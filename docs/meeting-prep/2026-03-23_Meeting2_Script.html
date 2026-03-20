@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PigPlanCORE — 2차 미팅 발표 스크립트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--brand:#0F2B50;--gold:#C9A84C;--green:#27AE60;--orange:#E67E22;--red:#C0392B;--blue:#2563EB;--bg:#FAFAF8;--surface:#fff;--text:#0F1923;--text2:#3A4A5C;--text3:#7A8FA6;--border:#D8DDE4}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.9;padding:0 0 60px}
+.top-bar{position:sticky;top:0;z-index:100;background:var(--brand);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.top-bar h1{font-size:14px;font-weight:700;letter-spacing:-.3px}
+.top-bar .meta{font-size:11px;color:#8EB8E8}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px}
+
+/* Section */
+.section{margin-bottom:32px}
+.sec-label{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);background:var(--brand);padding:4px 12px;border-radius:4px;margin-bottom:10px}
+.sec-title{font-size:20px;font-weight:800;margin-bottom:6px;line-height:1.4}
+.sec-time{font-size:11px;color:var(--text3);margin-bottom:16px}
+
+/* Script block */
+.script{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;line-height:2;font-size:14px;color:var(--text2)}
+.script strong{color:var(--text);font-weight:700}
+.script .highlight{background:linear-gradient(transparent 60%,rgba(201,168,76,.25) 60%);font-weight:700;color:var(--text)}
+.script .quote{border-left:3px solid var(--gold);padding:12px 16px;margin:12px 0;background:rgba(201,168,76,.06);font-style:italic;color:var(--text)}
+.script .pause{display:block;text-align:center;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:1px;padding:8px 0}
+
+/* Key point cards */
+.kp{background:var(--brand);color:#fff;border-radius:10px;padding:16px 20px;margin:12px 0}
+.kp-num{font-family:'JetBrains Mono';font-size:11px;color:var(--gold);font-weight:600;letter-spacing:1px}
+.kp-text{font-size:14px;font-weight:500;line-height:1.7;margin-top:4px}
+.kp-text strong{color:var(--gold)}
+
+/* Data table */
+.data-tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:12px}
+.data-tbl th{background:var(--brand);color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:600}
+.data-tbl td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.data-tbl tr:hover td{background:#F4F6F9}
+
+/* Decision box */
+.decision-box{background:linear-gradient(135deg,#0a1e3d,var(--brand));border:2px solid var(--gold);border-radius:12px;padding:24px;margin:20px 0;color:#fff}
+.decision-box h3{font-size:14px;color:var(--gold);font-weight:700;letter-spacing:1px;margin-bottom:14px}
+.decision-item{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.decision-item:last-child{border-bottom:none}
+.checkbox{width:20px;height:20px;border:2px solid var(--gold);border-radius:4px;flex-shrink:0}
+
+/* QA */
+.qa{margin:12px 0}
+.qa-q{font-size:13px;font-weight:700;color:var(--brand);padding:10px 14px;background:#F4F6F9;border-radius:8px 8px 0 0;border:1px solid var(--border)}
+.qa-a{font-size:13px;color:var(--text2);padding:12px 14px;background:var(--surface);border-radius:0 0 8px 8px;border:1px solid var(--border);border-top:none;line-height:1.8}
+
+/* Tip */
+.tip{background:#FFF9EB;border-left:4px solid var(--gold);padding:12px 16px;margin:12px 0;font-size:12px;color:var(--text2);border-radius:0 8px 8px 0}
+.tip strong{color:var(--brand)}
+
+/* Alert */
+.alert-box{padding:12px 16px;border-radius:8px;font-size:12px;margin:12px 0;font-weight:500}
+.alert-box.red{background:#FEF2F2;color:var(--red);border-left:4px solid var(--red)}
+.alert-box.green{background:#F0FDF4;color:var(--green);border-left:4px solid var(--green)}
+.alert-box.blue{background:#EFF6FF;color:var(--blue);border-left:4px solid var(--blue)}
+
+/* TOC */
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:24px}
+.toc-title{font-size:12px;font-weight:700;color:var(--text3);letter-spacing:1px;margin-bottom:8px}
+.toc a{display:block;padding:6px 0;font-size:13px;color:var(--brand);text-decoration:none;border-bottom:1px solid #F0F0F0;font-weight:500}
+.toc a:last-child{border-bottom:none}
+.toc a span{color:var(--text3);font-size:11px;float:right}
+
+@media(max-width:480px){
+  .sec-title{font-size:17px}
+  .script{padding:16px;font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>PigPlanCORE 2차 미팅 발표 스크립트</h1>
+  <div class="meta">2026.03.23 (월) 13:00</div>
+</div>
+
+<div class="wrap">
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">목차 (약 30분)</div>
+  <a href="#s0">인트로 <span>1분</span></a>
+  <a href="#s1">01. 나라마다 원하는 게 다르다 <span>5분</span></a>
+  <a href="#s2">02. 경쟁사 분석 — 5개 공백 <span>5분</span></a>
+  <a href="#s3">03. 기술 스택 확정 <span>3분</span></a>
+  <a href="#s4">04. Oracle MCP 분석 <span>3분</span></a>
+  <a href="#s5">05. 개발 스펙 — 다 준비됐다 <span>3분</span></a>
+  <a href="#s6">06. MVP 8주 — 현실적 범위 <span>5분</span></a>
+  <a href="#s7">마무리 — 결정 사항 4가지 <span>2분</span></a>
+  <a href="#s8">예상 Q&A 대비 <span>참고</span></a>
+</div>
+
+
+<!-- ═══ INTRO ═══ -->
+<div class="section" id="s0">
+  <div class="sec-label">INTRO</div>
+  <div class="sec-title">인트로</div>
+  <div class="sec-time">약 1분</div>
+
+  <div class="script">
+    "대표님, 오늘 보고드릴 내용은 크게 <strong>3가지</strong>입니다.<br><br>
+
+    첫째, <strong>시장을 어떻게 봤는지</strong> — 경쟁사 9개를 전부 분석했습니다.<br>
+    둘째, <strong>기술적으로 뭘 만들 건지</strong> — DB, API, 스펙이 다 나왔습니다.<br>
+    셋째, <strong>8주 안에 뭘 할 수 있는지</strong> — 현실적인 범위를 정했습니다.<br><br>
+
+    <div class="quote">
+      결론부터 말씀드리면,<br>
+      <strong>개발 시작할 준비가 다 됐습니다.<br>
+      오늘 3가지만 결정해주시면 됩니다.</strong>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 1 ═══ -->
+<div class="section" id="s1">
+  <div class="sec-label">AGENDA 01</div>
+  <div class="sec-title">나라마다 원하는 게 다르다</div>
+  <div class="sec-time">약 5분 · 6개 권역 분석 결과</div>
+
+  <div class="script">
+    "저희가 타겟으로 잡은 6개 권역 — 한국, EU, 미국, 브라질, 동남아, 중국.<br>
+    이 나라들의 양돈 현실이 <strong>완전히 다릅니다.</strong><br><br>
+
+    예를 들면, <span class="highlight">덴마크는 PSY가 35.6</span>입니다. 세계 최고.<br>
+    반면 <span class="highlight">동남아는 10~26</span>까지 편차가 큽니다. 베트남 소농은 인터넷도 없습니다.<br><br>
+
+    미국은 PRRS 피해가 연간 <strong>$6.6억</strong> 수준이고, PQA Plus 인증 없으면 유통사 계약이 안 됩니다.<br>
+    EU는 항생제 사용 보고가 <strong>법적 의무</strong>입니다.<br>
+    동남아는 ASF(아프리카돼지열병)가 상재화되어 있어서 질병 경보가 생존 문제입니다.<br><br>
+
+    <span class="pause">— 잠깐 멈춤 —</span>
+
+    <strong>그래서 하나의 제품으로 6개 나라를 다 커버하려면, 설계 초기부터 이걸 반영해야 합니다.</strong><br><br>
+
+    다행히 <span class="highlight">공통 분모</span>가 있습니다.<br>
+    어느 나라든 모돈 관리의 기본은 같습니다 — <strong>교배, 분만, 이유.</strong><br>
+    여기에 <strong>오프라인 모바일</strong>과 <strong>다국어</strong>를 붙이면, Phase 1에서 어디든 쓸 수 있습니다.<br><br>
+
+    지역 특화 기능 — 미국의 Feed Mill 연동, EU의 항생제 보고, 동남아의 ASF 경보 —<br>
+    이건 <strong>Phase 2부터 모듈로 분리 개발</strong>합니다."
+  </div>
+
+  <div class="kp">
+    <div class="kp-num">KEY POINT</div>
+    <div class="kp-text">Phase 1에서 3개 지역 공통 기능(<strong>교배/분만/이유 + 오프라인 + 다국어</strong>)만 만들면 어디든 쓸 수 있다. 지역 특화는 Phase 2부터.</div>
+  </div>
+
+  <div class="script">
+    "현지화 명세도 다 정리했습니다.<br>
+    무게 단위(kg vs lbs), 통화(원/달러/동), 날짜 포맷, 심지어 알림 채널까지 —<br>
+    한국은 카카오톡, 베트남은 Zalo, 브라질은 WhatsApp.<br>
+    이걸 DB의 <strong>country_configs 테이블 하나로 다 관리</strong>합니다."
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 2 ═══ -->
+<div class="section" id="s2">
+  <div class="sec-label">AGENDA 02</div>
+  <div class="sec-title">경쟁사 분석 — 5개 공백을 찾았다</div>
+  <div class="sec-time">약 5분 · 9개사 딥다이브 결과</div>
+
+  <div class="script">
+    "9개 경쟁사를 전부 뜯어봤습니다.<br>
+    PigCHAMP, PigKnows, MetaFarms, Cloudfarms, MTech, Porcitec, Agriness, LeeO, S&amp;W.<br><br>
+
+    먼저 <strong>가격</strong>입니다.<br>
+    거의 전부 <span class="highlight">비공개</span>입니다. 영업팀한테 연락해야 견적이 나옵니다.<br>
+    확인된 건 MetaFarms가 출하돈당 $0.05~$0.25, Cloudfarms가 $500/년부터.<br>
+    MTech은 대형 인테그레이터 전용이라 아예 가격 자체가 없습니다.<br><br>
+
+    <div class="quote">가격을 숨기는 게 업계 관행입니다. 우리는 이걸 깨겠다는 겁니다.</div>
+  </div>
+
+  <div class="script">
+    "그리고 <span class="highlight">5개 시장 공백</span>을 찾았습니다.<br>
+    이건 어떤 단일 경쟁사도 동시에 충족 못하는 겁니다."
+  </div>
+
+  <div class="kp">
+    <div class="kp-num">WHITE SPACE 1</div>
+    <div class="kp-text"><strong>아시아 특화 클라우드 SaaS</strong> — Cloudfarms가 24개 언어 지원하는데, 아시아어는 없습니다</div>
+  </div>
+  <div class="kp">
+    <div class="kp-num">WHITE SPACE 2</div>
+    <div class="kp-text"><strong>ESG + 양돈 운영 통합</strong> — 탄소/동물복지 자동 산출 솔루션이 아예 없습니다</div>
+  </div>
+  <div class="kp">
+    <div class="kp-num">WHITE SPACE 3</div>
+    <div class="kp-text"><strong>개체 IoT + 모돈 관리 통합</strong> — LeeO는 IoT만, PigCHAMP은 모돈만. 합친 건 없습니다</div>
+  </div>
+  <div class="kp">
+    <div class="kp-num">WHITE SPACE 4</div>
+    <div class="kp-text"><strong>중소 농장 합리적 가격</strong> — 대형 전용이거나 가격 비공개. 소농은 접근 불가</div>
+  </div>
+  <div class="kp">
+    <div class="kp-num">WHITE SPACE 5</div>
+    <div class="kp-text"><strong>AI 분석 민주화</strong> — MTech/LeeO AI 대형 전용. 우리는 SaaS에 AI 포함</div>
+  </div>
+
+  <div class="script">
+    "<span class="highlight">Phase 1 출시 즉시 5개가 차별화</span>됩니다.<br>
+    아시아어, 무료, 단위 자동 전환, 아시아 규정 대응, 가격 투명 공개.<br>
+    이건 구조적 공백이라서 경쟁사가 단기간에 따라오기 어렵습니다.<br><br>
+
+    <span class="pause">— 대표님 질문 예상 포인트 —</span>
+
+    '무료로 주면 <strong>돈은 언제 버냐?</strong>'<br><br>
+
+    Phase 1 목표는 수익이 아닙니다. <span class="highlight">활성 농장 300개 확보</span>가 기준점입니다.<br>
+    300농장의 30%만 유료 전환해도 <strong>연 $160K~$450K ARR</strong> 진입이 가능합니다.<br><br>
+
+    피그플랜 27년 개발 비용은 이미 회수됐고,<br>
+    글로벌 데이터 자산 — 저희가 <strong>Pigsignal</strong>이라 부르는 — 확보가 진짜 목적입니다."
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 3 ═══ -->
+<div class="section" id="s3">
+  <div class="sec-label">AGENDA 03</div>
+  <div class="sec-title">기술 스택 — FastAPI + PostgreSQL</div>
+  <div class="sec-time">약 3분 · 기술 결정 사항</div>
+
+  <div class="script">
+    "백엔드는 <span class="highlight">FastAPI(Python)</span>로 갑니다.<br><br>
+
+    Java vs Python 고민이 있었는데, 결론은 명확합니다.<br>
+    AI/ML 분석 — 질병 경보, 최적 출하 예측 — 이게 Phase 2~3에 핵심인데,<br>
+    Python 생태계 없이는 <strong>별도 ML 서버 구축 비용이 2배</strong>입니다.<br>
+    그리고 피그플랜 기존 분석 로직을 <strong>바로 재사용</strong>할 수 있습니다."
+  </div>
+
+  <div class="tip">
+    <strong>Java 전환은 언제?</strong><br>
+    지금은 안 합니다. 농장 2,000개, 동시 사용자 5,000명까지 FastAPI로 충분.<br>
+    전환 트리거: API P95 > 500ms 2주 지속 / 월간 2,000농장 초과 / Enterprise SLA 99.9% 요구 시
+  </div>
+
+  <div class="script">
+    "<strong>지금 Java로 시작하면 개발 속도가 2~3배 느려집니다.</strong><br><br>
+
+    DB는 <span class="highlight">PostgreSQL + Schema-per-tenant</span>.<br>
+    농장별 스키마 분리로 데이터 완전 격리. 규정 준수, 백업도 농장 단위로 가능합니다.<br>
+    IoT 센서 데이터는 <strong>TimescaleDB</strong>로 시계열 최적화합니다."
+  </div>
+
+  <div class="kp">
+    <div class="kp-num">BOTTOM LINE</div>
+    <div class="kp-text"><strong>FastAPI + PostgreSQL (Schema-per-tenant) + TimescaleDB(IoT).</strong><br>Java 전환은 성능 문제가 예측될 때 시작한다.</div>
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 4 ═══ -->
+<div class="section" id="s4">
+  <div class="sec-label">AGENDA 04</div>
+  <div class="sec-title">Oracle MCP 분석 — 일정을 결정하는 변수</div>
+  <div class="sec-time">약 3분 · 시나리오 3개</div>
+
+  <div class="script">
+    "피그플랜 27년간 쌓은 <strong>Oracle DB</strong>가 있습니다.<br>
+    이걸 CORE에서 어디까지 재사용할 수 있느냐가 전체 일정을 좌우합니다.<br><br>
+
+    시나리오가 3개입니다."
+  </div>
+
+  <div class="kp" style="border-left:4px solid #27AE60">
+    <div class="kp-num">SCENARIO A — 이상적</div>
+    <div class="kp-text">Oracle 핵심 테이블 → PostgreSQL 직접 매핑<br>분석 2주 + 마이그레이션 설계 2주. <strong>리스크 낮음</strong></div>
+  </div>
+  <div class="kp" style="border-left:4px solid #E67E22">
+    <div class="kp-num">SCENARIO B — 현실적</div>
+    <div class="kp-text">핵심(모돈/이벤트)만 재사용, 국내 특화 로직 제거 → 글로벌 표준 재설계<br>분석 2주 + 설계 4~6주. <strong>리스크 중간</strong></div>
+  </div>
+  <div class="kp" style="border-left:4px solid #C0392B">
+    <div class="kp-num">SCENARIO C — 최악</div>
+    <div class="kp-text">처음부터 새로 설계. Oracle과 완전 독립<br>분석 2주 + 신규 설계 8주. <strong>일정 지연 리스크</strong></div>
+  </div>
+
+  <div class="script">
+    "다만, <span class="highlight">CORE DB는 어떤 시나리오든 독립 설계로 갑니다.</span><br>
+    Oracle 분석은 '재사용할 로직을 찾는 것'이지, '반드시 쓰겠다'가 아닙니다.<br>
+    <strong>분석 결과와 무관하게 CORE 개발은 병행 가능</strong>합니다."
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 5 ═══ -->
+<div class="section" id="s5">
+  <div class="sec-label">AGENDA 05</div>
+  <div class="sec-title">개발 스펙 — 다 준비됐다</div>
+  <div class="sec-time">약 3분 · 바로 코딩 가능 상태</div>
+
+  <div class="script">
+    "스펙 얘기를 드리면, <span class="highlight">개발자가 바로 코딩 시작할 수 있는 상태</span>입니다."
+  </div>
+
+  <table class="data-tbl">
+    <thead><tr><th>항목</th><th>수량</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td><strong>DB 스키마</strong></td><td>49 테이블</td><td>11개 모듈, 6개 권역 대응</td></tr>
+      <tr><td><strong>API</strong></td><td>30 엔드포인트</td><td>MVP 범위 정의 완료</td></tr>
+      <tr><td><strong>이벤트 정의</strong></td><td>48종</td><td>7개 카테고리, 3개국어</td></tr>
+      <tr><td><strong>질병 코드</strong></td><td>30종</td><td>WOAH 코드, 지역별 현황</td></tr>
+      <tr><td><strong>백신 카탈로그</strong></td><td>22종</td><td>PRRS, ASF, PCV2, FMD 등</td></tr>
+      <tr><td><strong>항생제 카탈로그</strong></td><td>22종</td><td>DDDA값, VFD/EU 제한 플래그</td></tr>
+      <tr><td><strong>KPI 공식</strong></td><td>5개</td><td>PSY, NPD, FCR, 분만율, ROI</td></tr>
+    </tbody>
+  </table>
+
+  <div class="script">
+    "MVP 프로토타입 화면도 만들어놨습니다.<br>
+    대시보드, 모돈 관리, 번식, KPI, 사료, 건강, 출하, AI 인사이트까지<br>
+    <strong>실제 화면으로 볼 수 있습니다.</strong>"
+  </div>
+
+  <div class="alert-box green">
+    <strong>MVP 프로토타입:</strong> https://foes88.github.io/PigplanCORE/mvp/
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 6 ═══ -->
+<div class="section" id="s6">
+  <div class="sec-label">AGENDA 06</div>
+  <div class="sec-title">MVP 8주 — 현실적으로 뭘 할 수 있나</div>
+  <div class="sec-time">약 5분 · 핵심 파트</div>
+
+  <div class="script">
+    "솔직하게 말씀드리겠습니다.<br>
+    8주 안에 <strong>완벽한 제품은 불가능</strong>합니다.<br>
+    하지만 <span class="highlight">'베트남 농장주 1명이 내일 쓸 수 있는 것'은 가능</span>합니다."
+  </div>
+
+  <table class="data-tbl">
+    <thead><tr><th>주차</th><th>작업</th><th>산출물</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1~2주</strong></td><td>Oracle 분석 + PostgreSQL 스키마 설계</td><td>ERD 초안, 테이블 정의서</td></tr>
+      <tr><td><strong>3~4주</strong></td><td>FastAPI 기본 CRUD</td><td>API 엔드포인트 30개</td></tr>
+      <tr><td><strong>5~6주</strong></td><td>React 웹 대시보드 + PSY/NPD</td><td>웹 데이터 입력/조회</td></tr>
+      <tr><td><strong>7~8주</strong></td><td>Android 앱 오프라인 기본</td><td>현장 교배/분만 기록</td></tr>
+    </tbody>
+  </table>
+
+  <div class="script">
+    "<strong>8주 후 가능한 것:</strong><br>
+    교배/분만/이유 기록, PSY/NPD 대시보드, 오프라인 입력→동기화, 한/영/베 UI<br><br>
+
+    <strong>8주 후 불가능한 것 (솔직하게):</strong><br>
+    Feed Mill 연동, Multi-Site, Genetics, ESG, iOS, 고급 리포트"
+  </div>
+
+  <div class="alert-box blue">
+    <strong>MVP의 목적은 완성 제품이 아닙니다.</strong> '실제로 쓰이는가'를 검증하는 것입니다.
+  </div>
+
+  <div class="script">
+    "검증해야 할 질문이 3개입니다:<br><br>
+
+    <strong>1.</strong> 베트남 농장주가 앱을 스스로 설치하고 첫 데이터를 입력할 수 있는가?<br>
+    <strong>2.</strong> 인터넷 없는 환경에서 3일간 기록 후 동기화가 정상 작동하는가?<br>
+    <strong>3.</strong> PSY 수치를 보고 '이게 맞네'라고 반응하는가?<br><br>
+
+    <strong>파일럿 농장 3~5개</strong> — 한국계 베트남 진출 농장 우선 — 에서 2주 실사용 후 인터뷰.<br>
+    결과에 따라 Phase 2 방향을 결정합니다."
+
+    <span class="pause">— 핵심 멘트 —</span>
+
+    <div class="quote">
+      "8주 안에 완성 제품을 만드는 게 목표가 아닙니다.<br>
+      8주 안에 <strong>'실제로 쓰는 농장주 3명'</strong>을 확보하는 게 목표입니다.<br><br>
+      그 3명이 매일 데이터를 입력하고,<br>
+      'PSY가 올랐다'고 느끼면 —<br>
+      <strong>우리가 맞는 방향으로 가고 있다는 증거입니다.</strong>"
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 7: 결정 사항 ═══ -->
+<div class="section" id="s7">
+  <div class="sec-label">CLOSING</div>
+  <div class="sec-title">결정 사항 4가지</div>
+  <div class="sec-time">약 2분 · 마무리</div>
+
+  <div class="script">
+    "오늘 결정해주실 사항 <strong>4가지</strong>입니다."
+  </div>
+
+  <div class="decision-box">
+    <h3>TODAY'S DECISIONS</h3>
+    <div class="decision-item"><div class="checkbox"></div><span><strong>1.</strong> FastAPI로 Phase 1 진행 확정</span></div>
+    <div class="decision-item"><div class="checkbox"></div><span><strong>2.</strong> DB 스키마 v1 (49테이블, 11모듈) 승인</span></div>
+    <div class="decision-item"><div class="checkbox"></div><span><strong>3.</strong> 파일럿 농장 모집 시작 승인</span></div>
+    <div class="decision-item"><div class="checkbox"></div><span><strong>4.</strong> MVP 스프린트 시작일 확정 (목표 4/1)</span></div>
+  </div>
+
+  <div class="script">
+    "<strong>이 4개가 결정되면, 월요일부터 개발 들어갑니다.</strong><br>
+    보고 마치겠습니다."
+  </div>
+</div>
+
+
+<!-- ═══ SECTION 8: Q&A ═══ -->
+<div class="section" id="s8">
+  <div class="sec-label">APPENDIX</div>
+  <div class="sec-title">예상 Q&A 대비</div>
+  <div class="sec-time">참고용 · 대표님 예상 질문 5개</div>
+
+  <div class="qa">
+    <div class="qa-q">Q1. "다 좋은데 돈은 언제 버나?"</div>
+    <div class="qa-a">
+      Phase 1 목표는 수익이 아닙니다.<br>
+      <strong>활성 농장 300개 확보</strong>가 기준점입니다.<br>
+      300농장의 30% 전환 시 → <strong>연 $160K~$450K ARR</strong> 진입 가능합니다.
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Q2. "PigKnows는 이미 글로벌 확장한다는데 이길 수 있나?"</div>
+    <div class="qa-a">
+      PigKnows가 가지지 못한 것 3가지:<br>
+      <strong>1. 아시아어</strong> (한/베/태) — 단기간 추가 불가<br>
+      <strong>2. 무료 진입</strong> — Valstone 구조상 불가<br>
+      <strong>3. 오픈 API</strong> — 폐쇄형 수직통합 전략과 모순<br>
+      이 3가지 공백에서 우리가 먼저 자리를 잡으면 됩니다.
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Q3. "FastAPI로 시작했다가 Java로 바꾸면 처음부터 다시 짜야 하는 거 아닌가?"</div>
+    <div class="qa-a">
+      비즈니스 로직 재작성은 필요합니다.<br>
+      그러나 <strong>DB 스키마, API 설계, 프론트엔드는 그대로</strong> 씁니다.<br>
+      그 시점이면 수익도 나고 있을 겁니다.<br>
+      <strong>지금 Java로 시작하면 개발 속도가 2~3배 느려집니다.</strong>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Q4. "Oracle 분석이 복잡하면 일정 얼마나 밀리나?"</div>
+    <div class="qa-a">
+      최악 시나리오(완전 신규 설계)는 8주 추가됩니다.<br>
+      그러나 <strong>CORE DB는 Oracle과 독립 설계</strong>합니다.<br>
+      Oracle 분석은 "재사용 가능한 로직 찾기"가 목적이지, "반드시 쓰겠다"가 아닙니다.<br>
+      <strong>분석 결과와 무관하게 CORE 개발은 병행 가능합니다.</strong>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Q5. "베트남 농장주가 앱을 실제로 쓸 수 있을까?"</div>
+    <div class="qa-a">
+      이게 MVP에서 검증해야 할 핵심 질문입니다.<br>
+      피그플랜 기준, 현장 작업자는 <strong>3개 화면</strong>만 씁니다:<br>
+      <strong>교배 기록 / 분만 기록 / 이유 기록</strong><br>
+      이 3개 화면을 최대한 단순하게 만드는 것이 MVP UX 목표입니다.
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+<div style="background:var(--brand);color:#6A8CAF;text-align:center;padding:20px;font-size:11px;margin-top:40px">
+  PigPlanCORE &nbsp;|&nbsp; 2차 미팅 발표 스크립트 &nbsp;|&nbsp; 2026.03.23 &nbsp;|&nbsp; Confidential
+</div>
+
+</body>
+</html>
