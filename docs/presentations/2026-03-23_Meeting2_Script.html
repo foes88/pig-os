@@ -92,7 +92,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <a href="#s3">03. 기술 스택 확정 <span>3분</span></a>
   <a href="#s4">04. DB 설계 방향 <span>2분</span></a>
   <a href="#s5">05. 개발 스펙 — 다 준비됐다 <span>3분</span></a>
-  <a href="#s6">06. MVP 8주 — 현실적 범위 <span>5분</span></a>
+  <a href="#s6">06. 개발 일정 — 웹 먼저 <span>5분</span></a>
   <a href="#s7">마무리 — 결정 사항 4가지 <span>2분</span></a>
   <a href="#s8">예상 Q&A 대비 <span>참고</span></a>
 </div>
@@ -336,55 +336,57 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <!-- ═══ SECTION 6 ═══ -->
 <div class="section" id="s6">
   <div class="sec-label">AGENDA 06</div>
-  <div class="sec-title">MVP 8주 — 현실적으로 뭘 할 수 있나</div>
+  <div class="sec-title">개발 일정 — 웹 먼저, 모바일 이후</div>
   <div class="sec-time">약 5분 · 핵심 파트</div>
 
   <div class="script">
-    "솔직하게 말씀드리겠습니다.<br>
-    8주 안에 <strong>완벽한 제품은 불가능</strong>합니다.<br>
-    하지만 <span class="highlight">'베트남 농장주 1명이 내일 쓸 수 있는 것'은 가능</span>합니다."
+    "일정 말씀드리겠습니다.<br><br>
+
+    핵심은 <span class="highlight">AI가 코드를 만들고, 사람이 검증한다 — 동시에</span> 입니다.<br>
+    타업무 병행하면서도 AI 도구를 풀활용하면 병렬 처리가 가능합니다.<br><br>
+
+    <strong>웹을 먼저 런칭하고, 모바일은 이후입니다.</strong>"
+  </div>
+
+  <div class="tip" style="margin-bottom:20px">
+    <strong>Phase 1 — 웹 런칭: 약 12~14주 (3.5개월)</strong>
   </div>
 
   <table class="data-tbl">
-    <thead><tr><th>주차</th><th>작업</th><th>산출물</th></tr></thead>
+    <thead><tr><th>시기</th><th>작업</th><th>비고</th></tr></thead>
     <tbody>
-      <tr><td><strong>1~2주</strong></td><td>PostgreSQL 스키마 신규 설계</td><td>ERD 확정, 테이블 정의서</td></tr>
-      <tr><td><strong>3~4주</strong></td><td>FastAPI 기본 CRUD</td><td>API 엔드포인트 30개</td></tr>
-      <tr><td><strong>5~6주</strong></td><td>React 웹 대시보드 + PSY/NPD</td><td>웹 데이터 입력/조회</td></tr>
-      <tr><td><strong>7~8주</strong></td><td>Android 앱 오프라인 기본</td><td>현장 교배/분만 기록</td></tr>
+      <tr><td><strong>4월</strong></td><td>설계 확정 (DB, API, 화면)</td><td>2~3주</td></tr>
+      <tr><td><strong>5~6월</strong></td><td>백엔드 + 프론트엔드 병행 개발</td><td>AI 코드 생성 + 사람 검증</td></tr>
+      <tr><td><strong>6월 말~7월</strong></td><td>통합 테스트 + 버그 수정</td><td>파일럿 데이터 검증</td></tr>
+      <tr><td style="color:var(--success);font-weight:700">7월</td><td style="font-weight:700">웹 런칭 + 파일럿 오픈</td><td>농장 3~5개 실사용</td></tr>
     </tbody>
   </table>
 
-  <div class="script">
-    "<strong>8주 후 가능한 것:</strong><br>
-    교배/분만/이유 기록, PSY/NPD 대시보드, 오프라인 입력→동기화, 한/영/베 UI<br><br>
-
-    <strong>8주 후 불가능한 것 (솔직하게):</strong><br>
-    Feed Mill 연동, Multi-Site, Genetics, ESG, iOS, 고급 리포트"
+  <div class="tip" style="margin:20px 0">
+    <strong>Phase 2 — 모바일: 웹 런칭 후 약 3개월</strong>
   </div>
 
-  <div class="alert-box blue">
-    <strong>MVP의 목적은 완성 제품이 아닙니다.</strong> '실제로 쓰이는가'를 검증하는 것입니다.
-  </div>
+  <table class="data-tbl">
+    <thead><tr><th>시기</th><th>작업</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td><strong>8~9월</strong></td><td>React Native Android 개발</td><td>오프라인 동기화 포함</td></tr>
+      <tr><td style="color:var(--success);font-weight:700">10월</td><td style="font-weight:700">모바일 베타 오픈</td><td>오프라인 검증</td></tr>
+    </tbody>
+  </table>
 
-  <div class="script">
-    "검증해야 할 질문이 3개입니다:<br><br>
+  <div class="script" style="margin-top:20px">
+    "파일럿 검증 질문은 3가지입니다:<br><br>
 
-    <strong>1.</strong> 베트남 농장주가 앱을 스스로 설치하고 첫 데이터를 입력할 수 있는가?<br>
-    <strong>2.</strong> 인터넷 없는 환경에서 3일간 기록 후 동기화가 정상 작동하는가?<br>
-    <strong>3.</strong> PSY 수치를 보고 '이게 맞네'라고 반응하는가?<br><br>
-
-    <strong>파일럿 농장 3~5개</strong> — 베트남 현지 농장 우선 — 에서 2주 실사용 후 인터뷰.<br>
-    결과에 따라 Phase 2 방향을 결정합니다."
+    <strong>1.</strong> 농장주가 웹에서 직접 데이터를 입력할 수 있는가?<br>
+    <strong>2.</strong> PSY/NPD 수치를 보고 '이게 맞네'라고 반응하는가?<br>
+    <strong>3.</strong> 2주 후에도 계속 쓰고 있는가?"
 
     <span class="pause">— 핵심 멘트 —</span>
 
     <div class="quote">
-      "8주 안에 완성 제품을 만드는 게 목표가 아닙니다.<br>
-      8주 안에 <strong>'실제로 쓰는 농장주 3명'</strong>을 확보하는 게 목표입니다.<br><br>
-      그 3명이 매일 데이터를 입력하고,<br>
-      'PSY가 올랐다'고 느끼면 —<br>
-      <strong>우리가 맞는 방향으로 가고 있다는 증거입니다.</strong>"
+      "목표는 <strong>7월 웹 런칭, 10월 모바일</strong>입니다.<br>
+      파일럿 농장 3~5개가 2주 뒤에도 계속 쓰고 있으면 —<br>
+      <strong>맞는 방향입니다.</strong>"
     </div>
   </div>
 </div>
@@ -405,7 +407,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="decision-item"><div class="checkbox"></div><span><strong>1.</strong> FastAPI로 Phase 1 진행 확정</span></div>
     <div class="decision-item"><div class="checkbox"></div><span><strong>2.</strong> DB 스키마 v1 (49테이블, 11모듈) 승인</span></div>
     <div class="decision-item"><div class="checkbox"></div><span><strong>3.</strong> 파일럿 농장 모집 시작 승인</span></div>
-    <div class="decision-item"><div class="checkbox"></div><span><strong>4.</strong> MVP 스프린트 시작일 확정 (목표 4/1)</span></div>
+    <div class="decision-item"><div class="checkbox"></div><span><strong>4.</strong> 개발 시작일 확정 (목표 4/1) — 7월 웹 런칭</span></div>
   </div>
 
   <div class="script">

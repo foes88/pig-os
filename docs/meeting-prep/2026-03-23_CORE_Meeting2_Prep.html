@@ -887,110 +887,113 @@
     <div class="sec-head">
       <div class="sec-head-top">
         <div class="sec-num">05</div>
-        <div class="sec-title">MVP 현실성 체크</div>
+        <div class="sec-title">개발 일정 &mdash; 현실적 로드맵</div>
       </div>
-      <div class="sec-message">8주 안에 "완벽한 제품"은 불가능. "베트남 농장주 1명이 내일 쓸 수 있는 것"은 가능.</div>
+      <div class="sec-message">AI + 사람 병렬 작업. 웹 먼저 런칭하고, 모바일은 이후.</div>
     </div>
 
     <div class="key-msg">
       <div class="key-msg-eyebrow">Key Message</div>
       <div class="key-msg-text">
-        이 두 가지를 <strong>명확히 구분</strong>해야 한다.<br>
-        "가능한 것"과 "불가능한 것"을 미리 선 그어야 기대치를 관리할 수 있다.
+        <strong>AI가 코드를 만들고, 사람이 검증한다 &mdash; 동시에.</strong><br>
+        AI(Claude Code)로 코드/UI 생성은 3~5배 빨라지고,<br>
+        그 사이 사람은 비즈니스 로직 검증과 파일럿 준비를 병행한다.
       </div>
     </div>
 
-    <div class="sub-head">5.1 8주 MVP &mdash; 현실적으로 가능한 것</div>
-    <p class="footnote" style="margin-bottom:16px;">기준: 개발자 2~3명 기준.</p>
+    <div class="sub-head">5.1 Phase 1 &mdash; 웹 런칭 (약 3.5개월)</div>
+    <p class="footnote" style="margin-bottom:16px;">기준: 타업무 병행 + AI 풀활용 + 검증 병렬 처리 &mdash; 12~14주</p>
 
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <span class="tag tag-red">1~2주</span>
-        <div class="step-desc"><strong>PostgreSQL 스키마 신규 설계</strong></div>
-        <div class="step-owner">ERD 확정, 테이블 정의서</div>
+        <span class="tag tag-red">4월</span>
+        <div class="step-desc"><strong>설계 확정</strong> &mdash; DB 스키마, API 설계, 화면 설계</div>
+        <div class="step-owner">2~3주</div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
-        <span class="tag tag-red">3~4주</span>
-        <div class="step-desc"><strong>FastAPI 기본 CRUD</strong> (모돈/이벤트/사용자)</div>
-        <div class="step-owner">API 엔드포인트 30개</div>
+        <span class="tag tag-orange">5~6월</span>
+        <div class="step-desc"><strong>백엔드 + 프론트엔드 병행 개발</strong> &mdash; AI가 코드 생성, 사람이 검증</div>
+        <div class="step-owner">6~8주 (병행)</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
-        <span class="tag tag-orange">5~6주</span>
-        <div class="step-desc"><strong>React 웹 대시보드</strong> 기본 화면 + PSY/NPD</div>
-        <div class="step-owner">웹 데이터 입력/조회</div>
+        <span class="tag tag-blue">6월 말~7월</span>
+        <div class="step-desc"><strong>통합 테스트 + 버그 수정</strong> &mdash; 파일럿 농장 데이터 검증</div>
+        <div class="step-owner">2~3주</div>
       </div>
       <div class="step">
         <div class="step-num">4</div>
-        <span class="tag tag-blue">7~8주</span>
-        <div class="step-desc"><strong>Android 앱 오프라인</strong> 기본 기능</div>
-        <div class="step-owner">현장 교배/분만 기록</div>
+        <span class="tag tag-green">7월</span>
+        <div class="step-desc"><strong>웹 런칭 + 파일럿 오픈</strong> &mdash; 농장 3~5개 실사용 시작</div>
+        <div class="step-owner">배포</div>
       </div>
+    </div>
+
+    <div class="sub-head">5.2 Phase 2 &mdash; 모바일 (웹 런칭 후)</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">5</div>
+        <span class="tag tag-orange">8~9월</span>
+        <div class="step-desc"><strong>React Native Android</strong> &mdash; 현장 기록 + 오프라인 동기화</div>
+        <div class="step-owner">8주</div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <span class="tag tag-blue">10월</span>
+        <div class="step-desc"><strong>모바일 베타 오픈</strong> &mdash; 오프라인 동기화 검증</div>
+        <div class="step-owner">4주</div>
+      </div>
+    </div>
+
+    <div class="alert alert-green">
+      <strong>목표: 2026년 7월 웹 런칭 &rarr; 10월 모바일 오픈</strong>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
       <div class="card" style="border-left:4px solid var(--accent-green);">
-        <div class="sub-sub-head" style="margin-top:0;color:var(--accent-green);">8주 후 가능한 것</div>
+        <div class="sub-sub-head" style="margin-top:0;color:var(--accent-green);">웹 런칭 시 포함</div>
         <ul class="blist">
-          <li>모돈 교배/분만/이유 기록 (웹 + Android)</li>
-          <li>PSY/NPD 기본 계산/표시</li>
-          <li>오프라인 입력 후 온라인 동기화 (기본)</li>
-          <li>영어/베트남어/태국어 UI</li>
+          <li>모돈 교배/분만/이유 기록 (웹)</li>
+          <li>PSY/NPD/FCR 대시보드 + 벤치마크</li>
+          <li>다국어 UI (영어/베트남어/태국어)</li>
+          <li>역할별 권한 (농장주/기사/수의사)</li>
         </ul>
       </div>
-      <div class="card" style="border-left:4px solid var(--accent-red);">
-        <div class="sub-sub-head" style="margin-top:0;color:var(--accent-red);">8주 후 불가능한 것 (솔직하게)</div>
+      <div class="card" style="border-left:4px solid var(--accent-orange);">
+        <div class="sub-sub-head" style="margin-top:0;color:var(--accent-orange);">Phase 2 이후</div>
         <ul class="blist">
-          <li>Feed Mill 연동, Multi-Site, Genetics</li>
-          <li>ESG, ESF 연동</li>
-          <li>iOS 앱, 벤치마킹, 고급 리포트</li>
+          <li>모바일 앱 + 오프라인 동기화</li>
+          <li>Feed Mill 연동, Multi-Site</li>
+          <li>AI 분석 (질병 경보, 출하 예측)</li>
+          <li>ESG, Genetics, 고급 리포트</li>
         </ul>
       </div>
     </div>
 
-    <div class="sub-head">5.2 MVP로 무엇을 검증할 것인가</div>
-
-    <div class="alert alert-blue">
-      <strong>MVP의 목적 = "이게 팔릴까?"가 아니라 "이게 실제로 쓰일까?"를 검증하는 것</strong>
-    </div>
-
+    <div class="sub-head">5.3 파일럿 검증</div>
     <div class="card">
       <div class="sub-sub-head" style="margin-top:0;">검증 질문 3가지</div>
       <div class="tbl-wrap" style="margin-bottom:16px;">
         <table>
           <thead><tr><th>#</th><th>질문</th></tr></thead>
           <tbody>
-            <tr><td><strong>1</strong></td><td>베트남 농장주가 앱을 스스로 설치하고 첫 데이터를 입력할 수 있는가?</td></tr>
-            <tr><td><strong>2</strong></td><td>인터넷 없는 환경에서 3일간 기록 후 동기화가 정상 작동하는가?</td></tr>
-            <tr><td><strong>3</strong></td><td>PSY 수치를 보고 "이게 맞네"라고 반응하는가?</td></tr>
+            <tr><td><strong>1</strong></td><td>농장주가 웹에서 첫 데이터를 직접 입력할 수 있는가?</td></tr>
+            <tr><td><strong>2</strong></td><td>PSY/NPD 수치를 보고 "이게 맞네"라고 반응하는가?</td></tr>
+            <tr><td><strong>3</strong></td><td>2주 후에도 계속 쓰고 있는가?</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="sub-sub-head">검증 방법</div>
       <ul class="blist">
         <li>파일럿 농장 3~5개 모집 (베트남 현지 농장 우선)</li>
-        <li>2주 실사용 후 인터뷰</li>
-        <li>결과에 따라 Phase 2 방향 결정</li>
+        <li>2주 실사용 후 인터뷰 &rarr; Phase 2 방향 결정</li>
       </ul>
-    </div>
-
-    <div class="sub-head">5.3 MVP 핵심 메시지</div>
-    <div class="key-msg" style="border-left-color:var(--accent-green);">
-      <div class="key-msg-text">
-        "8주 안에 완성 제품을 만드는 게 목표가 아닙니다.<br>
-        8주 안에 <strong>'실제로 쓰는 농장주 3명'</strong>을 확보하는 게 목표입니다.<br><br>
-        그 3명이 매일 데이터를 입력하고,<br>
-        'PSY가 올랐다'고 느끼면 &mdash;<br>
-        <strong>우리가 맞는 방향으로 가고 있다는 증거입니다.</strong><br><br>
-        그게 현실적인 MVP입니다."
-      </div>
     </div>
 
     <div class="bottom-line">
       <span class="bl-label">Bottom Line</span>
-      <span class="bl-text">8주 MVP = 베트남 농장주 3명이 실제로 쓰는 것. 완성 제품이 아니라 검증이 목적이다.</span>
+      <span class="bl-text">웹 3.5개월(7월) + 모바일 3개월(10월). AI가 만들고 사람이 검증 &mdash; 병렬로. 파일럿 농장이 계속 쓰면 성공.</span>
     </div>
   </section>
 
@@ -1079,7 +1082,7 @@
         <span class="status"><span class="tag tag-orange">준비 필요</span></span>
       </li>
       <li>
-        <span>MVP 8주 개발 일정표 (주차별)</span>
+        <span>12~14주 개발 일정표 (월별)</span>
         <span class="owner">기획팀</span>
         <span class="status"><span class="tag tag-orange">준비 필요</span></span>
       </li>
@@ -1362,10 +1365,10 @@
 
       <div class="exec-point">
         <div class="exec-point-num">05</div>
-        <div class="exec-point-title">8주 MVP = 베트남 농장주 3명이 실제로 쓰는 것</div>
+        <div class="exec-point-title">7월 웹 런칭 &rarr; 10월 모바일. AI + 사람 병렬 작업.</div>
         <div class="exec-point-desc">
-          완성 제품이 아니라 검증이 목적<br>
-          3명이 매일 쓰면 &rarr; 맞는 방향. 안 쓰면 &rarr; 피벗
+          AI가 코드를 만들고, 사람이 검증 &mdash; 동시에.<br>
+          웹 먼저 런칭 후 파일럿 검증. 모바일은 이후.
         </div>
       </div>
 
@@ -1385,7 +1388,7 @@
         </div>
         <div class="exec-decision">
           <div class="exec-checkbox"></div>
-          <span>MVP 스프린트 시작일 확정 (목표 4/1)</span>
+          <span>개발 시작일 확정 (목표 4/1) &mdash; 7월 웹 런칭</span>
         </div>
       </div>
     </div>
