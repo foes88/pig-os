@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PigPlanCORE — 2차 회의 준비 보고서</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-dark:  #0F2B50;
+    --brand-blue:  #1E4D8C;
+    --brand-mid:   #2E6BC4;
+    --gold:        #C9A84C;
+    --accent-green:  #27AE60;
+    --accent-orange: #E67E22;
+    --accent-red:    #C0392B;
+    --bg:          #FAFAF8;
+    --surface:     #FFFFFF;
+    --text-dark:   #0F1923;
+    --text-mid:    #3A4A5C;
+    --text-light:  #7A8FA6;
+    --border:      #D8DDE4;
+    --tag-radius:  3px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text-dark);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--brand-dark);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 52px;
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 2px; color: #fff;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a {
+    color: #8EB8E8; font-size: 11px; font-weight: 500;
+    text-decoration: none; padding: 5px 8px; border-radius: 3px;
+    transition: background .15s, color .15s; white-space: nowrap;
+  }
+  .nav-links a:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+  /* LAYOUT */
+  .wrapper { max-width: 1060px; margin: 0 auto; padding: 86px 24px 64px; }
+
+  /* COVER */
+  .cover {
+    background: linear-gradient(160deg, #0a1e3d 0%, var(--brand-dark) 100%);
+    border-radius: 8px; padding: 56px 64px; margin-bottom: 16px;
+  }
+  .cover-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .cover-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(36px, 5vw, 56px); letter-spacing: 2px;
+    color: #fff; line-height: 1; margin-bottom: 10px;
+  }
+  .cover-title em { font-style: normal; color: var(--gold); }
+  .cover-sub {
+    font-size: 15px; font-weight: 400; color: #9CC3F0; margin-bottom: 6px;
+  }
+  .cover-sub2 {
+    font-size: 12px; font-weight: 300; color: #6A8CAF; margin-bottom: 20px;
+  }
+  .cover-meta {
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .cover-meta-item {
+    border-left: 3px solid var(--gold); padding: 6px 0 6px 16px;
+  }
+  .cover-meta-label { font-size: 10px; color: #6A8CAF; letter-spacing: .5px; }
+  .cover-meta-val { font-size: 14px; font-weight: 700; color: #fff; }
+  .cover-conf {
+    display: inline-block; margin-top: 16px;
+    border: 1px solid rgba(192,57,43,.5); border-radius: 3px;
+    padding: 4px 12px; font-size: 10px; font-weight: 700;
+    color: #E8A8A0; letter-spacing: 1px;
+  }
+
+  /* AGENDA BAR */
+  .agenda-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+    margin-bottom: 48px;
+  }
+  .agenda-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px 12px; text-align: center;
+    transition: all .15s; cursor: default;
+  }
+  .agenda-item:hover { border-color: var(--gold); }
+  .agenda-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--gold); line-height: 1;
+  }
+  .agenda-text { font-size: 11px; font-weight: 600; color: var(--text-mid); margin-top: 4px; }
+
+  /* SECTION HEADING */
+  .sec-head {
+    margin: 48px 0 24px; padding-bottom: 12px;
+    border-bottom: 2px solid var(--brand-dark);
+  }
+  .sec-head-top { display: flex; align-items: baseline; gap: 12px; }
+  .sec-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px; color: var(--brand-dark); line-height: 1;
+  }
+  .sec-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; color: var(--brand-dark); letter-spacing: 1px;
+  }
+  .sec-message { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+  .sub-head {
+    font-size: 16px; font-weight: 700; color: var(--brand-dark);
+    padding-bottom: 6px; margin: 36px 0 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sub-sub-head {
+    font-size: 14px; font-weight: 700; color: var(--brand-dark);
+    margin: 28px 0 12px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface); border-radius: 6px;
+    border: 1px solid var(--border);
+    padding: 32px; margin-bottom: 20px;
+  }
+
+  /* TABLES */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 24px; border-radius: 6px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 12px; }
+  thead tr { background: var(--brand-dark); }
+  thead th {
+    color: #fff; font-weight: 600; font-size: 11px; letter-spacing: .5px;
+    padding: 12px 16px; text-align: left; white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: #F8F9FA; }
+  tbody tr:hover { background: #F0F3F7; }
+  td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.6; }
+  td:first-child { font-weight: 600; }
+  .td-key { background: #F4F6F9; color: var(--brand-dark); font-weight: 700; width: 160px; white-space: nowrap; }
+
+  /* TAGS */
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: var(--tag-radius);
+    font-size: 10px; font-weight: 700; letter-spacing: .5px; white-space: nowrap;
+  }
+  .tag-red    { background: #FADBD8; color: var(--accent-red);  border: 1px solid #EBADA8; }
+  .tag-blue   { background: #D6E4F7; color: var(--brand-blue);  border: 1px solid #AECCF0; }
+  .tag-green  { background: #D5F5E3; color: #1a7a40;            border: 1px solid #A8DFBC; }
+  .tag-orange { background: #FDEBD0; color: #a05000;            border: 1px solid #F0CCAA; }
+  .tag-dark   { background: var(--brand-dark); color: #fff; }
+  .tag-gray   { background: #E8ECF0; color: #556; border: 1px solid #CCC; }
+
+  /* ALERT */
+  .alert {
+    border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;
+    font-size: 13px; line-height: 1.7;
+  }
+  .alert-red    { background: #FEF5F3; border-left: 4px solid var(--accent-red); }
+  .alert-blue   { background: #F3F7FE; border-left: 4px solid var(--brand-mid); }
+  .alert-orange { background: #FEF8F0; border-left: 4px solid var(--accent-orange); }
+  .alert-green  { background: #F3FBF6; border-left: 4px solid var(--accent-green); }
+
+  /* BOTTOM LINE */
+  .bottom-line {
+    background: var(--brand-dark);
+    border-left: 5px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 24px; margin: 32px 0 0;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .bl-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--gold); text-transform: uppercase;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .bl-text { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.5; }
+
+  /* KEY MESSAGE */
+  .key-msg {
+    background: var(--brand-dark); border-radius: 8px;
+    padding: 20px 24px; margin-bottom: 24px;
+    border-left: 5px solid var(--gold);
+  }
+  .key-msg-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 3px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .key-msg-text { font-size: 14px; color: #fff; line-height: 1.7; }
+  .key-msg-text strong { color: var(--gold); }
+
+  /* HEATMAP TABLE */
+  .heatmap td.h3 { background: #FADBD8; color: var(--accent-red); font-weight: 700; text-align: center; }
+  .heatmap td.h2 { background: #FDEBD0; color: #a05000; font-weight: 600; text-align: center; }
+  .heatmap td.h1 { background: #EBF0F5; color: var(--text-light); text-align: center; }
+  .heatmap td.h0 { background: #F8F9FA; color: #CCC; text-align: center; }
+  .heatmap td.phase { background: #D5F5E3; color: #1a7a40; font-weight: 700; font-size: 11px; text-align: center; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #1a2332; border-radius: 6px; padding: 20px 24px;
+    margin-bottom: 20px; overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: #9CC3F0; line-height: 1.7;
+  }
+  .code-block .hl { color: var(--gold); font-weight: 600; }
+  .code-block .cm { color: #5C7A99; }
+  .code-block .warn { color: var(--accent-orange); }
+  .code-block .ok { color: var(--accent-green); }
+
+  /* VERSUS TABLE */
+  .vs-table td.good { background: #D5F5E3; }
+  .vs-table td.warn { background: #FDEBD0; }
+  .vs-table td.bad  { background: #FADBD8; }
+
+  /* BULLET LIST */
+  .blist { list-style: none; padding: 0; margin: 10px 0 16px; }
+  .blist li {
+    padding: 7px 0 7px 20px; position: relative;
+    font-size: 13px; color: var(--text-mid); border-bottom: 1px solid #EEF0F3;
+  }
+  .blist li:last-child { border-bottom: none; }
+  .blist li::before {
+    content: ''; position: absolute; left: 4px; top: 14px;
+    width: 5px; height: 5px; border-radius: 50%; background: var(--brand-dark);
+  }
+
+  /* POSITIONING CARDS */
+  .pos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .pos-card {
+    border-radius: 8px; padding: 20px;
+    background: var(--brand-dark); color: #fff;
+    border-left: 4px solid var(--gold);
+  }
+  .pos-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px; color: var(--gold); line-height: 1; margin-bottom: 6px;
+  }
+  .pos-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .pos-desc { font-size: 11px; color: #8EB8E8; line-height: 1.5; }
+
+  /* SCENARIO */
+  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .scenario-card {
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border); background: var(--surface);
+  }
+  .scenario-header {
+    padding: 14px 18px; display: flex; align-items: center; gap: 10px;
+  }
+  .scenario-card.best .scenario-header { background: var(--accent-green); }
+  .scenario-card.mid .scenario-header  { background: var(--accent-orange); }
+  .scenario-card.worst .scenario-header { background: var(--accent-red); }
+  .scenario-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 2px; color: #fff; line-height: 1;
+  }
+  .scenario-sub { font-size: 11px; color: rgba(255,255,255,.8); }
+  .scenario-body { padding: 16px 18px; }
+  .scenario-body p { font-size: 12px; color: var(--text-mid); line-height: 1.6; margin-bottom: 8px; }
+  .scenario-body .duration {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--text-light);
+  }
+
+  /* TIMELINE STEPS */
+  .steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .step {
+    display: grid; grid-template-columns: 44px 80px 1fr 140px;
+    align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 4px; padding: 14px 16px;
+  }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--brand-dark); color: #fff;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-desc { font-size: 13px; color: var(--text-mid); }
+  .step-owner { font-size: 11px; color: var(--text-light); text-align: right; }
+
+  /* QA CARDS */
+  .qa-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+  .qa-card {
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border); background: var(--surface);
+  }
+  .qa-q {
+    padding: 14px 20px; background: #F4F6F9;
+    font-size: 14px; font-weight: 700; color: var(--brand-dark);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .qa-q-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; color: var(--text-light);
+  }
+  .qa-a {
+    padding: 16px 20px;
+    font-size: 13px; color: var(--text-mid); line-height: 1.8;
+  }
+  .qa-a strong { color: var(--brand-dark); }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; padding: 0; margin-bottom: 24px; }
+  .checklist li {
+    display: grid; grid-template-columns: 1fr 120px 100px;
+    gap: 12px; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--text-mid);
+    background: var(--surface);
+  }
+  .checklist li:first-child { border-radius: 6px 6px 0 0; border: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .checklist li:last-child { border-radius: 0 0 6px 6px; border: 1px solid var(--border); border-top: none; }
+  .checklist li:not(:first-child):not(:last-child) { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .checklist .owner { font-weight: 600; color: var(--brand-dark); }
+  .checklist .status { text-align: right; }
+
+  /* EXEC SUMMARY */
+  .exec-summary {
+    background: linear-gradient(160deg, #0a1e3d 0%, var(--brand-dark) 100%);
+    border-radius: 8px; padding: 40px; margin-top: 48px;
+    border: 2px solid var(--gold);
+  }
+  .exec-summary-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; color: var(--gold); letter-spacing: 2px;
+    margin-bottom: 24px;
+  }
+  .exec-point {
+    margin-bottom: 20px; padding-left: 20px;
+    border-left: 3px solid var(--gold);
+  }
+  .exec-point-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; color: var(--gold); line-height: 1;
+  }
+  .exec-point-title { font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px; }
+  .exec-point-desc { font-size: 12px; color: #8EB8E8; line-height: 1.6; margin-top: 4px; }
+  .exec-decisions {
+    margin-top: 28px; padding: 20px 24px;
+    background: rgba(201,168,76,.1); border-radius: 6px;
+    border: 1px solid rgba(201,168,76,.3);
+  }
+  .exec-decisions-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 2px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .exec-decision {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0; font-size: 13px; color: #fff;
+  }
+  .exec-checkbox {
+    width: 18px; height: 18px; border: 2px solid var(--gold);
+    border-radius: 3px; flex-shrink: 0;
+  }
+
+  /* FOOTNOTE / DISCLAIMER */
+  .footnote {
+    font-size: 11px; color: var(--text-light); margin-top: 8px;
+    padding-left: 12px; border-left: 2px solid var(--border); line-height: 1.6;
+  }
+  .disclaimer {
+    background: #F8F4F4; border: 1px solid #E4D8D8;
+    border-left: 4px solid var(--accent-red);
+    border-radius: 4px; padding: 16px 20px;
+    font-size: 11px; color: #8B5555; line-height: 1.7; margin-top: 36px;
+  }
+  .disclaimer strong { color: var(--accent-red); }
+
+  /* FOOTER */
+  footer {
+    background: var(--brand-dark); color: #6A8CAF;
+    text-align: center; padding: 20px; font-size: 11px; margin-top: 56px;
+  }
+
+  /* PRINT */
+  @media print {
+    nav, footer { display: none; }
+    .wrapper { padding-top: 20px; }
+    body { font-size: 11px; }
+  }
+  @media (max-width: 768px) {
+    .agenda-bar { grid-template-columns: 1fr 1fr; }
+    .pos-grid, .scenario-grid { grid-template-columns: 1fr; }
+    .cover { padding: 40px 24px; }
+    .step { grid-template-columns: 44px 1fr; }
+    .step-owner { display: none; }
+    .checklist li { grid-template-columns: 1fr; }
+    nav { padding: 0 16px; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Pig<span>Plan</span>CORE</div>
+  <div class="nav-links">
+    <a href="#s1">01 타겟</a>
+    <a href="#s2">02 경쟁</a>
+    <a href="#s3">03 수익+GTM</a>
+    <a href="#s4">04 기술</a>
+    <a href="#s5">05 스펙+일정</a>
+    <a href="#s6">Summary</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-eyebrow">2nd Meeting Prep &middot; Confidential &middot; 2026.03.23</div>
+    <div class="cover-title"><em>2</em>nd Meeting Prep</div>
+    <div class="cover-sub">PigPlanCORE &mdash; 2차 회의 준비 보고서</div>
+    <div class="cover-sub2">전략 &rarr; 시장 &rarr; 경쟁 &rarr; 비즈니스 &rarr; 기술 &rarr; 실행</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">
+        <div class="cover-meta-label">회의 일시</div>
+        <div class="cover-meta-val">2026.03.23 (월) 13:00</div>
+      </div>
+    </div>
+    <div class="cover-conf">CONFIDENTIAL &mdash; 내부 보고 전용</div>
+  </div>
+
+  <!-- AGENDA BAR -->
+  <div class="agenda-bar" style="grid-template-columns:repeat(6,1fr)">
+    <a href="#s1" class="agenda-item" style="text-decoration:none"><div class="agenda-num">01</div><div class="agenda-text">타겟 시장</div></a>
+    <a href="#s2" class="agenda-item" style="text-decoration:none"><div class="agenda-num">02</div><div class="agenda-text">경쟁 환경</div></a>
+    <a href="#s3" class="agenda-item" style="text-decoration:none"><div class="agenda-num">03</div><div class="agenda-text">수익 모델 + GTM</div></a>
+    <a href="#s4" class="agenda-item" style="text-decoration:none"><div class="agenda-num">04</div><div class="agenda-text">기술 아키텍처</div></a>
+    <a href="#s5" class="agenda-item" style="text-decoration:none"><div class="agenda-num">05</div><div class="agenda-text">개발 스펙 + 일정</div></a>
+    <a href="#s6" class="agenda-item" style="text-decoration:none;background:var(--gold);color:var(--brand-dark)"><div class="agenda-num">06</div><div class="agenda-text">Executive Summary</div></a>
+  </div>
+
+
+  <!-- ═══ 01: 타겟 시장 ═══ -->
+  <section id="s1">
+    <div class="sec-head">
+      <div class="sec-head-top">
+        <div class="sec-num">01</div>
+        <div class="sec-title">타겟 시장 &mdash; 왜 모돈 500~5,000두인가</div>
+      </div>
+      <div class="sec-message">전략 &rarr; 시장 &rarr; 경쟁 &rarr; 비즈니스 &rarr; 기술 &rarr; 실행 순서로 보고합니다.</div>
+    </div>
+
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>규모</th><th>현실</th><th>SW 도입 의향</th><th>전략</th></tr></thead>
+      <tbody>
+        <tr><td><strong>소농</strong><br>수십~수백두</td><td>수첩/엑셀이면 충분. 사장님 혼자 다 기억함.<br>월 매출 규모가 작아 SW 비용 정당화 어려움.</td><td><span class="tag tag-red">낮음</span></td><td>제외</td></tr>
+        <tr style="background:#FFEEBA"><td><strong>중대형</strong><br>500~5,000두</td><td>규모가 커져서 경험만으로 관리 한계.<br>직원 여러 명, 돈사 여러 동. 데이터 없이는 PSY/FCR 개선 불가.<br>프로그램 필요하지만 <strong>적당한 선택지가 없음.</strong><br>PSY 1두 개선 = 연 수천만원 차이 &rarr; ROI 명확.</td><td><span class="tag tag-green">높음</span></td><td><strong>핵심 타겟</strong></td></tr>
+        <tr><td><strong>대기업</strong><br>10만두+</td><td>Smithfield, CP Group, JBS 같은 인테그레이터.<br>자체 IT팀 + 자체 시스템(SAP/ERP) 이미 보유.</td><td><span class="tag tag-orange">자체 해결</span></td><td>제외 (Phase 3 이후)</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="key-msg">
+      <div class="key-msg-eyebrow">Key Insight</div>
+      <div class="key-msg-text">
+        상위 10개 기업이 전 세계 모돈의 17%, 상위 40개 기업이 26% 보유 <span style="font-size:10px;color:#6A8CAF">(pig333.com, 2024)</span>.<br>
+        나머지 <strong>74%가 중소&middot;중대형 농장</strong>이고, 이 중 500~5,000두 구간이 <strong>가장 비어있는 시장</strong>이다.<br><br>
+        이 농장들은 지금 <strong>성장 중</strong>이다. 500두 &rarr; 2,000두 &rarr; 5,000두로 커가면서 데이터 기반 경영의 필요성을 절감하고 있다.<br>
+        <strong>무료로 진입시키고, 규모가 커지면 자연스럽게 유료로 전환되는 구조.</strong>
+      </div>
+    </div>
+
+    <div class="sub-head">1.1 국가별 기능 요구사항</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>기능 영역</th><th>미국</th><th>중국</th><th>동남아 (VN/TH)</th><th>남미</th><th>한국</th><th>CORE 우선순위</th></tr></thead>
+      <tbody>
+        <tr style="background:#FFEEBA;font-weight:600"><td><strong>모돈 관리</strong></td><td>PSY/NPD 벤치마킹</td><td>대규모 관리</td><td>기본 교배/분만/이유</td><td>계약농 성적 관리</td><td>PSY/NPD 벤치마킹</td><td><span class="tag tag-red">Phase 1 필수</span></td></tr>
+        <tr><td><strong>사료 관리</strong></td><td>Feed Mill 연동</td><td>배합 최적화</td><td>사료빈 기본 재고</td><td>사료비 관리</td><td>사료빈+원가</td><td><span class="tag tag-blue">Phase 2</span></td></tr>
+        <tr style="background:#FFEEBA;font-weight:600"><td><strong>건강/방역</strong></td><td>PQA Plus</td><td>ASF/PRRS 대응</td><td>글로벌 질병 경보</td><td>수출 위생</td><td>방역 관리</td><td><span class="tag tag-red">Phase 1 필수</span></td></tr>
+        <tr><td><strong>오프라인</strong> <a href="https://foes88.github.io/PigplanCORE/docs/references/05_%EC%98%A4%ED%94%84%EB%9D%BC%EC%9D%B8%EC%88%98%EC%9A%94_%EC%A0%95%EB%9F%89%EB%B6%84%EC%84%9D.html" style="font-size:9px;color:var(--brand-mid)">[수요분석]</a></td><td>대체로 안정</td><td>농촌 불안정</td><td><strong>절대 필수</strong></td><td>필요</td><td>안정</td><td><span class="tag tag-blue">Phase 2</span></td></tr>
+        <tr style="background:#FFEEBA;font-weight:600"><td><strong>언어</strong></td><td>영어/스페인어</td><td>중국어</td><td>베트남어/태국어</td><td>포르투갈/스페인어</td><td>한국어</td><td><span class="tag tag-red">Phase 1</span></td></tr>
+        <tr style="background:#FFEEBA;font-weight:600"><td><strong>가격 민감도</strong></td><td>중간</td><td>중간</td><td><strong>매우 높음</strong></td><td>높음</td><td>중간</td><td><span class="tag tag-green">무료 전략</span></td></tr>
+        <tr style="background:#FFEEBA;font-weight:600"><td><strong>다사이트</strong></td><td>Integrator 필수</td><td>대기업 필수</td><td>단일 농장 多</td><td>계약농 구조</td><td>위탁농 구조</td><td><span class="tag tag-red">Phase 1</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">1.2 5개 시장 핵심 관리포인트</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>항목</th><th>미국</th><th>중국</th><th>동남아 (VN/TH)</th><th>남미</th><th>한국</th></tr></thead>
+      <tbody>
+        <tr><td class="td-key">PSY</td><td>25.1</td><td>~24</td><td>10~26</td><td>29~32</td><td>21.9</td></tr>
+        <tr><td class="td-key">FCR</td><td>~3.0</td><td>2.63</td><td>2.4~4.5</td><td>2.3~2.6</td><td>3.26</td></tr>
+        <tr><td class="td-key">ASF</td><td><span class="tag tag-green">청정</span></td><td><span class="tag tag-red">상재</span></td><td><span class="tag tag-red">상재</span></td><td><span class="tag tag-green">청정</span></td><td><span class="tag tag-orange">야생 확산</span></td></tr>
+        <tr><td class="td-key">SW 현황</td><td>PigCHAMP</td><td>IT기업 주도</td><td><span class="tag tag-red">소농 미보급</span></td><td>Agriness 90%</td><td>피그플랜 등</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">1.3 현지화 명세</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>항목</th><th>미국</th><th>중국</th><th>베트남/태국</th><th>남미</th><th>한국</th></tr></thead>
+      <tbody>
+        <tr><td class="td-key">무게</td><td><strong>lbs</strong></td><td>kg</td><td>kg</td><td>kg</td><td>kg</td></tr>
+        <tr><td class="td-key">통화</td><td>USD</td><td>CNY</td><td>VND/THB</td><td>BRL</td><td>KRW</td></tr>
+        <tr><td class="td-key">날짜</td><td>MM/dd/yyyy</td><td>yyyy-MM-dd</td><td>dd/MM/yyyy</td><td>dd/MM/yyyy</td><td>yyyy.MM.dd</td></tr>
+        <tr><td class="td-key">알림</td><td>Email/SMS</td><td>WeChat</td><td>Zalo/Line</td><td>WhatsApp</td><td>KakaoTalk</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="alert alert-blue">
+      <strong>한국 = Reference 시장.</strong> 피그플랜 기존 운영 경험과 유사한 기능 기반 + 추가 글로벌 기능 개발. 한국에서 검증 후 다른 시장에 확산하는 레퍼런스 역할.
+    </div>
+
+    <div class="bottom-line">
+      <span class="bl-label">Bottom Line</span>
+      <span class="bl-text">모돈 500~5,000두 중대형 농장이 핵심 타겟. 한국은 Reference 시장. 전 시장 동시 오픈.</span>
+    </div>
+  </section>
+
+
+  <!-- ═══ 02: 경쟁 환경 ═══ -->
+  <section id="s2">
+    <div class="sec-head">
+      <div class="sec-head-top">
+        <div class="sec-num">02</div>
+        <div class="sec-title">경쟁 환경 &mdash; 9개사 분석</div>
+      </div>
+      <div class="sec-message">경쟁사는 가격을 안 보여준다. 그게 우리의 기회다.</div>
+    </div>
+
+    <div class="sub-head">2.1 글로벌 경쟁사 가격 현황</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>소프트웨어</th><th>주요 시장</th><th>확인된 가격</th><th>과금 방식</th><th>출처 신뢰도</th></tr></thead>
+      <tbody>
+        <tr style="background:#F8F9FA"><td colspan="5" style="font-size:10px;font-weight:700;color:var(--text-light);letter-spacing:1px">북미</td></tr>
+        <tr><td><strong>PigKnows</strong> (Valstone)</td><td>미국 &rarr; 글로벌 확장 중</td><td><strong>비공개</strong></td><td>모돈 수 기반 추정</td><td><span class="tag tag-red">공식 미확인</span></td></tr>
+        <tr><td><strong>PigCHAMP</strong></td><td>미국/캐나다/남미</td><td><strong>비공개</strong></td><td>Per Sow/년 추정</td><td><span class="tag tag-red">공식 미확인</span></td></tr>
+        <tr><td><strong>MetaFarms</strong></td><td>미국</td><td><strong>$0.05~$0.25/출하돈</strong></td><td>출하 수 기반</td><td><span class="tag tag-orange">2018년 기사</span></td></tr>
+        <tr><td><strong>MTech Systems</strong></td><td>미국/EU 대형</td><td><strong>비공개</strong> &mdash; Enterprise만</td><td>Integrator 연간 계약</td><td><span class="tag tag-red">영업 문의 필요</span></td></tr>
+        <tr style="background:#F8F9FA"><td colspan="5" style="font-size:10px;font-weight:700;color:var(--text-light);letter-spacing:1px">유럽</td></tr>
+        <tr><td><strong>Cloudfarms</strong></td><td>EU (네덜란드, 24개 언어)</td><td><strong>$500/년</strong> 시작</td><td>모듈형 추가 과금</td><td><span class="tag tag-orange">SourceForge</span></td></tr>
+        <tr><td><strong>Porcitec</strong></td><td>EU (스페인)</td><td><strong>비공개</strong></td><td>하드웨어 번들</td><td><span class="tag tag-red">공식 미확인</span></td></tr>
+        <tr><td><strong>LeeO</strong></td><td>EU (덴마크, IoT)</td><td><strong>비공개</strong></td><td>IoT + SW 번들</td><td><span class="tag tag-red">공식 미확인</span></td></tr>
+        <tr><td><strong>S&amp;W</strong></td><td>EU (덴마크)</td><td><strong>비공개</strong></td><td>연간 라이선스 추정</td><td><span class="tag tag-red">공식 미확인</span></td></tr>
+        <tr style="background:#F8F9FA"><td colspan="5" style="font-size:10px;font-weight:700;color:var(--text-light);letter-spacing:1px">남미</td></tr>
+        <tr><td><strong>Agriness</strong></td><td>브라질 (90% 점유)</td><td><strong>비공개</strong> &mdash; Freemium</td><td>기본 무료 + 프리미엄</td><td><span class="tag tag-orange">웹사이트 추정</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">2.2 필수 기능 12개 (Must-Have)</div>
+    <p style="color:var(--text-mid);margin-bottom:12px;">전 경쟁사가 보유. 이 중 하나라도 없으면 고객 이탈.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>기능</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><strong>교배/분만/이유 전 주기</strong></td><td>양돈 SW의 존재 이유</td></tr>
+        <tr><td>2</td><td><strong>모돈 개체 이력 전체 조회</strong></td><td>수의사 첫 요구사항</td></tr>
+        <tr><td>3</td><td><strong>PSY/NPD/분만율 대시보드</strong></td><td>농장주 매일 확인</td></tr>
+        <tr><td>4</td><td><strong>완전 오프라인 모바일</strong></td><td>현장 인터넷 없음</td></tr>
+        <tr><td>5</td><td><strong>산업 벤치마킹</strong></td><td>내 농장 수준 판단 유일 기준</td></tr>
+        <tr><td>6</td><td><strong>다중 농장 관리</strong></td><td><strong>내 농장 여러 곳 관리 = Phase 1 기본 제공.</strong><br>업체가 여러 농장을 통합 관리 = 추후 모듈화 + 과금</td></tr>
+        <tr><td>7</td><td><strong>사료빈 재고 + 두당 원가</strong></td><td>비용 관리 핵심</td></tr>
+        <tr><td>8</td><td><strong>역할별 권한 (6단계)</strong></td><td>그룹관리자/농장주/매니저/수의사/작업자/열람자</td></tr>
+        <tr><td>9</td><td><strong>Android/iOS + RFID 스캔</strong></td><td>현장 = 모바일 전용</td></tr>
+        <tr><td>10</td><td><strong>커스텀 보고서</strong></td><td>농장마다 리포트 다름</td></tr>
+        <tr><td>11</td><td><strong>도체 등급 연동</strong></td><td>출하 피드백 없이 개선 불가. 국가별 등급 체계 상이 (US Carcass merit / KR 1+등급 등) &mdash; Phase 2 Growing 모듈에서 구현</td></tr>
+        <tr><td>12</td><td><strong>감사 로그</strong></td><td>규정 준수 + Enterprise 기본</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">2.3 5대 시장 공백 (White Space)</div>
+    <p style="color:var(--text-mid);margin-bottom:12px;"><strong>어떤 단일 경쟁사도 아래 5가지를 동시에 충족하지 못한다.</strong></p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>공백</th><th>현황</th><th>CORE 기회</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1</strong></td><td>아시아 현지 운영 + 소농 최적화</td><td>Cloudfarms 24개 언어 지원하나 현지 운영/지원 없음</td><td>동남아 현지 지원 + 오프라인 특화</td></tr>
+        <tr><td><strong>2</strong></td><td>ESG + 양돈 운영 통합</td><td>탄소/동물복지 자동 산출 솔루션 없음</td><td>바이어 ESG 대응</td></tr>
+        <tr><td><strong>3</strong></td><td>개체 IoT + 모돈 관리 통합</td><td>LeeO(IoT) vs PigCHAMP(모돈) 별도</td><td>단일 플랫폼</td></tr>
+        <tr><td><strong>4</strong></td><td>중소 농장 합리적 가격</td><td>MTech 대형 전용, 나머지 가격 비공개</td><td>무료 진입 + 투명 가격</td></tr>
+        <tr><td><strong>5</strong></td><td>AI 분석 &mdash; 대형 전용이 아닌 전 농장 제공</td><td>MTech/LeeO AI 대형 전용</td><td>SaaS에 AI 포함</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="bottom-line">
+      <span class="bl-label">Bottom Line</span>
+      <span class="bl-text">경쟁사 9개사 모두 가격 비공개 또는 $500+. 우리는 무료 진입 + 오픈 API + 소농 최적화로 시장을 선점한다.</span>
+    </div>
+  </section>
+
+
+  <!-- ═══ 03: 수익 모델 + GTM ═══ -->
+  <section id="s3">
+    <div class="sec-head">
+      <div class="sec-head-top">
+        <div class="sec-num">03</div>
+        <div class="sec-title">수익 모델 + GTM 전략</div>
+      </div>
+      <div class="sec-message">영업사원 없이 퍼지는 구조. 제품이 영업하고, 사용자가 퍼뜨리고, 콘텐츠가 신뢰를 만든다.</div>
+    </div>
+
+    <div class="key-msg">
+      <div class="key-msg-eyebrow">GTM 원칙</div>
+      <div class="key-msg-text">
+        우리는 직접 파는 회사가 아니다.<br>
+        <strong>퍼지고 선택되는 구조를 만든다.</strong>
+      </div>
+    </div>
+
+    <div class="sub-head">3.1 가격 전략</div>
+    <div class="alert alert-green">
+      <strong>Phase 1: 전 기능 무료.</strong> 유료 과금 모델은 추후 사용자 데이터 기반으로 설계 예정.
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>단계</th><th>전략</th><th>목적</th></tr></thead>
+      <tbody>
+        <tr style="background:#D5F5E3"><td><strong>Phase 1 (현재)</strong></td><td><strong>전 기능 무료</strong></td><td>사용자 확보 + 데이터 수집 + 시장 검증</td></tr>
+        <tr><td>Phase 2 이후</td><td>모돈수 구간별 과금 (가안)</td><td>무료 사용자 데이터 기반으로 최적 가격 결정</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="alert alert-orange">
+      <strong>과금 체계 (가안 &mdash; 추후 확정):</strong> 모돈수 구간별 정액제. 두당 과금은 복잡하므로 구간으로 단순화.
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>구간</th><th>예상 가격 (가안)</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr style="background:#D5F5E3"><td>200두 이하</td><td><strong>무료</strong></td><td>시장 진입용</td></tr>
+        <tr><td>200~300두</td><td>TBD</td><td rowspan="3">구간별 정액. 추후 시장 데이터 기반 결정</td></tr>
+        <tr><td>300~500두</td><td>TBD</td></tr>
+        <tr><td>500~5,000두</td><td>TBD</td></tr>
+        <tr><td>5,000두 이상</td><td><strong>개별 협상</strong></td><td>엔터프라이즈</td></tr>
+      </tbody>
+    </table></div>
+    <p class="footnote">* 업체가 여러 농장을 통합 관리하는 기능은 별도 모듈 + 추가 과금</p>
+
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">3.2 B2B 데이터 수익 (2차 엔진)</div>
+    <div class="alert alert-blue">
+      <strong>증거:</strong> Cargill이 Agriness(브라질, 200만+ 모돈)에 전략적 지분 투자. 사료회사가 양돈 데이터에 비용을 지불한다는 결정적 증거.
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>구매자</th><th>관심 데이터</th><th>추정 WTP/년</th></tr></thead>
+      <tbody>
+        <tr><td>사료회사 (Cargill, CP, CJ)</td><td>FCR 벤치마크, 급이 패턴</td><td>$50K~$500K</td></tr>
+        <tr><td>종돈사 (PIC, Topigs)</td><td>품종별 성적, 산자수</td><td>$30K~$200K</td></tr>
+        <tr><td>동물약품 (Elanco, BI)</td><td>질병 패턴, 치료 효능</td><td>$30K~$200K</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">3.3 GTM &mdash; 영업 없이 퍼지는 구조</div>
+    <div class="alert alert-blue">
+      <strong>핵심 구조 3가지:</strong><br>
+      1. <strong>제품이 영업한다</strong> &mdash; 무료로 쓰게 하면 제품이 알아서 증명<br>
+      2. <strong>사용자가 퍼뜨린다</strong> &mdash; 수의사&middot;컨설턴트가 자연 추천 + 추천 인센티브<br>
+      3. <strong>콘텐츠가 신뢰 만든다</strong> &mdash; 벤치마크&middot;리포트로 전문성 증명
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>권역</th><th>전략</th><th>방법</th><th>핵심</th></tr></thead>
+      <tbody>
+        <tr style="background:#FFEEBA"><td><strong>베트남&middot;태국</strong></td><td><strong>제품 중심 확산</strong></td><td>무료 가입 + 커뮤니티에서 정보 제공<br>수의사 무료 계정 &rarr; 자연 추천</td><td><strong>"많이 쓰게 만들기"</strong></td></tr>
+        <tr><td><strong>미국&middot;중국&middot;남미&middot;한국</strong></td><td><strong>콘텐츠 중심 유입</strong></td><td>벤치마크 리포트, 블로그<br>SEO + pig333/ThePigSite 기고</td><td><strong>"신뢰 만들고 문의 받기"</strong></td></tr>
+        <tr><td>기타</td><td>셀프서비스</td><td>다국어 지원, 앱스토어 최적화</td><td>자연 유입</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">3.4 핵심 마케팅 채널 (비용 거의 0)</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>#</th><th>방법</th><th>효과</th><th>비용</th></tr></thead>
+      <tbody>
+        <tr style="background:#FFEEBA"><td>1</td><td><strong>무료 벤치마크 미끼</strong></td><td>가입하면 내 PSY 순위 제공 &mdash; 가장 강력한 가입 동기</td><td>0</td></tr>
+        <tr><td>2</td><td><strong>양돈 커뮤니티 활동</strong></td><td>Facebook/Zalo 그룹에서 사례 공유 &rarr; 농장주끼리 확산</td><td>0</td></tr>
+        <tr><td>3</td><td><strong>수의사 무료 계정</strong></td><td>수의사 1명 = 농장 수십 개 관리. 열람자 계정 &rarr; 자연 추천</td><td>0</td></tr>
+        <tr><td>4</td><td><strong>추천 인센티브</strong></td><td>기존 사용자가 초대 &rarr; PRO 1개월 무료. 바이럴 확산</td><td>거의 0</td></tr>
+        <tr><td>5</td><td><strong>업계 전문 사이트 기고</strong></td><td>pig333.com, ThePigSite &mdash; 양돈인들이 진짜 읽는 곳</td><td>0</td></tr>
+        <tr><td>6</td><td><strong>콘텐츠/SEO</strong></td><td>"PSY 올리는 법" 등 검색 유입. 다국어 블로그</td><td>시간만</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="alert alert-green">
+      <strong>5년 목표:</strong> Year 3 ARR $7M~$15M &rarr; Year 5 ARR $28M~$63M. SaaS 구독 60~70% + B2B 데이터 15~25%.
+    </div>
+
+    <div class="bottom-line">
+      <span class="bl-label">Bottom Line</span>
+      <span class="bl-text">영업사원 없이 퍼지는 구조. 제품이 영업하고, 사용자가 퍼뜨리고, 콘텐츠가 신뢰를 만든다.</span>
+    </div>
+
+    <div style="margin-top:24px;background:linear-gradient(135deg,#0a1e3d,var(--brand-dark));border:2px solid var(--gold);border-radius:8px;padding:20px 24px;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:10px;">Deep Dive &mdash; Q1 Q2 Q3 상세 답변</div>
+      <div style="font-size:13px;color:#fff;line-height:1.8;margin-bottom:14px;">
+        <strong style="color:var(--gold)">Q1.</strong> 글로벌 양돈 데이터 표준 API를 어떤 구조로 설계해야 하는가?<br>
+        <strong style="color:var(--gold)">Q2.</strong> 단순 SaaS가 아닌 플랫폼 + 데이터 비즈니스로 확장하려면?<br>
+        <strong style="color:var(--gold)">Q3.</strong> 국가별 진출 우선순위를 투자 관점에서 어떻게 정하는가?
+      </div>
+      <a href="https://foes88.github.io/PigplanCORE/docs/presentations/2026-03-23_Strategy_Deep_Dive.html" style="display:inline-block;padding:10px 24px;background:var(--gold);color:var(--brand-dark);border-radius:6px;font-size:13px;font-weight:700;text-decoration:none;">Q1~Q3 상세 분석 보기 &rarr;</a>
+    </div>
+  </section>
+
+
+  <!-- ═══ 04: 기술 아키텍처 ═══ -->
+  <section id="s4">
+    <div class="sec-head">
+      <div class="sec-head-top">
+        <div class="sec-num">04</div>
+        <div class="sec-title">기술 아키텍처</div>
+      </div>
+      <div class="sec-message">FastAPI + PostgreSQL + TimescaleDB. 완전 신규 설계.</div>
+    </div>
+
+    <div class="sub-head">4.1 백엔드: FastAPI(Python)</div>
+    <div class="alert alert-green">
+      <strong>권고: FastAPI(Python) 선택.</strong> AI 분석 기능을 만들려면 Python이 필수. 다른 기술로 시작하면 나중에 Python을 따로 붙여야 해서 이중 작업이 된다.
+    </div>
+    <div class="alert alert-blue">
+      <strong>Java 전환:</strong> Python은 빠르게 만들기 좋고, Java는 대규모로 버티기 좋다. 지금은 빠르게 만드는 게 먼저. 농장 2,000개 넘거나 대형 고객이 SLA 99.9%를 요구할 때 전환 시작.
+    </div>
+
+    <div class="sub-head">4.2 DB 설계 &mdash; 완전 신규</div>
+    <div class="key-msg">
+      <div class="key-msg-eyebrow">Key Message</div>
+      <div class="key-msg-text">
+        CORE는 기존 시스템(피그플랜 Oracle DB)과 <strong>완전히 독립된 신규 설계</strong>로 진행한다.<br>
+        레거시에 얽매이지 않고, 글로벌 양돈 표준에 맞춰 처음부터 설계하는 것이 더 빠르고 깨끗하다.
+      </div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>원칙</th><th>내용</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr><td><strong>멀티테넌시<br>(Schema-per-tenant)</strong></td><td>하나의 시스템에서 여러 농장을 운영하되,<br>각 농장의 데이터는 완전히 분리된 공간(스키마)에 저장</td><td>A농장 데이터가 B농장에 절대 보이지 않음.<br>규정 준수, 농장 단위 백업 가능</td></tr>
+        <tr><td><strong>5개 시장 동시 대응</strong></td><td>country_configs로 지역별 설정</td><td>단일 스키마로 전 시장 커버</td></tr>
+        <tr><td><strong>모듈형 구조</strong></td><td>11개 모듈 독립 배포</td><td>Phase별 점진 확장</td></tr>
+        <tr><td><strong>오프라인 동기화</strong></td><td>sync_queue + LWW</td><td>인터넷 없는 농장 대응</td></tr>
+        <tr><td><strong>감사 추적</strong></td><td>모든 변경 &rarr; audit_log</td><td>규정 준수 + 데이터 신뢰성</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="bottom-line">
+      <span class="bl-label">Bottom Line</span>
+      <span class="bl-text">FastAPI + PostgreSQL (Schema-per-tenant) + TimescaleDB(IoT). 완전 신규 설계, 바로 개발 착수 가능.</span>
+    </div>
+  </section>
+
+
+  <!-- ═══ 05: 개발 스펙 + 일정 ═══ -->
+  <section id="s5">
+    <div class="sec-head">
+      <div class="sec-head-top">
+        <div class="sec-num">05</div>
+        <div class="sec-title">개발 스펙 + 일정</div>
+      </div>
+      <div class="sec-message">스펙 완성 + AI 활용 개발. 웹 8주 + 모바일 10주.</div>
+    </div>
+
+    <div class="sub-head">5.1 DB 스키마</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>모듈</th><th>테이블</th><th>Phase</th><th>핵심 내용</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Platform</strong></td><td>10</td><td><span class="tag tag-red">P1</span></td><td>멀티테넌시, 6단계 권한, 감사로그, 오프라인 동기화, 월마감 잠금, i18n, 알림</td></tr>
+        <tr><td><strong>Sow</strong></td><td>8</td><td><span class="tag tag-red">P1</span></td><td>모돈/교배/임신확인/분만/이유/폐사 + 위탁모돈 + RFID</td></tr>
+        <tr><td><strong>Growing</strong></td><td>4</td><td><span class="tag tag-blue">P2</span></td><td>배치관리, 비육기록, 출하, 도체등급(US/CN/LatAm/KR)</td></tr>
+        <tr><td><strong>Feed</strong></td><td>4</td><td><span class="tag tag-blue">P2</span></td><td>사료빈, 배합, Feed Mill, 급이(ESF 연동)</td></tr>
+        <tr><td><strong>Health</strong></td><td>3</td><td><span class="tag tag-red">P1~2</span></td><td>질병(ASF/PRRS), 백신, 항생제(DDDA/VFD)</td></tr>
+        <tr><td><strong>Compliance</strong></td><td>4</td><td><span class="tag tag-blue">P2</span></td><td>규정보고(US VFD/CN MARA/KR mtrace), 동물이동, 복지인증</td></tr>
+        <tr><td><strong>기타</strong></td><td>7</td><td><span class="tag tag-dark">P3</span></td><td>유전, 환경(TimescaleDB), 탄소, AMR, 시세, 데이터 익명화</td></tr>
+        <tr><td colspan="2"><strong>합계: 49 테이블 + 2 뷰</strong></td><td colspan="2">11개 모듈 / 5개 시장 대응 / Schema-per-tenant</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">5.2 마스터 데이터 (시드)</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>데이터</th><th>건수</th><th>내용</th><th>출처</th></tr></thead>
+      <tbody>
+        <tr><td><strong>이벤트 정의</strong></td><td>48종</td><td>7개 카테고리, 영/베/태 3개국어</td><td>PigCHAMP 48종 기준 + 업계 표준</td></tr>
+        <tr><td><strong>질병 코드</strong></td><td>30종</td><td>지역별 발생 현황, 치료법</td><td>WOAH (세계동물보건기구) 공식 코드</td></tr>
+        <tr><td><strong>백신 카탈로그</strong></td><td>22종</td><td>PRRS 4종, ASF 3종, PCV2 4종 등</td><td>Zoetis, Boehringer 등 글로벌 제약사</td></tr>
+        <tr><td><strong>항생제 카탈로그</strong></td><td>22종</td><td>DDDA값, 출하제한일, VFD 제한</td><td>ATCvet (WHO 동물용 항생제 분류)</td></tr>
+        <tr><td><strong>벤치마크</strong></td><td>13건</td><td>5개 시장 PSY/FCR/NPD/분만율</td><td>USDA, InterPIG, Agriness 등</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="sub-head">5.3 KPI 계산 공식</div>
+    <div class="code-block">
+      <span class="hl">PSY</span> = SUM(이유두수) [12개월] / AVG(활성모돈수)<br>
+      <span class="hl">NPD</span> = SUM(이유~재교배 간격) [12개월]<br>
+      <span class="hl">FCR</span> = SUM(사료소비 kg) / SUM(체중증가 kg)<br>
+      <span class="hl">분만율</span> = 분만 모돈수 / 교배 모돈수 &times; 100
+    </div>
+
+    <div class="sub-head">5.4 개발 일정 &mdash; 웹 8주 + 모바일 10주</div>
+    <div class="key-msg">
+      <div class="key-msg-eyebrow">Key Message</div>
+      <div class="key-msg-text"><strong>AI가 코드를 만들고, 사람이 검증한다 &mdash; 동시에.</strong></div>
+    </div>
+    <p class="footnote" style="margin-bottom:16px;">기준: 타업무 병행 + AI 풀활용 + 검증 병렬 처리</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><span class="tag tag-red">1~2주</span><div class="step-desc"><strong>설계 확정</strong> &mdash; DB 스키마, API 설계, 화면 설계</div><div class="step-owner">2주</div></div>
+      <div class="step" style="background:var(--bg);border-color:var(--gold)"><div class="step-num" style="background:var(--gold)">&#10003;</div><span class="tag tag-orange">2주차</span><div class="step-desc" style="color:var(--gold)"><strong>Slack 피드백 #1</strong> &mdash; 설계 리뷰 공유</div><div class="step-owner"></div></div>
+      <div class="step"><div class="step-num">2</div><span class="tag tag-orange">3~5주</span><div class="step-desc"><strong>백엔드 + 프론트엔드 병행 개발</strong></div><div class="step-owner">3주</div></div>
+      <div class="step" style="background:var(--bg);border-color:var(--gold)"><div class="step-num" style="background:var(--gold)">&#10003;</div><span class="tag tag-orange">5주차</span><div class="step-desc" style="color:var(--gold)"><strong>Slack 피드백 #2</strong> &mdash; 개발 중간 데모 공유</div><div class="step-owner"></div></div>
+      <div class="step"><div class="step-num">3</div><span class="tag tag-blue">6~8주</span><div class="step-desc"><strong>통합 테스트 + 검증 + 버그 수정 + 런칭</strong></div><div class="step-owner">3주</div></div>
+      <div class="step" style="background:var(--bg);border-color:var(--gold)"><div class="step-num" style="background:var(--gold)">&#10003;</div><span class="tag tag-blue">8주차</span><div class="step-desc" style="color:var(--gold)"><strong>Slack 피드백 #3</strong> &mdash; 런칭 전 최종 리뷰</div><div class="step-owner"></div></div>
+    </div>
+
+    <div class="sub-sub-head">Phase 2 &mdash; 모바일 (웹 런칭 후 10주)</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">4</div><span class="tag tag-orange">1~6주</span><div class="step-desc"><strong>Android Native + iOS Native 개발</strong></div><div class="step-owner">6주</div></div>
+      <div class="step"><div class="step-num">5</div><span class="tag tag-blue">7~10주</span><div class="step-desc"><strong>테스트 + 베타 오픈</strong></div><div class="step-owner">4주</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+      <div class="card" style="border-left:4px solid var(--accent-green);">
+        <div class="sub-sub-head" style="margin-top:0;color:var(--accent-green);">웹 런칭 시 포함</div>
+        <ul class="blist">
+          <li>모돈 교배/분만/이유 기록 (웹)</li>
+          <li>PSY/NPD/FCR 대시보드 + 벤치마크</li>
+          <li>홈페이지 + UI 5개 언어 (영어/중국어/베트남어/태국어/한국어)</li>
+          <li>역할별 권한 6단계</li>
+          <li>핵심 리포트 (월간 KPI, 번식 성적, 폐사 현황, 출하 실적)</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:4px solid var(--accent-orange);">
+        <div class="sub-sub-head" style="margin-top:0;color:var(--accent-orange);">Phase 2 이후</div>
+        <ul class="blist">
+          <li>모바일 앱 + 오프라인 동기화</li>
+          <li>Feed Mill 연동</li>
+          <li>AI 분석 (질병 경보, 출하 예측)</li>
+          <li>ESG, Genetics, 커스텀 리포트</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="bottom-line">
+      <span class="bl-label">Bottom Line</span>
+      <span class="bl-text">49T + 30 API + KPI 공식 완성. 웹 8주 + 모바일 10주. 개발과 검증에 같은 시간 투자.</span>
+    </div>
+  </section>
+
+
+  <!-- ═══ 06: Executive Summary ═══ -->
+  <section id="s6">
+    <div class="exec-summary">
+      <div class="exec-summary-title">Executive Summary</div>
+
+      <div class="exec-point">
+        <div class="exec-point-num">01</div>
+        <div class="exec-point-title">타겟: 모돈 500~5,000두 중대형 농장 (전 세계 74%)</div>
+        <div class="exec-point-desc">소농은 SW 불필요, 대기업은 자체 시스템. 중간층이 가장 비어있는 시장.</div>
+      </div>
+
+      <div class="exec-point">
+        <div class="exec-point-num">02</div>
+        <div class="exec-point-title">경쟁사 5개 공백 확인 &mdash; 무료 + 오픈 API + 소농 최적화</div>
+        <div class="exec-point-desc">9개사 딥다이브 완료. 구조적 공백이라 단기 추격 불가.</div>
+      </div>
+
+      <div class="exec-point">
+        <div class="exec-point-num">03</div>
+        <div class="exec-point-title">수익: SaaS 구독 + B2B 데이터 이중 구조</div>
+        <div class="exec-point-desc">무료 &rarr; 유료 전환 + 사료회사/종돈사/제약사 데이터 판매. Year 5 $28M~$63M ARR.</div>
+      </div>
+
+      <div class="exec-point">
+        <div class="exec-point-num">04</div>
+        <div class="exec-point-title">GTM: 영업 없이 퍼지는 구조</div>
+        <div class="exec-point-desc">제품이 영업하고, 사용자가 퍼뜨리고, 콘텐츠가 신뢰를 만든다. 전 시장 동시 오픈.</div>
+      </div>
+
+      <div class="exec-point">
+        <div class="exec-point-num">05</div>
+        <div class="exec-point-title">개발: 스펙 완성, 웹 8주 + 모바일 10주</div>
+        <div class="exec-point-desc">49T + 30 API + KPI 공식. AI 활용 개발. FastAPI + PostgreSQL 신규 설계.</div>
+      </div>
+
+      <div class="exec-decisions">
+        <div class="exec-decisions-title">확인 및 진행 사항</div>
+        <div class="exec-decision"><div class="exec-checkbox"></div><span>FastAPI로 Phase 1 진행 확정</span></div>
+        <div class="exec-decision"><div class="exec-checkbox"></div><span>DB 스키마 v1 (49테이블, 11모듈) 승인</span></div>
+        <div class="exec-decision"><div class="exec-checkbox"></div><span>파일럿 농장 모집 시작 승인</span></div>
+        <div class="exec-decision"><div class="exec-checkbox"></div><span>개발 시작일 확정 (목표 4/1) &mdash; 웹 8주 후 런칭</span></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  PigPlanCORE &nbsp;|&nbsp; 2차 회의 준비 보고서 &nbsp;|&nbsp; 2026.03.23 &nbsp;|&nbsp; Confidential &amp; Proprietary
+</footer>
+
+</body>
+</html>
