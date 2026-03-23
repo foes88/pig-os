@@ -494,7 +494,7 @@
         <tr style="background:#FFEEBA;font-weight:600"><td><strong>모돈 관리</strong></td><td>PSY/NPD 벤치마킹</td><td>대규모 관리</td><td>기본 교배/분만/이유</td><td>계약농 성적 관리</td><td>PSY/NPD 벤치마킹</td><td><span class="tag tag-red">Phase 1 필수</span></td></tr>
         <tr><td><strong>사료 관리</strong></td><td>Feed Mill 연동</td><td>배합 최적화</td><td>사료빈 기본 재고</td><td>사료비 관리</td><td>사료빈+원가</td><td><span class="tag tag-blue">Phase 2</span></td></tr>
         <tr style="background:#FFEEBA;font-weight:600"><td><strong>건강/방역</strong></td><td>PQA Plus</td><td>ASF/PRRS 대응</td><td>글로벌 질병 경보</td><td>수출 위생</td><td>방역 관리</td><td><span class="tag tag-red">Phase 1 필수</span></td></tr>
-        <tr><td><strong>오프라인</strong></td><td>대체로 안정</td><td>농촌 불안정</td><td><strong>절대 필수</strong></td><td>필요</td><td>안정</td><td><span class="tag tag-blue">Phase 2</span></td></tr>
+        <tr><td><strong>오프라인</strong> <a href="https://foes88.github.io/PigplanCORE/docs/references/05_%EC%98%A4%ED%94%84%EB%9D%BC%EC%9D%B8%EC%88%98%EC%9A%94_%EC%A0%95%EB%9F%89%EB%B6%84%EC%84%9D.html" style="font-size:9px;color:var(--brand-mid)">[수요분석]</a></td><td>대체로 안정</td><td>농촌 불안정</td><td><strong>절대 필수</strong></td><td>필요</td><td>안정</td><td><span class="tag tag-blue">Phase 2</span></td></tr>
         <tr style="background:#FFEEBA;font-weight:600"><td><strong>언어</strong></td><td>영어/스페인어</td><td>중국어</td><td>베트남어/태국어</td><td>포르투갈/스페인어</td><td>한국어</td><td><span class="tag tag-red">Phase 1</span></td></tr>
         <tr style="background:#FFEEBA;font-weight:600"><td><strong>가격 민감도</strong></td><td>중간</td><td>중간</td><td><strong>매우 높음</strong></td><td>높음</td><td>중간</td><td><span class="tag tag-green">무료 전략</span></td></tr>
         <tr style="background:#FFEEBA;font-weight:600"><td><strong>다사이트</strong></td><td>Integrator 필수</td><td>대기업 필수</td><td>단일 농장 多</td><td>계약농 구조</td><td>위탁농 구조</td><td><span class="tag tag-red">Phase 1</span></td></tr>
@@ -523,9 +523,13 @@
       </tbody>
     </table></div>
 
+    <div class="alert alert-blue">
+      <strong>한국 = Reference 시장.</strong> 피그플랜 기존 운영 경험과 유사한 기능 기반 + 추가 글로벌 기능 개발. 한국에서 검증 후 다른 시장에 확산하는 레퍼런스 역할.
+    </div>
+
     <div class="bottom-line">
       <span class="bl-label">Bottom Line</span>
-      <span class="bl-text">모돈 500~5,000두 중대형 농장이 핵심 타겟. Phase 1 공통 기능(교배/분만/이유 + 오프라인 + 다국어)으로 전 시장 동시 오픈.</span>
+      <span class="bl-text">모돈 500~5,000두 중대형 농장이 핵심 타겟. 한국은 Reference 시장. 전 시장 동시 오픈.</span>
     </div>
   </section>
 
@@ -569,12 +573,12 @@
         <tr><td>3</td><td><strong>PSY/NPD/분만율 대시보드</strong></td><td>농장주 매일 확인</td></tr>
         <tr><td>4</td><td><strong>완전 오프라인 모바일</strong></td><td>현장 인터넷 없음</td></tr>
         <tr><td>5</td><td><strong>산업 벤치마킹</strong></td><td>내 농장 수준 판단 유일 기준</td></tr>
-        <tr><td>6</td><td><strong>다중 농장 통합</strong></td><td>인테그레이터 필수</td></tr>
+        <tr><td>6</td><td><strong>다중 농장 관리</strong></td><td><strong>내 농장 여러 곳 관리 = Phase 1 기본 제공.</strong><br>업체가 여러 농장을 통합 관리 = 추후 모듈화 + 과금</td></tr>
         <tr><td>7</td><td><strong>사료빈 재고 + 두당 원가</strong></td><td>비용 관리 핵심</td></tr>
         <tr><td>8</td><td><strong>역할별 권한 (6단계)</strong></td><td>그룹관리자/농장주/매니저/수의사/작업자/열람자</td></tr>
         <tr><td>9</td><td><strong>Android/iOS + RFID 스캔</strong></td><td>현장 = 모바일 전용</td></tr>
         <tr><td>10</td><td><strong>커스텀 보고서</strong></td><td>농장마다 리포트 다름</td></tr>
-        <tr><td>11</td><td><strong>도체 등급 연동</strong></td><td>출하 피드백 없이 개선 불가</td></tr>
+        <tr><td>11</td><td><strong>도체 등급 연동</strong></td><td>출하 피드백 없이 개선 불가. 국가별 등급 체계 상이 (US Carcass merit / KR 1+등급 등) &mdash; Phase 2 Growing 모듈에서 구현</td></tr>
         <tr><td>12</td><td><strong>감사 로그</strong></td><td>규정 준수 + Enterprise 기본</td></tr>
       </tbody>
     </table></div>
@@ -625,7 +629,25 @@
       <thead><tr><th>단계</th><th>전략</th><th>목적</th></tr></thead>
       <tbody>
         <tr style="background:#D5F5E3"><td><strong>Phase 1 (현재)</strong></td><td><strong>전 기능 무료</strong></td><td>사용자 확보 + 데이터 수집 + 시장 검증</td></tr>
-        <tr><td>Phase 2 이후</td><td>유료 전환 모델 설계 (가안: Per-sow 과금)</td><td>무료 사용자 데이터 기반으로 최적 가격 결정</td></tr>
+        <tr><td>Phase 2 이후</td><td>모돈수 구간별 과금 (가안)</td><td>무료 사용자 데이터 기반으로 최적 가격 결정</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="alert alert-orange">
+      <strong>과금 체계 (가안 &mdash; 추후 확정):</strong> 모돈수 구간별 정액제. 두당 과금은 복잡하므로 구간으로 단순화.
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>구간</th><th>예상 가격 (가안)</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr style="background:#D5F5E3"><td>200두 이하</td><td><strong>무료</strong></td><td>시장 진입용</td></tr>
+        <tr><td>200~300두</td><td>TBD</td><td rowspan="3">구간별 정액. 추후 시장 데이터 기반 결정</td></tr>
+        <tr><td>300~500두</td><td>TBD</td></tr>
+        <tr><td>500~5,000두</td><td>TBD</td></tr>
+        <tr><td>5,000두 이상</td><td><strong>개별 협상</strong></td><td>엔터프라이즈</td></tr>
+      </tbody>
+    </table></div>
+    <p class="footnote">* 업체가 여러 농장을 통합 관리하는 기능은 별도 모듈 + 추가 과금</p>
+
       </tbody>
     </table></div>
 
@@ -790,8 +812,11 @@
 
     <div class="steps">
       <div class="step"><div class="step-num">1</div><span class="tag tag-red">1~2주</span><div class="step-desc"><strong>설계 확정</strong> &mdash; DB 스키마, API 설계, 화면 설계</div><div class="step-owner">2주</div></div>
+      <div class="step" style="background:var(--bg);border-color:var(--gold)"><div class="step-num" style="background:var(--gold)">&#10003;</div><span class="tag tag-orange">2주차</span><div class="step-desc" style="color:var(--gold)"><strong>Slack 피드백 #1</strong> &mdash; 설계 리뷰 공유</div><div class="step-owner"></div></div>
       <div class="step"><div class="step-num">2</div><span class="tag tag-orange">3~5주</span><div class="step-desc"><strong>백엔드 + 프론트엔드 병행 개발</strong></div><div class="step-owner">3주</div></div>
+      <div class="step" style="background:var(--bg);border-color:var(--gold)"><div class="step-num" style="background:var(--gold)">&#10003;</div><span class="tag tag-orange">5주차</span><div class="step-desc" style="color:var(--gold)"><strong>Slack 피드백 #2</strong> &mdash; 개발 중간 데모 공유</div><div class="step-owner"></div></div>
       <div class="step"><div class="step-num">3</div><span class="tag tag-blue">6~8주</span><div class="step-desc"><strong>통합 테스트 + 검증 + 버그 수정 + 런칭</strong></div><div class="step-owner">3주</div></div>
+      <div class="step" style="background:var(--bg);border-color:var(--gold)"><div class="step-num" style="background:var(--gold)">&#10003;</div><span class="tag tag-blue">8주차</span><div class="step-desc" style="color:var(--gold)"><strong>Slack 피드백 #3</strong> &mdash; 런칭 전 최종 리뷰</div><div class="step-owner"></div></div>
     </div>
 
     <div class="sub-sub-head">Phase 2 &mdash; 모바일 (웹 런칭 후 10주)</div>
@@ -806,7 +831,7 @@
         <ul class="blist">
           <li>모돈 교배/분만/이유 기록 (웹)</li>
           <li>PSY/NPD/FCR 대시보드 + 벤치마크</li>
-          <li>다국어 UI (영어/베트남어/태국어)</li>
+          <li>홈페이지 + UI 5개 언어 (영어/중국어/베트남어/태국어/한국어)</li>
           <li>역할별 권한 6단계</li>
           <li>핵심 리포트 (월간 KPI, 번식 성적, 폐사 현황, 출하 실적)</li>
         </ul>

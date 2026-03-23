@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>양돈 농가 오프라인 수요 분석 — PigPlanCORE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #F8F9FA;
+    --surface: #FFFFFF;
+    --border:  #E4E8EE;
+    --text1:   #0A1628;
+    --text2:   #5A6878;
+    --text3:   #9DAAB8;
+    --navy:    #0A1628;
+    --blue:    #378ADD;
+    --blue-l:  #E6F1FB;
+    --blue-m:  #B5D4F4;
+    --green:   #1D9E75;
+    --green-l: #E1F5EE;
+    --teal:    #0F6E56;
+    --amber:   #BA7517;
+    --amber-l: #FAEEDA;
+    --red:     #A32D2D;
+    --red-l:   #FCEBEB;
+    --r:       12px;
+    --rs:      8px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text1); font-size: 14px; line-height: 1.6; }
+  .page { max-width: 1060px; margin: 0 auto; padding: 2.5rem 2rem; }
+
+  /* ── HEADER ── */
+  .ph { margin-bottom: 2.5rem; padding-bottom: 1.25rem; border-bottom: 1.5px solid var(--border); }
+  .ph .eye { font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--text3); margin-bottom: .5rem; }
+  .ph h1 { font-size: 22px; font-weight: 500; margin-bottom: .4rem; }
+  .ph .sub { font-size: 13px; color: var(--text2); }
+  .ph .meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: .75rem; }
+  .ph .meta span { font-size: 11px; color: var(--text3); }
+
+  /* ── SECTION ── */
+  .sec { margin-bottom: 2.5rem; }
+  .sec-lbl { font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--text3); margin-bottom: 1rem; }
+
+  /* ── CALLOUT CARDS ── */
+  .cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .card { background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--r); padding: .9rem 1.1rem; }
+  .card .val { font-size: 22px; font-weight: 500; line-height: 1.1; }
+  .card .lbl { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .card .note { font-size: 11px; margin-top: 4px; }
+  .c-red  .val { color: var(--red); }
+  .c-amb  .val { color: var(--amber); }
+  .c-grn  .val { color: var(--green); }
+  .c-blu  .val { color: var(--blue); }
+
+  /* ── DIFF TABLE ── */
+  .dtab { display: grid; grid-template-columns: 150px 1fr 1fr;
+    gap: 0.5px; background: var(--border); border-radius: var(--r); overflow: hidden; }
+  .dc { background: var(--surface); padding: .65rem .95rem; }
+  .dc.hdr { background: #F1F4F8; }
+  .dc .main { font-size: 14px; font-weight: 500; }
+  .dc .sub  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .dc .va   { font-size: 15px; font-weight: 500; color: var(--teal); }
+  .dc .vb   { font-size: 15px; font-weight: 500; color: var(--blue); }
+  .dc .vb.hi{ color: var(--red); }
+  .col-hdr  { font-size: 11px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text2); }
+  .col-hdr small { display: block; font-size: 10px; font-weight: 400;
+    color: var(--text3); text-transform: none; letter-spacing: 0; margin-top: 2px; }
+
+  /* ── GAP BARS ── */
+  .gap-wrap  { display: flex; flex-direction: column; gap: 8px; }
+  .gap-row   { display: flex; align-items: center; gap: 10px; }
+  .gap-lbl   { font-size: 12px; color: var(--text2); width: 90px; flex-shrink: 0; text-align: right; }
+  .gap-track { flex: 1; position: relative; height: 24px; }
+  .g-bg   { position: absolute; top:0; left:0; height:24px; background:var(--blue-m);
+    border-radius:4px; opacity:.55; }
+  .g-fill { position: absolute; top:0; left:0; height:24px; background:var(--blue);
+    border-radius:4px; }
+  .g-note { position: absolute; top:4px; font-size:10px; color:var(--amber);
+    font-weight:500; white-space:nowrap; }
+
+  /* ── CHARTS ── */
+  .chart-box { position: relative; width: 100%; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .legend  { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+  .leg-i   { display: flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--text2); }
+  .leg-sq  { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── INSIGHTS ── */
+  .ins-list { display: flex; flex-direction: column; gap: 10px; }
+  .ins { border-left: 2px solid var(--border); border-radius: 0 var(--rs) var(--rs) 0;
+    padding: .65rem .9rem; background: var(--surface); }
+  .ins.bl { border-color: var(--blue); }
+  .ins.am { border-color: #EF9F27; }
+  .ins.gr { border-color: var(--green); }
+  .ins.rd { border-color: #E24B4A; }
+  .ins .it { font-size: 13px; font-weight: 500; }
+  .ins .ib { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.55; }
+
+  /* ── FOOTER ── */
+  .foot { margin-top: 3rem; padding-top: 1.25rem; border-top: 0.5px solid var(--border);
+    font-size: 11px; color: var(--text3); display: flex; flex-wrap: wrap; gap: 1.5rem; }
+
+  @media (max-width: 720px) {
+    .cards   { grid-template-columns: repeat(2,1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .dtab    { grid-template-columns: 90px 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="ph">
+  <div class="eye">PigPlanCORE · 글로벌 전략 리서치</div>
+  <h1>동남아 양돈 농가 오프라인 시스템 수요 정량 분석</h1>
+  <div class="sub">두 보고서 통합 종합 — 4G 커버리지 vs 실사용 격차 기반 국가별 오프라인 기능 필요 비중 추정</div>
+  <div class="meta">
+    <span>작성: 2026.03.23</span>
+    <span>출처 A: UNICEF·GSO SDGCW / NSO Thailand / APJII / USDA NASS / IBGE PNAD / CNNIC</span>
+    <span>출처 B: ITU 2024 / GSMA SMIC 2025 / BPS Indonesia / ConectarAgro / FAO / OECD</span>
+    <span>분석 기준: offline-first — 현장 입력·조회 미단절</span>
+  </div>
+</div>
+
+<!-- CALLOUTS -->
+<div class="sec">
+  <div class="sec-lbl">핵심 요약 — 오프라인 기능 필수 농가 (넓은 정의 기준)</div>
+  <div class="cards">
+    <div class="card c-red">
+      <div class="val">65–80%</div>
+      <div class="lbl">🇮🇩 인도네시아</div>
+      <div class="note" style="color:var(--red)">도서 지형·원격지 — 오프라인 수요 최고</div>
+    </div>
+    <div class="card c-red">
+      <div class="val">60–75%</div>
+      <div class="lbl">🇻🇳 베트남</div>
+      <div class="note" style="color:var(--red)">시장 최대 3,200만두 + 전력불안 동반</div>
+    </div>
+    <div class="card c-amb">
+      <div class="val">30–45%</div>
+      <div class="lbl">🇹🇭 태국</div>
+      <div class="note" style="color:var(--amber)">SEA 중 인프라 최우수 — 소농 95% 미도입</div>
+    </div>
+    <div class="card c-blu">
+      <div class="val">SaaS &lt;3%</div>
+      <div class="lbl">동남아 3국 평균 도입률</div>
+      <div class="note" style="color:var(--blue)">오프라인 수요 ≠ 도입 장벽 → 기회 영역</div>
+    </div>
+  </div>
+</div>
+
+<!-- DIFF TABLE -->
+<div class="sec">
+  <div class="sec-lbl">두 보고서 정의별 수치 비교</div>
+  <div class="dtab">
+    <div class="dc hdr"><span class="col-hdr">국가</span></div>
+    <div class="dc hdr">
+      <span class="col-hdr">보고서 A — 좁은 정의
+        <small>"기록·운영이 실제로 멈추는" 농가만</small>
+      </span>
+    </div>
+    <div class="dc hdr">
+      <span class="col-hdr">보고서 B — 넓은 정의
+        <small>"안정적 SaaS 운용 불가" 전체 환경</small>
+      </span>
+    </div>
+    <div class="dc"><div class="main">🇻🇳 베트남</div></div>
+    <div class="dc"><div class="va">10–20%</div><div class="sub">농촌 가구 65% 인터넷 기준 (UNICEF SDGCW)</div></div>
+    <div class="dc"><div class="vb hi">60–75%</div><div class="sub">전력불안·속도격차·축사 단절 포함</div></div>
+
+    <div class="dc"><div class="main">🇹🇭 태국</div></div>
+    <div class="dc"><div class="va">1–5%</div><div class="sub">비도시 89% 연결, 서비스부재 0.1% (NSO 2024)</div></div>
+    <div class="dc"><div class="vb">30–45%</div><div class="sub">고정 브로드밴드 18%, 소농 95% 미도입</div></div>
+
+    <div class="dc"><div class="main">🇮🇩 인도네시아</div></div>
+    <div class="dc"><div class="va">12–25%</div><div class="sub">농촌 침투율 74% 기준 (APJII 2024)</div></div>
+    <div class="dc"><div class="vb hi">65–80%</div><div class="sub">도서 지형·원격지·속도 17Mbps</div></div>
+
+    <div class="dc"><div class="main">🇧🇷 브라질</div></div>
+    <div class="dc"><div class="va">12–25%</div><div class="sub">농촌 모바일망 작동 67.4% (IBGE PNAD)</div></div>
+    <div class="dc"><div class="vb">55–70%</div><div class="sub">농업 생산지 73% 미연결 (ConectarAgro)</div></div>
+
+    <div class="dc"><div class="main">🇨🇳 중국</div></div>
+    <div class="dc"><div class="va">5–15%</div><div class="sub">농촌 침투율 65.6% (CNNIC 2024)</div></div>
+    <div class="dc"><div class="vb">40–55%</div><div class="sub">소농 디지털 도구 활용 5~10%</div></div>
+
+    <div class="dc"><div class="main">🇺🇸 미국</div></div>
+    <div class="dc"><div class="va">1–3%</div><div class="sub">농장 인터넷 접근 85% (USDA NASS 2025)</div></div>
+    <div class="dc"><div class="vb">20–30%</div><div class="sub">라스트에이커·축사 WiFi 미비</div></div>
+
+    <div class="dc"><div class="main">🇰🇷 한국</div></div>
+    <div class="dc"><div class="va">0.1–0.5%</div><div class="sub">가구 인터넷 99.97% (MSIT 2024)</div></div>
+    <div class="dc"><div class="vb">8–15%</div><div class="sub">축사 음영·고령농 디지털 리터러시</div></div>
+  </div>
+</div>
+
+<!-- TWO COL: GAP + RANGE CHART -->
+<div class="two-col sec">
+
+  <!-- LEFT: GAP BARS -->
+  <div>
+    <div class="sec-lbl">4G 커버리지 vs 농촌 실사용 — 격차가 오프라인 수요의 원천</div>
+    <div class="legend">
+      <div class="leg-i"><span class="leg-sq" style="background:var(--blue-m)"></span>4G 인구 커버리지</div>
+      <div class="leg-i"><span class="leg-sq" style="background:var(--blue)"></span>농촌 인터넷 실사용률</div>
+    </div>
+    <div style="margin-left:100px;margin-bottom:4px;font-size:10px;color:var(--text3)">
+      0%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;50%&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;100%
+    </div>
+    <div class="gap-wrap" id="gapChart"></div>
+  </div>
+
+  <!-- RIGHT: RANGE BAR -->
+  <div>
+    <div class="sec-lbl">오프라인 필수 범위 비교 (A 좁은 / B 넓은 정의)</div>
+    <div class="legend">
+      <div class="leg-i"><span class="leg-sq" style="background:#9FE1CB"></span>보고서 A 범위</div>
+      <div class="leg-i"><span class="leg-sq" style="background:#378ADD"></span>보고서 B 범위</div>
+    </div>
+    <div class="chart-box" style="height:260px"><canvas id="rangeChart"></canvas></div>
+  </div>
+</div>
+
+<!-- SCATTER: SaaS vs Offline -->
+<div class="sec">
+  <div class="sec-lbl">SaaS 도입률 vs 오프라인 필수 수요 — PigPlanCORE 진입 기회 매트릭스</div>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:8px">버블 크기 = 사육 규모(상대값) / 우상단 = 고수요·저도입 → 진입 기회</div>
+  <div class="chart-box" style="height:280px"><canvas id="scatterChart"></canvas></div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="sec">
+  <div class="sec-lbl">종합 시사점 — 두 보고서 공통 결론</div>
+  <div class="ins-list">
+    <div class="ins bl">
+      <div class="it">오프라인-퍼스트는 동남아 진입의 전제 조건</div>
+      <div class="ib">좁은 정의(A)로도 10~25%, 넓은 정의(B)로는 60~80%의 농가가 안정적 SaaS 운용 불가. Cloudfarms·Pig'UP·Porcitec 모두 오프라인 모드를 기본 탑재. PowerSync 기반 오프라인-퍼스트 아키텍처는 MVP 범위에 포함해야 함.</div>
+    </div>
+    <div class="ins am">
+      <div class="it">4G 커버리지 ≠ 실사용 — 격차가 핵심</div>
+      <div class="ib">베트남 4G 99.8% vs 농촌 실사용 70%, 인도네시아 97% vs 64%. 전력불안(베트남 2023 위기)·속도저하·축사 음영이 커버리지와 실사용의 괴리를 20~40%p 벌림.</div>
+    </div>
+    <div class="ins gr">
+      <div class="it">진입 우선순위: 베트남 → 태국 → 인도네시아</div>
+      <div class="ib">태국은 SEA 3국 중 인프라 리스크 최저(A기준 1~5%). 베트남은 시장 최대(3,200만두) + 기업농 70% B2B 접근으로 인프라 리스크 우회 가능. 인도네시아는 시장 소규모 + 지리 파편화로 가장 나중 공략.</div>
+    </div>
+    <div class="ins rd">
+      <div class="it">선진국도 오프라인 수요 존재 — 라스트에이커 문제</div>
+      <div class="ib">미국(20~30%)·브라질(55~70%)도 "농업 생산지 73% 미연결" 문제. 한국(8~15%)조차 축사 음영·고령농 리터러시 장벽으로 UX 안정장치 필요. 오프라인 기능은 글로벌 공통 필수 사양.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="foot">
+  <span>PigPlanCORE — 글로벌 전략 리서치</span>
+  <span>작성: 2026.03.23</span>
+  <span>보고서 A 근거: UNICEF SDGCW / NSO TH / APJII / USDA NASS / IBGE PNAD / CNNIC</span>
+  <span>보고서 B 근거: ITU 2024 / GSMA 2025 / BPS Indonesia / ConectarAgro / FAO / OECD</span>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ── GAP BARS ──────────────────────────────────────────────
+const gaps = [
+  {n:'🇻🇳 베트남',   cov:99.8, rural:70},
+  {n:'🇹🇭 태국',    cov:99.5, rural:88},
+  {n:'🇮🇩 인도네시아', cov:97,   rural:64},
+  {n:'🇧🇷 브라질',   cov:93.2, rural:67},
+  {n:'🇨🇳 중국',    cov:98,   rural:66},
+  {n:'🇺🇸 미국',    cov:99.6, rural:83},
+  {n:'🇰🇷 한국',    cov:99.9, rural:98},
+];
+const gc = document.getElementById('gapChart');
+gaps.forEach(d => {
+  const diff = (d.cov - d.rural).toFixed(1);
+  const r = document.createElement('div');
+  r.className = 'gap-row';
+  r.innerHTML = `
+    <div class="gap-lbl">${d.n}</div>
+    <div class="gap-track">
+      <div class="g-bg"   style="width:${d.cov}%"></div>
+      <div class="g-fill" style="width:${d.rural}%"></div>
+      <div class="g-note" style="left:${d.rural+1}%">▸ ${diff}%p 격차</div>
+    </div>`;
+  gc.appendChild(r);
+});
+
+// ── RANGE BAR CHART ───────────────────────────────────────
+const ctries = ['🇻🇳 베트남','🇮🇩 인도네시아','🇧🇷 브라질','🇨🇳 중국','🇹🇭 태국','🇺🇸 미국','🇰🇷 한국'];
+const minA=[10,12,12,5,1,1,0.1], maxA=[20,25,25,15,5,3,0.5];
+const minB=[60,65,55,40,30,20,8], maxB=[75,80,70,55,45,30,15];
+
+new Chart(document.getElementById('rangeChart'),{
+  type:'bar',
+  data:{
+    labels:ctries,
+    datasets:[
+      {data:minA, backgroundColor:'rgba(0,0,0,0)', borderWidth:0, stack:'A'},
+      {label:'보고서A', data:maxA.map((v,i)=>v-minA[i]), backgroundColor:'#9FE1CB', borderRadius:3, stack:'A'},
+      {data:minB, backgroundColor:'rgba(0,0,0,0)', borderWidth:0, stack:'B'},
+      {label:'보고서B', data:maxB.map((v,i)=>v-minB[i]), backgroundColor:'#378ADD', borderRadius:3, stack:'B'},
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        filter:i=>i.datasetIndex===1||i.datasetIndex===3,
+        callbacks:{label:c=>{
+          const i=c.dataIndex,s=c.datasetIndex;
+          return s===1?`보고서A: ${minA[i]}–${maxA[i]}%`:`보고서B: ${minB[i]}–${maxB[i]}%`;
+        }}
+      }
+    },
+    scales:{
+      x:{grid:{display:false}, ticks:{font:{size:11}}},
+      y:{min:0,max:100, ticks:{callback:v=>v+'%',font:{size:11}},
+         grid:{color:'rgba(0,0,0,0.06)'}}
+    }
+  }
+});
+
+// ── BUBBLE CHART: SaaS Adoption vs Offline Demand ─────────
+const bData = [
+  {x:0.5,  y:72, r:9,  lbl:'🇮🇩 인도네시아'},
+  {x:1.5,  y:67, r:20, lbl:'🇻🇳 베트남'},
+  {x:2.5,  y:37, r:11, lbl:'🇹🇭 태국'},
+  {x:17,   y:62, r:13, lbl:'🇧🇷 브라질'},
+  {x:22,   y:47, r:30, lbl:'🇨🇳 중국'},
+  {x:30,   y:11, r:7,  lbl:'🇰🇷 한국'},
+  {x:40,   y:25, r:16, lbl:'🇺🇸 미국'},
+];
+const bColors = ['#E24B4A','#E24B4A','#BA7517','#378ADD','#888780','#1D9E75','#185FA5'];
+
+new Chart(document.getElementById('scatterChart'),{
+  type:'bubble',
+  data:{
+    datasets:bData.map((d,i)=>({
+      label:d.lbl,
+      data:[{x:d.x,y:d.y,r:d.r}],
+      backgroundColor:bColors[i]+'99',
+      borderColor:bColors[i],
+      borderWidth:1.5,
+    }))
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    layout:{padding:{top:24,right:24,bottom:8,left:8}},
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>{
+        const d=bData[c.datasetIndex];
+        return `${d.lbl}  SaaS~${d.x}% / 오프라인필수${d.y}%`;
+      }}}
+    },
+    scales:{
+      x:{min:-2,max:55,
+        title:{display:true,text:'양돈 SaaS 도입률 (%)',font:{size:11}},
+        grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:11}}},
+      y:{min:0,max:95,
+        title:{display:true,text:'오프라인 기능 필수 농가 (%)',font:{size:11}},
+        grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:11}}}
+    }
+  }
+});
+</script>
+</body>
+</html>
