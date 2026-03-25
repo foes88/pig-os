@@ -16,7 +16,7 @@ PigPlanCORE is a cloud-based swine farm management platform designed for mid-to-
 - **KPI Dashboard** — PSY, NPD, FCR, farrowing rate with real-time monitoring
 - **Global Benchmarking** — Compare your farm performance against regional and global averages
 - **Multi-farm Management** — Manage multiple farm sites from a single account
-- **Multi-language** — English, Chinese, Vietnamese, Thai, Korean
+- **Multi-language** — English, Chinese, Vietnamese, Thai, Korean, Brazilian Portuguese, LATAM Spanish
 - **6-Level Access Control** — Group Admin / Farm Owner / Manager / Veterinarian / Worker / Viewer
 - **Reports** — Monthly KPI, breeding performance, mortality, shipment analytics
 
