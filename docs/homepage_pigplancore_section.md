@@ -1,7 +1,21 @@
 # PigPlanCORE — Homepage Section Content
 
-> pigplan 페이지에 추가할 PigPlanCORE 섹션 콘텐츠 (KO/EN)
-> 기존 PigPlanSection 아래, InsightPigPlanSection 위에 배치 권장
+> pigplan 페이지 내 PigPlan / InsightPigPlan / PigSignal 과 동일한 Section 컴포넌트 사이즈로 배치
+> 컨셉 전환: SaaS → AI 중심 플랫폼 (양돈 수익 최적화 AI 운영 시스템)
+
+---
+
+## 컨셉 방향
+
+| 구분 | 기존 | 전환 방향 |
+|------|------|----------|
+| 제품 정의 | 양돈 관리 SaaS | **양돈 수익 최적화 AI 운영 시스템** |
+| 기술 구조 | CRUD 기반 | **Event-driven + Time-series + AI Agent** |
+| AI 역할 | 리포트/챗봇/추천 (보조) | **Agent 기반 의사결정 + 실행 (핵심)** |
+| 과금 모델 | Per-seat 구독 | **Platform 무료 → Usage → Outcome 기반** |
+| 투자 스토리 | Agri SaaS | **Vertical AI for Pig Farm Operations** |
+
+**한 줄:** 데이터 → AI Agent → Action(실행). SaaS는 기록하는 시스템, AI는 돈을 만들어주는 시스템.
 
 ---
 
@@ -13,33 +27,32 @@
 {
   "pigplanCore": {
     "label": "PigPlanCORE",
-    "title": "피그플랜, 세계로",
-    "subtitle": "27년 양돈 노하우를 글로벌 SaaS로. 전 세계 농장이 하나의 플랫폼에서 연결됩니다.",
-    "desc": "PigPlanCORE는 모돈 500~5,000두 중대형 농장을 위한 클라우드 Farm Management 플랫폼입니다. 교배·분만·이유 기록부터 KPI 대시보드, 글로벌 벤치마크, AI 분석까지 — 무료로 시작합니다.",
+    "title": "기록이 아니라, 수익을 만드는 시스템",
+    "subtitle": "AI Agent가 농장 데이터를 분석하고, 의사결정을 내리고, 실행까지 연결합니다.",
+    "desc": "PigPlanCORE는 단순 관리 SaaS가 아닙니다. 데이터가 들어오면 AI가 분석하고, 지금 무엇을 해야 하는지 알려주고, 실행까지 이어지는 양돈 수익 최적화 AI 운영 시스템입니다.",
     "features": {
-      "f1_title": "글로벌 벤치마크",
-      "f1_desc": "내 농장 PSY가 세계 상위 몇 %인지 실시간으로 확인",
-      "f2_title": "5개 시장 동시 지원",
-      "f2_desc": "미국·중국·동남아·남미·한국 — 언어, 단위, 통화 자동 전환",
-      "f3_title": "무료로 시작",
-      "f3_desc": "가입 즉시 전 기능 무료. 농장이 성장하면 함께 성장하는 구조",
+      "f1_title": "AI Agent 의사결정",
+      "f1_desc": "폐사율 감소, 사료 효율 개선, 출하 수익 증가 — 수치로 증명하는 AI",
+      "f2_title": "데이터 → 행동",
+      "f2_desc": "알림이 아니라 Action. '지금 무엇을 해야 하는가'까지 제시",
+      "f3_title": "글로벌 벤치마크",
+      "f3_desc": "5개 시장 실시간 비교. 내 농장이 세계 상위 몇 %인지 즉시 확인",
       "f4_title": "데이터 마켓플레이스",
-      "f4_desc": "농장 데이터가 사료회사·종돈사·제약사와 만나는 곳. API로 연결되고, 가치가 교환됩니다"
+      "f4_desc": "농장 데이터가 사료회사·종돈사·제약사와 API로 연결. 가치가 교환되는 장터"
     },
     "stats": {
       "markets": "5개 시장",
-      "tables": "49 테이블",
       "languages": "5개 언어",
-      "competitors": "9개사 분석"
+      "agent": "AI Agent",
+      "outcome": "성과 기반"
     },
     "marketplace": {
-      "title": "데이터가 만나는 장터",
-      "desc": "농장의 PSY, FCR, 질병 데이터가 API를 통해 사료회사·종돈사·제약사와 연결됩니다. AI Agent가 데이터를 주고받고, 각자에게 가치 있는 인사이트로 돌아옵니다.",
-      "flow1": "농장 데이터 수집",
-      "flow2": "AI 분석 + 익명화",
-      "flow3": "B2B API 마켓플레이스",
-      "flow4": "인사이트 환류",
-      "buyers": "사료회사 · 종돈사 · 제약사 · 연구기관"
+      "title": "데이터가 돈이 되는 구조",
+      "desc": "농장의 데이터가 AI Agent를 통해 분석되고, API 마켓플레이스에서 사료회사·종돈사·제약사와 만납니다. 각자에게 가치 있는 인사이트로 돌아옵니다.",
+      "flow1": "농장 데이터",
+      "flow2": "AI Agent 분석",
+      "flow3": "API 마켓플레이스",
+      "flow4": "수익 환류"
     },
     "cta": "자세히 보기",
     "ctaPrototype": "프로토타입 보기"
@@ -53,33 +66,32 @@
 {
   "pigplanCore": {
     "label": "PigPlanCORE",
-    "title": "PigPlan Goes Global",
-    "subtitle": "27 years of swine expertise, now a global SaaS. Farms worldwide, connected on one platform.",
-    "desc": "PigPlanCORE is a cloud-based Farm Management platform for mid-to-large pig farms (500~5,000 sows). From breeding records to KPI dashboards, global benchmarks, and AI analytics — starting free.",
+    "title": "Not Records. Revenue.",
+    "subtitle": "AI Agents analyze farm data, make decisions, and drive actions — automatically.",
+    "desc": "PigPlanCORE is not just management SaaS. Data flows in, AI analyzes it, tells you what to do right now, and connects to execution. An AI-powered revenue optimization system for pig farms.",
     "features": {
-      "f1_title": "Global Benchmarking",
-      "f1_desc": "See where your farm PSY ranks worldwide, in real-time",
-      "f2_title": "5 Markets Simultaneously",
-      "f2_desc": "USA, China, Southeast Asia, Latin America, Korea — language, units, currency auto-switch",
-      "f3_title": "Start Free",
-      "f3_desc": "All features free from day one. Grows with your farm",
+      "f1_title": "AI Agent Decisions",
+      "f1_desc": "Reduce mortality, improve feed efficiency, increase shipment revenue — proven by numbers",
+      "f2_title": "Data → Action",
+      "f2_desc": "Not alerts. Actions. 'What should I do right now?' answered instantly",
+      "f3_title": "Global Benchmarking",
+      "f3_desc": "Real-time comparison across 5 markets. See your farm's global ranking instantly",
       "f4_title": "Data Marketplace",
-      "f4_desc": "Where farm data meets feed companies, genetics firms, and pharma. Connected via API, value exchanged"
+      "f4_desc": "Farm data connects with feed, genetics, and pharma companies via API. Value exchanged"
     },
     "stats": {
       "markets": "5 Markets",
-      "tables": "49 Tables",
       "languages": "5 Languages",
-      "competitors": "9 Analyzed"
+      "agent": "AI Agent",
+      "outcome": "Outcome-based"
     },
     "marketplace": {
-      "title": "Where Data Meets Value",
-      "desc": "Farm PSY, FCR, and disease data connects with feed companies, genetics firms, and pharma through APIs. AI Agents exchange data, returning actionable insights to each party.",
-      "flow1": "Farm Data Collection",
-      "flow2": "AI Analysis + Anonymization",
-      "flow3": "B2B API Marketplace",
-      "flow4": "Insight Returns",
-      "buyers": "Feed · Genetics · Pharma · Research"
+      "title": "Where Data Becomes Revenue",
+      "desc": "Farm data is analyzed by AI Agents and meets feed companies, genetics firms, and pharma on the API marketplace. Actionable insights flow back to everyone.",
+      "flow1": "Farm Data",
+      "flow2": "AI Agent Analysis",
+      "flow3": "API Marketplace",
+      "flow4": "Revenue Returns"
     },
     "cta": "Learn More",
     "ctaPrototype": "View Prototype"
@@ -89,59 +101,58 @@
 
 ---
 
-## Image Prompts (AI 이미지 생성용)
+## Image Prompts
 
-### 1. 메인 히어로 이미지
-> **Prompt:** A modern, clean isometric illustration of a global pig farm management platform. A central glowing dashboard screen showing PSY/KPI charts, surrounded by 5 floating icons representing USA, China, Southeast Asia, Latin America, and South Korea flags. Connected by thin glowing lines. Soft green (#0D7C66) and dark navy (#0F2B50) color scheme. White background. Minimal, SaaS marketing style. No text.
+### 1. 메인 히어로 — AI Agent가 농장을 운영하는 느낌
+> **Prompt:** A futuristic isometric illustration of an AI-powered pig farm operations system. In the center, a glowing AI brain/agent icon connected to a holographic dashboard showing PSY, FCR, mortality charts. On the left, stylized farm buildings with data streams flowing upward into the AI. On the right, action arrows pointing to outcomes: a dollar sign (revenue up), a downward arrow (mortality down), a grain icon (feed optimized). Clean, minimal SaaS style. Color palette: dark navy (#0F172A), emerald green (#0D7C66), gold accents (#C9A84C). Dark background with subtle grid. No text.
 
-### 2. 데이터 마켓플레이스 (장터) 이미지
-> **Prompt:** An isometric illustration of a data marketplace concept. In the center, a glowing hexagonal hub labeled with a pig icon. From the left, farm buildings send data streams (green lines) into the hub. From the right, corporate buildings (feed company, genetics lab, pharmaceutical) receive processed data streams (gold lines). Small AI agent icons (robot silhouettes) float along the data streams, carrying data packets between farms and businesses. Clean, modern SaaS style. Color palette: navy (#0F2B50), green (#0D7C66), gold (#C9A84C). White background. No text.
+### 2. 데이터 → AI Agent → Action 플로우
+> **Prompt:** A horizontal flow illustration on dark background. Three stages connected by glowing lines. Stage 1 (left): Farm icons with data points floating up — temperature, pig silhouettes, feed bins. Stage 2 (center): A large glowing AI Agent hexagon processing data, with neural network patterns inside. Stage 3 (right): Action outputs — a calendar (breeding schedule), alert icon (disease warning), truck (optimal shipment timing), coin stack (revenue). Data particles flow left to right, transforming from raw (blue dots) to processed (gold dots). Futuristic, clean. Navy/green/gold palette. No text.
 
-### 3. API 연결 플로우 이미지
-> **Prompt:** A horizontal flow diagram illustration showing data exchange between pig farms and businesses. Left side: 3 stylized farm icons with pig silhouettes. Center: a cloud platform with API connection nodes glowing in green. Right side: icons for feed company (grain icon), genetics (DNA helix), pharma (pill icon), research (microscope). Animated-style dotted lines connect each element, with small data packet icons traveling along the lines in both directions. Clean flat design. Navy and green tones. White background. No text.
+### 3. 데이터 마켓플레이스 — API끼리 Agent끼리 장터
+> **Prompt:** An isometric dark-themed illustration of a data marketplace ecosystem. Center: a glowing circular platform/hub with the concept of a digital marketplace. Left side: multiple farm nodes sending green data streams into the hub, each with a small AI agent icon attached. Right side: corporate nodes (feed company with grain icon, genetics with DNA helix, pharma with molecule, research with chart) receiving gold data streams. AI agent robots travel along the connection lines, carrying data packets. The hub pulses with energy where data transforms into insights. Futuristic cyberpunk-lite aesthetic. Navy (#0F172A) background, green (#0D7C66) for farm data, gold (#C9A84C) for business insights. No text.
 
-### 4. 글로벌 벤치마크 이미지
-> **Prompt:** A clean dashboard mockup showing a world map with 5 highlighted regions (USA, China, Southeast Asia, Latin America, South Korea) connected by thin lines to a central PSY leaderboard chart. Each region shows a small farm icon with a percentage ranking. Modern SaaS analytics style. Green accent color (#0D7C66) on dark navy (#0F172A) background. Minimal, no real text — use abstract placeholder bars and numbers.
+### 4. SaaS vs AI 비교 — 전환 컨셉
+> **Prompt:** A split-screen comparison illustration. Left side (dimmer, grayscale-ish): Traditional SaaS — a person typing records into a computer, static spreadsheets, manual clipboard. Label area for "Records". Right side (vibrant, glowing): AI-powered system — an AI agent brain icon connected to automated dashboards, real-time alerts, money/revenue icons flowing. Label area for "Revenue". A dramatic arrow or transition effect from left to right. The right side radiates energy and movement while the left is static. Clean illustration style. Left: muted blue-gray. Right: vibrant navy + green + gold. No text.
 
-### 5. 무료 시작 → 성장 이미지
-> **Prompt:** A minimal illustration showing a growth journey from left to right. Left: a small farm with "FREE" badge, simple and small. Middle: a medium farm with more buildings, data charts appearing above. Right: a large farm complex with full dashboard, AI icons, and global connections. A subtle upward arrow connects all three stages. Green gradient from light to dark. Clean white background. SaaS marketing style. No text.
+### 5. 글로벌 5개 시장 연결 — AI가 전 세계를 연결
+> **Prompt:** A dark globe illustration with 5 glowing hotspots for USA, China, Southeast Asia (Vietnam/Thailand), Latin America, and South Korea. Each hotspot has a small farm icon and an AI agent icon. Thin glowing green lines connect all hotspots through a central orbiting AI agent ring around the globe. Data particles travel along the lines between markets. The globe is semi-transparent with subtle country borders. Futuristic, premium feel. Navy background, green connection lines, gold accent on AI agents. No text.
+
+### 6. Outcome 기반 — 성과로 증명
+> **Prompt:** A clean dashboard-style illustration showing three outcome metrics as large glowing cards on a dark background. Card 1: Pig mortality icon with a large downward arrow and percentage (abstract). Card 2: Feed conversion icon with an efficiency gauge showing improvement. Card 3: Revenue/shipment icon with upward trending graph and coin symbols. Below the cards, a subtle timeline showing "Data In → AI Analysis → Action Taken → Outcome Achieved" as a horizontal flow. Premium SaaS analytics aesthetic. Dark navy background, green for positive metrics, gold for revenue. No text except abstract numbers/symbols.
 
 ---
 
-## 컴포넌트 구조 제안
+## 컴포넌트 배치
 
 ```
-pigplan/page.tsx 에서:
+pigplan/page.tsx:
 
 <PageHero namespace="pages.pigplan" />
-<PigPlanSection showHeader={false} />       ← 기존 피그플랜
-<PigPlanCoreSection />                      ← 새로 추가 (이 문서 내용)
+<PigPlanSection showHeader={false} />         ← 기존 피그플랜
+<PigPlanCoreSection />                        ← 새로 추가 (이 문서)
 <PartnerMarquee />
 <InsightPigPlanSection />
 <PigSignalSection />
 ```
 
-### PigPlanCoreSection 레이아웃 제안
+PigPlanCoreSection은 기존 PigPlanSection / InsightPigPlanSection과 동일한 `<Section>` 컴포넌트 사용. 동일한 `grid lg:grid-cols-2 gap-16 items-center` 레이아웃.
 
-```
-┌─────────────────────────────────────────┐
-│ [Label] PigPlanCORE                     │
-│ [Title] 피그플랜, 세계로                   │
-│ [Subtitle] 27년 양돈 노하우를...           │
-│                                         │
-│ ┌─────────┐ ┌─────────┐                │
-│ │ 글로벌    │ │ 5개 시장  │                │
-│ │ 벤치마크  │ │ 동시 지원  │                │
-│ └─────────┘ └─────────┘                │
-│ ┌─────────┐ ┌─────────┐                │
-│ │ 무료로    │ │ 데이터    │                │
-│ │ 시작     │ │ 마켓플레이스│                │
-│ └─────────┘ └─────────┘                │
-│                                         │
-│ ── 데이터가 만나는 장터 ──                  │
-│ [농장] → [AI 분석] → [B2B API] → [인사이트] │
-│        사료회사 · 종돈사 · 제약사            │
-│                                         │
-│ [자세히 보기] [프로토타입 보기]              │
-└─────────────────────────────────────────┘
-```
+**구성:**
+- Left: label + title + subtitle + desc + 4개 feature 카드 (2x2 grid)
+- Right: 메인 이미지 (히어로 또는 데이터→AI→Action 플로우)
+- Below (full-width): 데이터 마켓플레이스 섹션 (flow1→flow2→flow3→flow4 수평 플로우)
+- Stats: 4개 수치 카드 (5개 시장 / 5개 언어 / AI Agent / 성과 기반)
+- CTA: 자세히 보기 + 프로토타입 보기
+
+---
+
+## 네이밍 후보 (참고)
+
+| 이름 | 포지셔닝 | 강점 |
+|------|----------|------|
+| **PigOS AI** | 농장 운영 체제 | 플랫폼 전략과 일치, 투자자 스토리에 강함 |
+| **PigOps AI** | 운영 최적화 실행 | B2B 현장 친화적, 실행/자동화 뉘앙스 |
+| **PigCore AI** | 핵심 플랫폼 + 확장성 | 장기 브랜드 내구성, 축산 확장 시에도 유효 |
+
+*최종 네이밍 미확정. 대외 브랜딩과 내부 제품명 분리 검토 중.*
