@@ -1,4 +1,4 @@
-# PigPlanCORE 변경 흐름 (Changelog)
+# PigOS AI 변경 흐름 (Changelog)
 
 > 프로젝트가 어떻게 발전해왔는지 단계별 기록
 
@@ -181,9 +181,9 @@
 | Strategy Deep Dive | `docs/presentations/...Deep_Dive.html` | Q1~Q3 상세 |
 | 조사 결과 | `docs/references/06_조사결과...html` | 인프라/결제/스키마 |
 | 오프라인 수요 | `docs/references/05_오프라인수요...html` | 정량 분석 |
-| 홈페이지 섹션 | `docs/homepage_pigplancore_section.md` | AI 컨셉 반영 |
-| 프로젝트 오버뷰 | `docs/pigplancore_overview.md` | 상세 |
-| 프로젝트 요약 | `docs/pigplancore_summary.md` | 홈페이지용 간략 |
+| 홈페이지 섹션 | `docs/homepage_pig-os-ai_section.md` | AI 컨셉 반영 |
+| 프로젝트 오버뷰 | `docs/pig-os-ai_overview.md` | 상세 |
+| 프로젝트 요약 | `docs/pig-os-ai_summary.md` | 홈페이지용 간략 |
 | MVP 풀버전 | `mvp/` | 13페이지 프로토타입 |
 | MVP Lite | `mvp-lite/` | 4페이지 미니멀 |
 | UI 컨셉 | `concepts/` | 5종 디자인 |

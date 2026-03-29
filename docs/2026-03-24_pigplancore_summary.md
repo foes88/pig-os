@@ -1,4 +1,4 @@
-# PigPlanCORE
+# PigOS AI
 
 ## KO
 
@@ -12,7 +12,7 @@
 ### 왜 필요한가
 - 상위 40개 대기업이 전 세계 모돈의 26%만 보유. **나머지 74%의 중대형 농장에는 적당한 SW가 없음**
 - 기존 경쟁사(9개사)는 가격 비공개 또는 $500+. 중소 농장은 접근 자체가 어려움
-- PigPlanCORE는 **무료로 시작**, 농장이 성장하면 자연스럽게 유료 전환
+- PigOS AI는 **무료로 시작**, 농장이 성장하면 자연스럽게 유료 전환
 
 ### 타겟 시장
 미국 / 중국 / 동남아(베트남·태국) / 남미 / 한국 — 5개 시장 동시 진출
@@ -37,7 +37,7 @@ Breeding records, KPI dashboards (PSY/NPD/FCR), global benchmarking, and AI anal
 ### Why it matters
 - Top 40 companies own just 26% of global sows. **The remaining 74% of mid-size farms have no good software options**
 - All 9 competitors hide pricing or charge $500+/year. Mid-size farms can't access them
-- PigPlanCORE **starts free** — farms convert to paid as they grow
+- PigOS AI **starts free** — farms convert to paid as they grow
 
 ### Target markets
 USA / China / Southeast Asia (Vietnam, Thailand) / Latin America / South Korea — 5 markets, simultaneous launch

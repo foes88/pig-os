@@ -9,7 +9,7 @@
 
 | 버전 | 날짜 | 주요 변경 |
 |------|------|-----------|
-| v1.0 | 2026.03.19 | 초기 기획 (PigPlanCORE, SaaS 모델) |
+| v1.0 | 2026.03.19 | 초기 기획 (PigOS AI, SaaS 모델) |
 | v2.0 | 2026.03.27 | PigOps AI 전환, AI Agent 구조, 과금 모델 재정의 |
 
 ---
@@ -44,7 +44,7 @@
 핵심 전환:
 
 ```
-기존: 양돈 관리 SaaS (PigPlanCORE)
+기존: 양돈 관리 SaaS (PigOS AI)
          ↓ 데이터 기록 → 리포트 → 농장주가 판단
          
 신규: AI 기반 양돈 운영 최적화 시스템 (PigOps AI)
@@ -96,7 +96,7 @@ PigOps AI는 **오픈 생태계**로 간다.
 
 | 항목 | 기존 (v1.0) | 신규 (v2.0) |
 |------|-------------|-------------|
-| **제품명** | PigPlanCORE | **PigOps AI** |
+| **제품명** | PigOS AI | **PigOps AI** |
 | **제품 정의** | 양돈 관리 SaaS | AI 기반 양돈 운영 최적화 시스템 |
 | **기술 구조** | CRUD 중심 SaaS | Event + Time-series + Agent + Workflow |
 | **과금 모델** | Per-farm 구독 | Platform 무료 + Agent usage/outcome + Marketplace |

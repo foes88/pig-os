@@ -1,4 +1,4 @@
-# PigPlanCORE
+# PigOS AI
 
 > Global Swine Farm Management SaaS Platform
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-PigPlanCORE is a cloud-based swine farm management platform designed for mid-to-large scale pig farms (500~5,000 sows) worldwide. Built on 27 years of domain expertise in swine production, the platform provides breeding cycle management, KPI dashboards, global benchmarking, and AI-powered analytics — starting completely free.
+PigOS AI is a cloud-based swine farm management platform designed for mid-to-large scale pig farms (500~5,000 sows) worldwide. Built on 27 years of domain expertise in swine production, the platform provides breeding cycle management, KPI dashboards, global benchmarking, and AI-powered analytics — starting completely free.
 
 ---
 
@@ -40,7 +40,7 @@ The top 40 companies own just 26% of global sows. The remaining 74% — mid-size
 
 ---
 
-## Why PigPlanCORE
+## Why PigOS AI
 
 ### Market Gap
 
@@ -163,12 +163,12 @@ Aggregated, anonymized farm data sold to feed companies, genetics firms, and pha
 
 ## Links
 
-- [Global Strategy Report (v2)](https://foes88.github.io/PigplanCORE/docs/meeting-prep/2026-03-23_CORE_Meeting2_Prep_v2.html)
-- [MVP Prototype (Full)](https://foes88.github.io/PigplanCORE/mvp/)
-- [MVP Prototype (Lite)](https://foes88.github.io/PigplanCORE/mvp-lite/)
-- [UI Concepts (5 designs)](https://foes88.github.io/PigplanCORE/concepts/index.html)
-- [Strategy Deep Dive (Q1~Q3)](https://foes88.github.io/PigplanCORE/docs/presentations/2026-03-23_Strategy_Deep_Dive.html)
+- [Global Strategy Report (v2)](https://foes88.github.io/PigOS AI/docs/meeting-prep/2026-03-23_CORE_Meeting2_Prep_v2.html)
+- [MVP Prototype (Full)](https://foes88.github.io/PigOS AI/mvp/)
+- [MVP Prototype (Lite)](https://foes88.github.io/PigOS AI/mvp-lite/)
+- [UI Concepts (5 designs)](https://foes88.github.io/PigOS AI/concepts/index.html)
+- [Strategy Deep Dive (Q1~Q3)](https://foes88.github.io/PigOS AI/docs/presentations/2026-03-23_Strategy_Deep_Dive.html)
 
 ---
 
-*PigPlanCORE — Built on 27 years of swine expertise. Designed for the world.*
+*PigOS AI — Built on 27 years of swine expertise. Designed for the world.*

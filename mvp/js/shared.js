@@ -1,5 +1,5 @@
 /* ============================================================
-   PigPlanCORE — Shared JS (sidebar, i18n, unit system)
+   PigOS AI — Shared JS (sidebar, i18n, unit system)
    ============================================================ */
 
 // ── Current Settings (persisted in localStorage) ──

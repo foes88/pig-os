@@ -1,4 +1,4 @@
-# PigPlanCORE
+# PigOS AI
 
 ## KO
 
@@ -6,7 +6,7 @@
 양돈 수익 최적화 AI 운영 시스템 — 27년 데이터 기반, 글로벌 5개 시장
 
 ### 설명
-PigPlanCORE는 전 세계 중대형 양돈 농장(모돈 500~5,000두)을 위한 AI 기반 Farm Management 플랫폼입니다.
+PigOS AI는 전 세계 중대형 양돈 농장(모돈 500~5,000두)을 위한 AI 기반 Farm Management 플랫폼입니다.
 
 단순히 기록하는 시스템이 아닙니다. 데이터가 들어오면 AI가 분석하고, "지금 무엇을 해야 하는지" 알려주고, 실행까지 연결합니다. 교배 최적 타이밍, 폐사 조기 경보, 사료 효율 개선, 출하 수익 극대화 — 농장의 수익을 직접 올리는 AI 운영 시스템입니다.
 
@@ -29,7 +29,7 @@ FastAPI + PostgreSQL + TimescaleDB + Next.js + Android/iOS Native
 AI-powered Revenue Optimization System for Pig Farms — built on 27 years of data, serving 5 global markets
 
 ### Description
-PigPlanCORE is an AI-powered Farm Management platform for mid-to-large pig farms (500~5,000 sows) worldwide.
+PigOS AI is an AI-powered Farm Management platform for mid-to-large pig farms (500~5,000 sows) worldwide.
 
 It's not just a record-keeping system. When data flows in, AI analyzes it, tells you what to do right now, and connects to execution. Optimal breeding timing, early mortality alerts, feed efficiency optimization, shipment revenue maximization — an AI operations system that directly increases farm revenue.
 

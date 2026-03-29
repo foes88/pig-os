@@ -1,4 +1,4 @@
-# PigPlanCORE
+# PigOS AI
 
 > Global Swine Farm Management SaaS + Data Monetization Platform
 > 피그플랜 27년 양돈 노하우 기반 글로벌 버전
@@ -7,7 +7,7 @@
 
 ## 프로젝트 개요
 
-- **제품**: PigPlanCORE — 해외 양돈 농장용 Farm Management SaaS
+- **제품**: PigOS AI — 해외 양돈 농장용 Farm Management SaaS
 - **포지셔닝**: 벤더-중립 독립 데이터 플랫폼 + 오픈 연동 생태계
 - **전략**: 무료 제공 → 데이터 수집 → 수익화 → 농가 배분
 - **타겟**: 5개 시장 (US/CN/SEA/LatAm/KR)
@@ -31,7 +31,7 @@
 ## 폴더 구조
 
 ```
-pigplancore/
+pig-os-ai/
 ├── CLAUDE.md           ← 이 파일
 ├── docs/
 │   ├── specs/          ← DB 스키마, KPI 계산식, API 스펙
@@ -58,7 +58,7 @@ pigplancore/
 ## 기획 문서 (biz-report-os 프로젝트)
 
 심층분석 기획서 및 회의 자료는 별도 프로젝트에서 관리:
-- `c:/dev/biz-report-os/projects/pigplancore/docs/`
+- `c:/dev/biz-report-os/projects/pig-os-ai/docs/`
 - GlobalStrategy.html (심층분석 16개 섹션)
 - Meeting2_Prep.html (2차 회의 준비)
 - 참고문서/ (지역별 관리포인트, 경쟁사 분석, 개발반영사항)

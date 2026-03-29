@@ -1,4 +1,4 @@
-# PigPlanCORE — Homepage Section Content
+# PigOS AI — Homepage Section Content
 
 > pigplan 페이지 내 PigPlan / InsightPigPlan / PigSignal 과 동일한 Section 컴포넌트 사이즈로 배치
 > 컨셉 전환: SaaS → AI 중심 플랫폼 (양돈 수익 최적화 AI 운영 시스템)
@@ -26,10 +26,10 @@
 ```json
 {
   "pigplanCore": {
-    "label": "PigPlanCORE",
+    "label": "PigOS AI",
     "title": "기록이 아니라, 수익을 만드는 시스템",
     "subtitle": "AI Agent가 농장 데이터를 분석하고, 의사결정을 내리고, 실행까지 연결합니다.",
-    "desc": "PigPlanCORE는 단순 관리 SaaS가 아닙니다. 데이터가 들어오면 AI가 분석하고, 지금 무엇을 해야 하는지 알려주고, 실행까지 이어지는 양돈 수익 최적화 AI 운영 시스템입니다.",
+    "desc": "PigOS AI는 단순 관리 SaaS가 아닙니다. 데이터가 들어오면 AI가 분석하고, 지금 무엇을 해야 하는지 알려주고, 실행까지 이어지는 양돈 수익 최적화 AI 운영 시스템입니다.",
     "features": {
       "f1_title": "AI Agent 의사결정",
       "f1_desc": "폐사율 감소, 사료 효율 개선, 출하 수익 증가 — 수치로 증명하는 AI",
@@ -65,10 +65,10 @@
 ```json
 {
   "pigplanCore": {
-    "label": "PigPlanCORE",
+    "label": "PigOS AI",
     "title": "Not Records. Revenue.",
     "subtitle": "AI Agents analyze farm data, make decisions, and drive actions — automatically.",
-    "desc": "PigPlanCORE is not just management SaaS. Data flows in, AI analyzes it, tells you what to do right now, and connects to execution. An AI-powered revenue optimization system for pig farms.",
+    "desc": "PigOS AI is not just management SaaS. Data flows in, AI analyzes it, tells you what to do right now, and connects to execution. An AI-powered revenue optimization system for pig farms.",
     "features": {
       "f1_title": "AI Agent Decisions",
       "f1_desc": "Reduce mortality, improve feed efficiency, increase shipment revenue — proven by numbers",

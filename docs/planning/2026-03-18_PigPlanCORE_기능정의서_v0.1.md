@@ -1,4 +1,4 @@
-# PigPlanCORE — 기능 정의서 (Functional Specification)
+# PigOS AI — 기능 정의서 (Functional Specification)
 > 서비스 기획 + 개발 설계 기준 문서
 > 버전: v0.1 Draft | 작성일: 2026.03.19
 > **이 문서가 없으면 개발팀은 뭘 만들어야 할지 모른다**
@@ -33,7 +33,7 @@
 ## 1. 서비스 전체 구조
 
 ```
-PigPlanCORE
+PigOS AI
 │
 ├── 🏠 홈 / 오늘의 할 일        ← 매일 아침 가장 먼저 보는 화면
 │
@@ -926,5 +926,5 @@ Level 0: 법인 / 그룹 (최상위)
 
 ---
 
-*작성: PigPlanCORE 기획팀 | 2026.03.19*
+*작성: PigOS AI 기획팀 | 2026.03.19*
 *다음 업데이트: 화면 설계(와이어프레임) 작업 후*
