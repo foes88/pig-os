@@ -1,5 +1,5 @@
 -- ============================================================================
--- PigOS AI — Global DB Schema v1.0
+-- PigOS — Global DB Schema v1.0
 -- ============================================================================
 -- 설계 원칙:
 --   1. 모듈형 구조: 각 도메인 독립 배포 가능 (마이크로서비스 대응)
@@ -11,7 +11,7 @@
 --   7. 다국어: i18n 코드 테이블 분리
 --
 -- 기준 문서:
---   - PigOS_AI_GlobalStrategy.html (심층분석 16개 섹션)
+--   - PigOS_GlobalStrategy.html (심층분석 16개 섹션)
 --   - 01_글로벌_양돈_관리포인트_지역별분석.md
 --   - 04_글로벌_양돈_관리포인트_개발반영사항.md
 --   - 03_MVP_개발계획.md
@@ -170,7 +170,7 @@ CREATE TABLE boars (
     UNIQUE(farm_id, ear_tag)
 );
 
--- 1-3. 모돈 (Sow) — PigOS AI 핵심 개체
+-- 1-3. 모돈 (Sow) — PigOS 핵심 개체
 CREATE TABLE sows (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     farm_id         UUID NOT NULL REFERENCES farms(id),

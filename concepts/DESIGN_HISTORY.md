@@ -1,4 +1,4 @@
-# PigOS AI — Design History & Decision Log
+# PigOS — Design History & Decision Log
 
 > 시안 변경 이력 · 의사결정 기록 · 나중에 디자인 변경 시 참고용
 
@@ -6,7 +6,7 @@
 
 ## v1 — 초기 시안 3종 (2026.03.19)
 
-디자인 스펙 문서(`biz-report-os/projects/pig-os-ai/ui-concepts/`) 기반으로 제작.
+디자인 스펙 문서(`biz-report-os/projects/pig-os/ui-concepts/`) 기반으로 제작.
 
 | 파일 | 컨셉 | 색상 | 타겟 |
 |------|------|------|------|

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PigOS AI",
+  title: "PigOS",
   description: "AI-powered Revenue Optimization System for Pig Farms",
 };
 

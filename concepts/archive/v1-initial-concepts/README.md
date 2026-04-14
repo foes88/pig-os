@@ -2,7 +2,7 @@
 
 2026.03.19 제작 → 전부 탈락
 
-디자인 스펙 원본: `C:/dev/biz-report-os/projects/pig-os-ai/ui-concepts/`
+디자인 스펙 원본: `C:/dev/biz-report-os/projects/pig-os/ui-concepts/`
 
 | 파일 | 스펙 기반 |
 |------|----------|

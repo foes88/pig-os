@@ -15,7 +15,7 @@ docs/planning/
 
 ### common (공통)
 - [2026-03_monthly-report.md](common/2026-03_monthly-report.md) — 2026년 3월 월간 보고
-- [2026-04-05_risk-assessment.md](common/2026-04-05_risk-assessment.md) — PigOS AI 사업·개발 리스크 평가서
+- [2026-04-05_risk-assessment.md](common/2026-04-05_risk-assessment.md) — PigOS 사업·개발 리스크 평가서
 
 ### pigplancore
 - [2026-03-18_GlobalStrategy.html](pigplancore/2026-03-18_GlobalStrategy.html) — 글로벌 전략 심층분석 (HTML)

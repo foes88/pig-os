@@ -1,4 +1,4 @@
-# PigOS AI — Roadmap Infographic Data
+# PigOS — Roadmap Infographic Data
 
 > 인포그래픽 제작용 구조화 데이터
 > 추출 기준: 월간보고서 + 기능정의서 + 글로벌전략기획서
@@ -21,7 +21,7 @@
 - 사업계획서 v2
 - MVP 프로토타입 3종 (14페이지 + Lite + AI)
 - 컨셉 디자인 5종
-- PigPlanCORE → PigOS AI 리브랜딩 (초기 기획 단계 명칭 CORE에서 변경)
+- PigPlanCORE → PigOS 리브랜딩 (초기 기획 단계 명칭 CORE에서 변경)
 - 7개 언어 현지화 명세
 - Next.js 프론트엔드 초기 셋업
 

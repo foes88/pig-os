@@ -1,4 +1,4 @@
-# PigOS AI 변경 흐름 (Changelog)
+# PigOS 변경 흐름 (Changelog)
 
 > 프로젝트가 어떻게 발전해왔는지 단계별 기록
 
@@ -141,8 +141,8 @@
 01 타겟 시장 → 02 경쟁 환경 → 03 수익+GTM → 04 기술 → 05 스펙+일정 → 06 Summary
 
 ### 파일 분리
-- 원본: `2026-03-23_PigOS_AI_Meeting2_Prep.html` (2차 미팅 그대로)
-- v2: `2026-03-23_PigOS_AI_Meeting2_Prep_v2.html` (피드백 반영 최신)
+- 원본: `2026-03-23_PigOS_Meeting2_Prep.html` (2차 미팅 그대로)
+- v2: `2026-03-23_PigOS_Meeting2_Prep_v2.html` (피드백 반영 최신)
 
 ---
 
@@ -181,9 +181,9 @@
 | Strategy Deep Dive | `docs/presentations/...Deep_Dive.html` | Q1~Q3 상세 |
 | 조사 결과 | `docs/references/06_조사결과...html` | 인프라/결제/스키마 |
 | 오프라인 수요 | `docs/references/05_오프라인수요...html` | 정량 분석 |
-| 홈페이지 섹션 | `docs/homepage_pig-os-ai_section.md` | AI 컨셉 반영 |
-| 프로젝트 오버뷰 | `docs/pig-os-ai_overview.md` | 상세 |
-| 프로젝트 요약 | `docs/pig-os-ai_summary.md` | 홈페이지용 간략 |
+| 홈페이지 섹션 | `docs/homepage_pig-os_section.md` | AI 컨셉 반영 |
+| 프로젝트 오버뷰 | `docs/pig-os_overview.md` | 상세 |
+| 프로젝트 요약 | `docs/pig-os_summary.md` | 홈페이지용 간략 |
 | MVP 풀버전 | `mvp/` | 13페이지 프로토타입 |
 | MVP Lite | `mvp-lite/` | 4페이지 미니멀 |
 | UI 컨셉 | `concepts/` | 5종 디자인 |

@@ -20,7 +20,7 @@
 | MVP Lite 버전 — 미니멀 4페이지 + Owner Dashboard | 완료 |
 | MVP AI 버전 — SaaS→AI 플랫폼 전환 프로토타입 5페이지 | 완료 |
 | 컨셉 디자인 5종 (대시보드, 농장운영, AI, 번식 등) | 완료 |
-| PigPlanCORE → PigOS AI 전면 리브랜딩 (초기 기획명 CORE에서 변경) | 완료 |
+| PigPlanCORE → PigOS 전면 리브랜딩 (초기 기획명 CORE에서 변경) | 완료 |
 | 7개 언어 현지화 명세 확장 | 완료 |
 | Next.js 프론트엔드 프로젝트 초기 셋업 | 완료 |
 
