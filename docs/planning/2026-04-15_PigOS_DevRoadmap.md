@@ -155,9 +155,11 @@ def validate_compliance(farm_id, profile_code):
         validate_wean_period(farm_id, profile.min_wean_period)
 ```
 
-**Claude API 연동 (AI 자연어 리포트):**
+**Claude API 연동 — 두 가지 AI 상호작용 모드:**
+
+**(1) Layer 2 Insight: 월간 AI 분석 리포트 (Push형)**
 ```python
-# Layer 2 Insight: 월간 AI 분석 리포트
+# AI가 먼저 분석해서 리포트 생성 → 농장주에게 전달
 prompt = build_farm_analysis_prompt(
     farm_kpi=current_kpi,
     metrics=effective_metrics,
@@ -168,6 +170,36 @@ response = anthropic.messages.create(
     messages=[{"role": "user", "content": prompt}]
 )
 ```
+
+**(2) Layer 3 Advisor: 자연어 Q&A (Pull형)**
+```python
+# 농장주가 직접 질문 → AI가 농장 데이터 기반으로 즉시 답변
+# 예: "이번 달 PSY가 왜 낮아?" / "재발정 많은 이유가 뭐야?"
+def chat_with_farm_data(farm_id: str, user_question: str):
+    context = build_farm_context(
+        farm_id=farm_id,
+        kpi_snapshots=get_recent_kpi(farm_id, months=3),
+        alerts=get_active_alerts(farm_id),
+        benchmarks=effective_metric_values(farm_id)
+    )
+    response = anthropic.messages.create(
+        model="claude-opus-4-7",
+        system=FARM_ADVISOR_SYSTEM_PROMPT,
+        messages=[
+            {"role": "user", "content": f"{context}\n\n질문: {user_question}"}
+        ]
+    )
+    return response.content[0].text
+```
+> 경쟁사 PLD(Precision Livestock Diagnostics)가 이 방식으로 차별화 중.
+> Claude API 추가 비용 없이 구현 가능. 7월 Base에 베타 포함 검토.
+
+**Base vs Addon 경계:**
+| 기능 | 층 | 포함 |
+|------|----|------|
+| 월간 AI 리포트 | Layer 2 | Base (무료) |
+| 자연어 Q&A (기본 KPI 질문) | Layer 3 | Base 베타 (7월) |
+| 자연어 Q&A (Addon 도메인 질문) | Layer 3 | 해당 Addon 포함 |
 
 ---
 
