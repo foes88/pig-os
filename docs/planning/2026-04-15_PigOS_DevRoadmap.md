@@ -88,18 +88,28 @@ src/
 - 질병 30종, 백신 22종, 항생제 22종 시드
 - `default_metric_values` KR/NA/EU/SEA/SA 기준값
 
-**온보딩 플로우 API:**
+**온보딩 플로우 API (v2.4 수정):**
 ```
+GET /onboarding/detect-country
+  → IP 기반 감지 → { ip_detected_country: "US" }  # 힌트만, 강제 아님
+
 POST /onboarding/start
-  body: { country_code, sow_count, farm_type }
-  → IP 기반 region 감지 + scope_kpi_recommendations 조회
-  → is_base KPI 자동 추천 반환
+  body: {
+    farm_country_code: "KR",   ← 필수 (사용자가 직접 선택한 농장 소재 국가)
+    ip_detected_country: "US", ← 선택 (프론트에서 참고용으로 전달)
+    sow_count: 300,
+    farm_type: "INTEGRATED"    ← INTEGRATED / BREEDING / FINISHING
+  }
+  → farm_country_code 기준으로 scope_kpi_recommendations 조회
   → compliance_profiles 필수 KPI 강제 포함
+  → is_base KPI 자동 추천 반환
 
 POST /onboarding/complete
   → farm 생성 + tenant schema 초기화
-  → default_metric_values 적용
+  → default_metric_values (farm_country_code 기준) 적용
 ```
+> IP ≠ 농장 위치 케이스 대응 (해외 거주 농장주 등)
+> KPI 기준값은 항상 farm_country_code 기준으로 적용
 
 ---
 
