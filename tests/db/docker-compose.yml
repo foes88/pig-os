@@ -1,0 +1,25 @@
+version: "3.3"
+
+services:
+  pigos-db:
+    image: postgres:16-alpine
+    container_name: pigos-db-test
+    environment:
+      POSTGRES_DB: pigos_test
+      POSTGRES_USER: pigos
+      POSTGRES_PASSWORD: pigos_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d          # 초기화 스크립트
+      - ../../docs/specs:/sql:ro                     # 스키마 SQL 파일 (읽기 전용)
+      - ./pigplan_data:/pigplan_data:ro              # PigPlan 추출 데이터 (선택)
+      - pigos-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pigos -d pigos_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pigos-db-data:
