@@ -26,3 +26,9 @@
     color: var(--color-text);
   }
 }
+
+@layer components {
+  .input {
+    @apply w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-text1 outline-none transition focus:border-primary;
+  }
+}
