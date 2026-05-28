@@ -1,7 +1,7 @@
 """
 Integration test fixtures.
 - 테스트 DB: pigos_test (Docker postgres 컨테이너 재활용)
-- 각 테스트는 savepoint로 감싸고 rollback → 격리 보장
+- 각 테스트는 별도 트랜잭션 + rollback으로 격리
 """
 import os
 import uuid
@@ -11,7 +11,9 @@ from typing import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.db.base import Base
@@ -22,42 +24,39 @@ from app.main import app
 from app.core.dependencies import get_db
 
 # ── Test DB URL ───────────────────────────────────────────────────────────────
-# pigos_test DB는 docker exec로 미리 생성 필요:
-#   docker exec pigos-postgres psql -U pigos -c "CREATE DATABASE pigos_test;"
-_TEST_DB_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    settings.database_url.replace("/pigos", "/pigos_test"),
-)
+def _make_test_url(url: str) -> str:
+    from urllib.parse import urlparse, urlunparse
+    p = urlparse(url)
+    return urlunparse(p._replace(path="/pigos_test"))
 
-_engine = create_async_engine(_TEST_DB_URL, echo=False, future=True)
-_TestSession = async_sessionmaker(_engine, expire_on_commit=False)
+_ASYNC_TEST_URL = os.getenv("TEST_DATABASE_URL", _make_test_url(settings.database_url))
+_SYNC_TEST_URL = _ASYNC_TEST_URL.replace("postgresql+asyncpg", "postgresql+psycopg2")
+
+# sync 엔진 — 테이블 생성 전용 (event loop 없이 session-scoped fixture에서 사용)
+_sync_engine = create_engine(_SYNC_TEST_URL, echo=False)
+
+# async 엔진 — 각 테스트 함수에서만 사용, NullPool로 독립 연결
+_async_engine = create_async_engine(_ASYNC_TEST_URL, echo=False, future=True, poolclass=NullPool)
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def create_tables():
-    """세션 시작 시 한 번만 테이블 생성."""
-    async with _engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+@pytest.fixture(scope="session", autouse=True)
+def create_tables():
+    """세션 시작 시 한 번만 테이블 생성 (sync 엔진 사용)."""
+    Base.metadata.create_all(_sync_engine)
     yield
-    # 테스트 세션 종료 후 전체 드랍 (선택적)
-    # async with _engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.drop_all)
+    _sync_engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def db() -> AsyncGenerator[AsyncSession, None]:
     """
-    각 테스트마다 savepoint 트랜잭션으로 격리.
-    테스트 종료 시 rollback → DB 상태 초기화.
+    각 테스트마다 독립 트랜잭션.
+    서비스의 commit()을 flush()로 대체 후 rollback → DB 격리.
     """
-    async with _engine.connect() as conn:
-        await conn.begin()
-        await conn.begin_nested()  # savepoint
-
+    async with _async_engine.begin() as conn:
         session = AsyncSession(bind=conn, expire_on_commit=False)
 
         async def mock_commit():
-            # commit 대신 flush만 — savepoint 안에서 유지
             await session.flush()
 
         session.commit = mock_commit  # type: ignore[method-assign]
