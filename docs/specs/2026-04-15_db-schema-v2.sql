@@ -344,10 +344,11 @@ CREATE TABLE breeding_cycles (
     mating_count    INT NOT NULL DEFAULT 1
         CHECK (mating_count >= 1 AND mating_count <= 5),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (sow_id, parity)
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    -- UNIQUE(sow_id, parity) 제거: 재발정 재교배 시 같은 산차에 여러 사이클 가능
 );
 CREATE INDEX idx_bc_farm_sow ON breeding_cycles(farm_id, sow_id);
+CREATE INDEX idx_bc_sow_parity ON breeding_cycles(sow_id, parity);
 
 -- 활성 사이클은 모돈당 최대 1개 (WEANED/FAILED 제외)
 CREATE UNIQUE INDEX idx_one_active_cycle
@@ -596,7 +597,7 @@ ALTER TABLE sows ADD CONSTRAINT chk_sow_parity
 ALTER TABLE farrowings ADD CONSTRAINT chk_total_born_integrity
     CHECK (total_born = born_alive + stillborn + mummified);
 ALTER TABLE farrowings ADD CONSTRAINT chk_total_born_range
-    CHECK (total_born >= 0 AND total_born <= 30);
+    CHECK (total_born >= 0 AND total_born <= 40);
 ALTER TABLE farrowings ADD CONSTRAINT chk_born_alive_range
     CHECK (born_alive >= 0);
 ALTER TABLE farrowings ADD CONSTRAINT chk_stillborn_range
@@ -605,9 +606,9 @@ ALTER TABLE farrowings ADD CONSTRAINT chk_mummified_range
     CHECK (mummified >= 0);
 
 ALTER TABLE weanings ADD CONSTRAINT chk_weaned_count
-    CHECK (weaned_count >= 0 AND weaned_count <= 25);
+    CHECK (weaned_count >= 0 AND weaned_count <= 30);
 ALTER TABLE weanings ADD CONSTRAINT chk_weaning_age
-    CHECK (weaning_age_days >= 10 AND weaning_age_days <= 60);
+    CHECK (weaning_age_days >= 1 AND weaning_age_days <= 60);
 
 ALTER TABLE matings ADD CONSTRAINT chk_mating_number
     CHECK (mating_number >= 1 AND mating_number <= 5);
@@ -787,6 +788,7 @@ CREATE TRIGGER trg_validate_weaning_dates
     FOR EACH ROW EXECUTE FUNCTION validate_weaning_dates();
 
 -- [M-07] v_farm_psy: deleted_at IS NULL 필터 추가
+DROP VIEW IF EXISTS v_farm_psy CASCADE;
 CREATE OR REPLACE VIEW v_farm_psy AS
 SELECT
     s.farm_id,
@@ -804,6 +806,7 @@ WHERE s.deleted_at IS NULL
 GROUP BY s.farm_id, DATE_TRUNC('year', w.weaning_date);
 
 -- [M-06] v_sow_npd: LATERAL + LIMIT 1 (중복 집계 방지)
+DROP VIEW IF EXISTS v_sow_npd CASCADE;
 CREATE OR REPLACE VIEW v_sow_npd AS
 SELECT
     s.id         AS sow_id,

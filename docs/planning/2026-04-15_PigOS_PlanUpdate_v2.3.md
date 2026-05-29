@@ -1,7 +1,8 @@
 # PigOS 기획서 Update v2.4
 
-> 2026-04-27 | v2.3 → v2.4 업데이트
-> 대상 섹션: 온보딩 UX / PigSignal 영업전략 / 경쟁사 인텔리전스 반영
+> 2026-05-06 | v2.4 → v2.5 업데이트
+> 대상 섹션: Salesforce 파트너십 현황 반영 / AgentExchange MCP 전략 추가
+> **도메인**: pigos.io (2026-05-18 구매 확정)
 > 하위 문서:
 >   - DB Schema v2 — [2026-04-15_db-schema-v2.sql](../specs/2026-04-15_db-schema-v2.sql)
 >   - Migration — [2026-04-15_schema-v1-to-v2-migration.md](../specs/2026-04-15_schema-v1-to-v2-migration.md)
@@ -31,17 +32,27 @@
 | 3 | 이메일 캠페인 | 일반 마케팅 목적 | **H2A 수요처(사료사·도축장·보험·연구기관) 직접 영업** 목적으로 명확화 |
 | 4 | Layer 3 AI | 월간 리포트 생성(Push)만 | **자연어 Q&A(Pull) 추가** — 7월 Base 베타 포함 검토 |
 
+### v2.5 (2026-05-06)
+| # | 항목 | 내용 |
+|---|------|------|
+| 1 | Salesforce 파트너십 | **ISV 파트너 가입 완료 + AppExchange 승인 완료** |
+| 2 | 데이터 유통 채널 | AgentExchange에 PigOS 데이터 API를 **MCP 서버**로 등록 — Agentforce 생태계에서 PigOS 데이터 직접 접근 가능 |
+| 3 | Agentforce 연동 | Agentforce Operations (백오피스 자동화) 연동 계획 추가 — 2026년 5월 베타 진입 타이밍에 맞춰 테스트 |
+| 4 | ISV GTM | AppExchange 비공개 제안·자동 프로비저닝 활용 → PigOS 구독 판매 채널 확장 |
+
 ---
 
 ## 0. 핵심 제품 컨셉
 
 ```
-FarmOS (Base, 무료)          AI Addon (유료)
-─────────────────────        ──────────────────────────────
-이벤트 입력                  Addon #1 — FCR AI 분석
-KPI 자동 산출 (PSY·MSY·NPD)  Addon #2 — 건강·방역 AI 분석
-기본 대시보드                 Addon #3 — 원가·재무 AI 분석
-이상 감지 알림               Addon #4 — 시장연동 AI 분석
+FarmOS (Base, 무료)               AI Addon (유료)
+──────────────────────────        ──────────────────────────────────────
+이벤트 입력                       Addon #1 — FCR Optimizer AI       $15~50/월
+KPI 자동 산출 (PSY·MSY·NPD)       Addon #2 — Health & Mortality AI  $20~60/월
+기본 대시보드                      Addon #3 — Cost/Profit Layer      $0 (ROI 엔진)
+이상 감지 알림                     Addon #4 — Market Advisor         소농 무료/B2B
+Base CLI Q&A (기본 KPI, 제한)      Addon #5 — Breeding & Farrowing   $15~100/월
+#4 소농 시세 알림 (무료)           Addon #6 — Biosecurity Audit AI   $10~60/월
 ```
 
 **차별화 전략:**
@@ -68,7 +79,7 @@ KPI 자동 산출 (PSY·MSY·NPD)  Addon #2 — 건강·방역 AI 분석
 |-------|--------|----------|------|
 | 1 Data | 베이직 | 이벤트 입력, KPI 대시보드, 기록 관리 | 무료 |
 | 2 Insight | 베이직 | 기준값 이탈 경보, 농장 점수화 | 무료 |
-| 3 Advisor | 애드온 #1~3 | FCR 최적화, 번식 What-if, 수익 시뮬 | 월 과금 |
+| 3 Advisor | 애드온 #1·#2·#4·#5·#6 | FCR 최적화, 건강·방역, 번식, 시장연동, 방역 감사 | 월 과금 |
 | 4 Autopilot | 프리미엄 | 사료 자동 발주, 번식 스케줄링, 알림 실행 | 연 계약 |
 
 ---
@@ -129,20 +140,37 @@ KPI 자동 산출 (PSY·MSY·NPD)  Addon #2 — 건강·방역 AI 분석
 
 ### 5-1. FarmOS — Base (무료)
 - **기능**: 이벤트 입력 (교배·분만·이유·도폐사) + PSY·MSY·NPD 자동 산출 + 기본 대시보드 + 이상 감지 알림
-- **리포트**: 월간 KPI 요약 / 농장 점수 vs 국가 평균 / 이벤트 현황 / AI 자연어 분석 리포트 (Claude API) + **PDF 내보내기 포함**
-- **목적**: 농가 유입 + 데이터 축적 (경쟁사 대비 무료가 핵심 무기)
+- **리포트**: 월간 KPI 요약 / 농장 점수 vs 국가 평균 / 이벤트 현황 / AI 자연어 분석 리포트 + **PDF 내보내기 포함**
+- **CLI Q&A (무료 포함, 기능 제한)**: 자연어로 AI에 질문/응답 가능. Base는 기본 KPI 도메인으로 제한. Addon 도메인 Q&A는 해당 Addon 구독 시 해제. (제한 기준 TBD — 질문 횟수 or 도메인)
+- **목적**: 농가 유입 + 데이터 축적. CLI Q&A는 현재 업계 트렌드 대응 (SwineWeb Q1 2026 확인)
 
-### 5-2. AI Addon (월 과금)
-> 각 Addon = 특정 기능 영역 전체 (데이터 입력 + AI 분석) 패키지
+### 5-2. AI Addon (이용 시 과금)
+> Addon 6개 확정 (2026-05-13, Claude + GPT 3차 토론 최종 합의)
+> 상세 스펙: [2026-05_PigOS_AddonSpec.md](2026-05_PigOS_AddonSpec.md)
 
-각 Addon = **데이터 입력 + AI 분석 + AI 리포트 + PDF 내보내기** 완결 패키지
+각 Addon = **데이터 입력 + Rule Engine 분석 + AI 리포트 + PDF + 도메인 특화 CLI Q&A** 완결 패키지
 
-| Addon | 기능 영역 | AI 분석 | 리포트 |
-|-------|----------|---------|--------|
-| #1 (8월) | FCR · 사료 입출고 | 사료효율 최적화, 급이 패턴 분석 | FCR AI 리포트 + PDF |
-| #2 (9월) | 건강·방역 · 항생제 추적 | 질병 예측, 이상 패턴 감지 | 건강·방역 AI 리포트 + PDF |
-| #3 (10월) | 원가·재무 · 생산원가 | 두당 수익 시뮬레이션, 비용 최적화 | 원가·재무 AI 리포트 + PDF |
-| #4 (11월) | 시장연동 · 출하 관리 | 시세 기반 출하 타이밍 AI 추천 | 시장연동 AI 리포트 + PDF |
+```
+CLI Q&A 구조:
+┌──────────────────────────────────────────────────────────┐
+│ Base CLI     │ 기본 KPI 질문/응답 (PSY·MSY·NPD 등)       │ 무료, 기능 제한
+├──────────────────────────────────────────────────────────┤
+│ Addon #1 CLI │ FCR·사료 특화  ("왜 FCR이 높아?")         │ #1 구독 시
+│ Addon #2 CLI │ 건강·방역 특화 ("PRRS 위험 돈방은?")      │ #2 구독 시
+│ Addon #4 CLI │ 시장연동 특화  ("지금 출하가 유리해?")    │ #4 구독 시
+│ Addon #5 CLI │ 번식 특화      ("재교배 필요한 모돈은?")  │ #5 구독 시
+│ Addon #6 CLI │ 방역 특화      ("방역 취약점이 어디야?")  │ #6 구독 시
+└──────────────────────────────────────────────────────────┘
+```
+
+| Addon | 기능 영역 | 과금 | 출시 |
+|-------|----------|------|------|
+| #1 FCR Optimizer AI | FCR·사료 입출고 | $15~50/월 | 2026.08 GA |
+| #2 Health & Mortality AI | 건강·폐사·치료 | $20~60/월 | 2026.09 GA |
+| #3 Cost/Profit Layer | 원가·손실 가시화 | $0 (ROI 엔진) | 2026.10 통합 |
+| #4 Market Advisor | 시장연동·각국 일별 돈가 | 소농 무료 / B2B $2k~10k | 2026.11 베타 |
+| #5 Breeding & Farrowing AI ★ | 번식·분만·모돈 최적화 | $15~100/월 | 2026.10 베타 |
+| #6 Biosecurity Audit AI ★ | 방역 감사·점수화 | $10~60/월 | 2026.10 베타 |
 - **과금 트리거 후보**:
   1. 등록 두수 증가 (100두 / 500두 / 1000두 구간)
   2. 애드온 선택 (모듈별 개별 과금)
@@ -269,7 +297,67 @@ PigSignal API
 
 ---
 
-## 9. 데이터 락인(Moat) 전략
+## 9. Salesforce 파트너십 전략 (v2.5 신규)
+
+### 9-0. 현황 (2026-05-06 기준)
+| 항목 | 상태 |
+|------|------|
+| Salesforce ISV 파트너 가입 | ✅ 완료 |
+| AppExchange 앱 등록 승인 | ✅ 완료 |
+| AgentExchange MCP 서버 등록 | 🔲 예정 |
+| Agentforce Operations 연동 테스트 | 🔲 예정 (2026년 5월 베타) |
+
+### 9-1. 왜 Salesforce 생태계인가
+- **AgentExchange**: 2026 TDX 발표 — AppExchange + Slack 마켓플레이스 + Agentforce를 단일 스토어로 통합. 현재 13,600개 앱·에이전트·MCP 서버 등록. **키워드가 아닌 비즈니스 의도 기반 검색** → PigOS 발견 가능성 향상.
+- **Agentforce Operations**: 재고 관리·온보딩·컴플라이언스 체크 등 백오피스 자동화 지원 (2026년 5월 베타). 양돈 농장 운영 자동화와 직접 연결.
+- **ISV GTM 앱**: 비공개 제안·통합 결제·자동 프로비저닝 → PigOS 구독 판매 채널 확장.
+
+### 9-2. PigOS ↔ Salesforce 연동 구조
+```
+Salesforce CRM (고객 농장)
+    ↓  Connected App (OAuth 2.0)
+PigOS FastAPI
+    ↓  MCP 서버 프로토콜
+AgentExchange 에이전트
+    ↓
+Agentforce Operations
+  → 사료 발주 자동화
+  → 번식 일정 알림
+  → 컴플라이언스 체크
+```
+
+### 9-3. MCP 서버 구현 범위 (개발 추가 항목)
+| API | 설명 | 우선순위 |
+|-----|------|---------|
+| `get_farm_kpi` | PSY·MSY·NPD 현재값 + 벤치마크 | P1 (7월) |
+| `get_alerts` | 이상 감지 알림 목록 | P1 (7월) |
+| `get_sow_status` | 모돈별 현재 상태 (임신·분만·이유) | P2 (8월) |
+| `post_event` | 이벤트 입력 (교배/분만/이유) | P2 (8월) |
+| `get_benchmark` | 국가별 KPI 기준값 조회 | P3 (9월) |
+
+### 9-4. 수익 연결
+- **데이터 API 판매 채널**: AgentExchange를 통해 Salesforce 생태계 내 수요처(사료사·보험·연구기관)에 PigOS 집계 데이터 API 직접 유통 가능 → **PigSignal A2A 수익화** 가속
+- **$50M Builders Initiative**: Salesforce AgentExchange Builders Initiative 신청 검토 (MCP 서버·에이전트 개발자 대상 지원금)
+
+---
+
+## 10. 하드웨어 중립 오픈 API 전략 (v2.5 신규)
+
+> Eco-Pork·Big Dutchman·Fancom 등 하드웨어 번들 플레이어가 동남아 시장 동시 진입 중 → PigOS 포지션 명문화
+
+PigOS는 특정 하드웨어에 종속되지 않는 오픈 API 생태계를 지향한다. Eco-Pork 바이오센싱 카메라·Big Dutchman IoT·Fancom 환경센서 등 외부 하드웨어 데이터를 PigOS로 연동 가능하도록 설계하며, 하드웨어 벤더를 경쟁자가 아닌 파트너 에코시스템으로 흡수하는 것을 차별화 전략의 핵심으로 삼는다.
+
+| 하드웨어 벤더 | 데이터 유형 | PigOS 연동 포인트 |
+|---|---|---|
+| Eco-Pork | 카메라 영상 → 발정·분만 감지 | Breeding AI Addon 또는 Layer 2 이상 감지 |
+| Big Dutchman | 급이·환기·온도 IoT | `environment_readings` + `feed_records` |
+| Fancom | 온도·습도·CO₂ 센서 | `environment_readings` (TimescaleDB) |
+
+**경쟁 구도 재정의**: 하드웨어 벤더는 PigOS의 데이터 수집 파트너, PigOS는 분석·AI 레이어 → Win-Win
+
+---
+
+## 11. 데이터 락인(Moat) 전략
 
 | 단계 | 기간 | 메커니즘 | 이탈 비용 |
 |------|------|---------|-----------|
@@ -301,7 +389,7 @@ PigSignal API
 
 ---
 
-## 11. 미결 의사결정 종합
+## 12. 미결 의사결정 종합
 
 | 항목 | 내용 | 시점 |
 |------|------|------|
@@ -319,7 +407,7 @@ PigSignal API
 
 ---
 
-## 12. 관련 문서
+## 13. 관련 문서
 
 - [db-schema-v2.sql](../specs/2026-04-15_db-schema-v2.sql) — v2.3 DB DDL
 - [schema-v1-to-v2-migration.md](../specs/2026-04-15_schema-v1-to-v2-migration.md) — 마이그레이션 가이드

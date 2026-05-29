@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PigOS 2026 로드맵</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --green:#1D9E75;--green-dark:#0D6348;--green-light:#D6F5E8;--green-mid:#EDF9F3;
+  --violet:#7F77DD;--violet-light:#EDE9FF;
+  --navy:#1E1B4B;--navy-mid:#F0EDFF;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:#F0F0EE;min-height:100vh;padding:32px 24px}
+.site-header{max-width:1400px;margin:0 auto 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.site-title{font-size:22px;font-weight:900;color:#222;letter-spacing:-1px}
+.site-title span{color:var(--green)}
+.updated{font-size:12px;color:#999}
+.badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--green);color:#fff}
+.section{max-width:1400px;margin:0 auto 40px}
+.section-header{display:flex;align-items:flex-end;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:3px solid var(--green)}
+.section-name{font-size:24px;font-weight:900;letter-spacing:-1px;color:var(--green-dark)}
+.section-sub{font-size:12px;color:#666;margin-bottom:3px}
+.section-legend{display:flex;gap:12px;margin-left:auto;font-size:11px;color:#888;align-items:center;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:4px}
+.lsq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.blog-banner{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:8px 14px;margin-bottom:12px;border-radius:6px;background:#E8F9F2;color:#0A4A36;border-left:4px solid var(--green)}
+.blog-banner span{opacity:.7;font-weight:400;font-size:11px}
+.table-wrap{overflow-x:auto;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+table{width:100%;border-collapse:collapse;table-layout:fixed;min-width:960px;background:#fff}
+th,td{border:.5px solid #DDD;vertical-align:top;padding:9px 11px;font-size:12px;line-height:1.5;word-break:break-word;overflow-wrap:break-word}
+thead th{text-align:center;font-weight:700;font-size:12px;padding:10px 8px;color:#444;background:#F2F2F0;white-space:nowrap;border-bottom:1.5px solid #CCC}
+th.th-label{width:64px;background:#FAFAFA;border:none}
+thead th.th-ms{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
+thead th.th-gl{background:var(--navy);color:#fff;border-color:var(--navy)}
+thead th .th-star{display:block;font-size:16px;font-weight:900;line-height:1;letter-spacing:-1px}
+thead th .th-sub{display:block;font-size:10px;font-weight:500;margin-top:2px;opacity:.8}
+.rl{text-align:center;vertical-align:middle;width:64px;padding:8px 6px;font-weight:700;font-size:12px;line-height:1.4;border:none}
+.rl .rl-sub{display:block;font-size:9px;font-weight:400;opacity:.65;margin-top:2px;letter-spacing:.5px}
+.rl-dev{background:var(--green-light);color:var(--green-dark);border-right:3px solid var(--green)}
+.rl-biz{background:var(--violet-light);color:var(--navy);border-right:3px solid var(--violet)}
+td.c-dev{background:#FAFEFE}
+td.c-biz{background:#FDFCFF}
+td.c-ms{background:var(--green-mid)}
+td.c-gl{background:var(--navy-mid)}
+.row-sep td{border-top:1.5px solid #DDD}
+.item{display:flex;align-items:flex-start;gap:5px;margin-bottom:3px;line-height:1.45}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.c-dev .dot,.c-ms .dot{background:var(--green)}
+.c-biz .dot{background:var(--violet)}
+.c-gl .dot{background:#555}
+.ms-title{font-weight:700;font-size:12px;margin-bottom:4px;display:block}
+.c-ms .ms-title{color:var(--green-dark)}
+.c-gl .ms-title{color:var(--navy)}
+
+
+/* ── 상시 활동 Row ── */
+.always-row td{border:.5px solid #DDD;padding:0;vertical-align:middle}
+.always-rl{background:#EAEAE8;color:#555;border-right:3px solid #BBBBBB;font-size:11px;font-weight:700;text-align:center;vertical-align:middle;padding:8px 4px}
+.always-rl .rl-sub{display:block;font-size:9px;font-weight:400;opacity:.6;margin-top:2px;letter-spacing:.5px}
+.always-gantt-wrap{padding:10px 14px;background:#F5F5F3;display:flex;flex-direction:column;gap:5px}
+.a-bar-row{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:10px}
+.a-bar-label{font-size:10.5px;font-weight:700;color:#444;white-space:nowrap;text-align:right;line-height:1.3}
+.a-bar-track{height:18px;background:#E4E4E0;border-radius:9px;position:relative;overflow:hidden}
+.a-bar-fill{height:100%;border-radius:9px;position:absolute;top:0;display:flex;align-items:center;padding:0 10px;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
+.a-bar-text{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.95);white-space:nowrap}
+.table-footer{margin-top:10px;font-size:11px;color:#AAA;display:flex;gap:16px;flex-wrap:wrap;padding:0 2px}
+.table-footer b{color:#888;margin-right:2px}
+</style>
+</head>
+<body>
+<div class="site-header">
+  <div><div class="site-title">Pig<span>OS</span> &nbsp;<span style="font-size:14px;color:#888;font-weight:400">2026 실행 로드맵</span></div></div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <span class="updated" id="updated-date"></span>
+    <span class="badge">LIVE</span>
+  </div>
+</div>
+<div id="roadmap-root"></div>
+
+<script>
+// ════════════════════════════════════════════════
+//  ★ 여기만 수정하면 자동 업데이트됩니다 ★
+// ════════════════════════════════════════════════
+const LAST_UPDATED = '2026-05-06';
+
+const DATA = {
+  name: 'PigOS',
+  sub: 'AI 양돈 농장 관리 플랫폼',
+  blog: 'Radar Desk 트렌드·이슈 포착 → 주제 선정 · GPT·Claude 활용 작성 · 하루 2편 목표 · 제3 매체 노출 → 보도자료 레퍼런스 축적',
+  months: ['4월','5월','6월','7/1 ★','8월','9월','10월','11월','12월 ★'],
+  ms_col: 3, gl_col: 8,
+
+  build: [
+    { items: ['DB 49테이블 검증 · Multi-tenant 아키텍처', 'MARKET/REGION 기본값 테이블 설계', 'default_metric_values 테이블 설계', 'compliance_profiles 설계'] },
+    { items: ['FastAPI 착수 · MVP 스프린트 (8주)', '온보딩 UX · IP기반 국가감지 개발', 'scope_kpi_recommendations 구축', 'Rule Engine 구현 (기준값 이탈 감지)'] },
+    { items: ['MVP 완성 · QA · 코드리뷰', '반응형·iPad·i18n', 'Claude API 연동 · AI 분석 엔진', '<b style="color:#0A4A36">6/30 개발 완료</b>'] },
+    { milestone: '★ 7/1 베이직 출시', items: ['Android+iOS 동시 · 7개 언어', 'PSY·MSY·NPD · API 버저닝 · 감사 로그', 'AI 자연어 분석 리포트 (Claude API)'] },
+    { milestone: 'Addon #1 출시', items: ['FCR 사료효율 모듈', '사료 입출고 연동'] },
+    { milestone: 'Addon #2 출시', items: ['건강·방역 · 항생제 추적', 'RAG 구축 시작 (pgvector)'] },
+    { milestone: 'Addon #3 출시', items: ['원가·재무 · 두당 생산원가', 'RAG 양돈 전문 문서 적재'] },
+    { milestone: 'Addon #4 출시', items: ['시장연동 AI · PigSignal 연동', 'market_price_reference 연동'] },
+    { milestone: '★ KPI 4종 완성', items: ['풀 라인업 · 5개국 서비스', 'Spring Boot · Phase 2 완료', 'Gemma 4 로컬 전환 검토'] },
+  ],
+
+  growth: [
+    { items: ['브랜드 확정 · 타겟시장 5개', '나라별 KPI 리스트 조사', '온보딩 플로우 설계 · 과금 구조 기획'] },
+    { items: ['패키징·과금 구조 확정 · 무료 한도 결정', '양돈 Rule 문서화 · benchmark 4종 값 정리', 'IP기반 KPI 추천 UX 기획 · 앱스토어 준비'] },
+    { items: ['보도자료 초안 · 기자 이메일 DB', '무료체험 랜딩 · 해외 배포 전략'] },
+    { milestone: '★ 7/1 출시 마케팅', items: ['보도자료 국내외 배포', '키워드 광고 · 랜딩 오픈 · 앱스토어 등록'] },
+    { items: ['Addon #1 홍보', '사용자 피드백 수집'] },
+    { items: ['Addon #2 홍보', '해외 기자 아웃리치'] },
+    { items: ['Addon #3 홍보', '파트너십 발굴'] },
+    { items: ['Addon #4 홍보', '연말 프로모션 기획'] },
+    { milestone: '★ 글로벌 인지도', items: ['제3매체 레퍼런스 확보', '파트너십 · 2027 플랜 수립'] },
+  ],
+
+  // 상시 활동: 비개발 행 아래 Row로 표시
+  // start/end: 1=4월 ~ 9=12월 (9컬럼 기준)
+  always: [
+    { label: '✏ 블로그 작성',     color: '#3B82F6', period: '4→12월', start: 1, end: 9 },
+    { label: '👁 경쟁사 모니터링', color: '#64748B', period: '4→12월', start: 1, end: 9 },
+    { label: '📰 보도자료',        color: '#8B5CF6', period: '7→12월', start: 4, end: 9 },
+    { label: '🤖 AI 엔진 고도화',  color: '#D97706', period: '7→12월', start: 4, end: 9 },
+  ],
+
+  footer: [
+    ['Base (무료)', '교배·분만·이유·도폐사 + PSY·MSY·NPD 자동산출'],
+    ['Addon (유료)', 'FCR / 건강·방역 / 원가·재무 / 시장연동 AI'],
+    ['타겟시장', '미국 · 동남아(VN·TH) · 중국 · 브라질 · 한국 — 아시아태평양 최고 성장 지역'],
+    ['시장 규모', 'Precision Swine Farming $1.35B→$2.46B (Mordor, CAGR 12.8%) | AI 정밀축산 $2.7B→$8B+ (GlobeNewswire 2026, CAGR 27.9%)'],
+    ['AI 엔진', 'Phase 2: Claude API → Phase 3: +RAG → Phase 4: Gemma 4 로컬'],
+  ],
+};
+
+// ════════════════════════════════════════════════
+//  렌더링 엔진 (수정 불필요)
+// ════════════════════════════════════════════════
+function renderCell(cell, cls) {
+  let html = `<td class="${cls}">`;
+  if (cell.milestone) html += `<span class="ms-title">${cell.milestone}</span>`;
+  (cell.items||[]).forEach(t => html += `<div class="item"><span class="dot"></span><span>${t}</span></div>`);
+  return html + '</td>';
+}
+
+function renderAlwaysRow(always) {
+  const bars = always.map(a => {
+    const startPct = ((a.start - 1) / 9 * 100).toFixed(2);
+    const widthPct = ((a.end - a.start + 1) / 9 * 100).toFixed(2);
+    return `<div class="a-bar-row">
+      <span class="a-bar-label">${a.label}</span>
+      <div class="a-bar-track">
+        <div class="a-bar-fill" style="left:${startPct}%;width:${widthPct}%;background:${a.color}">
+          <span class="a-bar-text">${a.period}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<tr class="always-row">
+    <td class="always-rl">상시<br><span class="rl-sub">ALWAYS</span></td>
+    <td colspan="9" style="padding:0;border:.5px solid #DDD">
+      <div class="always-gantt-wrap">${bars}</div>
+    </td>
+  </tr>`;
+}
+
+function render(d) {
+  // headers
+  let headers = '<th class="th-label"></th>';
+  d.months.forEach((m, i) => {
+    let cls = i === d.ms_col ? 'th-ms' : i === d.gl_col ? 'th-gl' : '';
+    if (m.includes('★')) {
+      headers += `<th class="${cls}"><span class="th-star">${m.replace(' ★','')}</span><span class="th-sub">${i===d.ms_col?'출시 마일스톤':'연간 목표'}</span></th>`;
+    } else {
+      headers += `<th class="${cls}">${m}</th>`;
+    }
+  });
+
+  // build row
+  let buildCells = d.build.map((c,i) => renderCell(c, i===d.gl_col?'c-gl':i===d.ms_col?'c-ms':'c-dev')).join('');
+  // growth row
+  let growthCells = d.growth.map((c,i) => renderCell(c, i===d.gl_col?'c-gl':i===d.ms_col?'c-ms':'c-biz')).join('');
+  // footer
+  let footer = d.footer.map(([k,v]) => `<span><b>${k}</b>${v}</span>`).join('');
+
+  return `
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <div class="section-name">${d.name}</div>
+        <div class="section-sub">${d.sub}</div>
+      </div>
+      <div class="section-legend">
+        <span class="leg"><span class="lsq" style="background:var(--green)"></span>개발</span>
+        <span class="leg"><span class="lsq" style="background:var(--violet)"></span>비개발</span>
+        <span class="leg"><span class="lsq" style="background:#EAEAE8;border:1px solid #CCC"></span>상시활동</span>
+        <span class="leg"><span class="lsq" style="background:var(--navy)"></span>★ 마일스톤·목표</span>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>${headers}</tr></thead>
+        <tbody>
+          <tr>
+            <td class="rl rl-dev">개발<span class="rl-sub">BUILD</span></td>
+            ${buildCells}
+          </tr>
+          <tr class="row-sep">
+            <td class="rl rl-biz">비개발<span class="rl-sub">GROWTH</span></td>
+            ${growthCells}
+          </tr>
+          ${renderAlwaysRow(d.always)}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">${footer}</div>
+  </div>`;
+}
+
+document.getElementById('roadmap-root').innerHTML = render(DATA);
+document.getElementById('updated-date').textContent = 'Last updated: ' + LAST_UPDATED;
+</script>
+</body>
+</html>

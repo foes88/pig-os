@@ -1,0 +1,984 @@
+openapi: "3.1.0"
+info:
+  title: PigOS API
+  version: "1.0.0"
+  description: |
+    Global Swine Farm Management SaaS — Base API + AI Addon platform.
+
+    ## Authentication
+    All endpoints (except `/auth/register`, `/auth/login`, `/health`) require a
+    Bearer JWT access token obtained from `/api/v1/auth/login`.
+
+    Access token TTL: **15 minutes**
+    Refresh token TTL: **7 days**
+
+    ## Addon Gating
+    Some endpoints require an active Addon subscription.
+    Attempting to access a gated endpoint without subscription returns `402 Payment Required`.
+
+    ## Multi-tenancy
+    All farm data is isolated by `farm_id`. Users only see farms they belong to.
+
+  contact:
+    name: PigOS Support
+    url: https://pigos.io
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.pigos.io/api/v1
+    description: Production
+  - url: http://localhost:8000/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Registration, login, token management
+  - name: Onboarding
+    description: Farm setup wizard (steps 1–4)
+  - name: Farms
+    description: Farm CRUD
+  - name: Sows
+    description: Sow inventory management
+  - name: Events
+    description: Reproductive event recording
+  - name: KPI
+    description: Key Performance Indicators — PSY, NPD, alerts
+  - name: Q&A
+    description: Rule-grounded Q&A (Base=template, Addon=LLM)
+  - name: System
+    description: Health check
+
+# ── Security scheme ───────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # ── Reusable schemas ─────────────────────────────────────────────────────────
+  schemas:
+
+    # Common
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:    { type: string, example: "UNAUTHORIZED" }
+        message: { type: string, example: "Invalid or expired token" }
+
+    PageMeta:
+      type: object
+      properties:
+        total:     { type: integer, example: 142 }
+        page:      { type: integer, example: 1 }
+        page_size: { type: integer, example: 50 }
+        has_next:  { type: boolean, example: true }
+
+    UUID:
+      type: string
+      format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    # Auth
+    RegisterRequest:
+      type: object
+      required: [name, email, password, org_name, country]
+      properties:
+        name:     { type: string, example: "Brian Bae" }
+        email:    { type: string, format: email, example: "brian@farm.com" }
+        password: { type: string, minLength: 8, example: "SecurePass1!" }
+        org_name: { type: string, example: "Green Valley Farm" }
+        country:  { type: string, example: "KR", description: "ISO-3166-1 alpha-2" }
+        language: { type: string, default: "en", example: "ko" }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:    { type: string, format: email }
+        password: { type: string }
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:  { type: string }
+        refresh_token: { type: string }
+        token_type:    { type: string, default: "bearer" }
+        expires_in:    { type: integer, example: 900, description: "Access token TTL (seconds)" }
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+
+    MeResponse:
+      type: object
+      properties:
+        id:       { $ref: "#/components/schemas/UUID" }
+        name:     { type: string }
+        email:    { type: string, format: email }
+        role:     { type: string, enum: [ADMIN, ORG_OWNER, FARM_MANAGER, WORKER] }
+        org_id:   { $ref: "#/components/schemas/UUID" }
+        language: { type: string }
+        farm_ids: { type: array, items: { $ref: "#/components/schemas/UUID" } }
+
+    # Farm
+    FarmCreate:
+      type: object
+      required: [name, country]
+      properties:
+        name:     { type: string, example: "Green Valley Farm #1" }
+        country:  { type: string, example: "KR" }
+        region:   { type: string, example: "경기" }
+        timezone: { type: string, example: "Asia/Seoul" }
+        address:  { type: string }
+        phone:    { type: string }
+
+    FarmResponse:
+      type: object
+      properties:
+        id:       { $ref: "#/components/schemas/UUID" }
+        farm_code: { type: string, example: "FARM-KR-GRN" }
+        name:     { type: string }
+        country:  { type: string }
+        region:   { type: ["string", "null"] }
+        timezone: { type: string }
+        active:   { type: boolean }
+
+    FarmUpdate:
+      type: object
+      properties:
+        name:     { type: string }
+        region:   { type: string }
+        timezone: { type: string }
+        address:  { type: string }
+        phone:    { type: string }
+
+    FarmConfigSet:
+      type: object
+      description: "Upsert farm-specific reproductive parameters. Omitted keys keep current values."
+      properties:
+        gestation_days:       { type: integer, example: 114 }
+        lactation_days:       { type: integer, example: 21 }
+        npd_alert_threshold:  { type: integer, example: 35 }
+        target_psy:           { type: number, format: float, example: 25.0 }
+        target_farrowing_rate:{ type: number, format: float, example: 88.0 }
+        piglet_value_usd:     { type: number, format: float, example: 45.0 }
+
+    OnboardingStatus:
+      type: object
+      properties:
+        farm_id:     { $ref: "#/components/schemas/UUID" }
+        pct_complete:{ type: integer, example: 75 }
+        steps:
+          type: object
+          properties:
+            farm_created:    { type: boolean }
+            config_set:      { type: boolean }
+            sows_added:      { type: boolean }
+            first_event:     { type: boolean }
+
+    # Sow
+    SowCreate:
+      type: object
+      required: [ear_tag, entry_date, entry_type]
+      properties:
+        ear_tag:      { type: string, example: "A-001" }
+        rfid_tag:     { type: ["string", "null"], example: "RFID-001" }
+        entry_date:   { type: string, format: date, example: "2026-01-15" }
+        entry_type:   { type: string, enum: [GILT, PURCHASED, TRANSFERRED] }
+        breed:        { type: string, example: "LANDRACE" }
+        breed_company:{ type: string, example: "DanBred" }
+        building_id:  { $ref: "#/components/schemas/UUID" }
+        parity:       { type: integer, default: 0 }
+
+    SowResponse:
+      type: object
+      properties:
+        id:           { $ref: "#/components/schemas/UUID" }
+        farm_id:      { $ref: "#/components/schemas/UUID" }
+        ear_tag:      { type: string }
+        rfid_tag:     { type: ["string", "null"] }
+        status:       { type: string, enum: [ACTIVE, GESTATING, LACTATING, WEANED, DRY, CULLED, DEAD] }
+        parity:       { type: integer }
+        breed:        { type: ["string", "null"] }
+        entry_date:   { type: string, format: date-time }
+        deleted_at:   { type: ["string", "null"], format: date-time }
+
+    SowUpdate:
+      type: object
+      properties:
+        ear_tag:    { type: string }
+        rfid_tag:   { type: string }
+        breed:      { type: string }
+        building_id:{ $ref: "#/components/schemas/UUID" }
+        status:     { type: string }
+
+    # Events
+    MatingCreate:
+      type: object
+      required: [sow_id, mating_date, mating_type]
+      properties:
+        sow_id:        { $ref: "#/components/schemas/UUID" }
+        mating_date:   { type: string, format: date, example: "2026-05-01" }
+        mating_type:   { type: string, enum: [AI, NATURAL] }
+        boar_id:       { $ref: "#/components/schemas/UUID" }
+        semen_batch:   { type: string, example: "BATCH-2026-05-001" }
+        mating_number: { type: integer, default: 1, description: "1=first service, 2=return" }
+        notes:         { type: string }
+
+    MatingResponse:
+      type: object
+      properties:
+        id:          { $ref: "#/components/schemas/UUID" }
+        sow_id:      { $ref: "#/components/schemas/UUID" }
+        mating_date: { type: string, format: date }
+        mating_type: { type: string }
+        created_at:  { type: string, format: date-time }
+
+    FarrowingCreate:
+      type: object
+      required: [sow_id, farrowing_date, total_born, born_alive]
+      properties:
+        sow_id:         { $ref: "#/components/schemas/UUID" }
+        farrowing_date: { type: string, format: date }
+        total_born:     { type: integer, minimum: 0 }
+        born_alive:     { type: integer, minimum: 0 }
+        born_dead:      { type: integer, default: 0 }
+        mummies:        { type: integer, default: 0 }
+        farrowing_type: { type: string, enum: [NORMAL, ASSISTED, INDUCED], default: "NORMAL" }
+        notes:          { type: string }
+
+    FarrowingResponse:
+      type: object
+      properties:
+        id:             { $ref: "#/components/schemas/UUID" }
+        sow_id:         { $ref: "#/components/schemas/UUID" }
+        farrowing_date: { type: string, format: date }
+        total_born:     { type: integer }
+        born_alive:     { type: integer }
+        born_dead:      { type: integer }
+        mummies:        { type: integer }
+        created_at:     { type: string, format: date-time }
+
+    WeaningCreate:
+      type: object
+      required: [sow_id, weaning_date, weaned_count]
+      properties:
+        sow_id:         { $ref: "#/components/schemas/UUID" }
+        weaning_date:   { type: string, format: date }
+        weaned_count:   { type: integer, minimum: 0 }
+        avg_weight_kg:  { type: number, format: float, example: 6.2 }
+        notes:          { type: string }
+
+    WeaningResponse:
+      type: object
+      properties:
+        id:           { $ref: "#/components/schemas/UUID" }
+        sow_id:       { $ref: "#/components/schemas/UUID" }
+        weaning_date: { type: string, format: date }
+        weaned_count: { type: integer }
+        created_at:   { type: string, format: date-time }
+
+    ReproductiveEventCreate:
+      type: object
+      required: [sow_id, event_type, event_date]
+      properties:
+        sow_id:     { $ref: "#/components/schemas/UUID" }
+        event_type: { type: string, enum: [RETURN_TO_ESTRUS, ABORTION, EMPTY, CULL, DEATH], example: "RETURN_TO_ESTRUS" }
+        event_date: { type: string, format: date }
+        notes:      { type: string }
+
+    ReproductiveEventResponse:
+      type: object
+      properties:
+        id:         { $ref: "#/components/schemas/UUID" }
+        sow_id:     { $ref: "#/components/schemas/UUID" }
+        event_type: { type: string }
+        event_date: { type: string, format: date }
+        created_at: { type: string, format: date-time }
+
+    # KPI
+    KpiValue:
+      type: object
+      properties:
+        value:           { type: ["number", "null"], format: float }
+        benchmark_avg:   { type: ["number", "null"], format: float }
+        benchmark_top25: { type: ["number", "null"], format: float }
+        target_value:    { type: ["number", "null"], format: float }
+        unit:            { type: string, example: "piglets/sow/year" }
+        status:          { type: string, enum: [OK, WARNING, CRITICAL, NO_DATA] }
+
+    Alert:
+      type: object
+      properties:
+        alert_type: { type: string, example: "NPD_OVERDUE" }
+        severity:   { type: string, enum: [INFO, WARNING, CRITICAL] }
+        sow_id:     { $ref: "#/components/schemas/UUID" }
+        message:    { type: string }
+        detail:     { type: object }
+
+    DashboardKpi:
+      type: object
+      properties:
+        farm_id:          { $ref: "#/components/schemas/UUID" }
+        as_of:            { type: string, format: date }
+        period_months:    { type: integer, example: 12 }
+        psy:              { $ref: "#/components/schemas/KpiValue" }
+        msy:              { $ref: "#/components/schemas/KpiValue" }
+        npd:              { $ref: "#/components/schemas/KpiValue" }
+        active_sow_count: { type: integer }
+        gestating_count:  { type: integer }
+        lactating_count:  { type: integer }
+        alerts:           { type: array, items: { $ref: "#/components/schemas/Alert" } }
+        alerts_critical:  { type: integer }
+        alerts_warning:   { type: integer }
+
+    PsyDetail:
+      type: object
+      properties:
+        farm_id:       { $ref: "#/components/schemas/UUID" }
+        year:          { type: integer, example: 2026 }
+        avg_sow_count: { type: number }
+        total_weaned:  { type: integer }
+        psy:           { type: ["number", "null"], format: float, example: 23.4 }
+        benchmark_avg: { type: ["number", "null"] }
+        target_value:  { type: ["number", "null"] }
+
+    NpdBreakdown:
+      type: object
+      properties:
+        farm_id:               { $ref: "#/components/schemas/UUID" }
+        period_start:          { type: string, format: date }
+        period_end:            { type: string, format: date }
+        avg_npd:               { type: ["number", "null"], example: 38.2 }
+        weaning_to_mating_days:{ type: ["number", "null"], example: 6.1 }
+        return_to_estrus_days: { type: ["number", "null"] }
+        empty_days:            { type: ["number", "null"] }
+        npd_target:            { type: ["number", "null"] }
+        benchmark_avg:         { type: ["number", "null"] }
+
+    # Q&A
+    ChatQuery:
+      type: object
+      required: [question]
+      properties:
+        question: { type: string, minLength: 2, maxLength: 500, example: "Why is my PSY so low?" }
+        locale:   { type: string, enum: [en, ko, es, zh], default: "en" }
+
+    FindingOut:
+      type: object
+      properties:
+        rule_id:              { type: string, example: "psy.below_target" }
+        kpi:                  { type: string, example: "PSY" }
+        severity:             { type: string, enum: [OK, INFO, WARNING, CRITICAL] }
+        current_value:        { type: ["number", "null"] }
+        target_value:         { type: ["number", "null"] }
+        causes:               { type: array, items: { type: string } }
+        recommended_actions:  { type: array, items: { type: string } }
+
+    ChatResponse:
+      type: object
+      properties:
+        intent:   { type: string, example: "psy" }
+        severity: { type: string, enum: [OK, INFO, WARNING, CRITICAL] }
+        answer:   { type: string, description: "Human-readable response (template or LLM)" }
+        findings: { type: array, items: { $ref: "#/components/schemas/FindingOut" } }
+        farm_id:  { $ref: "#/components/schemas/UUID" }
+        as_of:    { type: string, format: date }
+        renderer: { type: string, enum: [template, llm], example: "template" }
+
+  # ── Reusable responses ────────────────────────────────────────────────────────
+  responses:
+    Unauthorized:
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: "UNAUTHORIZED", message: "Invalid or expired token" }
+
+    Forbidden:
+      description: User has no access to this farm
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+    PaymentRequired:
+      description: Addon subscription required
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: "ADDON_NOT_SUBSCRIBED", message: "Addon ADDON_FCR is not active for this farm" }
+
+    PeriodLocked:
+      description: Period is locked — data cannot be modified
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { code: "PERIOD_LOCKED", message: "2026-04 is locked" }
+
+# ── Default security for all endpoints ───────────────────────────────────────
+security:
+  - BearerAuth: []
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── System ──────────────────────────────────────────────────────────────────
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example: { status: "ok", version: "1.0.0" }
+
+  # ── Auth ─────────────────────────────────────────────────────────────────────
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Create account + organization
+      description: |
+        Creates an Organization and User in one call.
+        Returns tokens immediately — no email verification in MVP.
+        Next step: `POST /api/v1/onboarding/farm`
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterRequest" }
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "409":
+          description: Email already registered
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "401":
+          description: Invalid credentials
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefreshRequest" }
+      responses:
+        "200":
+          description: New token pair issued (old refresh token invalidated)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TokenResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (invalidate refresh token)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RefreshRequest" }
+      responses:
+        "204": { description: Logged out }
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user profile + farm list
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MeResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  # ── Onboarding ────────────────────────────────────────────────────────────────
+  /api/v1/onboarding/farm:
+    post:
+      tags: [Onboarding]
+      summary: "Step 2: Create farm"
+      description: |
+        Create a farm and link it to the current user.
+        `farm_code` is auto-generated: `FARM-{COUNTRY}-{ORG_PREFIX}`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FarmCreate" }
+      responses:
+        "201":
+          description: Farm created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FarmResponse" }
+
+  /api/v1/onboarding/farm/{farm_id}/config:
+    post:
+      tags: [Onboarding]
+      summary: "Step 3: Set farm parameters"
+      description: Upsert reproductive parameters. All fields optional.
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FarmConfigSet" }
+      responses:
+        "200":
+          description: Config saved
+          content:
+            application/json:
+              example: { saved: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/v1/onboarding/farm/{farm_id}/status:
+    get:
+      tags: [Onboarding]
+      summary: Onboarding completion status
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      responses:
+        "200":
+          description: Onboarding status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnboardingStatus" }
+
+  # ── Farms ─────────────────────────────────────────────────────────────────────
+  /api/v1/farms:
+    get:
+      tags: [Farms]
+      summary: List farms accessible to current user
+      responses:
+        "200":
+          description: Farm list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FarmResponse" }
+
+  /api/v1/farms/{farm_id}:
+    get:
+      tags: [Farms]
+      summary: Get farm detail
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      responses:
+        "200":
+          description: Farm detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FarmResponse" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    patch:
+      tags: [Farms]
+      summary: Update farm info
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FarmUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FarmResponse" }
+
+  # ── Sows ──────────────────────────────────────────────────────────────────────
+  /api/v1/farms/{farm_id}/sows:
+    get:
+      tags: [Sows]
+      summary: List sows (paginated)
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [ACTIVE, GESTATING, LACTATING, WEANED, DRY] }
+        - name: building_id
+          in: query
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: parity_min
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: parity_max
+          in: query
+          schema: { type: integer, maximum: 20 }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+      responses:
+        "200":
+          description: Sow list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, items: { $ref: "#/components/schemas/SowResponse" } }
+                  meta: { $ref: "#/components/schemas/PageMeta" }
+
+    post:
+      tags: [Sows]
+      summary: Register a sow
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SowCreate" }
+      responses:
+        "201":
+          description: Sow created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SowResponse" }
+
+  /api/v1/farms/{farm_id}/sows/{sow_id}:
+    get:
+      tags: [Sows]
+      summary: Get sow detail
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: sow_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      responses:
+        "200":
+          description: Sow detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SowResponse" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    patch:
+      tags: [Sows]
+      summary: Update sow info
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: sow_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SowUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SowResponse" }
+
+    delete:
+      tags: [Sows]
+      summary: Soft delete sow
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: sow_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ── Events ────────────────────────────────────────────────────────────────────
+  /api/v1/farms/{farm_id}/events/matings:
+    post:
+      tags: [Events]
+      summary: Record mating (AI or natural)
+      description: |
+        Automatically creates or reuses a BreedingCycle.
+        Sets `sow.status = GESTATING`.
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MatingCreate" }
+      responses:
+        "201":
+          description: Mating recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MatingResponse" }
+        "423": { $ref: "#/components/responses/PeriodLocked" }
+
+  /api/v1/farms/{farm_id}/events/farrowings:
+    post:
+      tags: [Events]
+      summary: Record farrowing
+      description: |
+        Validates gestation period (100–130 days from last mating).
+        Sets `sow.status = LACTATING`, increments parity.
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FarrowingCreate" }
+      responses:
+        "201":
+          description: Farrowing recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FarrowingResponse" }
+        "423": { $ref: "#/components/responses/PeriodLocked" }
+
+  /api/v1/farms/{farm_id}/events/weanings:
+    post:
+      tags: [Events]
+      summary: Record weaning
+      description: |
+        Validates nursing period (10–60 days from farrowing).
+        Sets `sow.status = WEANED`, closes BreedingCycle.
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WeaningCreate" }
+      responses:
+        "201":
+          description: Weaning recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WeaningResponse" }
+        "423": { $ref: "#/components/responses/PeriodLocked" }
+
+  /api/v1/farms/{farm_id}/events/reproductive:
+    post:
+      tags: [Events]
+      summary: Record non-productive event
+      description: |
+        Records return to estrus, abortion, empty, cull, or death.
+        Critical for accurate NPD calculation.
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReproductiveEventCreate" }
+      responses:
+        "201":
+          description: Event recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReproductiveEventResponse" }
+
+  # ── KPI ───────────────────────────────────────────────────────────────────────
+  /api/v1/farms/{farm_id}/kpi/dashboard:
+    get:
+      tags: [KPI]
+      summary: Main KPI dashboard
+      description: |
+        Returns PSY, NPD, sow inventory counts, and Rule Engine alerts.
+        Data served from `kpi_snapshots` table (fast).
+        No Addon subscription required.
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      responses:
+        "200":
+          description: Dashboard KPIs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardKpi" }
+
+  /api/v1/farms/{farm_id}/kpi/psy:
+    get:
+      tags: [KPI]
+      summary: Annual PSY detail
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: year
+          in: query
+          schema: { type: integer, example: 2026 }
+      responses:
+        "200":
+          description: PSY detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PsyDetail" }
+
+  /api/v1/farms/{farm_id}/kpi/npd:
+    get:
+      tags: [KPI]
+      summary: NPD breakdown by period
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+        - name: start
+          in: query
+          schema: { type: string, format: date }
+          description: "Default: Jan 1 this year"
+        - name: end
+          in: query
+          schema: { type: string, format: date }
+          description: "Default: today"
+      responses:
+        "200":
+          description: NPD breakdown
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NpdBreakdown" }
+
+  # ── Q&A ───────────────────────────────────────────────────────────────────────
+  /api/v1/farms/{farm_id}/chat/query:
+    post:
+      tags: [Q&A]
+      summary: Natural language KPI query
+      description: |
+        Ask a question about farm KPIs in natural language.
+
+        **Base tier**: Rule Engine + template response. No LLM cost.
+        **Addon #1 (AI Insight)**: Same endpoint, LLM-powered natural language answer.
+        The `renderer` field in the response indicates which tier responded.
+
+        **Intent auto-detection** (keyword-based):
+        - PSY / productivity / 생산성 → `psy`
+        - NPD / non-productive / 비생산일 → `npd`
+        - farrowing rate / 분만율 → `farrowing`
+        - Others → `dashboard` (all rules evaluated)
+      parameters:
+        - name: farm_id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/UUID" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChatQuery" }
+            examples:
+              psy_question:
+                summary: PSY question (English)
+                value: { question: "Why is my PSY so low this year?", locale: "en" }
+              npd_question:
+                summary: NPD question (Korean)
+                value: { question: "비생산일이 왜 이렇게 높아요?", locale: "ko" }
+      responses:
+        "200":
+          description: Q&A response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatResponse" }
+              example:
+                intent: "psy"
+                severity: "WARNING"
+                answer: "⚠ Warning [PSY] 21.2 (target: 25.0)\n  Causes: Low litters per sow per year, High NPD extending inter-litter interval\n  Actions: Audit weaning-to-mating interval, Reduce NPD to shorten cycle"
+                findings:
+                  - rule_id: "psy.below_target"
+                    kpi: "PSY"
+                    severity: "WARNING"
+                    current_value: 21.2
+                    target_value: 25.0
+                    causes: ["low_litters_per_sow_per_year", "high_non_productive_days_extending_inter_litter_interval"]
+                    recommended_actions: ["audit_weaning_to_mating_interval", "reduce_npd_to_shorten_cycle_and_improve_psy"]
+                farm_id: "550e8400-e29b-41d4-a716-446655440000"
+                as_of: "2026-05-19"
+                renderer: "template"
+        "402": { $ref: "#/components/responses/PaymentRequired" }

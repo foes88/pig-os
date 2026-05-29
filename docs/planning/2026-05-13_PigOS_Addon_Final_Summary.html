@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PigOS Addon 최종 합의안 — 요약</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg:#F4F7F4; --card:#FFF; --card2:#F0F5F0; --border:#D4E0D4; --border2:#BFD0BF;
+  --green:#1A7A3C; --green-lt:#E8F5EE; --green-md:#27AE60;
+  --gold:#A67C00; --gold-lt:#FEF9E7; --gold-bd:#DEB841;
+  --red:#B03A2E; --red-lt:#FDECEA;
+  --blue:#1A5E8A; --blue-lt:#EAF2FB;
+  --orange:#C0560A; --orange-lt:#FEF3E8;
+  --purple:#6C3483; --purple-lt:#F5EEF8;
+  --teal:#0E7A65; --teal-lt:#E8F8F5;
+  --text:#182818; --text2:#3A5A3A; --text3:#6A8A6A;
+  --shadow:0 2px 10px rgba(0,50,0,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;line-height:1.65;}
+
+/* HEADER */
+.hdr{background:#fff;border-bottom:3px solid var(--green-md);padding:28px 44px 22px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:14px;box-shadow:var(--shadow);}
+.hdr-eye{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:2px;color:var(--text);line-height:1;}
+.hdr-title span{color:var(--green-md);}
+.hdr-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+.pills{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end;}
+.pill{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;padding:4px 11px;border-radius:20px;}
+.pg{background:var(--green-lt);color:var(--green);border:1px solid #A9D6B8;}
+.pb{background:var(--blue-lt);color:var(--blue);border:1px solid #AED6F1;}
+.pr{background:var(--red-lt);color:var(--red);border:1px solid #F5B7B1;}
+.po{background:var(--gold-lt);color:var(--gold);border:1px solid var(--gold-bd);}
+
+/* WRAP */
+.wrap{max-width:1180px;margin:0 auto;padding:24px 28px 44px;display:grid;gap:18px;}
+
+/* SECTION LABEL */
+.sl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.sl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── 합의 뱃지 박스 ── */
+.agree-bar{background:var(--green-lt);border:1.5px solid #A9D6B8;border-radius:9px;padding:14px 20px;display:flex;align-items:center;gap:16px;font-size:13px;color:var(--text2);}
+.agree-bar strong{color:var(--green);}
+.agree-icon{font-size:22px;flex-shrink:0;}
+
+/* ── 3단 결론 ── */
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.dbox{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.dbox-head{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding-bottom:9px;margin-bottom:10px;border-bottom:2px solid;}
+.dh-gpt{color:var(--blue);border-color:#AED6F1;}
+.dh-claude{color:var(--green);border-color:#A9D6B8;}
+.dh-final{color:var(--gold);border-color:var(--gold-bd);}
+.di{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.di:last-child{border-bottom:none;}
+.dn{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0;width:22px;font-weight:700;}
+.dc{color:var(--text2);line-height:1.5;}
+.dc strong{color:var(--text);}
+.dc .x{color:var(--red);text-decoration:line-through;font-size:11px;}
+.dc .arr{color:var(--gold);margin:0 3px;font-weight:700;}
+
+/* ── 6개 Addon ── */
+.row6{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;}
+.ac{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px 13px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:transform .15s,box-shadow .15s;}
+.ac:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.ac-new{border-color:#A9D6B8;}
+.ac-top{display:flex;align-items:center;justify-content:space-between;}
+.ac-num{font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:1;letter-spacing:1px;}
+.badge{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;}
+.bk{background:var(--blue-lt);color:var(--blue);border:1px solid #AED6F1;}
+.bm{background:var(--orange-lt);color:var(--orange);border:1px solid #F5CBA7;}
+.bd{background:var(--red-lt);color:var(--red);border:1px solid #F5B7B1;}
+.bb{background:var(--purple-lt);color:var(--purple);border:1px solid #D2B4DE;}
+.bn{background:var(--green-lt);color:var(--green);border:1px solid #A9D6B8;}
+.bs{background:var(--gold-lt);color:var(--gold);border:1px solid var(--gold-bd);}
+.ac-name{font-size:12.5px;font-weight:700;color:var(--text);line-height:1.3;}
+.ac-en{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-top:1px;}
+.ac-when{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);font-weight:700;}
+.ac-core{font-size:11px;color:var(--text2);line-height:1.65;flex:1;}
+.ac-core strong{color:var(--text);}
+.ac-price{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--teal);background:var(--teal-lt);border:1px solid #A2D9CE;padding:3px 7px;border-radius:5px;}
+.ac-free{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--red);background:var(--red-lt);border:1px solid #F5B7B1;padding:3px 7px;border-radius:5px;}
+.ac-kill{font-size:10px;color:var(--red);padding-top:7px;border-top:1px dashed #F5B7B1;line-height:1.5;}
+.ac-kill::before{content:"⚠ Kill: ";font-weight:700;}
+
+/* ── PigSignal ── */
+.pigsignal-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;}
+.ps-card{background:var(--card);border:1.5px solid #AED6F1;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.ps-head{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #AED6F1;}
+.ps-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.ps-body{font-size:11.5px;color:var(--text2);line-height:1.65;}
+.ps-body strong{color:var(--text);}
+.ps-price{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue);background:var(--blue-lt);border:1px solid #AED6F1;padding:3px 7px;border-radius:5px;margin-top:8px;display:inline-block;}
+
+/* ── 합의 vs 이견 ── */
+.agree-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.agree-col{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;}
+.acol-head{font-size:13px;font-weight:700;padding-bottom:10px;margin-bottom:10px;border-bottom:2px solid;display:flex;align-items:center;gap:8px;}
+.acol-agree .acol-head{color:var(--green);border-color:#A9D6B8;}
+.acol-diff .acol-head{color:var(--orange);border-color:#F5CBA7;}
+.acol-item{display:flex;gap:9px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12.5px;align-items:flex-start;}
+.acol-item:last-child{border-bottom:none;}
+.acol-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.acol-text{color:var(--text2);line-height:1.55;}
+.acol-text strong{color:var(--text);}
+
+/* ── 로드맵 ── */
+.tl-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px 26px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.tl-track{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;position:relative;}
+.tl-track::before{content:'';position:absolute;top:16px;left:18px;right:18px;height:2px;background:var(--border2);z-index:0;}
+.tl-node{position:relative;z-index:1;}
+.tl-dot-row{display:flex;align-items:center;margin-bottom:9px;}
+.tl-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid var(--bg);box-shadow:0 0 0 2px var(--border);}
+.tl-line{flex:1;height:2px;background:var(--border);}
+.tl-date{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);font-weight:700;margin-bottom:3px;}
+.tl-ttl{font-size:11.5px;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.3;}
+.tl-body{font-size:10px;color:var(--text2);line-height:1.55;}
+
+/* ── CEO 결정 ── */
+.ceo-row{display:grid;grid-template-columns:1fr 1fr 1fr 1.1fr;gap:12px;}
+.ceo-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.ceo-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--border);font-weight:700;}
+.ci{display:flex;gap:8px;align-items:flex-start;padding:5px 0;border-bottom:1px solid var(--bg);font-size:12px;}
+.ci:last-child{border-bottom:none;}
+.cdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px;}
+.ct{color:var(--text2);line-height:1.5;}
+.ct strong{color:var(--text);}
+
+/* ── Bottom ── */
+.bottom{background:linear-gradient(135deg,var(--green-lt),var(--gold-lt));border:1.5px solid #A9D6B8;border-radius:10px;padding:22px 30px;display:flex;align-items:center;gap:22px;}
+.bl-arr{font-family:'Bebas Neue',sans-serif;font-size:50px;color:var(--green-md);line-height:1;flex-shrink:0;}
+.bl-lbl{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.bl-txt{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.7;}
+.bl-txt span{color:var(--green);}
+.bl-txt span.s2{color:var(--blue);}
+
+footer{text-align:center;padding:18px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);border-top:1px solid var(--border);background:#fff;letter-spacing:1px;}
+
+@media(max-width:900px){
+  .row3,.agree-grid,.ceo-row{grid-template-columns:1fr 1fr;}
+  .row6,.pigsignal-row{grid-template-columns:repeat(3,1fr);}
+  .tl-track{grid-template-columns:repeat(4,1fr);}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-eye">PigOS · Addon Final Agreed Strategy · 2026.05.13 · Claude + GPT 합의</div>
+    <div class="hdr-title">최종 합의안 <span>요약</span></div>
+    <div class="hdr-sub">Claude vs GPT 3차 토론 완료 · Addon 6개 + PigSignal API 2개 + Enterprise 1개 확정</div>
+  </div>
+  <div class="pills">
+    <div class="pill pg">Farm OS 무료</div>
+    <div class="pill po">AI Addon 유료</div>
+    <div class="pill pb">PigSignal B2B API</div>
+    <div class="pill pg">AgentExchange 진입</div>
+    <div class="pill pr">Biosecurity Insurance → 2027</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── 합의 요약 ── -->
+  <div>
+    <div class="sl">00 · 최종 합의 핵심</div>
+    <div class="agree-bar">
+      <div class="agree-icon">✅</div>
+      <div><strong>GPT가 이겼던 것:</strong> #6 = Biosecurity Audit AI, Benchmark는 PigSignal API로 분리. &nbsp;|&nbsp; <strong>Claude가 이겼던 것:</strong> Benchmark 2026 병행 개발 우선순위 유지, #3 Base 통합, #4 B2B 전용, Multi-farm 2026 Q3 착수. &nbsp;|&nbsp; <strong>공통 수정:</strong> #3은 독립 과금 없이 ROI Layer로, #4는 농가 Lite 무료 + B2B API.</div>
+    </div>
+  </div>
+
+  <!-- ── 3단 비교 ── -->
+  <div>
+    <div class="sl">01 · GPT vs Claude vs 최종 합의</div>
+    <div class="row3">
+      <div class="dbox">
+        <div class="dbox-head dh-gpt">GPT 주장</div>
+        <div class="di"><div class="dn">#5</div><div class="dc"><strong>Breeding AI</strong></div></div>
+        <div class="di"><div class="dn">#6</div><div class="dc"><strong>Biosecurity Audit AI</strong></div></div>
+        <div class="di"><div class="dn">BM</div><div class="dc">Benchmark = <strong>PigSignal API</strong>, Addon 아님</div></div>
+        <div class="di"><div class="dn">#3</div><div class="dc">ROI Layer로 축소, 독립 과금 보류</div></div>
+        <div class="di"><div class="dn">#4</div><div class="dc">농가 Lite 무료 + B2B API</div></div>
+        <div class="di"><div class="dn">M</div><div class="dc">Multi-farm 2026 Q3 착수</div></div>
+      </div>
+      <div class="dbox">
+        <div class="dbox-head dh-claude">Claude 주장</div>
+        <div class="di"><div class="dn">#5</div><div class="dc"><strong>Breeding AI</strong></div></div>
+        <div class="di"><div class="dn">#6</div><div class="dc"><span class="x">Benchmark API</span> <span class="arr">→</span> 수정</div></div>
+        <div class="di"><div class="dn">BM</div><div class="dc">Benchmark = <strong>2026 병행 개발 우선</strong></div></div>
+        <div class="di"><div class="dn">#3</div><div class="dc">Base 무료 통합</div></div>
+        <div class="di"><div class="dn">#4</div><div class="dc">B2B 전용, 농가는 Base 무료</div></div>
+        <div class="di"><div class="dn">M</div><div class="dc">Multi-farm 2026 Q3 착수</div></div>
+      </div>
+      <div class="dbox" style="border-color:var(--gold-bd);">
+        <div class="dbox-head dh-final">최종 합의</div>
+        <div class="di"><div class="dn">#5</div><div class="dc"><strong>Breeding & Farrowing AI</strong> ★신규</div></div>
+        <div class="di"><div class="dn">#6</div><div class="dc"><strong>Biosecurity & Compliance Audit AI</strong> ★신규</div></div>
+        <div class="di"><div class="dn">BM</div><div class="dc"><strong>PigSignal API #1</strong> — 2026 병행 개발</div></div>
+        <div class="di"><div class="dn">#3</div><div class="dc">Base ROI Layer, 독립 과금 없음</div></div>
+        <div class="di"><div class="dn">#4</div><div class="dc">농가 Lite 무료 + B2B PigSignal API</div></div>
+        <div class="di"><div class="dn">M</div><div class="dc">2026 Q3 DB설계, Q4 베타, 2027 Q1 GA</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6개 Addon ── -->
+  <div>
+    <div class="sl">02 · Farm-facing Addon 6개</div>
+    <div class="row6">
+
+      <div class="ac">
+        <div class="ac-top"><div class="ac-num" style="color:var(--blue)">#1</div><div class="badge bk">유지</div></div>
+        <div><div class="ac-name">FCR Optimizer AI</div><div class="ac-en">사료 효율 최적화</div></div>
+        <div class="ac-when">▶ 2026.08 GA</div>
+        <div class="ac-core">사료비 = 생산비 <strong>60~70%</strong><br>Rule 감지 + <strong>LLM 원인 설명</strong><br>총판 30초 데모 가능<br>FCR 개선 행동 추천 강화</div>
+        <div class="ac-price">$15~50 / 월</div>
+        <div class="ac-kill">60일 입력률 &lt;50% → UX 재설계</div>
+      </div>
+
+      <div class="ac">
+        <div class="ac-top"><div class="ac-num" style="color:var(--orange)">#2</div><div class="badge bm">범위 수정</div></div>
+        <div><div class="ac-name">Health & Mortality AI</div><div class="ac-en">건강 · 폐사 · 치료</div></div>
+        <div class="ac-when">▶ 2026.09 GA</div>
+        <div class="ac-core">폐사·치료·임상 기록 → <strong>군집 감지</strong><br>SEA: ASF 조기 경보<br>EU 항생제 = 별도 Module<br>Disease Radar → PigSignal 연동</div>
+        <div class="ac-price">$20~60 / 월</div>
+        <div class="ac-kill">폐사 원인 "기타" &gt;35% → UX 재설계</div>
+      </div>
+
+      <div class="ac">
+        <div class="ac-top"><div class="ac-num" style="color:var(--red)">#3</div><div class="badge bd">ROI Layer</div></div>
+        <div><div class="ac-name">Cost / Profit Impact Layer</div><div class="ac-en">원가 · 손실 가시화</div></div>
+        <div class="ac-when">▶ 2026.10 Base 통합</div>
+        <div class="ac-core"><strong>독립 과금 없음</strong><br>#1 FCR / #2 폐사 / #5 NPD의<br>손실액 자동 계산 엔진<br>Addon 구매 ROI 증명 도구</div>
+        <div class="ac-free">$0 · ROI Layer</div>
+        <div class="ac-kill">데이터 품질 낮으면 표시 숨김</div>
+      </div>
+
+      <div class="ac">
+        <div class="ac-top"><div class="ac-num" style="color:var(--purple)">#4</div><div class="badge bb">B2B 전용</div></div>
+        <div><div class="ac-name">Market-linked Profit Advisor</div><div class="ac-en">시장 연동 · PigSignal</div></div>
+        <div class="ac-when">▶ 2026.11 B2B 베타</div>
+        <div class="ac-core">소농: Base 시세·출하 알림 <strong>무료</strong><br>대형 농장: 출하 타이밍 Lite<br>B2B: /pig_supply_forecast<br><strong>AgentExchange Market Signal</strong></div>
+        <div class="ac-price">B2B $2k~10k/월</div>
+        <div class="ac-kill">B2B LOI 2건 미만 → API 중단</div>
+      </div>
+
+      <div class="ac ac-new">
+        <div class="ac-top"><div class="ac-num" style="color:var(--gold)">#5</div><div class="badge bn">★ 신규</div></div>
+        <div><div class="ac-name">Breeding & Farrowing AI</div><div class="ac-en">번식 · 분만 · 모돈</div></div>
+        <div class="ac-when">▶ 2026.10 베타 / 12 GA</div>
+        <div class="ac-core">NPD 1일 = ₩8,500 손실<br><strong>30일 MVP:</strong> NPD 계산 + 재교배 알림 + 아하 모먼트<br>카메라 없이 이벤트 기반<br>모돈별 장기 → 최강 Lock-in</div>
+        <div class="ac-price">$15~100/월</div>
+        <div class="ac-kill">15농가 유료전환 &lt;5곳 → 범위 축소</div>
+      </div>
+
+      <div class="ac ac-new">
+        <div class="ac-top"><div class="ac-num" style="color:var(--green)">#6</div><div class="badge bs">★ 신규</div></div>
+        <div><div class="ac-name">Biosecurity & Compliance Audit AI</div><div class="ac-en">방역 감사 · 점수화</div></div>
+        <div class="ac-when">▶ 2026.10 베타 / 12 GA</div>
+        <div class="ac-core"><strong>"질병 들어오기 전 구멍 막기"</strong><br>방역 점수 + 취약점 Top 5<br>방문·차량·소독 기록 + PDF<br>보험 연결 <strong>2027로 분리</strong></div>
+        <div class="ac-price">$10~60/월</div>
+        <div class="ac-kill">체크리스트 완료율 &lt;50% → UX 재설계</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PigSignal API ── -->
+  <div>
+    <div class="sl">03 · PigSignal B2B/API 포트폴리오 (Addon 아님)</div>
+    <div class="pigsignal-row">
+
+      <div class="ps-card">
+        <div class="ps-head">PigSignal API #1</div>
+        <div class="ps-name">Benchmark Intelligence API</div>
+        <div class="ps-body">PSY/NPD/FCR 지역·규모별 집계<br>피그플랜 <strong>700+ 농장</strong> 시드 즉시 활용<br>k-anonymity, cohort N≥30<br><strong>AgentExchange ISV 대표 상품</strong><br>LLM 불필요, 집계 통계로 충분</div>
+        <div class="ps-price">▶ 2026.11 베타 / 2027.Q1 GA</div>
+      </div>
+
+      <div class="ps-card">
+        <div class="ps-head">PigSignal API #2</div>
+        <div class="ps-name">Market / Cost / Supply Signal</div>
+        <div class="ps-body">/pig_supply_forecast<br>/pig_cost_index<br>사료사·도축장·보험사 대상<br>#4 Market Advisor와 연동<br>Agentforce 호출 가능 설계</div>
+        <div class="ps-price">▶ 2026.11 베타 (#4 연동)</div>
+      </div>
+
+      <div class="ps-card">
+        <div class="ps-head">PigSignal API #3</div>
+        <div class="ps-name">Disease Radar API</div>
+        <div class="ps-body">익명 집계 기반 질병 이상 신호<br>#2 Health 데이터 집계<br><strong>2026 내부 베타만</strong><br>외부 판매 2027 이후<br>법적 검토 선행 필수</div>
+        <div class="ps-price">▶ 2027 외부 출시</div>
+      </div>
+
+      <div class="ps-card">
+        <div class="ps-head">Enterprise</div>
+        <div class="ps-name">Multi-farm Command Center</div>
+        <div class="ps-body">여러 농장 KPI 비교·랭킹<br>PigKnows 전환 고객 필수 기능<br>DB 설계 <strong>2026 Q3</strong><br>베타 <strong>2026 Q4</strong><br>GA <strong>2027 Q1</strong></div>
+        <div class="ps-price">▶ Enterprise 연 계약</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 합의점 vs 이견 ── -->
+  <div>
+    <div class="sl">04 · Claude + GPT 최종 합의점 vs 조정 사항</div>
+    <div class="agree-grid">
+      <div class="agree-col acol-agree">
+        <div class="acol-head">✅ 양측 합의</div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--green-md)"></div><div class="acol-text"><strong>#5 Breeding AI</strong> 독립 Addon — 30일 MVP: NPD계산 + 재교배알림 + 아하모먼트</div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--green-md)"></div><div class="acol-text"><strong>#6 = Biosecurity Audit AI</strong> (GPT안 채택), Benchmark는 PigSignal API로 분리</div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--green-md)"></div><div class="acol-text"><strong>Benchmark 2026 병행 개발</strong> (Claude안 채택) — AgentExchange 첫 번째 API 상품</div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--green-md)"></div><div class="acol-text"><strong>Multi-farm</strong> 2026 Q3 DB설계, Q4 베타, 2027 Q1 GA</div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--green-md)"></div><div class="acol-text"><strong>Rule Engine 우선</strong> + LLM 설명. Benchmark는 LLM 불필요</div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--green-md)"></div><div class="acol-text"><strong>Carbon/ESG, Genetic, Sensor, Autopilot, Insurance underwriting</strong> 2026 금지</div></div>
+      </div>
+      <div class="agree-col acol-diff">
+        <div class="acol-head">🔄 조정 사항 (GPT ↔ Claude)</div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--orange)"></div><div class="acol-text"><strong>#3:</strong> Claude는 "완전 무료", GPT는 "ROI Layer 활용" → <strong>절충: 독립 과금 없되, 각 Addon ROI 계산 엔진으로 활용</strong></div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--orange)"></div><div class="acol-text"><strong>#4:</strong> Claude는 "B2B 완전 전용", GPT는 "대형 농장 출하 판단 가치 있음" → <strong>절충: 소농은 Base 무료, 대형 농장 Lite + B2B API</strong></div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--orange)"></div><div class="acol-text"><strong>#6 이름:</strong> "Insurance Readiness" 위험 → <strong>최종: Biosecurity & Compliance Audit AI</strong> (GPT 이름 채택)</div></div>
+        <div class="acol-item"><div class="acol-dot" style="background:var(--orange)"></div><div class="acol-text"><strong>Benchmark 신뢰 리스크:</strong> Claude "낮음", GPT "관리 필요" → <strong>절충: k-anonymity + opt-out + cohort N≥30 + confidence score 필수</strong></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 로드맵 ── -->
+  <div>
+    <div class="sl">05 · 2026~2027 실행 로드맵</div>
+    <div class="tl-wrap">
+      <div class="tl-track">
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--gold)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2026.05~06</div>
+          <div class="tl-ttl">Scope Freeze</div>
+          <div class="tl-body">#5/#6 확정. #3 ROI Layer. #4 재정의. Benchmark 법적 검토. Multi-farm DB 설계.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--blue)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2026.07~08</div>
+          <div class="tl-ttl">Base + #1 GA</div>
+          <div class="tl-body">Farm OS 7개 언어. FCR Optimizer 출시. 피그플랜 50농가 온보딩. #5 개발 착수.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--orange)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2026.09</div>
+          <div class="tl-ttl">#2 GA</div>
+          <div class="tl-body">Health & Mortality. SEA ASF 경보. EU Compliance Module 개발. #5 아하 모먼트 완성.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--gold)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2026.10</div>
+          <div class="tl-ttl">#5 + #6 베타</div>
+          <div class="tl-body">Breeding 5농가, Biosecurity 5농가 동시 베타. Multi-farm 내부 테스트.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--purple)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2026.11</div>
+          <div class="tl-ttl">#4 + BM API 베타</div>
+          <div class="tl-body">PigSignal Market API POC. Benchmark API 한국 베타. AgentExchange ISV 신청.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--green-md)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2026.12</div>
+          <div class="tl-ttl">#5 + #6 GA</div>
+          <div class="tl-body">Kill Criteria 통과 시 유료 전환. B2B LOI 2건 목표. Multi-farm Q4 베타.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:var(--teal)"></div><div class="tl-line"></div></div>
+          <div class="tl-date">2027.Q1</div>
+          <div class="tl-ttl">Multi-farm GA</div>
+          <div class="tl-body">Enterprise 출시. AgentExchange 등록. Benchmark API GA. B2B 유료 전환.</div>
+        </div>
+        <div class="tl-node">
+          <div class="tl-dot-row"><div class="tl-dot" style="background:#BDC3C7"></div></div>
+          <div class="tl-date">2027.Q2~Q4</div>
+          <div class="tl-ttl">확장</div>
+          <div class="tl-body">Biosecurity Insurance API. SEA 확장. Vet Collaboration. Autopilot 준비.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CEO 결정 ── -->
+  <div>
+    <div class="sl">06 · CEO 의사결정</div>
+    <div class="ceo-row">
+      <div class="ceo-box" style="border-top:3px solid var(--red)">
+        <div class="ceo-title" style="color:var(--red)">🔴 오늘 결정</div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>#5 Breeding AI</strong> 개발 착수</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>#6 Biosecurity Audit</strong> 개발 착수</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>베타 5농가</strong> 선정 위임</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>#3 독립 과금 포기</strong>, ROI Layer 확정</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>#4 B2B 전용</strong> 재정의</div></div>
+      </div>
+      <div class="ceo-box" style="border-top:3px solid var(--gold)">
+        <div class="ceo-title" style="color:var(--gold)">🟡 이번 주</div>
+        <div class="ci"><div class="cdot" style="background:var(--gold)"></div><div class="ct"><strong>Benchmark 법적 검토</strong> 의뢰</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--gold)"></div><div class="ct"><strong>#2 범위 수정</strong> 개발팀 공지</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--gold)"></div><div class="ct"><strong>Multi-farm DB 설계</strong> 착수</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--gold)"></div><div class="ct"><strong>수의사 2명</strong> #6 체크리스트 검토</div></div>
+      </div>
+      <div class="ceo-box" style="border-top:3px solid var(--green-md)">
+        <div class="ceo-title" style="color:var(--green)">🟢 이번 달</div>
+        <div class="ci"><div class="cdot" style="background:var(--green-md)"></div><div class="ct"><strong>AgentExchange ISV</strong> 신청 담당 지정</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--green-md)"></div><div class="ct"><strong>PigSignal API</strong> 사양 확정</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--green-md)"></div><div class="ct"><strong>EU Compliance Module</strong> 우선순위</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--green-md)"></div><div class="ct"><strong>Benchmark opt-out</strong> 약관 설계</div></div>
+      </div>
+      <div class="ceo-box" style="border-top:3px solid var(--red);background:var(--red-lt)">
+        <div class="ceo-title" style="color:var(--red)">🚫 2026년 절대 금지</div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>Carbon/ESG AI</strong> 상품화</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>Genetic Performance AI</strong> 판매</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>Sensor full integration</strong></div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>Autopilot Scheduling</strong> 자동화</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>Insurance API</strong> 개별 underwriting</div></div>
+        <div class="ci"><div class="cdot" style="background:var(--red)"></div><div class="ct"><strong>Benchmark을 Addon</strong>으로 포장</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom ── -->
+  <div class="bottom">
+    <div class="bl-arr">→</div>
+    <div>
+      <div class="bl-lbl">Bottom Line · Claude + GPT 최종 합의</div>
+      <div class="bl-txt">
+        <span>#5 Breeding AI</span> — 농장 결제 첫 번째 킬러, 모돈 Lock-in 시작.<br>
+        <span>#6 Biosecurity Audit AI</span> — "방역 구멍 찾기", 보험 연결 없는 순수 농가용.<br>
+        <span class="s2">Benchmark Intelligence API</span> — Addon 아님, PigSignal #1 · AgentExchange 첫 상품.
+      </div>
+    </div>
+  </div>
+
+</div>
+<footer>PigOS Addon Final Agreed Strategy · Claude + GPT · 2026.05.13 · CONFIDENTIAL</footer>
+</body>
+</html>
