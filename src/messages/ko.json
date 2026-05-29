@@ -1,0 +1,140 @@
+{
+  "nav": {
+    "dashboard": "대시보드",
+    "sows": "모돈 관리",
+    "events": "이벤트",
+    "kpi": "KPI 리포트",
+    "chat": "AI 어시스턴트",
+    "settings": "설정",
+    "logout": "로그아웃"
+  },
+  "dashboard": {
+    "title": "AI 대시보드",
+    "subtitle": "{farmName} · 모돈 {sowCount}두 · AI 실시간 분석 중",
+    "aiActive": "AI 활성",
+    "stats": {
+      "psy": "PSY (AI 예측)",
+      "npd": "비생산일수 (NPD)",
+      "activeSows": "현재 모돈수",
+      "mortalityRisk": "폐사 위험도"
+    },
+    "alerts": {
+      "title": "AI 알림",
+      "noAlerts": "현재 알림 없음"
+    }
+  },
+  "sows": {
+    "title": "모돈 관리",
+    "add": "모돈 추가",
+    "search": "이표번호 검색...",
+    "filter": {
+      "all": "전체",
+      "active": "활성",
+      "gestating": "임신",
+      "lactating": "수유",
+      "weaned": "이유",
+      "culled": "도태"
+    },
+    "table": {
+      "earTag": "이표번호",
+      "status": "상태",
+      "parity": "산차",
+      "breed": "품종",
+      "entryDate": "입식일",
+      "actions": "액션"
+    },
+    "status": {
+      "ACTIVE": "활성",
+      "GESTATING": "임신",
+      "LACTATING": "수유",
+      "WEANED": "이유",
+      "DRY": "건유",
+      "CULLED": "도태",
+      "DEAD": "폐사"
+    }
+  },
+  "events": {
+    "mating": {
+      "title": "교배 기록",
+      "date": "교배일",
+      "type": "교배 방법",
+      "typeAi": "인공수정 (AI)",
+      "typeNatural": "자연교배",
+      "semenBatch": "정액 배치번호",
+      "submit": "교배 기록 저장"
+    },
+    "farrowing": {
+      "title": "분만 기록",
+      "date": "분만일",
+      "totalBorn": "총 출생두수",
+      "bornAlive": "생존 출생두수",
+      "bornDead": "사산두수",
+      "mummies": "미라두수",
+      "submit": "분만 기록 저장"
+    },
+    "weaning": {
+      "title": "이유 기록",
+      "date": "이유일",
+      "weanedCount": "이유두수",
+      "avgWeight": "평균 체중 (kg)",
+      "submit": "이유 기록 저장"
+    }
+  },
+  "kpi": {
+    "psy": "PSY",
+    "npd": "비생산일수",
+    "farrowingRate": "분만율",
+    "fcr": "사료요구율",
+    "trend": "추세",
+    "benchmark": "벤치마크"
+  },
+  "chat": {
+    "placeholder": "농장 KPI에 대해 질문하세요... (예: PSY가 낮은 이유는?)",
+    "send": "전송",
+    "thinking": "AI가 분석 중입니다...",
+    "disclaimer": "AI 인사이트는 농장 데이터를 기반으로 합니다. 중요한 결정은 수의사와 상담하세요."
+  },
+  "auth": {
+    "login": {
+      "title": "PigOS 로그인",
+      "email": "이메일",
+      "password": "비밀번호",
+      "submit": "로그인",
+      "forgotPassword": "비밀번호 찾기",
+      "noAccount": "계정이 없으신가요?",
+      "register": "무료로 시작하기"
+    },
+    "logout": {
+      "confirm": "PigOS에서 로그아웃하시겠습니까?"
+    }
+  },
+  "errors": {
+    "generic": "오류가 발생했습니다. 다시 시도해 주세요.",
+    "network": "네트워크 오류입니다. 인터넷 연결을 확인해 주세요.",
+    "unauthorized": "세션이 만료되었습니다. 다시 로그인해 주세요.",
+    "forbidden": "이 작업을 수행할 권한이 없습니다.",
+    "notFound": "찾을 수 없습니다.",
+    "periodLocked": "해당 기간은 잠금 처리되었습니다. 관리자에게 잠금 해제를 요청하세요.",
+    "sowNotFound": "모돈을 찾을 수 없거나 이미 삭제되었습니다.",
+    "statusConflict": "현재 모돈 상태에서는 이 작업이 불가능합니다.",
+    "futureDate": "이벤트 날짜는 미래 날짜로 입력할 수 없습니다."
+  },
+  "upgrade": {
+    "title": "이 기능을 사용하려면 업그레이드가 필요합니다",
+    "description": "이 기능은 프리미엄 애드온에 포함되어 있습니다.",
+    "cta": "플랜 보기",
+    "dismiss": "나중에"
+  },
+  "common": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "수정",
+    "loading": "로딩 중...",
+    "noData": "데이터가 없습니다",
+    "confirm": "확인",
+    "back": "뒤로",
+    "next": "다음",
+    "search": "검색"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "sows": "Sows",
+    "events": "Events",
+    "kpi": "KPI Reports",
+    "chat": "AI Assistant",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "dashboard": {
+    "title": "AI Dashboard",
+    "subtitle": "{farmName} · {sowCount} sows · AI analyzing in real-time",
+    "aiActive": "AI Active",
+    "stats": {
+      "psy": "PSY (AI Predicted)",
+      "npd": "Non-Productive Days",
+      "activeSows": "Active Sows",
+      "mortalityRisk": "Mortality Risk"
+    },
+    "alerts": {
+      "title": "AI Alerts",
+      "noAlerts": "No active alerts"
+    }
+  },
+  "sows": {
+    "title": "Sow Management",
+    "add": "Add Sow",
+    "search": "Search by ear tag...",
+    "filter": {
+      "all": "All",
+      "active": "Active",
+      "gestating": "Gestating",
+      "lactating": "Lactating",
+      "weaned": "Weaned",
+      "culled": "Culled"
+    },
+    "table": {
+      "earTag": "Ear Tag",
+      "status": "Status",
+      "parity": "Parity",
+      "breed": "Breed",
+      "entryDate": "Entry Date",
+      "actions": "Actions"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "GESTATING": "Gestating",
+      "LACTATING": "Lactating",
+      "WEANED": "Weaned",
+      "DRY": "Dry",
+      "CULLED": "Culled",
+      "DEAD": "Dead"
+    }
+  },
+  "events": {
+    "mating": {
+      "title": "Record Mating",
+      "date": "Mating Date",
+      "type": "Type",
+      "typeAi": "AI (Artificial Insemination)",
+      "typeNatural": "Natural",
+      "semenBatch": "Semen Batch",
+      "submit": "Record Mating"
+    },
+    "farrowing": {
+      "title": "Record Farrowing",
+      "date": "Farrowing Date",
+      "totalBorn": "Total Born",
+      "bornAlive": "Born Alive",
+      "bornDead": "Born Dead",
+      "mummies": "Mummies",
+      "submit": "Record Farrowing"
+    },
+    "weaning": {
+      "title": "Record Weaning",
+      "date": "Weaning Date",
+      "weanedCount": "Weaned Count",
+      "avgWeight": "Avg Weight (kg)",
+      "submit": "Record Weaning"
+    }
+  },
+  "kpi": {
+    "psy": "PSY",
+    "npd": "NPD",
+    "farrowingRate": "Farrowing Rate",
+    "fcr": "FCR",
+    "trend": "Trend",
+    "benchmark": "Benchmark"
+  },
+  "chat": {
+    "placeholder": "Ask about your farm KPIs... (e.g. Why is PSY low?)",
+    "send": "Send",
+    "thinking": "AI is analyzing...",
+    "disclaimer": "AI insights are based on your farm data. Always verify with your veterinarian."
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to PigOS",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "register": "Get started free"
+    },
+    "logout": {
+      "confirm": "Sign out of PigOS?"
+    }
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Network error. Check your connection.",
+    "unauthorized": "Session expired. Please sign in again.",
+    "forbidden": "You don't have permission to do this.",
+    "notFound": "Not found.",
+    "periodLocked": "This period is locked. Contact your manager to unlock.",
+    "sowNotFound": "Sow not found or has been removed.",
+    "statusConflict": "This action is not allowed for the current sow status.",
+    "futureDate": "Event date cannot be in the future."
+  },
+  "upgrade": {
+    "title": "Upgrade to unlock this feature",
+    "description": "This feature is part of a premium add-on.",
+    "cta": "View plans",
+    "dismiss": "Maybe later"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search"
+  }
+}

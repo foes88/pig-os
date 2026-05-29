@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
-import type { SowStatus, CreateSowRequest } from "@/types/api.types";
+import type { SowStatus, SowEntryType, CreateSowRequest } from "@/types/api.types";
 
 const STATUS_TABS: { label: string; value: SowStatus | "ALL" }[] = [
   { label: "전체", value: "ALL" },
@@ -211,9 +211,9 @@ function AddSowModal({
   const [form, setForm] = useState<CreateSowRequest>({
     ear_tag: "",
     entry_date: new Date().toISOString().slice(0, 10),
+    entry_type: "GILT",
     parity: 0,
     breed: "",
-    notes: "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -251,6 +251,18 @@ function AddSowModal({
               className="input"
             />
           </Field>
+          <Field label="입식 구분 *">
+            <select
+              value={form.entry_type}
+              onChange={(e) => set("entry_type", e.target.value as SowEntryType)}
+              className="input"
+            >
+              <option value="GILT">육성돈 (Gilt)</option>
+              <option value="PURCHASE">구매</option>
+              <option value="TRANSFER">전입</option>
+              <option value="BORN">자가생산</option>
+            </select>
+          </Field>
           <Field label="산차 (초산 전=0)">
             <input
               type="number"
@@ -265,13 +277,6 @@ function AddSowModal({
               value={form.breed ?? ""}
               onChange={(e) => set("breed", e.target.value)}
               placeholder="예: Yorkshire, Landrace"
-              className="input"
-            />
-          </Field>
-          <Field label="비고">
-            <input
-              value={form.notes ?? ""}
-              onChange={(e) => set("notes", e.target.value)}
               className="input"
             />
           </Field>
