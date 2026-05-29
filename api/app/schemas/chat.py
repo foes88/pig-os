@@ -1,0 +1,28 @@
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+class ChatQuery(BaseModel):
+    question: str = Field(..., min_length=2, max_length=500)
+    locale: str = Field(default="en", pattern="^(en|ko|es|zh)$")
+
+
+class FindingOut(BaseModel):
+    rule_id: str
+    kpi: str
+    severity: str
+    current_value: float | None
+    target_value: float | None
+    causes: list[str]
+    recommended_actions: list[str]
+
+
+class ChatResponse(BaseModel):
+    intent: str
+    severity: str
+    answer: str
+    findings: list[FindingOut]
+    farm_id: UUID
+    as_of: str
+    renderer: str = "template"  # "template" | "llm" — lets client know which tier responded

@@ -1,0 +1,117 @@
+"""
+Sow management module: buildings, boars, sows, breeding_cycles.
+"""
+from datetime import datetime
+from uuid import UUID, uuid4
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import Base
+
+
+class Building(Base):
+    __tablename__ = "buildings"
+    __table_args__ = (Index("idx_buildings_farm", "farm_id"),)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    building_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    # GESTATION / FARROWING / NURSERY / FINISHER / GILT_DEVELOPMENT / ISOLATION / QUARANTINE / STORAGE
+    floor_number: Mapped[int] = mapped_column(Integer, default=1)
+    capacity: Mapped[int | None] = mapped_column(Integer)
+    housing_type: Mapped[str] = mapped_column(String(20), default="GROUP")
+    area_per_pig_m2: Mapped[float | None] = mapped_column(Numeric(5, 2))
+    area_per_pig_sqft: Mapped[float | None] = mapped_column(Numeric(5, 2))
+    prop12_compliant: Mapped[bool | None] = mapped_column(Boolean)
+    welfare_enrichment: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Boar(Base):
+    __tablename__ = "boars"
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    ear_tag: Mapped[str] = mapped_column(String(30), nullable=False)
+    breed: Mapped[str | None] = mapped_column(String(50))
+    breed_company: Mapped[str | None] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE")
+    # ACTIVE / CULLED / DEAD / TRANSFERRED
+    entry_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    entry_type: Mapped[str | None] = mapped_column(String(20))
+    semen_quality: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (UniqueConstraint("farm_id", "ear_tag"),)
+
+
+class Sow(Base):
+    __tablename__ = "sows"
+    __table_args__ = (
+        Index("idx_sows_farm_status", "farm_id", "status"),
+        Index("idx_sows_parity", "farm_id", "parity"),
+        Index("idx_sow_exit", "exit_date", postgresql_where="exit_date IS NOT NULL"),
+        UniqueConstraint("farm_id", "ear_tag"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    building_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("buildings.id"))
+    ear_tag: Mapped[str] = mapped_column(String(30), nullable=False)
+    rfid_tag: Mapped[str | None] = mapped_column(String(50))
+    parity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    breed: Mapped[str | None] = mapped_column(String(50))
+    breed_company: Mapped[str | None] = mapped_column(String(30))
+    genetics_id: Mapped[str | None] = mapped_column(String(50))
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE")
+    # ACTIVE / GESTATING / LACTATING / WEANED / DRY / CULLED / DEAD
+    entry_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    entry_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    # GILT / PURCHASE / TRANSFER / BORN
+    source_farm_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True))
+    exit_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    stall_to_group_converted: Mapped[bool | None] = mapped_column(Boolean)
+    nurse_sow_flag: Mapped[bool] = mapped_column(Boolean, default=False)
+    ractopamine_free: Mapped[bool] = mapped_column(Boolean, default=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    breeding_cycles: Mapped[list["BreedingCycle"]] = relationship(back_populates="sow")
+
+
+class BreedingCycle(Base):
+    """
+    Per-parity cycle tracker. Connects matings → farrowings → weanings.
+    Active cycle = cycle_status NOT IN ('WEANED', 'FAILED').
+    Max 1 active cycle per sow enforced by partial unique index.
+    """
+    __tablename__ = "breeding_cycles"
+    __table_args__ = (
+        Index("idx_bc_farm_sow", "farm_id", "sow_id"),
+        Index("idx_bc_sow_parity", "sow_id", "parity"),
+        # Partial unique index (DDL only — defined in migration):
+        # CREATE UNIQUE INDEX idx_one_active_cycle ON breeding_cycles (sow_id)
+        # WHERE cycle_status NOT IN ('WEANED', 'FAILED');
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    sow_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("sows.id"), nullable=False)
+    parity: Mapped[int] = mapped_column(Integer, nullable=False)
+    cycle_status: Mapped[str] = mapped_column(String(20), nullable=False, default="MATED")
+    # MATED / CONFIRMED / FARROWED / WEANED / FAILED
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    mating_count: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    sow: Mapped["Sow"] = relationship(back_populates="breeding_cycles")
