@@ -165,8 +165,9 @@ Renderer (Base: 템플릿 | Addon #1: LLM)
 - [x] OpenAPI 3.1 스펙 v1 — `docs/api/openapi-v1.yaml`
 - [x] Docker Compose 로컬 개발환경 — `docker-compose.yml` (postgres + redis + api)
 - [x] 프론트엔드 기반 — Next.js 15 + Zustand + TanStack Query + axios + next-intl + /login 페이지
-- [ ] **Alembic 마이그레이션 생성 + DB 적용** (Docker Desktop 필요)
-- [ ] **MVP 스프린트 시작 (8주)**
+- [x] **Alembic 마이그레이션 생성 + DB 적용** — 40테이블 Docker PostgreSQL 적용 완료
+- [x] **API Contract 검증 + 수정** — 프론트-백 계약 7종 수정, 코드리뷰 버그 8종 수정, unit 43/43 pass
+- [ ] **MVP 스프린트 완료 (7/1 출시)** — /dashboard, /chat, Sidebar 완성, i18n, 배포
 
 ---
 
