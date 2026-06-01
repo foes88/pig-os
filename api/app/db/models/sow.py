@@ -1,10 +1,10 @@
 """
-Sow management module: buildings, boars, sows, breeding_cycles.
+Sow management module: buildings, boars, sows, breeding_cycles, piglet_groups.
 """
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -115,3 +115,65 @@ class BreedingCycle(Base):
     )
 
     sow: Mapped["Sow"] = relationship(back_populates="breeding_cycles")
+
+
+class PigletGroup(Base):
+    """
+    이유 후 자돈 그룹 (피그플랜 자돈관리 P03).
+    개별 개체 추적 없이 그룹 단위로 관리.
+    weaning_date → transfer_date 기간이 자돈 사육 기간.
+    """
+    __tablename__ = "piglet_groups"
+    __table_args__ = (
+        UniqueConstraint("farm_id", "group_code"),
+        Index("idx_pg_farm_active", "farm_id", "weaning_date", postgresql_where="deleted_at IS NULL"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    building_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("buildings.id"))
+    group_code: Mapped[str] = mapped_column(String(30), nullable=False)
+    batch_name: Mapped[str | None] = mapped_column(String(100))
+    weaning_date: Mapped[date] = mapped_column(Date, nullable=False)
+    head_count_in: Mapped[int] = mapped_column(Integer, nullable=False)
+    head_count_dead: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    head_count_out: Mapped[int | None] = mapped_column(Integer)  # 전출/판매 두수
+    avg_entry_weight_kg: Mapped[float | None] = mapped_column(Numeric(6, 2))
+    avg_exit_weight_kg: Mapped[float | None] = mapped_column(Numeric(6, 2))
+    transfer_date: Mapped[date | None] = mapped_column(Date)  # 비육사 전출 또는 판매일
+    transfer_type: Mapped[str | None] = mapped_column(String(20))
+    # FINISHER_TRANSFER / SOLD / CULLED
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class PigletTransfer(Base):
+    """
+    양자/대리모 이벤트 — 모돈 간 자돈 이동.
+    분만 기록과 분리: 분만 = 출생(생물학적), 양자 = 포유 중 이동(관리적).
+    PSY는 생물학적 산자 기준, 이유두수는 포유 중인 수(양자 반영) 기준으로 각각 계산.
+    """
+    __tablename__ = "piglet_transfers"
+    __table_args__ = (
+        Index("idx_pt_farm_date", "farm_id", "transfer_date"),
+        Index("idx_pt_source_sow", "source_sow_id"),
+        Index("idx_pt_dest_sow", "dest_sow_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    source_sow_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("sows.id"), nullable=False)
+    dest_sow_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("sows.id"), nullable=False)
+    source_farrowing_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farrowings.id"))
+    dest_farrowing_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farrowings.id"))
+    transfer_date: Mapped[date] = mapped_column(Date, nullable=False)
+    piglet_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    reason: Mapped[str | None] = mapped_column(String(100))
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

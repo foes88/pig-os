@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.addons import AddonRegistry
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
-from app.routers.base import auth, chat, events, farms, kpi, onboarding, sows, sync
+from app.routers.base import auth, chat, events, farms, finishers, kpi, onboarding, piglets, sows, sync
 
 # ── Import Addon packages here to trigger AddonRegistry.register() ──────────
 # from app.addons import fcr      # uncomment when Addon #1 is ready
@@ -71,6 +71,8 @@ app.include_router(events.router,      prefix=V1)
 app.include_router(kpi.router,         prefix=V1)
 app.include_router(chat.router,        prefix=V1)
 app.include_router(sync.router,        prefix=V1)
+app.include_router(finishers.router,   prefix=V1)
+app.include_router(piglets.router,     prefix=V1)
 
 # ── Addon routers (auto-discovered from AddonRegistry) ───────────────────────
 for addon in AddonRegistry.all():

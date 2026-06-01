@@ -2,9 +2,11 @@ import { apiClient } from "@/lib/api/client";
 import type {
   CreateFarrowingRequest,
   CreateMatingRequest,
+  CreateReproductiveEventRequest,
   CreateWeaningRequest,
   Farrowing,
   Mating,
+  ReproductiveEvent,
   Weaning,
 } from "@/types/api.types";
 
@@ -39,5 +41,12 @@ export const eventsApi = {
 
     create: (farmId: string, body: CreateWeaningRequest) =>
       apiClient.post<Weaning>(`${base(farmId)}/weanings`, body).then((r) => r.data),
+  },
+
+  reproductive: {
+    create: (farmId: string, body: CreateReproductiveEventRequest) =>
+      apiClient
+        .post<ReproductiveEvent>(`/api/v1/farms/${farmId}/events/reproductive`, body)
+        .then((r) => r.data),
   },
 };

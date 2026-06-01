@@ -3,6 +3,7 @@ import type {
   CreateSowRequest,
   PagedResult,
   Sow,
+  SowCullRequest,
   SowStatus,
   UpdateSowRequest,
 } from "@/types/api.types";
@@ -33,4 +34,7 @@ export const sowsApi = {
 
   delete: (farmId: string, sowId: string) =>
     apiClient.delete(`${base(farmId)}/${sowId}`),
+
+  cull: (farmId: string, sowId: string, body: SowCullRequest) =>
+    apiClient.post<Sow>(`${base(farmId)}/${sowId}/cull`, body).then((r) => r.data),
 };

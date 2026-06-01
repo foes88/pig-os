@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -6,8 +7,8 @@ from sqlalchemy import select
 from app.core.dependencies import CurrentUser, DbDep, FarmDep
 from app.core.exceptions import NotFoundError
 from app.db.models.sow import Sow
-from app.schemas.common import PageMeta, PagedResponse
-from app.schemas.sow import SowCreate, SowResponse, SowUpdate
+from app.schemas.common import PagedResponse, PageMeta
+from app.schemas.sow import SowCreate, SowCullRequest, SowResponse, SowUpdate
 
 router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 
@@ -33,7 +34,6 @@ async def list_sows(
     if parity_max is not None:
         q = q.where(Sow.parity <= parity_max)
 
-    total_q = q.with_only_columns(select(Sow.id).where(Sow.farm_id == farm.id, Sow.deleted_at.is_(None)).subquery().c.id)
     from sqlalchemy import func
     count_row = await db.scalar(select(func.count()).select_from(q.subquery()))
     total = count_row or 0
@@ -56,7 +56,7 @@ async def list_sows(
 
 @router.post("", response_model=SowResponse, status_code=201)
 async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
-    from datetime import datetime, UTC
+    from datetime import UTC, datetime
     sow = Sow(
         farm_id=farm.id,
         ear_tag=body.ear_tag,
@@ -99,9 +99,23 @@ async def update_sow(sow_id: UUID, body: SowUpdate, farm: FarmDep, db: DbDep):
     return SowResponse.model_validate(sow)
 
 
+@router.post("/{sow_id}/cull", response_model=SowResponse)
+async def cull_sow(sow_id: UUID, body: SowCullRequest, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    """도폐사/판매 처리 — 모돈 상태를 CULLED/DEAD/SOLD로 변경하고 삭제 처리."""
+    sow = await db.scalar(
+        select(Sow).where(Sow.id == sow_id, Sow.farm_id == farm.id, Sow.deleted_at.is_(None))
+    )
+    if not sow:
+        raise NotFoundError(f"Sow {sow_id} not found")
+    sow.status = body.reason  # CULLED / DEAD / SOLD
+    sow.deleted_at = datetime.now(UTC)
+    await db.commit()
+    await db.refresh(sow)
+    return SowResponse.model_validate(sow)
+
+
 @router.delete("/{sow_id}", status_code=204)
 async def delete_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
-    from datetime import datetime, UTC
     sow = await db.scalar(
         select(Sow).where(Sow.id == sow_id, Sow.farm_id == farm.id, Sow.deleted_at.is_(None))
     )

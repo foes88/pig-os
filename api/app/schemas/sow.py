@@ -25,6 +25,14 @@ class SowUpdate(BaseModel):
     rfid_tag: str | None = None
 
 
+class SowCullRequest(BaseModel):
+    """도폐사/판매 처리 — 모돈을 비활성화하고 이력을 남긴다."""
+    reason: str = Field(..., pattern="^(CULLED|DEAD|SOLD)$")
+    event_date: date
+    cull_reason: str | None = Field(None, max_length=200)  # 도태 사유 (저생산성/노령/질병 등)
+    notes: str | None = None
+
+
 class SowResponse(UUIDMixin):
     farm_id: UUID
     ear_tag: str

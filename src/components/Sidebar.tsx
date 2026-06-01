@@ -3,11 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const navItems = [
-  { href: "/", icon: "🧠", label: "AI Dashboard" },
-  { href: "/sows", icon: "🐷", label: "Sow Intelligence" },
-  { href: "/record", icon: "✏️", label: "Smart Record" },
-  { href: "/kpi", icon: "📊", label: "Predictive KPI" },
+const navGroups = [
+  {
+    label: "핵심",
+    items: [
+      { href: "/",       icon: "🏠", label: "대시보드" },
+      { href: "/kpi",    icon: "📊", label: "KPI 현황" },
+      { href: "/chat",   icon: "💬", label: "Q&A" },
+    ],
+  },
+  {
+    label: "번식돈",
+    items: [
+      { href: "/sows",   icon: "🐷", label: "모돈 관리" },
+      { href: "/record", icon: "✏️", label: "이벤트 기록" },
+    ],
+  },
+  {
+    label: "생산돈",
+    items: [
+      { href: "/piglets",   icon: "🐽", label: "자돈 관리" },
+      { href: "/finishers", icon: "🏭", label: "비육돈 관리" },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -22,23 +40,30 @@ export function Sidebar() {
         </span>
       </div>
 
-      {navItems.map((item) => {
-        const isActive = pathname === item.href;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-2.5 px-[18px] py-2 text-xs font-medium transition-all ${
-              isActive
-                ? "text-[#5EEAD4] font-semibold bg-[rgba(13,124,102,.15)] border-r-2 border-primary"
-                : "text-[#8896A8] hover:text-[#CBD5E1] hover:bg-white/[.05]"
-            }`}
-          >
-            <span className="w-[18px] text-center text-[13px]">{item.icon}</span>
-            {item.label}
-          </Link>
-        );
-      })}
+      {navGroups.map((group) => (
+        <div key={group.label} className="mb-2">
+          <div className="px-[18px] py-1.5 text-[9px] font-bold text-[#4B5563] uppercase tracking-widest">
+            {group.label}
+          </div>
+          {group.items.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2.5 px-[18px] py-2 text-xs font-medium transition-all ${
+                  isActive
+                    ? "text-[#5EEAD4] font-semibold bg-[rgba(13,124,102,.15)] border-r-2 border-primary"
+                    : "text-[#8896A8] hover:text-[#CBD5E1] hover:bg-white/[.05]"
+                }`}
+              >
+                <span className="w-[18px] text-center text-[13px]">{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+      ))}
 
       <div className="mt-auto px-[18px] py-4 text-[10px] text-[#4B5563] border-t border-white/[.06]">
         AI-Powered Revenue System

@@ -11,14 +11,18 @@ import type {
   CreateMatingRequest,
   CreateFarrowingRequest,
   CreateWeaningRequest,
+  CreateReproductiveEventRequest,
+  SowCullRequest,
 } from "@/types/api.types";
 
-type Tab = "mating" | "farrowing" | "weaning";
+type Tab = "mating" | "farrowing" | "weaning" | "repro" | "cull";
 
 const TABS: { value: Tab; label: string; icon: string }[] = [
-  { value: "mating",    label: "교배",  icon: "💉" },
-  { value: "farrowing", label: "분만",  icon: "🐖" },
-  { value: "weaning",   label: "이유",  icon: "🌱" },
+  { value: "mating",    label: "교배",    icon: "💉" },
+  { value: "farrowing", label: "분만",    icon: "🐖" },
+  { value: "weaning",   label: "이유",    icon: "🌱" },
+  { value: "repro",     label: "임신사고", icon: "⚠️" },
+  { value: "cull",      label: "도폐사",  icon: "📋" },
 ];
 
 export default function RecordPage() {
@@ -82,6 +86,12 @@ export default function RecordPage() {
           )}
           {tab === "weaning" && (
             <WeaningForm farmId={farmId} sows={sows} onSuccess={(msg) => setSuccess(msg)} />
+          )}
+          {tab === "repro" && (
+            <ReproForm farmId={farmId} sows={sows} onSuccess={(msg) => setSuccess(msg)} />
+          )}
+          {tab === "cull" && (
+            <CullForm farmId={farmId} sows={sows} onSuccess={(msg) => setSuccess(msg)} />
           )}
         </div>
       </main>
@@ -257,6 +267,114 @@ function WeaningForm({
       </Field>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <SubmitBtn disabled={!form.sow_id || form.weaned_count < 1} loading={mutation.isPending} label="이유 기록" />
+    </form>
+  );
+}
+
+// ── Repro Form (임신사고) ─────────────────────────────────────────────────────
+
+const REPRO_TYPES: { value: string; label: string }[] = [
+  { value: "RETURN_TO_ESTRUS", label: "반발정" },
+  { value: "ABORTION",         label: "유산" },
+  { value: "EMPTY",            label: "공태 확인" },
+  { value: "INFERTILE",        label: "불임" },
+  { value: "HEAT_DETECTED",    label: "발정 감지" },
+];
+
+function ReproForm({
+  farmId, sows, onSuccess,
+}: { farmId: string; sows: { id: string; ear_tag: string }[]; onSuccess: (msg: string) => void }) {
+  const [form, setForm] = useState<CreateReproductiveEventRequest>({
+    sow_id: "", event_type: "RETURN_TO_ESTRUS", event_date: today(),
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: () => eventsApi.reproductive.create(farmId, form),
+    onSuccess: () => {
+      const label = REPRO_TYPES.find((t) => t.value === form.event_type)?.label ?? form.event_type;
+      onSuccess(`${tagOf(sows, form.sow_id)} ${label} 기록 완료`);
+      setForm({ sow_id: "", event_type: "RETURN_TO_ESTRUS", event_date: today() });
+      setError(null);
+    },
+    onError: (err: unknown) => setError(apiError(err)),
+  });
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="space-y-4">
+      <h2 className="text-base font-bold mb-2">⚠️ 임신사고 기록</h2>
+      <p className="text-xs text-text3 -mt-2">반발정·유산·공태 등 비생산 이벤트 — NPD 계산에 반영됩니다</p>
+      <Field label="모돈 *">
+        <SowSelect sows={sows} value={form.sow_id} onChange={(v) => setForm((f) => ({ ...f, sow_id: v }))} />
+      </Field>
+      <Field label="이벤트 유형 *">
+        <select value={form.event_type} onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value as CreateReproductiveEventRequest["event_type"] }))} className="input">
+          {REPRO_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+        </select>
+      </Field>
+      <Field label="발생일 *">
+        <input type="date" value={form.event_date} onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))} className="input" />
+      </Field>
+      <Field label="비고">
+        <input value={form.notes ?? ""} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="input" />
+      </Field>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <SubmitBtn disabled={!form.sow_id} loading={mutation.isPending} label="임신사고 기록" />
+    </form>
+  );
+}
+
+// ── Cull Form (도폐사) ────────────────────────────────────────────────────────
+
+const CULL_REASONS: { value: string; label: string }[] = [
+  { value: "CULLED", label: "도태 (저생산성/노령/지제불량 등)" },
+  { value: "DEAD",   label: "폐사" },
+  { value: "SOLD",   label: "판매" },
+];
+
+function CullForm({
+  farmId, sows, onSuccess,
+}: { farmId: string; sows: { id: string; ear_tag: string }[]; onSuccess: (msg: string) => void }) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<SowCullRequest>({
+    reason: "CULLED", event_date: today(),
+  });
+  const [sowId, setSowId] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: () => sowsApi.cull(farmId, sowId, form),
+    onSuccess: () => {
+      const label = CULL_REASONS.find((r) => r.value === form.reason)?.label.split(" ")[0] ?? form.reason;
+      onSuccess(`${tagOf(sows, sowId)} ${label} 처리 완료`);
+      queryClient.invalidateQueries({ queryKey: ["sows", farmId] });
+      setSowId("");
+      setForm({ reason: "CULLED", event_date: today() });
+      setError(null);
+    },
+    onError: (err: unknown) => setError(apiError(err)),
+  });
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }} className="space-y-4">
+      <h2 className="text-base font-bold mb-2">📋 도폐사 기록</h2>
+      <p className="text-xs text-text3 -mt-2">처리 후 모돈은 비활성화됩니다</p>
+      <Field label="모돈 *">
+        <SowSelect sows={sows} value={sowId} onChange={setSowId} />
+      </Field>
+      <Field label="처리 유형 *">
+        <select value={form.reason} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value as SowCullRequest["reason"] }))} className="input">
+          {CULL_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+        </select>
+      </Field>
+      <Field label="처리일 *">
+        <input type="date" value={form.event_date} onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))} className="input" />
+      </Field>
+      <Field label="사유">
+        <input value={form.cull_reason ?? ""} onChange={(e) => setForm((f) => ({ ...f, cull_reason: e.target.value }))} placeholder="예: 8산 이상 노령, 지제 불량" className="input" />
+      </Field>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      <SubmitBtn disabled={!sowId} loading={mutation.isPending} label="도폐사 처리" />
     </form>
   );
 }

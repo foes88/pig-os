@@ -204,11 +204,128 @@ export interface CreateWeaningRequest {
 export interface ReproductiveEvent {
   id: string;
   sow_id: string;
-  event_type: "RETURN_TO_ESTRUS" | "ABORTION" | "EMPTY" | "CULL" | "DEATH";
+  event_type: "RETURN_TO_ESTRUS" | "ABORTION" | "EMPTY" | "INFERTILE" | "CULLED" | "DEAD" | "TRANSFER_OUT" | "SOLD" | "HEAT_DETECTED";
   event_date: string;
+  mating_id?: string;
+  detected_method?: "ULTRASOUND" | "VISUAL" | "BEHAVIOR" | "BLOOD_TEST";
   notes?: string;
   farm_id: string;
   created_at: string;
+}
+
+export interface CreateReproductiveEventRequest {
+  sow_id: string;
+  event_type: "RETURN_TO_ESTRUS" | "ABORTION" | "EMPTY" | "INFERTILE" | "CULLED" | "DEAD" | "TRANSFER_OUT" | "SOLD" | "HEAT_DETECTED";
+  event_date: string;
+  mating_id?: string;
+  detected_method?: "ULTRASOUND" | "VISUAL" | "BEHAVIOR" | "BLOOD_TEST";
+  notes?: string;
+}
+
+export interface SowCullRequest {
+  reason: "CULLED" | "DEAD" | "SOLD";
+  event_date: string;
+  cull_reason?: string;
+  notes?: string;
+}
+
+// ── Piglet Groups (자돈) ──────────────────────────────────────────────────────
+
+export interface PigletGroup {
+  id: string;
+  farm_id: string;
+  group_code: string;
+  batch_name?: string;
+  weaning_date: string;
+  transfer_date?: string;
+  transfer_type?: "FINISHER_TRANSFER" | "SOLD" | "CULLED";
+  head_count_in: number;
+  head_count_dead: number;
+  head_count_out?: number;
+  avg_entry_weight_kg?: number;
+  avg_exit_weight_kg?: number;
+  building_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatePigletGroupRequest {
+  group_code: string;
+  batch_name?: string;
+  weaning_date: string;
+  head_count_in: number;
+  avg_entry_weight_kg?: number;
+  building_id?: string;
+  notes?: string;
+}
+
+export interface PigletGroupTransferOutRequest {
+  transfer_date: string;
+  transfer_type: "FINISHER_TRANSFER" | "SOLD" | "CULLED";
+  head_count_out: number;
+  avg_exit_weight_kg?: number;
+  notes?: string;
+}
+
+export interface PigletTransfer {
+  id: string;
+  farm_id: string;
+  source_sow_id: string;
+  dest_sow_id: string;
+  transfer_date: string;
+  piglet_count: number;
+  source_farrowing_id?: string;
+  dest_farrowing_id?: string;
+  reason?: string;
+  created_at: string;
+}
+
+export interface CreatePigletTransferRequest {
+  source_sow_id: string;
+  dest_sow_id: string;
+  transfer_date: string;
+  piglet_count: number;
+  source_farrowing_id?: string;
+  dest_farrowing_id?: string;
+  reason?: string;
+  notes?: string;
+}
+
+// ── Finisher Groups (비육돈) ──────────────────────────────────────────────────
+
+export interface FinisherGroup {
+  id: string;
+  farm_id: string;
+  group_code: string;
+  batch_name?: string;
+  start_date: string;
+  end_date?: string;
+  head_count_in: number;
+  head_count_out?: number;
+  avg_entry_weight_kg?: number;
+  avg_exit_weight_kg?: number;
+  building_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFinisherGroupRequest {
+  group_code: string;
+  batch_name?: string;
+  start_date: string;
+  head_count_in: number;
+  avg_entry_weight_kg?: number;
+  building_id?: string;
+  notes?: string;
+}
+
+export interface FinisherGroupShipRequest {
+  end_date: string;
+  head_count_out: number;
+  avg_exit_weight_kg?: number;
+  notes?: string;
 }
 
 export interface HealthEvent {
