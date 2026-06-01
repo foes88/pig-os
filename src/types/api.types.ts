@@ -156,45 +156,48 @@ export interface CreateMatingRequest {
 
 export interface Farrowing {
   id: string;
+  farm_id: string;
   sow_id: string;
+  mating_id: string | null;
   farrowing_date: string;
   total_born: number;
   born_alive: number;
-  born_dead: number;
-  mummies: number;
-  farrowing_type: string;
-  notes?: string;
-  farm_id: string;
+  stillborn: number;
+  mummified: number;
+  farrowing_ease: "EASY" | "ASSISTED" | "DIFFICULT" | null;
+  breeding_cycle_id: string | null;
   created_at: string;
 }
 
 export interface CreateFarrowingRequest {
   sow_id: string;
+  mating_id?: string;
   farrowing_date: string;
-  total_born: number;
   born_alive: number;
-  born_dead?: number;
-  mummies?: number;
-  farrowing_type?: string;
+  stillborn?: number;
+  mummified?: number;
+  farrowing_ease?: "EASY" | "ASSISTED" | "DIFFICULT";
   notes?: string;
 }
 
 export interface Weaning {
   id: string;
+  farm_id: string;
   sow_id: string;
+  farrowing_id: string | null;
   weaning_date: string;
   weaned_count: number;
-  avg_weight_kg?: number;
-  notes?: string;
-  farm_id: string;
+  weaning_age_days: number | null;
+  avg_weaning_weight_kg: number | null;
   created_at: string;
 }
 
 export interface CreateWeaningRequest {
   sow_id: string;
+  farrowing_id?: string;
   weaning_date: string;
   weaned_count: number;
-  avg_weight_kg?: number;
+  avg_weaning_weight_kg?: number;
   notes?: string;
 }
 

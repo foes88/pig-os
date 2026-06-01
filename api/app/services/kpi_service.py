@@ -194,7 +194,7 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
             Farrowing.farrowing_date >= date(today.year, 1, 1),
         )
     )
-    farrowing_rate = (farrowing_count / mating_count) if mating_count else None
+    farrowing_rate = (farrowing_count / mating_count * 100) if mating_count else None
 
     # Rule Engine — base tier only (no addon subscriptions needed)
     ctx = RuleContext(

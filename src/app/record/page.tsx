@@ -160,10 +160,9 @@ function FarrowingForm({
     mutationFn: () => eventsApi.farrowings.create(farmId, {
       sow_id: form.sow_id,
       farrowing_date: form.farrowing_date,
-      total_born: form.born_alive + form.stillborn + form.mummified,
       born_alive: form.born_alive,
-      born_dead: form.stillborn,
-      mummies: form.mummified,
+      stillborn: form.stillborn,
+      mummified: form.mummified,
       notes: form.notes,
     } as CreateFarrowingRequest),
     onSuccess: () => {
@@ -225,7 +224,7 @@ function WeaningForm({
       sow_id: form.sow_id,
       weaning_date: form.weaning_date,
       weaned_count: form.weaned_count,
-      avg_weight_kg: form.avg_weight_kg ? Number(form.avg_weight_kg) : undefined,
+      avg_weaning_weight_kg: form.avg_weight_kg ? Number(form.avg_weight_kg) : undefined,
       notes: form.notes,
     } as CreateWeaningRequest),
     onSuccess: () => {

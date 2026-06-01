@@ -16,6 +16,7 @@ from app.core.security import (
 )
 from app.db.models.config import FarmConfig
 from app.db.models.platform import Farm, Organization, RefreshToken, User, UserFarm
+from app.services.farm_service import _generate_farm_code
 from app.schemas.auth import LoginResponse, OnboardingCompleteRequest, OnboardingCompleteResponse, RegisterRequest, TokenResponse
 
 
@@ -85,11 +86,6 @@ async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
         role=user.role,
         farm_ids=farm_ids,
     )
-
-
-def _generate_farm_code(country: str, org_id) -> str:
-    suffix = str(org_id)[:6].upper()
-    return f"FARM-{country.upper()}-{suffix}"
 
 
 async def complete_onboarding(

@@ -73,8 +73,8 @@ components:
       properties:
         total:     { type: integer, example: 142 }
         page:      { type: integer, example: 1 }
-        page_size: { type: integer, example: 50 }
-        has_next:  { type: boolean, example: true }
+        per_page:  { type: integer, example: 50 }
+        pages:     { type: integer, example: 3 }
 
     UUID:
       type: string
@@ -302,40 +302,29 @@ components:
         created_at: { type: string, format: date-time }
 
     # KPI
-    KpiValue:
-      type: object
-      properties:
-        value:           { type: ["number", "null"], format: float }
-        benchmark_avg:   { type: ["number", "null"], format: float }
-        benchmark_top25: { type: ["number", "null"], format: float }
-        target_value:    { type: ["number", "null"], format: float }
-        unit:            { type: string, example: "piglets/sow/year" }
-        status:          { type: string, enum: [OK, WARNING, CRITICAL, NO_DATA] }
-
     Alert:
       type: object
       properties:
-        alert_type: { type: string, example: "NPD_OVERDUE" }
-        severity:   { type: string, enum: [INFO, WARNING, CRITICAL] }
-        sow_id:     { $ref: "#/components/schemas/UUID" }
-        message:    { type: string }
-        detail:     { type: object }
+        rule_id:       { type: string, example: "npd.overdue" }
+        kpi:           { type: string, example: "NPD" }
+        severity:      { type: string, enum: [OK, INFO, WARNING, CRITICAL] }
+        message:       { type: string }
+        current_value: { type: ["number", "null"], format: float }
+        target_value:  { type: ["number", "null"], format: float }
 
     DashboardKpi:
       type: object
       properties:
-        farm_id:          { $ref: "#/components/schemas/UUID" }
-        as_of:            { type: string, format: date }
-        period_months:    { type: integer, example: 12 }
-        psy:              { $ref: "#/components/schemas/KpiValue" }
-        msy:              { $ref: "#/components/schemas/KpiValue" }
-        npd:              { $ref: "#/components/schemas/KpiValue" }
-        active_sow_count: { type: integer }
-        gestating_count:  { type: integer }
-        lactating_count:  { type: integer }
-        alerts:           { type: array, items: { $ref: "#/components/schemas/Alert" } }
-        alerts_critical:  { type: integer }
-        alerts_warning:   { type: integer }
+        farm_id:        { $ref: "#/components/schemas/UUID" }
+        as_of:          { type: string, format: date }
+        psy:            { type: ["number", "null"], format: float, example: 24.5 }
+        npd:            { type: ["number", "null"], format: float, example: 38.2 }
+        farrowing_rate: { type: ["number", "null"], format: float, example: 87.3 }
+        active_sows:    { type: integer }
+        gestating:      { type: integer }
+        lactating:      { type: integer }
+        weaned:         { type: integer }
+        alerts:         { type: array, items: { $ref: "#/components/schemas/Alert" } }
 
     PsyDetail:
       type: object
@@ -667,7 +656,7 @@ paths:
         - name: page
           in: query
           schema: { type: integer, default: 1, minimum: 1 }
-        - name: page_size
+        - name: per_page
           in: query
           schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
       responses:
@@ -678,7 +667,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  data: { type: array, items: { $ref: "#/components/schemas/SowResponse" } }
+                  items: { type: array, items: { $ref: "#/components/schemas/SowResponse" } }
                   meta: { $ref: "#/components/schemas/PageMeta" }
 
     post:

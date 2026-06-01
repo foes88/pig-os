@@ -33,7 +33,7 @@ class MatingResponse(UUIDMixin):
 
 class FarrowingCreate(BaseModel):
     sow_id: UUID
-    mating_id: UUID
+    mating_id: UUID | None = None  # optional — UI가 교배 선택 없이 기록 가능
     farrowing_date: date
     born_alive: int = Field(..., ge=0)
     stillborn: int = Field(default=0, ge=0)
@@ -67,7 +67,7 @@ class FarrowingResponse(UUIDMixin):
 
 class WeaningCreate(BaseModel):
     sow_id: UUID
-    farrowing_id: UUID
+    farrowing_id: UUID | None = None  # optional — UI가 분만 선택 없이 기록 가능
     weaning_date: date
     weaned_count: int = Field(..., ge=0, le=30)
     avg_weaning_weight_kg: float | None = Field(None, gt=0)

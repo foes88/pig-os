@@ -4,15 +4,6 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class KpiValue(BaseModel):
-    value: float | None
-    benchmark_avg: float | None
-    benchmark_top25: float | None
-    target_value: float | None
-    unit: str
-    status: str  # OK / WARNING / CRITICAL / NO_DATA
-
-
 class Alert(BaseModel):
     rule_id: str
     kpi: str
