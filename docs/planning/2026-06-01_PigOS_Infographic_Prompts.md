@@ -125,19 +125,49 @@ ROW 1 개발 BUILD (UPDATED STATUS):
   API Contract 검증 완료 (7종)
   오프라인 동기화 구현 완료
   번식돈 풀싸이클 + 자돈 + 비육돈 구현
+  임신사고·도폐사·양자/대리모 기능 구현
   통합테스트 58개 통과
-7/1 LAUNCH STAR: Android+iOS 동시·7개 언어, PSY/MSY/NPD, AI 자연어 분석
-8월~11월: Addon #1~#4 순차 출시
+7/1 LAUNCH STAR: Android+iOS 동시·7개 언어, PSY·NPD·분만율, AI 자연어 분석
+  pigos.io 랜딩페이지 퍼블리시
+8월: Addon #1 출시 — FCR 사료효율 모듈
+  MSY·WSY·발정재귀일령 추가 (Phase 1.5)
+  배치 연속 입력 모드 (작업자 UX 혁신)
+  종합일보형 대시보드 (오늘 예정 작업 중심)
+  항생제 기록 KR 버전 (규제 대응)
+9월: Addon #2 출시 — 건강·방역
+10월: Addon #3 출시 — 원가·재무
+11월: Addon #4 출시 — 시장연동 AI
 12월★: KPI 4종·5개국 서비스·Phase 2
 
-ROW 2 비개발 GROWTH (same as original)
+ROW 2 비개발 GROWTH (UPDATED):
+4월 (✅ DONE): 브랜드 확정, 타겟시장 5개, KPI 리스트, 온보딩 플로우, 과금 구조
+5월 (✅ DONE):
+  pigos.io 도메인 구매 완료 (2026-05-18)
+  패키징·과금 구조 확정, 양돈 Rule 문서화
+  benchmark 4종 값 정리
+6월 (🔄 IN PROGRESS):
+  로고 제작 중 → 곧 확정
+  pigos.io 랜딩페이지 개발 중 (Astro)
+  랜딩페이지 시안 생성
+  앱스토어 준비, 보도자료 초안
+  기자 이메일 DB, 해외 배포 전략
+7/1 LAUNCH: 보도자료 국내외 배포, 키워드 광고
+  pigos.io 랜딩 공개, 앱스토어 등록
+  로고 확정 공개
+8월~: Addon #1~#4 홍보 순차 진행
+12월★: 글로벌 인지도, 파트너십, 2027 플랜
+
 ROW 3 상시 ALWAYS: 4개 progress bar
+  블로그 작성 (4→12월)
+  경쟁사 모니터링 (4→12월)
+  보도자료 (7→12월)
+  AI 엔진 고도화 (7→12월)
 
 BOTTOM 4 INFO CARDS:
-  [Base 무료] 교배·분만·이유·도폐사 + PSY·MSY·NPD 자동산출
+  [Base 무료] 교배·분만·이유·임신사고·도폐사 + 자돈·비육돈 + PSY·NPD·분만율
   [Addon 유료] FCR / 건강·방역 / 원가·재무 / 시장연동 AI
   [타겟 시장] 미국·동남아·중국·브라질·한국 (5개 시장)
-  [AI 엔진] Claude API 연동 → AI 엔진 고도화
+  [AI 엔진] Rule Engine → Claude API 연동 → Phase 3 AI 고도화
 
 STYLE:
   Color: navy #101828 background, teal #0D7C66 accents, white text, amber #F59E0B for milestones
