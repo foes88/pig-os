@@ -45,3 +45,4 @@ from app.db.models.master import (  # noqa: F401
     MedicationCatalog,
     VaccineCatalog,
 )
+from app.db.models.pilot_signup import PilotSignup  # noqa: F401
