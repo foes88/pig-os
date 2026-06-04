@@ -1,34 +1,121 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #0D7C66;
-  --color-primary-light: rgba(13,124,102,.08);
-  --color-gold: #B8941F;
-  --color-danger: #DC2626;
-  --color-success: #16A34A;
-  --color-warning: #D97706;
-  --color-purple: #7C3AED;
-  --color-blue: #2563EB;
-  --color-surface: #FFFFFF;
-  --color-bg: #F8FAFB;
-  --color-border: #E2E8F0;
-  --color-text: #0F172A;
-  --color-text2: #475569;
-  --color-text3: #94A3B8;
-  --color-sidebar: #0F172A;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* ── Brand / surfaces (light) ── */
+  --color-bg:           #FAFAF9;
+  --color-bg2:          #F1F5F3;
+  --color-surface:      #FFFFFF;
+  --color-panel:        #FFFFFF;
+  --color-panel-hi:     #F8F8F6;
+
+  /* ── Text ── */
+  --color-text:         #0F172A;
+  --color-text2:        #1E293B;
+  --color-muted:        #64748B;
+  --color-faint:        #94A3B8;
+
+  /* ── Legacy aliases (기존 코드 호환) ── */
+  --color-text3:        #64748B;
+  --color-text1:        #0F172A;
+  --color-background:   #FAFAF9;
+
+  /* ── Borders ── */
+  --color-border:       #E7E5E4;
+  --color-border-strong:#CBD5CF;
+
+  /* ── Primary (actions, links) ── */
+  --color-primary:      #2563EB;
+  --color-primary-d:    #1D4ED8;
+  --color-primary-soft: #EFF6FF;
+
+  /* ── Navy (PigOS brand — logo, primary buttons) ── */
+  --color-navy:         #0D1B3E;
+
+  /* ── Status ── */
+  --color-danger:       #DC2626;
+  --color-red:          #DC2626;
+  --color-red-soft:     #FEF2F2;
+  --color-warning:      #D97706;
+  --color-amber:        #D97706;
+  --color-amber-soft:   #FFFBEB;
+  --color-success:      #059669;
+  --color-green:        #059669;
+  --color-green-soft:   #ECFDF5;
+  --color-purple:       #7C3AED;
+  --color-purple-soft:  #F5F3FF;
+
+  /* ── Logo accent ── */
+  --color-snout:        #E83B2F;
+
+  /* ── Typography ── */
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* ── Radii ── */
+  --radius-card: 14px;
+  --radius-btn:  8px;
+
+  /* ── Shadows ── */
+  --shadow-card:  0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.05);
+  --shadow-hover: 0 4px 6px rgba(15,23,42,.06), 0 12px 32px rgba(15,23,42,.08);
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] {
+  --color-bg:           #0A0F1E;
+  --color-bg2:          #0E1426;
+  --color-surface:      #111933;
+  --color-panel:        #111933;
+  --color-panel-hi:     #172347;
+  --color-text:         #FFFFFF;
+  --color-text2:        #E2E8F0;
+  --color-muted:        #94A3B8;
+  --color-faint:        #64748B;
+  --color-text3:        #94A3B8;
+  --color-text1:        #FFFFFF;
+  --color-background:   #0A0F1E;
+  --color-border:       rgba(148,163,184,.14);
+  --color-border-strong:rgba(148,163,184,.22);
+  --color-primary:      #2563EB;
+  --color-primary-d:    #3B82F6;
+  --color-primary-soft: rgba(37,99,235,.12);
+  --color-red:          #EF4444;
+  --color-red-soft:     rgba(239,68,68,.12);
+  --color-amber:        #F59E0B;
+  --color-amber-soft:   rgba(245,158,11,.12);
+  --color-green:        #10B981;
+  --color-green-soft:   rgba(16,185,129,.12);
 }
 
 @layer base {
   body {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     background: var(--color-bg);
     color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
   }
+
+  /* 숫자/KPI/뱃지는 모두 font-mono */
+  .font-mono { font-family: var(--font-mono); }
 }
 
 @layer components {
   .input {
-    @apply w-full px-3 py-2 rounded-lg border border-border bg-white text-sm text-text1 outline-none transition focus:border-primary;
+    @apply w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text outline-none transition focus:border-primary;
+  }
+
+  /* 카드 공통 */
+  .card {
+    @apply bg-surface border border-border rounded-[14px];
+    box-shadow: var(--shadow-card);
+  }
+
+  /* 앱 내 주요 버튼 = navy */
+  .btn-primary {
+    @apply bg-navy text-white rounded-lg px-4 py-2 text-sm font-semibold transition hover:bg-primary;
+  }
+
+  .btn-ghost {
+    @apply bg-surface border border-border text-muted rounded-lg px-3 py-2 text-sm transition hover:bg-bg2;
   }
 }

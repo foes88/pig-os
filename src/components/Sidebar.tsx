@@ -2,72 +2,183 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuthStore } from "@/store/auth.store";
 
-const navGroups = [
+interface NavItem {
+  href: string;
+  icon: string;
+  label: { en: string; ko: string };
+  badge?: string | number | null;
+}
+
+const NAV_GROUPS: { label?: { en: string; ko: string }; items: NavItem[] }[] = [
   {
-    label: "핵심",
     items: [
-      { href: "/",       icon: "🏠", label: "대시보드" },
-      { href: "/kpi",    icon: "📊", label: "KPI 현황" },
-      { href: "/chat",   icon: "💬", label: "Q&A" },
+      { href: "/", icon: "⊞", label: { en: "Home", ko: "홈" } },
+      { href: "/sows",      icon: "⬡", label: { en: "Sows", ko: "모돈" }, badge: null },
+      { href: "/farrowing", icon: "◫", label: { en: "Farrowing", ko: "분만사" } },
+      { href: "/reports",   icon: "▤", label: { en: "Reports", ko: "보고서" } },
     ],
   },
   {
-    label: "번식돈",
+    label: { en: "Production", ko: "생산돈" },
     items: [
-      { href: "/sows",   icon: "🐷", label: "모돈 관리" },
-      { href: "/record", icon: "✏️", label: "이벤트 기록" },
+      { href: "/piglets",   icon: "◎", label: { en: "Piglets", ko: "자돈" } },
+      { href: "/finishers", icon: "▣", label: { en: "Finishers", ko: "비육돈" } },
     ],
   },
   {
-    label: "생산돈",
+    label: { en: "Addons", ko: "Addon" },
     items: [
-      { href: "/piglets",   icon: "🐽", label: "자돈 관리" },
-      { href: "/finishers", icon: "🏭", label: "비육돈 관리" },
+      { href: "/addons",    icon: "✦", label: { en: "Addon Store", ko: "Addon 스토어" } },
     ],
   },
 ];
 
-export function Sidebar() {
+const BOTTOM_ITEMS = [
+  { href: "/notifications", icon: "🔔", label: { en: "Notifications", ko: "알림" } },
+  { href: "/settings",      icon: "⚙", label: { en: "Settings", ko: "설정" } },
+];
+
+interface SidebarProps {
+  lang?: "en" | "ko";
+  collapsed?: boolean;
+  onCollapse?: () => void;
+  onAskAI?: () => void;
+}
+
+export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }: SidebarProps) {
   const pathname = usePathname();
+  const user = useAuthStore((s) => s.user);
+  const w = collapsed ? 64 : 224;
+
+  const t = (obj: { en: string; ko: string }) => obj[lang];
 
   return (
-    <nav className="fixed top-0 left-0 w-[220px] h-screen bg-[#0F172A] border-r border-[#1E293B] py-5 flex flex-col z-50 overflow-y-auto">
-      <div className="px-[18px] pb-5 text-[15px] font-extrabold text-white tracking-tight border-b border-white/[.08] mb-4">
-        Pig<span className="text-[#5EEAD4]">OS</span> AI
-        <span className="ml-1 text-[8px] font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-white px-1.5 py-0.5 rounded align-top">
-          AI
-        </span>
-      </div>
-
-      {navGroups.map((group) => (
-        <div key={group.label} className="mb-2">
-          <div className="px-[18px] py-1.5 text-[9px] font-bold text-[#4B5563] uppercase tracking-widest">
-            {group.label}
+    <aside
+      style={{ width: w }}
+      className="hidden md:flex fixed top-0 left-0 h-screen bg-surface border-r border-border flex-col z-50 transition-all duration-200 overflow-hidden"
+    >
+      {/* Logo + collapse toggle */}
+      <div className="flex items-center justify-between px-4 py-4 border-b border-border flex-shrink-0">
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            {/* Logo mark */}
+            <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs font-black">P</span>
+              <span className="absolute w-2 h-1.5 bg-snout rounded-sm" style={{ marginTop: 4, marginLeft: 4 }} />
+            </div>
+            <span className="text-sm font-black tracking-tight text-text">
+              Pig<span className="text-primary">OS</span>
+            </span>
           </div>
-          {group.items.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-2.5 px-[18px] py-2 text-xs font-medium transition-all ${
-                  isActive
-                    ? "text-[#5EEAD4] font-semibold bg-[rgba(13,124,102,.15)] border-r-2 border-primary"
-                    : "text-[#8896A8] hover:text-[#CBD5E1] hover:bg-white/[.05]"
-                }`}
-              >
-                <span className="w-[18px] text-center text-[13px]">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
-
-      <div className="mt-auto px-[18px] py-4 text-[10px] text-[#4B5563] border-t border-white/[.06]">
-        AI-Powered Revenue System
+        )}
+        {collapsed && (
+          <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center mx-auto">
+            <span className="text-white text-xs font-black">P</span>
+          </div>
+        )}
+        <button
+          onClick={onCollapse}
+          className={`text-muted hover:text-text transition text-xs ${collapsed ? "mx-auto mt-2" : ""}`}
+          title={collapsed ? "Expand" : "Collapse"}
+        >
+          {collapsed ? "›" : "‹"}
+        </button>
       </div>
-    </nav>
+
+      {/* Farm name */}
+      {!collapsed && (
+        <div className="px-4 py-2.5 border-b border-border">
+          <div className="text-[10px] text-muted uppercase tracking-widest mb-0.5">Farm</div>
+          <div className="text-xs font-semibold text-text truncate">
+            {user?.name ?? "My Farm"}
+          </div>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2">
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={gi} className="mb-1">
+            {!collapsed && group.label && (
+              <div className="px-4 py-1 text-[9px] font-bold text-faint uppercase tracking-widest">
+                {t(group.label)}
+              </div>
+            )}
+            {group.items.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={collapsed ? t(item.label) : undefined}
+                  className={`flex items-center gap-3 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
+                    isActive
+                      ? "bg-primary-soft text-primary font-semibold"
+                      : "text-muted hover:bg-bg2 hover:text-text"
+                  } ${collapsed ? "justify-center" : ""}`}
+                >
+                  <span className="text-base flex-shrink-0">{item.icon}</span>
+                  {!collapsed && (
+                    <span className="flex-1 text-[13px]">{t(item.label)}</span>
+                  )}
+                  {!collapsed && item.badge && (
+                    <span className="font-mono text-[10px] text-muted">{item.badge}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* Ask AI button */}
+      <div className="px-3 pb-3">
+        <button
+          onClick={onAskAI}
+          className={`w-full flex items-center gap-2.5 rounded-xl py-2.5 text-sm font-semibold text-white transition ${
+            collapsed ? "justify-center px-2" : "px-3"
+          }`}
+          style={{ background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)" }}
+        >
+          <span className="text-base">✦</span>
+          {!collapsed && <span>PigOS AI</span>}
+        </button>
+      </div>
+
+      {/* Bottom items */}
+      <div className="border-t border-border py-2">
+        {BOTTOM_ITEMS.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={collapsed ? t(item.label) : undefined}
+              className={`flex items-center gap-3 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
+                isActive ? "bg-primary-soft text-primary font-semibold" : "text-muted hover:bg-bg2 hover:text-text"
+              } ${collapsed ? "justify-center" : ""}`}
+            >
+              <span className="text-base flex-shrink-0">{item.icon}</span>
+              {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
+            </Link>
+          );
+        })}
+
+        {/* User */}
+        {user && !collapsed && (
+          <div className="flex items-center gap-2.5 mx-2 px-2.5 py-2 mt-1">
+            <div className="w-7 h-7 rounded-full bg-purple flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+              {user.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-semibold text-text truncate">{user.name}</div>
+              <div className="text-[10px] text-muted truncate">{user.email}</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Sidebar } from "@/components/Sidebar";
 import { chatApi } from "@/lib/api/endpoints/chat";
 import { useAuthStore } from "@/store/auth.store";
 import type { ChatResponse, FindingOut } from "@/types/api.types";
@@ -83,9 +82,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Sidebar />
-      <main className="ml-[220px] flex flex-col h-screen">
+    <div className="flex flex-col h-[calc(100vh-3.5rem)] pb-16 md:pb-0">
         {/* Header */}
         <div className="px-7 py-4 border-b border-border bg-surface flex items-center gap-3">
           <div>
@@ -180,7 +177,6 @@ export default function ChatPage() {
             </button>
           </form>
         </div>
-      </main>
     </div>
   );
 }

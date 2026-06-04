@@ -1,0 +1,53 @@
+"use client";
+
+import { useState } from "react";
+import { Sidebar } from "@/components/Sidebar";
+import { Topbar } from "@/components/Topbar";
+import { BottomNav } from "@/components/BottomNav";
+import { QuickInputDrawer } from "@/components/QuickInputDrawer";
+import { AskAiDrawer } from "@/components/AskAiDrawer";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const [lang, setLang] = useState<"en" | "ko">("ko");
+  const [collapsed, setCollapsed] = useState(false);
+  const [askAiOpen, setAskAiOpen] = useState(false);
+  const [quickInputOpen, setQuickInputOpen] = useState(false);
+
+  return (
+    <>
+      <Sidebar
+        lang={lang}
+        collapsed={collapsed}
+        onCollapse={() => setCollapsed((c) => !c)}
+        onAskAI={() => setAskAiOpen(true)}
+      />
+      <div
+        className={`flex flex-col min-h-screen transition-all duration-200 ${
+          collapsed ? "md:ml-16" : "md:ml-56"
+        }`}
+      >
+        <div className="sticky top-0 z-40">
+          <Topbar
+            lang={lang}
+            onLangToggle={setLang}
+            onQuickInput={() => setQuickInputOpen(true)}
+          />
+        </div>
+        <main className="flex-1 pb-16 md:pb-0">
+          {children}
+        </main>
+      </div>
+      <BottomNav lang={lang} onAskAI={() => setAskAiOpen(true)} />
+      <QuickInputDrawer
+        open={quickInputOpen}
+        onClose={() => setQuickInputOpen(false)}
+        lang={lang}
+      />
+      <AskAiDrawer
+        open={askAiOpen}
+        onClose={() => setAskAiOpen(false)}
+        lang={lang}
+      />
+    </>
+  );
+}

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Sidebar } from "@/components/Sidebar";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
@@ -46,9 +45,7 @@ export default function RecordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="ml-[220px] p-7 max-w-2xl">
+    <div className="p-7 max-w-2xl">
         <div className="mb-6">
           <h1 className="text-[22px] font-extrabold tracking-tight">이벤트 기록</h1>
           <p className="text-xs text-text3 mt-0.5">교배 · 분만 · 이유 실적 입력</p>
@@ -94,7 +91,6 @@ export default function RecordPage() {
             <CullForm farmId={farmId} sows={sows} onSuccess={(msg) => setSuccess(msg)} />
           )}
         </div>
-      </main>
     </div>
   );
 }

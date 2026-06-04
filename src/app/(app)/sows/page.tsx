@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sidebar } from "@/components/Sidebar";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
@@ -65,9 +64,7 @@ export default function SowsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="ml-[220px] p-7">
+    <div className="p-7">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -185,7 +182,6 @@ export default function SowsPage() {
             </button>
           </div>
         )}
-      </main>
 
       {/* Add Sow Modal */}
       {showAddModal && (

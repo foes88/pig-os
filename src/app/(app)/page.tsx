@@ -1,11 +1,8 @@
-import { Sidebar } from "@/components/Sidebar";
 import { Stat, AIBubble, AIAction, Card, PipeItem } from "@/components/ui";
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen">
-      <Sidebar />
-      <main className="ml-[220px] p-7">
+    <div className="p-7">
         {/* Header */}
         <div className="flex items-center justify-between mb-7">
           <div>
@@ -180,7 +177,6 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
-      </main>
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Sidebar } from "@/components/Sidebar";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { useAuthStore } from "@/store/auth.store";
@@ -50,23 +49,13 @@ export default function SowDetailPage() {
 
   if (sowLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <main className="ml-[220px] p-7">
-          <div className="text-center py-20 text-text3 text-sm">불러오는 중...</div>
-        </main>
-      </div>
+      <div className="p-7 text-center py-20 text-text3 text-sm">불러오는 중...</div>
     );
   }
 
   if (!sow) {
     return (
-      <div className="min-h-screen bg-background">
-        <Sidebar />
-        <main className="ml-[220px] p-7">
-          <div className="text-center py-20 text-danger text-sm">모돈을 찾을 수 없습니다.</div>
-        </main>
-      </div>
+      <div className="p-7 text-center py-20 text-danger text-sm">모돈을 찾을 수 없습니다.</div>
     );
   }
 
@@ -82,9 +71,7 @@ export default function SowDetailPage() {
     .sort((a, b) => b.mating.mating_date.localeCompare(a.mating.mating_date));
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <main className="ml-[220px] p-7 max-w-3xl">
+    <div className="p-7 max-w-3xl">
         {/* 뒤로가기 */}
         <button
           onClick={() => router.back()}
@@ -187,7 +174,6 @@ export default function SowDetailPage() {
             </div>
           )}
         </div>
-      </main>
     </div>
   );
 }
