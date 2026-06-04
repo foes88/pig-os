@@ -100,14 +100,17 @@ export type SowStatus =
 
 export interface Sow {
   id: string;
+  farm_id: string;
   ear_tag: string;
+  rfid_tag: string | null;
   status: SowStatus;
   parity: number;
-  breed?: string;
-  birth_date?: string;
+  breed: string | null;
+  breed_company: string | null;
   entry_date: string;
-  notes?: string;
-  farm_id: string;
+  entry_type: SowEntryType;
+  building_id: string | null;
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 }

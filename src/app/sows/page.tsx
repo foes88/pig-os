@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/Sidebar";
 import { sowsApi } from "@/lib/api/endpoints/sows";
@@ -29,6 +30,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 
 export default function SowsPage() {
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<SowStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
@@ -136,7 +138,8 @@ export default function SowsPage() {
                   return (
                     <tr
                       key={sow.id}
-                      className={`border-b border-border hover:bg-background/50 transition ${
+                      onClick={() => router.push(`/sows/${sow.id}`)}
+                      className={`border-b border-border hover:bg-background/50 transition cursor-pointer ${
                         i % 2 === 0 ? "" : "bg-background/20"
                       }`}
                     >
@@ -152,7 +155,7 @@ export default function SowsPage() {
                         {sow.entry_date.slice(0, 10)}
                       </td>
                       <td className="px-4 py-3 text-text3 text-xs max-w-[160px] truncate">
-                        {sow.notes ?? "-"}
+                        {sow.breed_company ?? "-"}
                       </td>
                     </tr>
                   );
