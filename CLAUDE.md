@@ -5,6 +5,14 @@
 
 ---
 
+## 세션 프로토콜 규칙
+
+1. **세션 시작 시** CLAUDE.md + PROGRESS.md를 읽고 현재 상태를 3줄 이내로 요약 보고
+2. **태스크 완료마다** PROGRESS.md 현재상태 갱신 후 `git commit`
+3. **컨텍스트가 커지면** 사람에게 `/clear` 권유 (대화가 길어져 응답이 느려지거나, 한 세션에서 대형 태스크 3개 이상 완료 시)
+
+---
+
 ## 프로젝트 개요
 
 - **제품**: PigOS — 해외 양돈 농장용 Farm Management SaaS
@@ -214,3 +222,66 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 - `git push` 금지 (사람이 확인 후 직접 push)
 - 실제 DB (Oracle PKSU) 데이터 변경 금지
 - AWS 리소스 생성/변경 금지
+
+---
+
+## 프론트엔드 구조 & 컨벤션
+
+### 폴더 배치 (실제 확인, 2026-06-04 기준)
+
+```
+src/
+├── app/
+│   ├── layout.tsx               ← 루트: Providers(next-intl + TanStack + auth 인터셉터)
+│   ├── globals.css              ← 라이트 테마 CSS 변수 토큰
+│   ├── providers.tsx
+│   ├── page.tsx                 ← 루트 "/" = 대시보드 (현재 Sidebar 직접 import, Shell 이전 예정)
+│   ├── (auth)/
+│   │   ├── layout.tsx           ← 로그인 전용 centered 레이아웃 (#0F1B2D 배경)
+│   │   └── login/page.tsx
+│   ├── onboarding/page.tsx      ← Shell 없는 독립 페이지 (다크 배경 #0F172A)
+│   ├── kpi/page.tsx
+│   ├── chat/page.tsx
+│   ├── sows/page.tsx
+│   ├── sows/[id]/page.tsx
+│   ├── finishers/page.tsx
+│   ├── piglets/page.tsx
+│   └── record/page.tsx
+├── components/
+│   ├── Sidebar.tsx              props: { lang?: "en"|"ko", onAskAI?: () => void } — collapsed 내부 state
+│   ├── Topbar.tsx               props: { lang?, onLangToggle?, onQuickInput?, onBell?, alertCount? }
+│   ├── BottomNav.tsx            props: { lang?, onAskAI?, alertCount? } — md:hidden 고정
+│   ├── QuickInputDrawer.tsx     props: { open: boolean, onClose: () => void, lang? }
+│   ├── AskAiDrawer.tsx          props: { open: boolean, onClose: () => void, context?, lang? }
+│   └── ui/                      ← Stat, AIBubble, AIAction, Card, PipeItem 등 공용 UI
+├── store/
+│   └── auth.store.ts            Zustand + persist(localStorage). 필드: user(UserProfile|null), accessToken, refreshToken, activeFarmId
+├── lib/
+│   └── api/
+│       ├── client.ts            ← axios 인스턴스 + 인터셉터
+│       ├── queryKeys.ts
+│       └── endpoints/           ← auth, farms, kpi, chat, sows, events, finishers, piglets, sync
+└── types/
+    └── api.types.ts             ← UserProfile, ChatResponse, FindingOut, Alert, SowStatus, ...
+```
+
+### 페이지 구조 (Shell 통합 전)
+- 모든 app 페이지가 직접 `<Sidebar />` import + `ml-[220px]` offset 사용
+- `/dashboard` 페이지 없음 — 대시보드는 루트 `/`(page.tsx)
+- Shell 통합 후 `(app)/` 라우트 그룹 아래로 이동 예정
+
+### 상태관리 경계
+| 계층 | 도구 |
+|------|------|
+| 서버 데이터 (fetch/cache) | TanStack Query |
+| 전역 클라이언트 (auth) | Zustand (persist) |
+| URL 연동 필터/탭 | `useSearchParams` / URL |
+| UI 로컬 (open/close 등) | useState |
+
+### 디자인 토큰 (globals.css CSS 변수)
+- 배경: `bg-background`, `bg-surface`, `bg-bg`, `bg-bg2`, `bg-panel-hi`
+- 텍스트: `text-text`, `text-text1`, `text-text2`, `text-text3`, `text-muted`, `text-faint`
+- 테두리: `border-border`
+- 브랜드: `bg-navy` (#0D1B3E), `bg-primary` (blue #2563EB), `bg-snout` (pig snout 색상), `text-gold`
+- 시맨틱: `text-success`, `text-danger`, `text-warning`, `text-purple`
+- 숫자·코드: `font-mono` (JetBrains Mono)
