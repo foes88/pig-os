@@ -1,0 +1,140 @@
+{
+  "nav": {
+    "dashboard": "Tổng quan",
+    "sows": "Quản lý nái",
+    "events": "Sự kiện",
+    "kpi": "Báo cáo KPI",
+    "chat": "Trợ lý AI",
+    "settings": "Cài đặt",
+    "logout": "Đăng xuất"
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển AI",
+    "subtitle": "{farmName} · {sowCount} nái · AI đang phân tích",
+    "aiActive": "AI đang hoạt động",
+    "stats": {
+      "psy": "PSY (AI dự báo)",
+      "npd": "Ngày không sản xuất",
+      "activeSows": "Nái đang hoạt động",
+      "mortalityRisk": "Nguy cơ chết"
+    },
+    "alerts": {
+      "title": "Cảnh báo AI",
+      "noAlerts": "Không có cảnh báo"
+    }
+  },
+  "sows": {
+    "title": "Quản lý nái",
+    "add": "Thêm nái",
+    "search": "Tìm theo số tai...",
+    "filter": {
+      "all": "Tất cả",
+      "active": "Hoạt động",
+      "gestating": "Mang thai",
+      "lactating": "Đang cho con bú",
+      "weaned": "Đã cai sữa",
+      "culled": "Đã loại"
+    },
+    "table": {
+      "earTag": "Số tai",
+      "status": "Trạng thái",
+      "parity": "Lứa đẻ",
+      "breed": "Giống",
+      "entryDate": "Ngày nhập",
+      "actions": "Thao tác"
+    },
+    "status": {
+      "ACTIVE": "Hoạt động",
+      "GESTATING": "Mang thai",
+      "LACTATING": "Cho con bú",
+      "WEANED": "Cai sữa",
+      "DRY": "Khô sữa",
+      "CULLED": "Đã loại",
+      "DEAD": "Chết"
+    }
+  },
+  "events": {
+    "mating": {
+      "title": "Ghi phối giống",
+      "date": "Ngày phối",
+      "type": "Phương thức",
+      "typeAi": "Thụ tinh nhân tạo (AI)",
+      "typeNatural": "Phối tự nhiên",
+      "semenBatch": "Lô tinh dịch",
+      "submit": "Lưu phối giống"
+    },
+    "farrowing": {
+      "title": "Ghi đẻ",
+      "date": "Ngày đẻ",
+      "totalBorn": "Tổng số con",
+      "bornAlive": "Sống",
+      "bornDead": "Chết thai",
+      "mummies": "Thai gỗ",
+      "submit": "Lưu đẻ"
+    },
+    "weaning": {
+      "title": "Ghi cai sữa",
+      "date": "Ngày cai sữa",
+      "weanedCount": "Số con cai sữa",
+      "avgWeight": "Trọng lượng TB (kg)",
+      "submit": "Lưu cai sữa"
+    }
+  },
+  "kpi": {
+    "psy": "PSY",
+    "npd": "Ngày không sản xuất",
+    "farrowingRate": "Tỷ lệ đẻ",
+    "fcr": "Hệ số tiêu tốn thức ăn",
+    "trend": "Xu hướng",
+    "benchmark": "Chuẩn"
+  },
+  "chat": {
+    "placeholder": "Hỏi về KPI trang trại... (vd: PSY thấp vì sao?)",
+    "send": "Gửi",
+    "thinking": "AI đang phân tích...",
+    "disclaimer": "Phân tích AI dựa trên dữ liệu trang trại. Hãy tham khảo bác sĩ thú y cho các quyết định quan trọng."
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập PigOS",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "forgotPassword": "Quên mật khẩu?",
+      "noAccount": "Chưa có tài khoản?",
+      "register": "Dùng thử miễn phí"
+    },
+    "logout": {
+      "confirm": "Đăng xuất khỏi PigOS?"
+    }
+  },
+  "errors": {
+    "generic": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "network": "Lỗi mạng. Kiểm tra kết nối của bạn.",
+    "unauthorized": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    "forbidden": "Bạn không có quyền thực hiện thao tác này.",
+    "notFound": "Không tìm thấy.",
+    "periodLocked": "Kỳ này đã bị khóa. Liên hệ quản lý để mở khóa.",
+    "sowNotFound": "Không tìm thấy nái hoặc đã bị xóa.",
+    "statusConflict": "Không thể thực hiện thao tác này với trạng thái nái hiện tại.",
+    "futureDate": "Ngày sự kiện không thể là ngày tương lai."
+  },
+  "upgrade": {
+    "title": "Nâng cấp để mở khóa tính năng này",
+    "description": "Tính năng này là một phần của gói bổ sung cao cấp.",
+    "cta": "Xem gói",
+    "dismiss": "Để sau"
+  },
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "confirm": "Xác nhận",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "search": "Tìm kiếm"
+  }
+}

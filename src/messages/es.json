@@ -1,0 +1,140 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "sows": "Cerdas",
+    "events": "Eventos",
+    "kpi": "Informes KPI",
+    "chat": "Asistente IA",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión"
+  },
+  "dashboard": {
+    "title": "Panel de IA",
+    "subtitle": "{farmName} · {sowCount} cerdas · IA analizando en tiempo real",
+    "aiActive": "IA Activa",
+    "stats": {
+      "psy": "PSY (Predicción IA)",
+      "npd": "Días No Productivos",
+      "activeSows": "Cerdas Activas",
+      "mortalityRisk": "Riesgo de Mortalidad"
+    },
+    "alerts": {
+      "title": "Alertas de IA",
+      "noAlerts": "Sin alertas activas"
+    }
+  },
+  "sows": {
+    "title": "Gestión de Cerdas",
+    "add": "Agregar Cerda",
+    "search": "Buscar por arete...",
+    "filter": {
+      "all": "Todas",
+      "active": "Activas",
+      "gestating": "Gestantes",
+      "lactating": "Lactantes",
+      "weaned": "Destetadas",
+      "culled": "Eliminadas"
+    },
+    "table": {
+      "earTag": "Arete",
+      "status": "Estado",
+      "parity": "Paridad",
+      "breed": "Raza",
+      "entryDate": "Fecha Entrada",
+      "actions": "Acciones"
+    },
+    "status": {
+      "ACTIVE": "Activa",
+      "GESTATING": "Gestante",
+      "LACTATING": "Lactante",
+      "WEANED": "Destetada",
+      "DRY": "Seca",
+      "CULLED": "Eliminada",
+      "DEAD": "Muerta"
+    }
+  },
+  "events": {
+    "mating": {
+      "title": "Registrar Monta",
+      "date": "Fecha de Monta",
+      "type": "Tipo",
+      "typeAi": "IA (Inseminación Artificial)",
+      "typeNatural": "Monta Natural",
+      "semenBatch": "Lote de Semen",
+      "submit": "Guardar Monta"
+    },
+    "farrowing": {
+      "title": "Registrar Parto",
+      "date": "Fecha de Parto",
+      "totalBorn": "Total Nacidos",
+      "bornAlive": "Nacidos Vivos",
+      "bornDead": "Nacidos Muertos",
+      "mummies": "Momificados",
+      "submit": "Guardar Parto"
+    },
+    "weaning": {
+      "title": "Registrar Destete",
+      "date": "Fecha de Destete",
+      "weanedCount": "Cantidad Destetada",
+      "avgWeight": "Peso Promedio (kg)",
+      "submit": "Guardar Destete"
+    }
+  },
+  "kpi": {
+    "psy": "PSY",
+    "npd": "Días No Productivos",
+    "farrowingRate": "Tasa de Partos",
+    "fcr": "Índice de Conversión",
+    "trend": "Tendencia",
+    "benchmark": "Referencia"
+  },
+  "chat": {
+    "placeholder": "Pregunta sobre los KPI de tu granja... (ej. ¿Por qué es bajo el PSY?)",
+    "send": "Enviar",
+    "thinking": "IA analizando...",
+    "disclaimer": "Los análisis de IA se basan en los datos de tu granja. Consulta siempre con tu veterinario."
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión en PigOS",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "Iniciar sesión",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes cuenta?",
+      "register": "Comienza gratis"
+    },
+    "logout": {
+      "confirm": "¿Cerrar sesión de PigOS?"
+    }
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
+    "network": "Error de red. Verifica tu conexión.",
+    "unauthorized": "Sesión expirada. Por favor, inicia sesión de nuevo.",
+    "forbidden": "No tienes permiso para hacer esto.",
+    "notFound": "No encontrado.",
+    "periodLocked": "Este período está bloqueado. Contacta a tu gerente para desbloquearlo.",
+    "sowNotFound": "Cerda no encontrada o eliminada.",
+    "statusConflict": "Esta acción no está permitida para el estado actual de la cerda.",
+    "futureDate": "La fecha del evento no puede ser futura."
+  },
+  "upgrade": {
+    "title": "Actualiza para desbloquear esta función",
+    "description": "Esta función es parte de un complemento premium.",
+    "cta": "Ver planes",
+    "dismiss": "Quizás después"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "noData": "Sin datos disponibles",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "search": "Buscar"
+  }
+}

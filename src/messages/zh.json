@@ -1,0 +1,140 @@
+{
+  "nav": {
+    "dashboard": "仪表板",
+    "sows": "母猪管理",
+    "events": "事件记录",
+    "kpi": "KPI报告",
+    "chat": "AI助手",
+    "settings": "设置",
+    "logout": "退出登录"
+  },
+  "dashboard": {
+    "title": "AI仪表板",
+    "subtitle": "{farmName} · {sowCount}头母猪 · AI实时分析中",
+    "aiActive": "AI已激活",
+    "stats": {
+      "psy": "PSY（AI预测）",
+      "npd": "非生产天数",
+      "activeSows": "在栏母猪",
+      "mortalityRisk": "死亡风险"
+    },
+    "alerts": {
+      "title": "AI预警",
+      "noAlerts": "暂无预警"
+    }
+  },
+  "sows": {
+    "title": "母猪管理",
+    "add": "添加母猪",
+    "search": "按耳标搜索...",
+    "filter": {
+      "all": "全部",
+      "active": "空怀",
+      "gestating": "妊娠",
+      "lactating": "哺乳",
+      "weaned": "断奶",
+      "culled": "淘汰"
+    },
+    "table": {
+      "earTag": "耳标",
+      "status": "状态",
+      "parity": "胎次",
+      "breed": "品种",
+      "entryDate": "入场日期",
+      "actions": "操作"
+    },
+    "status": {
+      "ACTIVE": "空怀",
+      "GESTATING": "妊娠",
+      "LACTATING": "哺乳",
+      "WEANED": "断奶",
+      "DRY": "干乳",
+      "CULLED": "淘汰",
+      "DEAD": "死亡"
+    }
+  },
+  "events": {
+    "mating": {
+      "title": "配种记录",
+      "date": "配种日期",
+      "type": "配种方式",
+      "typeAi": "人工授精 (AI)",
+      "typeNatural": "自然交配",
+      "semenBatch": "精液批次",
+      "submit": "保存配种记录"
+    },
+    "farrowing": {
+      "title": "分娩记录",
+      "date": "分娩日期",
+      "totalBorn": "总产仔数",
+      "bornAlive": "活产数",
+      "bornDead": "死产数",
+      "mummies": "木乃伊数",
+      "submit": "保存分娩记录"
+    },
+    "weaning": {
+      "title": "断奶记录",
+      "date": "断奶日期",
+      "weanedCount": "断奶头数",
+      "avgWeight": "平均体重 (kg)",
+      "submit": "保存断奶记录"
+    }
+  },
+  "kpi": {
+    "psy": "PSY（母猪年产断奶仔猪数）",
+    "npd": "非生产天数",
+    "farrowingRate": "分娩率",
+    "fcr": "料肉比",
+    "trend": "趋势",
+    "benchmark": "基准"
+  },
+  "chat": {
+    "placeholder": "询问您的农场KPI... (例：PSY为何偏低？)",
+    "send": "发送",
+    "thinking": "AI正在分析...",
+    "disclaimer": "AI分析基于您的农场数据。重要决策请咨询兽医。"
+  },
+  "auth": {
+    "login": {
+      "title": "登录PigOS",
+      "email": "邮箱",
+      "password": "密码",
+      "submit": "登录",
+      "forgotPassword": "忘记密码？",
+      "noAccount": "还没有账号？",
+      "register": "免费注册"
+    },
+    "logout": {
+      "confirm": "确认退出PigOS？"
+    }
+  },
+  "errors": {
+    "generic": "出现错误，请重试。",
+    "network": "网络错误，请检查您的连接。",
+    "unauthorized": "会话已过期，请重新登录。",
+    "forbidden": "您没有权限执行此操作。",
+    "notFound": "未找到。",
+    "periodLocked": "该期间已锁定，请联系管理员解锁。",
+    "sowNotFound": "未找到该母猪或已被删除。",
+    "statusConflict": "当前母猪状态下不允许此操作。",
+    "futureDate": "事件日期不能为未来日期。"
+  },
+  "upgrade": {
+    "title": "升级以解锁此功能",
+    "description": "此功能为高级附加功能。",
+    "cta": "查看套餐",
+    "dismiss": "稍后再说"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "search": "搜索"
+  }
+}

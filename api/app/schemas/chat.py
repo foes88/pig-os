@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class ChatQuery(BaseModel):
     question: str = Field(..., min_length=2, max_length=500)
-    locale: str = Field(default="en", pattern="^(en|ko|es|zh)$")
+    locale: str = Field(default="en", pattern="^(en|ko|zh|es|vi)$")
 
 
 class FindingOut(BaseModel):
