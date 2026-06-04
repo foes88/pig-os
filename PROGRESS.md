@@ -11,13 +11,13 @@
 - [x] `src/components/BottomNav.tsx` — props: `{ lang?, onAskAI?, alertCount? }`, md:hidden
 - [x] `src/components/QuickInputDrawer.tsx` — props: `{ open, onClose, lang? }`
 - [x] `src/components/AskAiDrawer.tsx` — props: `{ open, onClose, context?, lang? }`
-- [ ] **7단계: Shell 통합** — `(app)` 라우트 그룹 신설 + 파일 이동 + `(app)/layout.tsx` 작성
-  - [ ] `src/app/(app)/layout.tsx` 생성 (lang/askAiOpen/quickInputOpen 상태 보유)
-  - [ ] 페이지 7개 `(app)/`로 이동 + 각 페이지에서 `<Sidebar>` + `ml-[220px]` wrapper 제거
-  - [ ] `Sidebar` 의 `/dashboard` 링크를 `/`로 수정
-  - [ ] `BottomNav` 의 `/dashboard` 링크를 `/`로 수정
-  - [ ] `Sidebar` 에서 collapsed 상태를 Shell로 lift-up (본문 margin 동기화 위해)
-- [ ] **8단계: 검증·커밋** — `npx tsc --noEmit` 통과 후 commit
+- [x] **7단계: Shell 통합** — `(app)` 라우트 그룹 신설 + 파일 이동 + `(app)/layout.tsx` 작성
+  - [x] `src/app/(app)/layout.tsx` 생성 (lang/collapsed/askAiOpen/quickInputOpen 상태 보유)
+  - [x] 페이지 8개 `(app)/`로 이동 + 각 페이지에서 `<Sidebar>` + `ml-[220px]` wrapper 제거
+  - [x] `Sidebar` 의 `/dashboard` 링크를 `/`로 수정
+  - [x] `BottomNav` 의 `/dashboard` 링크를 `/`로 수정
+  - [x] `Sidebar` 에서 collapsed 상태를 Shell로 lift-up + `hidden md:flex` 모바일 대응
+- [x] **8단계: 검증·커밋** — `tsc --noEmit` 통과 (기존 badge 타입 에러 포함 수정) + commit 완료
 - [ ] **백엔드 /chat 엔드포인트** 존재 확인 (`chatApi.query` → FastAPI `POST /api/v1/farms/{farm_id}/chat/query`)
 
 ## 완료된 스프린트 항목 (MVP)
