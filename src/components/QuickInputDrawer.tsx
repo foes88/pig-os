@@ -2,23 +2,34 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Locale } from "@/i18n/config";
 
 interface QuickInputDrawerProps {
   open: boolean;
   onClose: () => void;
-  lang?: "en" | "ko";
+  lang?: Locale;
 }
 
-const EVENTS = [
-  { id: "mating",    icon: "💉", color: "#2563EB", soft: "#EFF6FF", label: { en: "Mating",    ko: "교배"   } },
-  { id: "farrowing", icon: "🐖", color: "#059669", soft: "#ECFDF5", label: { en: "Farrowing", ko: "분만"   } },
-  { id: "weaning",   icon: "🌱", color: "#D97706", soft: "#FFFBEB", label: { en: "Weaning",   ko: "이유"   } },
-  { id: "repro",     icon: "⚠️", color: "#DC2626", soft: "#FEF2F2", label: { en: "Repro Event", ko: "임신사고" } },
-  { id: "cull",      icon: "📋", color: "#64748B", soft: "#F8FAFC", label: { en: "Cull / Death", ko: "도폐사" } },
-  { id: "piglet",    icon: "🐽", color: "#7C3AED", soft: "#F5F3FF", label: { en: "Piglet Group", ko: "자돈 그룹" } },
-  { id: "finisher",  icon: "🏭", color: "#0D1B3E", soft: "#F0F4FF", label: { en: "Finisher",  ko: "비육돈" } },
-  { id: "foster",    icon: "🔄", color: "#0891B2", soft: "#ECFEFF", label: { en: "Foster",    ko: "양자"   } },
+type L = Record<Locale, string>;
+
+const EVENTS: { id: string; icon: string; color: string; soft: string; label: L }[] = [
+  { id: "mating",    icon: "💉", color: "#2563EB", soft: "#EFF6FF", label: { en: "Mating",       ko: "교배",    zh: "配种",   es: "Monta",          vi: "Phối giống" } },
+  { id: "farrowing", icon: "🐖", color: "#059669", soft: "#ECFDF5", label: { en: "Farrowing",    ko: "분만",    zh: "分娩",   es: "Parto",          vi: "Đẻ" } },
+  { id: "weaning",   icon: "🌱", color: "#D97706", soft: "#FFFBEB", label: { en: "Weaning",      ko: "이유",    zh: "断奶",   es: "Destete",        vi: "Cai sữa" } },
+  { id: "repro",     icon: "⚠️", color: "#DC2626", soft: "#FEF2F2", label: { en: "Repro Event",  ko: "임신사고", zh: "繁殖事故", es: "Evento Repro",  vi: "Sự cố sinh sản" } },
+  { id: "cull",      icon: "📋", color: "#64748B", soft: "#F8FAFC", label: { en: "Cull / Death", ko: "도폐사",  zh: "淘汰/死亡", es: "Eliminación",  vi: "Loại/Chết" } },
+  { id: "piglet",    icon: "🐽", color: "#7C3AED", soft: "#F5F3FF", label: { en: "Piglet Group", ko: "자돈 그룹", zh: "仔猪组",  es: "Grupo Lechones", vi: "Nhóm heo con" } },
+  { id: "finisher",  icon: "🏭", color: "#0D1B3E", soft: "#F0F4FF", label: { en: "Finisher",     ko: "비육돈",  zh: "育肥猪",  es: "Finalización",   vi: "Heo thịt" } },
+  { id: "foster",    icon: "🔄", color: "#0891B2", soft: "#ECFEFF", label: { en: "Foster",       ko: "양자",    zh: "寄养",   es: "Adopción",       vi: "Nuôi ghép" } },
 ];
+
+const UI: Record<Locale, { title: string; sub: string }> = {
+  en: { title: "Quick Input",    sub: "Select an event type" },
+  ko: { title: "빠른 입력",       sub: "이벤트 유형을 선택하세요" },
+  zh: { title: "快速录入",        sub: "选择事件类型" },
+  es: { title: "Entrada Rápida", sub: "Selecciona el tipo de evento" },
+  vi: { title: "Nhập nhanh",     sub: "Chọn loại sự kiện" },
+};
 
 export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawerProps) {
   const router = useRouter();
@@ -42,8 +53,7 @@ export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawe
     }
   };
 
-  const title = lang === "ko" ? "빠른 입력" : "Quick Input";
-  const sub = lang === "ko" ? "이벤트 유형을 선택하세요" : "Select an event type";
+  const { title, sub } = UI[lang] ?? UI.en;
 
   if (!open) return null;
 

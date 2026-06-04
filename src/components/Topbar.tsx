@@ -1,8 +1,22 @@
 "use client";
 
+import type { Locale } from "@/i18n/config";
+
+const LABELS: Record<Locale, { search: string; qi: string }> = {
+  en: { search: "Search sow ID, batch, room…",    qi: "Quick Input"    },
+  ko: { search: "모돈 ID, 배치, 구역 검색…",         qi: "빠른 입력"      },
+  zh: { search: "搜索母猪ID、批次、栏位…",             qi: "快速录入"       },
+  es: { search: "Buscar cerda ID, lote, sala…",   qi: "Entrada Rápida" },
+  vi: { search: "Tìm số nái, lô, khu…",           qi: "Nhập nhanh"     },
+};
+
+const LANG_LABELS: Record<Locale, string> = {
+  en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI",
+};
+
 interface TopbarProps {
-  lang?: "en" | "ko";
-  onLangToggle?: (l: "en" | "ko") => void;
+  lang?: Locale;
+  onLangToggle?: (l: Locale) => void;
   onQuickInput?: () => void;
   onBell?: () => void;
   alertCount?: number;
@@ -15,9 +29,7 @@ export function Topbar({
   onBell,
   alertCount = 0,
 }: TopbarProps) {
-  const t = lang === "ko"
-    ? { search: "모돈 ID, 배치, 구역 검색…", qi: "빠른 입력" }
-    : { search: "Search sow ID, batch, room…", qi: "Quick Input" };
+  const t = LABELS[lang] ?? LABELS.en;
 
   return (
     <header className="h-14 flex-shrink-0 bg-bg border-b border-border flex items-center px-5 gap-3">
@@ -34,22 +46,16 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {/* Lang toggle */}
-        <div className="flex bg-surface border border-border rounded-md overflow-hidden">
-          {(["en", "ko"] as const).map((l) => (
-            <button
-              key={l}
-              onClick={() => onLangToggle?.(l)}
-              className={`px-2.5 py-1 text-[11px] font-bold tracking-wider transition ${
-                lang === l
-                  ? "bg-text text-bg"
-                  : "text-muted hover:text-text"
-              }`}
-            >
-              {l.toUpperCase()}
-            </button>
+        {/* Lang select */}
+        <select
+          value={lang}
+          onChange={(e) => onLangToggle?.(e.target.value as Locale)}
+          className="bg-surface border border-border text-text text-[11px] font-bold px-2 py-1.5 rounded-md outline-none focus:border-primary cursor-pointer"
+        >
+          {(Object.keys(LANG_LABELS) as Locale[]).map((l) => (
+            <option key={l} value={l}>{LANG_LABELS[l]}</option>
           ))}
-        </div>
+        </select>
 
         {/* Bell */}
         <button

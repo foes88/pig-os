@@ -5,17 +5,29 @@ import { useMutation } from "@tanstack/react-query";
 import { chatApi } from "@/lib/api/endpoints/chat";
 import { useAuthStore } from "@/store/auth.store";
 import type { ChatResponse } from "@/types/api.types";
+import type { Locale } from "@/i18n/config";
 
 interface AskAiDrawerProps {
   open: boolean;
   onClose: () => void;
   context?: string | null;
-  lang?: "en" | "ko";
+  lang?: Locale;
 }
 
-const SUGGESTED = {
-  ko: ["PSY가 왜 낮아요?", "비생산일수 현황", "분만율 미달 이유", "오늘 이슈 요약"],
-  en: ["Why is PSY low?", "NPD status", "Farrowing rate miss", "Today's issues"],
+const SUGGESTED: Record<Locale, string[]> = {
+  en: ["Why is PSY low?",        "NPD status",          "Farrowing rate miss",      "Today's issues"],
+  ko: ["PSY가 왜 낮아요?",        "비생산일수 현황",      "분만율 미달 이유",          "오늘 이슈 요약"],
+  zh: ["PSY为何偏低？",            "非生产天数现状",       "分娩率未达标原因",           "今日问题摘要"],
+  es: ["¿Por qué es bajo el PSY?","Estado de DNP",       "Tasa de partos baja",      "Resumen de hoy"],
+  vi: ["PSY thấp vì sao?",        "Tình trạng NPD",      "Tỷ lệ đẻ chưa đạt",       "Tóm tắt hôm nay"],
+};
+
+const UI: Record<Locale, { header: string; subtitle: string; placeholder: string }> = {
+  en: { header: "PigOS AI", subtitle: "Rule Engine analysis",      placeholder: "Ask about your farm KPIs…" },
+  ko: { header: "PigOS AI", subtitle: "Rule Engine 기반 분석",      placeholder: "농장 KPI나 문제 상황을 질문하세요…" },
+  zh: { header: "PigOS AI", subtitle: "规则引擎分析",                placeholder: "询问您的农场KPI…" },
+  es: { header: "PigOS AI", subtitle: "Análisis por motor de reglas", placeholder: "Pregunta sobre los KPI de tu granja…" },
+  vi: { header: "PigOS AI", subtitle: "Phân tích Rule Engine",      placeholder: "Hỏi về KPI trang trại…" },
 };
 
 type Msg = { role: "user"; text: string } | { role: "ai"; response: ChatResponse };
@@ -46,8 +58,7 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
     mutation.mutate(text);
   };
 
-  const header = lang === "ko" ? "PigOS AI" : "PigOS AI";
-  const placeholder = lang === "ko" ? "농장 KPI나 문제 상황을 질문하세요…" : "Ask about your farm KPIs…";
+  const { header, subtitle, placeholder } = UI[lang] ?? UI.en;
 
   return (
     <>
@@ -71,7 +82,7 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
             </div>
             <div>
               <div className="text-sm font-bold text-text">{header}</div>
-              <div className="text-[10px] text-muted">Rule Engine 기반 분석</div>
+              <div className="text-[10px] text-muted">{subtitle}</div>
             </div>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-full bg-bg2 flex items-center justify-center text-muted hover:text-text transition text-sm">
@@ -92,8 +103,8 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && (
             <div className="space-y-2 mt-2">
-              <p className="text-xs text-muted font-medium">{lang === "ko" ? "추천 질문" : "Suggested"}</p>
-              {SUGGESTED[lang].map((q) => (
+              <p className="text-xs text-muted font-medium">{lang === "ko" ? "추천 질문" : lang === "zh" ? "推荐问题" : lang === "es" ? "Sugeridas" : lang === "vi" ? "Gợi ý" : "Suggested"}</p>
+              {(SUGGESTED[lang] ?? SUGGESTED.en).map((q) => (
                 <button
                   key={q}
                   onClick={() => send(q)}

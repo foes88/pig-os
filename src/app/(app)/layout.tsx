@@ -6,9 +6,10 @@ import { Topbar } from "@/components/Topbar";
 import { BottomNav } from "@/components/BottomNav";
 import { QuickInputDrawer } from "@/components/QuickInputDrawer";
 import { AskAiDrawer } from "@/components/AskAiDrawer";
+import type { Locale } from "@/i18n/config";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<"en" | "ko">("ko");
+  const [lang, setLang] = useState<Locale>("ko");
   const [collapsed, setCollapsed] = useState(false);
   const [askAiOpen, setAskAiOpen] = useState(false);
   const [quickInputOpen, setQuickInputOpen] = useState(false);

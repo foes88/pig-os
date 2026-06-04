@@ -3,45 +3,48 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import type { Locale } from "@/i18n/config";
+
+type L = Record<Locale, string>;
 
 interface NavItem {
   href: string;
   icon: string;
-  label: { en: string; ko: string };
+  label: L;
   badge?: string | number | null;
 }
 
-const NAV_GROUPS: { label?: { en: string; ko: string }; items: NavItem[] }[] = [
+const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
   {
     items: [
-      { href: "/", icon: "⊞", label: { en: "Home", ko: "홈" } },
-      { href: "/sows",      icon: "⬡", label: { en: "Sows", ko: "모돈" }, badge: null },
-      { href: "/farrowing", icon: "◫", label: { en: "Farrowing", ko: "분만사" } },
-      { href: "/reports",   icon: "▤", label: { en: "Reports", ko: "보고서" } },
+      { href: "/",         icon: "⊞", label: { en: "Home",         ko: "홈",        zh: "首页",   es: "Inicio",    vi: "Trang chủ" } },
+      { href: "/sows",     icon: "⬡", label: { en: "Sows",         ko: "모돈",      zh: "母猪",   es: "Cerdas",    vi: "Nái" }, badge: null },
+      { href: "/farrowing",icon: "◫", label: { en: "Farrowing",    ko: "분만사",    zh: "产房",   es: "Partos",    vi: "Đẻ" } },
+      { href: "/reports",  icon: "▤", label: { en: "Reports",       ko: "보고서",    zh: "报告",   es: "Informes",  vi: "Báo cáo" } },
     ],
   },
   {
-    label: { en: "Production", ko: "생산돈" },
+    label: { en: "Production", ko: "생산돈", zh: "生产猪", es: "Producción", vi: "Heo thịt" },
     items: [
-      { href: "/piglets",   icon: "◎", label: { en: "Piglets", ko: "자돈" } },
-      { href: "/finishers", icon: "▣", label: { en: "Finishers", ko: "비육돈" } },
+      { href: "/piglets",  icon: "◎", label: { en: "Piglets",      ko: "자돈",      zh: "仔猪",   es: "Lechones",     vi: "Heo con" } },
+      { href: "/finishers",icon: "▣", label: { en: "Finishers",    ko: "비육돈",    zh: "育肥猪",  es: "Finalización", vi: "Heo thịt" } },
     ],
   },
   {
-    label: { en: "Addons", ko: "Addon" },
+    label: { en: "Addons", ko: "Addon", zh: "插件", es: "Addons", vi: "Tiện ích" },
     items: [
-      { href: "/addons",    icon: "✦", label: { en: "Addon Store", ko: "Addon 스토어" } },
+      { href: "/addons",   icon: "✦", label: { en: "Addon Store",  ko: "Addon 스토어", zh: "插件商店", es: "Tienda de Addons", vi: "Cửa hàng" } },
     ],
   },
 ];
 
-const BOTTOM_ITEMS = [
-  { href: "/notifications", icon: "🔔", label: { en: "Notifications", ko: "알림" } },
-  { href: "/settings",      icon: "⚙", label: { en: "Settings", ko: "설정" } },
+const BOTTOM_ITEMS: NavItem[] = [
+  { href: "/notifications", icon: "🔔", label: { en: "Notifications", ko: "알림", zh: "通知",  es: "Notificaciones", vi: "Thông báo" } },
+  { href: "/settings",      icon: "⚙",  label: { en: "Settings",      ko: "설정", zh: "设置",  es: "Configuración",  vi: "Cài đặt" } },
 ];
 
 interface SidebarProps {
-  lang?: "en" | "ko";
+  lang?: Locale;
   collapsed?: boolean;
   onCollapse?: () => void;
   onAskAI?: () => void;
@@ -52,7 +55,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
   const user = useAuthStore((s) => s.user);
   const w = collapsed ? 64 : 224;
 
-  const t = (obj: { en: string; ko: string }) => obj[lang];
+  const t = (obj: L) => obj[lang];
 
   return (
     <aside

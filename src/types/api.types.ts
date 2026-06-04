@@ -380,7 +380,7 @@ export interface KpiTrend {
 
 export interface ChatQuery {
   question: string;
-  locale?: "en" | "ko" | "es" | "zh";
+  locale?: "en" | "ko" | "zh" | "es" | "vi";
 }
 
 export interface FindingOut {

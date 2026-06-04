@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { Locale } from "@/i18n/config";
 
 interface BottomNavProps {
-  lang?: "en" | "ko";
+  lang?: Locale;
   onAskAI?: () => void;
   alertCount?: number;
 }
 
-const TABS = [
-  { href: "/", icon: "⊞", label: { en: "Home", ko: "홈" } },
-  { href: "/sows",      icon: "⬡", label: { en: "Sows", ko: "모돈" } },
-  { href: null,         icon: "✦", label: { en: "AI", ko: "AI" }, isAI: true },
-  { href: "/notifications", icon: "🔔", label: { en: "Alerts", ko: "알림" }, badge: 3 },
-  { href: "/settings",  icon: "⚙", label: { en: "More", ko: "더보기" } },
+type L = Record<Locale, string>;
+
+const TABS: { href: string | null; icon: string; label: L; isAI?: boolean; badge?: number }[] = [
+  { href: "/",              icon: "⊞", label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ" } },
+  { href: "/sows",          icon: "⬡", label: { en: "Sows",   ko: "모돈",  zh: "母猪", es: "Cerdas",    vi: "Nái" } },
+  { href: null,             icon: "✦", label: { en: "AI",     ko: "AI",    zh: "AI",   es: "IA",        vi: "AI" }, isAI: true },
+  { href: "/notifications", icon: "🔔", label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo" }, badge: 3 },
+  { href: "/settings",      icon: "⚙",  label: { en: "More",  ko: "더보기", zh: "更多", es: "Más",       vi: "Thêm" } },
 ];
 
 export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavProps) {
