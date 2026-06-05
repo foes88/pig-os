@@ -1,182 +1,196 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import { Stat, AIBubble, AIAction, Card, PipeItem } from "@/components/ui";
+import { kpiApi } from "@/lib/api/endpoints/kpi";
+import { queryKeys } from "@/lib/api/queryKeys";
+import { useAuthStore } from "@/store/auth.store";
+import type { Alert } from "@/types/api.types";
+
+const SEVERITY_STYLE: Record<string, { cls: string; icon: string }> = {
+  OK:       { cls: "bg-green-50 border-green-200", icon: "✓" },
+  INFO:     { cls: "bg-blue-50 border-blue-200",   icon: "ℹ" },
+  WARNING:  { cls: "bg-amber-50 border-amber-200", icon: "⚠" },
+  CRITICAL: { cls: "bg-red-50 border-red-200",     icon: "🚨" },
+};
 
 export default function Dashboard() {
+  const farmId = useAuthStore((s) => s.activeFarmId);
+  const user   = useAuthStore((s) => s.user);
+
+  const { data, isLoading } = useQuery({
+    queryKey: queryKeys.kpi.dashboard(farmId ?? ""),
+    queryFn:  () => kpiApi.dashboard(farmId!),
+    enabled:  !!farmId,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const farmName = user?.name ?? "My Farm";
+
   return (
     <div className="p-7">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-7">
-          <div>
-            <h1 className="text-[22px] font-extrabold tracking-tight flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--color-primary)]" />
-              AI Dashboard
-            </h1>
-            <p className="text-xs text-text3">Wiselake Farm · 680 sows · AI analyzing in real-time</p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-light text-primary border border-primary/20 rounded-full text-xs font-semibold">
-            🧠 AI Active
-          </span>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-7">
+        <div>
+          <h1 className="text-[22px] font-extrabold tracking-tight flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--color-primary)]" />
+            AI Dashboard
+          </h1>
+          <p className="text-xs text-text3">
+            {farmName}
+            {data && ` · ${data.active_sows}두 · AI 실시간 분석 중`}
+          </p>
         </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary border border-primary/20 rounded-full text-xs font-semibold">
+          🧠 AI Active
+        </span>
+      </div>
 
-        {/* Alert */}
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 flex items-start gap-3.5">
-          <span className="text-xl flex-shrink-0">🚨</span>
-          <div className="flex-1">
-            <div className="text-[13px] font-bold text-danger mb-1">
-              AI Alert: #A-042 Farrowing Overdue (D115) — Immediate Action Required
+      {/* Loading */}
+      {isLoading && (
+        <div className="text-center py-20 text-text3 text-sm">대시보드 로딩 중...</div>
+      )}
+
+      {/* No farm */}
+      {!farmId && (
+        <div className="text-center py-20 text-text3 text-sm">농장을 선택해주세요.</div>
+      )}
+
+      {data && (
+        <>
+          {/* Critical alerts */}
+          {data.alerts.filter((a) => a.severity === "CRITICAL").map((alert, i) => (
+            <AlertBanner key={i} alert={alert} />
+          ))}
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            <Stat
+              label="PSY"
+              value={data.psy != null ? data.psy.toFixed(1) : "-"}
+              sub={data.psy != null ? (data.psy >= 28 ? "✓ 목표 달성" : "▼ 목표 미달 28.0") : "데이터 없음"}
+              subType={data.psy != null && data.psy >= 28 ? "up" : "down"}
+            />
+            <Stat
+              label="NPD (비생산일수)"
+              value={data.npd != null ? `${data.npd.toFixed(1)}일` : "-"}
+              sub={data.npd != null ? (data.npd <= 35 ? "✓ 목표 이하" : "▲ 목표 초과 35일") : "데이터 없음"}
+              subType={data.npd != null && data.npd <= 35 ? "up" : "down"}
+            />
+            <Stat
+              label="분만율"
+              value={data.farrowing_rate != null ? `${(data.farrowing_rate * 100).toFixed(1)}%` : "-"}
+              sub={data.farrowing_rate != null ? (data.farrowing_rate >= 0.9 ? "✓ 목표 달성" : "▼ 목표 미달 90%") : "데이터 없음"}
+              subType={data.farrowing_rate != null && data.farrowing_rate >= 0.9 ? "up" : "down"}
+            />
+            <Stat
+              label="AI 알림"
+              value={String(data.alerts.length)}
+              sub={`위급 ${data.alerts.filter((a) => a.severity === "CRITICAL").length} · 경고 ${data.alerts.filter((a) => a.severity === "WARNING").length}`}
+              subType="ai"
+              valueColor="var(--color-purple)"
+            />
+          </div>
+
+          {/* Pipeline */}
+          <div className="flex gap-1 mb-6">
+            <PipeItem icon="💉" count={0} name="교배" />
+            <span className="flex items-center text-text3 text-xs">→</span>
+            <PipeItem icon="🤰" count={data.gestating} name="임신" active />
+            <span className="flex items-center text-text3 text-xs">→</span>
+            <PipeItem icon="🐖" count={0} name="분만" />
+            <span className="flex items-center text-text3 text-xs">→</span>
+            <PipeItem icon="🍼" count={data.lactating} name="포유" />
+            <span className="flex items-center text-text3 text-xs">→</span>
+            <PipeItem icon="🌱" count={data.weaned} name="이유" />
+          </div>
+
+          {/* Two column */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Left: Alerts */}
+            <div>
+              <Card title="🧠 Rule Engine 알림" badge={`${data.alerts.length}건`} badgeColor="purple" className="mb-4" children={<></>} />
+              {data.alerts.length === 0 ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-success">
+                  ✓ 현재 알림 없음 — 모든 KPI 정상 범위
+                </div>
+              ) : (
+                data.alerts.map((alert, i) => (
+                  <AlertCard key={i} alert={alert} />
+                ))
+              )}
             </div>
-            <div className="text-xs text-text2">
-              AI detected abnormal gestation length. 87% probability of complications. Recommended: veterinary check within 2 hours.
+
+            {/* Right: Herd status */}
+            <div>
+              <AIBubble label="AI 브리핑">
+                <p>
+                  현재 활성 모돈 <strong className="text-primary">{data.active_sows}두</strong>.
+                  PSY <strong className="text-primary">{data.psy?.toFixed(1) ?? "-"}</strong>,
+                  비생산일수 <strong className="text-primary">{data.npd?.toFixed(1) ?? "-"}일</strong>.
+                  {data.alerts.length > 0
+                    ? ` Rule Engine 알림 ${data.alerts.length}건 — 확인이 필요합니다.`
+                    : " 현재 모든 KPI 정상 범위입니다."}
+                </p>
+              </AIBubble>
+
+              <Card title="군집 현황">
+                <table className="w-full text-xs">
+                  <tbody>
+                    {[
+                      { label: "임신", value: data.gestating },
+                      { label: "포유", value: data.lactating },
+                      { label: "이유/공태", value: data.weaned },
+                      { label: "활성 전체", value: data.active_sows },
+                    ].map((row, i) => (
+                      <tr key={i} className="border-b border-border">
+                        <td className="py-2.5">{row.label}</td>
+                        <td className="py-2.5 text-right font-mono font-bold">{row.value}두</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
             </div>
           </div>
-          <button className="flex-shrink-0 bg-primary text-white px-4 py-2 rounded-lg text-xs font-semibold hover:shadow-lg transition">
-            Take Action
-          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AlertBanner({ alert }: { alert: Alert }) {
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 flex items-start gap-3.5">
+      <span className="text-xl flex-shrink-0">🚨</span>
+      <div className="flex-1">
+        <div className="text-[13px] font-bold text-danger mb-1">
+          {alert.kpi} — {alert.message}
         </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          <Stat label="PSY (AI Predicted)" value="24.3" sub="▲ +1.2 · Next month forecast: 24.8" subType="up" />
-          <Stat label="Revenue This Month" value="₩298M" sub="▲ +8.2% · AI saved ₩840K in feed" subType="up" valueColor="var(--color-gold)" />
-          <Stat label="AI Actions Today" value="7" sub="3 critical · 2 high · 2 insight" subType="ai" valueColor="var(--color-purple)" />
-          <Stat label="Mortality Risk" value="2.1%" sub="▲ Up from 1.5% — PRRS suspected" subType="down" valueColor="var(--color-danger)" />
-        </div>
-
-        {/* Pipeline */}
-        <div className="flex gap-1 mb-6">
-          <PipeItem icon="💉" count={12} name="Breeding" aiIcon />
-          <span className="flex items-center text-text3 text-xs">→</span>
-          <PipeItem icon="🔍" count={8} name="Preg Check" />
-          <span className="flex items-center text-text3 text-xs">→</span>
-          <PipeItem icon="🤰" count={218} name="Gestation" active aiIcon />
-          <span className="flex items-center text-text3 text-xs">→</span>
-          <PipeItem icon="🐖" count={5} name="Farrowing" aiIcon aiDanger />
-          <span className="flex items-center text-text3 text-xs">→</span>
-          <PipeItem icon="🍼" count={85} name="Lactation" />
-          <span className="flex items-center text-text3 text-xs">→</span>
-          <PipeItem icon="🌱" count={3} name="Weaning" />
-        </div>
-
-        {/* Two Column */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Left: AI Actions */}
-          <div>
-            <Card title="🧠 AI Recommended Actions" badge="7 actions" badgeColor="purple" className="mb-4" children={<></>} />
-
-            <AIAction
-              priority="critical"
-              title="#A-042 Farrowing — Overdue D115"
-              desc="Gestation exceeds normal range. AI predicts 87% complication risk. Veterinary intervention recommended within 2 hours."
-              impact="Risk: High"
-              impactNegative
-              actionLabel="Record Farrowing"
-            />
-            <AIAction
-              priority="critical"
-              title="PRRS Suspected — Satellite Farm"
-              desc="Mortality pattern matches PRRS signature (87% AI confidence). 3 deaths in 48h. Isolation + PCR testing recommended."
-              impact="Potential loss: ₩150M+"
-              impactNegative
-              actionLabel="Execute Protocol"
-            />
-            <AIAction
-              priority="high"
-              title="Optimal Breeding Window — 12 Sows Today"
-              desc="AI analyzed WEI patterns. Optimal breeding time: 14:30~16:00 today. Expected conception rate: 92% (vs 85% random)."
-              impact="+7% conception rate"
-              actionLabel="Start Breeding"
-            />
-            <AIAction
-              priority="high"
-              title="Ship Pen F-01 by Mar 22"
-              desc="Market price trending up ₩5,140/kg (+2.3%). AI predicts 5-7 more days of increase, then seasonal dip."
-              impact="+₩1.2M extra revenue"
-              actionLabel="Schedule Shipment"
-            />
-            <AIAction
-              priority="medium"
-              title="Feed Adjustment — Barn A Gestating"
-              desc="FCR analysis: Barn A gestating sows overfed by 8%. Current 2.8kg/day → AI recommends 2.6kg/day."
-              impact="Save ₩840K/month"
-              actionLabel="Apply"
-            />
-            <AIAction
-              priority="insight"
-              title="Farrowing Forecast — 23 Sows in 14 Days"
-              desc="Expected avg litter: 12.4. 3 high-risk sows (P7+). Pre-assign foster mothers for #A-055, #A-078."
-              impact="~285 piglets expected"
-              actionLabel="View Schedule"
-            />
+        {alert.current_value != null && (
+          <div className="text-xs text-text2">
+            현재 {alert.current_value.toFixed(1)} / 목표 {alert.target_value?.toFixed(1) ?? "-"}
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
-          {/* Right */}
-          <div>
-            <AIBubble label="AI Daily Briefing">
-              <p>
-                Your farm PSY reached <strong className="text-primary">24.3</strong> — now in the{" "}
-                <strong className="text-primary">national top 35%</strong>. Main driver: breeding efficiency improved 12% since January protocol change.
-                Key risk today: <strong className="text-primary">#A-042 overdue farrowing</strong> and{" "}
-                <strong className="text-primary">satellite farm PRRS suspicion</strong>.
-                Feed optimization is saving <strong className="text-primary">₩840K/month</strong>.
-                Next month PSY forecast: <strong className="text-primary">24.8 (▲)</strong>.
-              </p>
-            </AIBubble>
-
-            <Card title="Herd Status" className="mb-4">
-              <table className="w-full">
-                <tbody className="text-xs">
-                  {[
-                    { label: "Gestating", value: "218", tag: "Normal", tagColor: "green" as const },
-                    { label: "Lactating", value: "85", tag: "Avg D14", tagColor: "green" as const },
-                    { label: "Open / NPD", value: "42", tag: "8 over 30d", tagColor: "yellow" as const, valueColor: "var(--color-warning)" },
-                    { label: "Finisher", value: "340", tag: "58 ship ready", tagColor: "green" as const },
-                    { label: "Critical", value: "3", tag: "Action needed", tagColor: "red" as const, valueColor: "var(--color-danger)" },
-                  ].map((row, i) => (
-                    <tr key={i} className="border-b border-border">
-                      <td className="py-2.5">{row.label}</td>
-                      <td className="py-2.5 text-right font-mono font-bold" style={row.valueColor ? { color: row.valueColor } : {}}>
-                        {row.value}
-                      </td>
-                      <td className="py-2.5 text-right">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          row.tagColor === "green" ? "bg-green-50 text-success" :
-                          row.tagColor === "yellow" ? "bg-amber-50 text-warning" :
-                          "bg-red-50 text-danger"
-                        }`}>{row.tag}</span>
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="border-t-2 border-border">
-                    <td className="py-2.5 font-bold">Total</td>
-                    <td className="py-2.5 text-right font-mono font-extrabold text-base">680</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
-            </Card>
-
-            <Card title="💰 AI Revenue Impact (This Month)" className="border-gold/20">
-              <table className="w-full text-xs">
-                <tbody>
-                  {[
-                    { label: "Feed optimization", value: "+₩840K saved" },
-                    { label: "Breeding timing", value: "+7% conception" },
-                    { label: "Shipment timing", value: "+₩1.2M pending" },
-                    { label: "Disease prevention", value: "₩150M+ at risk" },
-                  ].map((row, i) => (
-                    <tr key={i} className="border-b border-border">
-                      <td className="py-2.5">{row.label}</td>
-                      <td className="py-2.5 text-right font-mono font-bold text-success">{row.value}</td>
-                    </tr>
-                  ))}
-                  <tr className="border-t-2 border-border">
-                    <td className="py-2.5 font-bold text-gold">Total AI Value</td>
-                    <td className="py-2.5 text-right font-mono font-extrabold text-sm text-gold">₩152M+ impact</td>
-                  </tr>
-                </tbody>
-              </table>
-            </Card>
+function AlertCard({ alert }: { alert: Alert }) {
+  const style = SEVERITY_STYLE[alert.severity] ?? SEVERITY_STYLE.INFO;
+  return (
+    <div className={`border rounded-xl px-4 py-3 mb-2 flex items-start gap-3 ${style.cls}`}>
+      <span className="font-bold flex-shrink-0">{style.icon}</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-semibold">{alert.kpi} — {alert.message}</div>
+        {alert.current_value != null && (
+          <div className="text-[10px] mt-0.5 opacity-75">
+            현재 {alert.current_value.toFixed(1)} / 목표 {alert.target_value?.toFixed(1) ?? "-"}
           </div>
-        </div>
+        )}
+      </div>
+      <span className="text-[9px] opacity-50 flex-shrink-0">{alert.rule_id}</span>
     </div>
   );
 }
