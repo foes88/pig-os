@@ -50,6 +50,18 @@
 | KPI 계산 전략 확정 | 대시보드: kpi_snapshots 조회 / 실시간: 개별 이벤트 상세 계산 |
 | Multi-tenant 전략 | Shared Schema + farm_id row-level filtering |
 
+### 1-5. 모바일 — 준비 단계
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 모바일 기술 스택 결정 | ✅ 완료 | React Native → Native 전환 (05-중) |
+| Android 개발 가이드 작성 | ✅ 완료 | Kotlin + Jetpack Compose + Room + WorkManager |
+| 오프라인 동기화 스펙 문서화 | ✅ 완료 | docs/specs/2026-05-19_offline-sync-spec.md |
+| Android 저장소 생성 | ✅ 완료 | github.com/wiselake/pigos-android |
+| iOS 저장소 생성 | ✅ 완료 | github.com/wiselake/pigos-ios |
+| Android 구현 시작 | 🔜 6월 착수 | 웹 API 완성 후 병행 개발 |
+| iOS 구현 | ❌ Phase 2 | Android 안정화 후 착수 |
+
 ---
 
 ## 2. 수치 요약
@@ -64,15 +76,25 @@
 
 ---
 
-## 3. 6월 계획
+## 3. 6월 진행 현황 (06-01 ~ 06-05)
+
+| 항목 | 상태 | 완료일 |
+|------|------|--------|
+| UI Shell 통합 (Sidebar + Topbar + BottomNav + Drawer) | ✅ 완료 | 06-04 |
+| /dashboard 실API 연동 (KPI + Alert) | ✅ 완료 | 06-04 |
+| 조직 계층 구조 + 권한 시스템 (SUPER_ADMIN/VENDOR/DEALER 등 10개 롤) | ✅ 완료 | 06-05 |
+| Rule Engine DB화 — 글로벌 5개국(KR/US/BR/CN/VN) 임계값 | ✅ 완료 | 06-05 |
+| /record 이벤트 기록 Flow 레이아웃 (분만 스테퍼+자동계산+난이도) | ✅ 완료 | 06-05 |
+| Essential 페이지 10종 (약관·인증·결제·공지·지원·점검·업데이트 등) | ✅ 완료 | 06-05 |
+| Codex 코드 검증 (권한 시스템 + 마이그레이션) | ✅ 완료 | 06-05 |
+| Unit 테스트 76개 전체 통과 | ✅ 완료 | 06-05 |
+
+## 4. 남은 작업 (~ 7/1 출시)
 
 | 항목 | 목표일 |
 |------|--------|
-| UI Shell 통합 (Sidebar + Topbar + BottomNav + Drawer) | 06-10 |
-| /dashboard 실API 연동 (KPI + Alert) | 06-10 |
-| 조직 계층 구조 + 권한 시스템 구축 | 06-15 |
-| Rule Engine DB화 + 글로벌 5개국 임계값 | 06-15 |
-| /record 이벤트 기록 Flow 레이아웃 | 06-20 |
-| Essential 페이지 10종 (법적 필수 + 운영 필수) | 06-20 |
 | Supabase 마이그레이션 적용 | 06-25 |
-| **7/1 MVP 배포 (api.pigos.io + app.pigos.io)** | 07-01 |
+| /farrowing·/reports 링크 처리 | 06-25 |
+| **FastAPI 배포 (api.pigos.io)** | 06-28 |
+| **Next.js 배포 (app.pigos.io)** | 06-28 |
+| **7/1 MVP 공개 출시** | 07-01 |
