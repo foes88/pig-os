@@ -50,17 +50,43 @@
 | KPI 계산 전략 확정 | 대시보드: kpi_snapshots 조회 / 실시간: 개별 이벤트 상세 계산 |
 | Multi-tenant 전략 | Shared Schema + farm_id row-level filtering |
 
-### 1-5. 모바일 — 준비 단계
+### 1-5. 모바일 — Android 70% / iOS 60%
 
-| 항목 | 상태 | 비고 |
+#### Android (github.com/wiselake/pigos-android)
+
+| 항목 | 상태 | 내용 |
 |------|------|------|
-| 모바일 기술 스택 결정 | ✅ 완료 | React Native → Native 전환 (05-중) |
-| Android 개발 가이드 작성 | ✅ 완료 | Kotlin + Jetpack Compose + Room + WorkManager |
-| 오프라인 동기화 스펙 문서화 | ✅ 완료 | docs/specs/2026-05-19_offline-sync-spec.md |
-| Android 저장소 생성 | ✅ 완료 | github.com/wiselake/pigos-android |
-| iOS 저장소 생성 | ✅ 완료 | github.com/wiselake/pigos-ios |
-| Android 구현 시작 | 🔜 6월 착수 | 웹 API 완성 후 병행 개발 |
-| iOS 구현 | ❌ Phase 2 | Android 안정화 후 착수 |
+| 기술 스택 | ✅ | Kotlin + Jetpack Compose (Material 3) + Hilt + MVVM |
+| 화면 구현 | ✅ | 9종 — 로그인·대시보드·모돈(목록/상세)·자돈·비육돈·기록·채팅·온보딩·설정 |
+| 오프라인 동기화 | ✅ | Room → SyncQueue → WorkManager(SyncWorker) → POST /sync |
+| 인증 | ✅ | JWT (DataStore) + AccessToken 자동 갱신 (TokenAuthenticator) |
+| API 연동 | ✅ | Retrofit + OkHttp + AuthInterceptor |
+| 양방향 동기화 | ✅ | Upload(변경분) + Download(server_changes) 완성 |
+| CI/CD | ✅ | GitHub Actions (android.yml) |
+| 테스트 | ✅ | JVM 유닛 36케이스 (ViewModel + Repository + Fake) |
+| 남은 작업 | 🔜 | 비육돈/자돈 상세 화면, 날짜 피커 UI, Compose UI 테스트 |
+
+#### iOS (github.com/wiselake/pigos-ios)
+
+| 항목 | 상태 | 내용 |
+|------|------|------|
+| 기술 스택 | ✅ | Swift 5.9 + SwiftUI + SwiftData + 수동 DI (AppContainer) |
+| 화면 구현 | ✅ | 8종 — 로그인·대시보드·모돈(목록/상세)·온보딩·채팅·기록(도폐사·임신사고)·모돈등록 |
+| 오프라인 동기화 | ✅ | SwiftData 로컬 저장 → BGTaskScheduler 백그라운드 동기화 |
+| 인증 | ✅ | JWT (Keychain) + 자동 refresh + 토큰 로테이션 |
+| API 연동 | ✅ | URLSession + APIClient + DTO |
+| 배포 대상 | ✅ | iOS 17.0+ / iPhone + iPad (XcodeGen) |
+| 남은 작업 | 🔜 | Reports/More ViewModel, 동기화 다운로드 완성, UI 테스트 |
+
+#### 모바일 공통 현황
+
+| 지표 | Android | iOS |
+|------|---------|-----|
+| 진도 | **70%** | **60%** |
+| 구현 화면 수 | 9종 | 8종 |
+| 테스트 | 36케이스 | 초기 단계 |
+| 오프라인 동기화 | Room + WorkManager | SwiftData + BGTask |
+| CI/CD | GitHub Actions | 미설정 |
 
 ---
 
@@ -68,11 +94,13 @@
 
 | 지표 | 값 |
 |------|-----|
-| 생성된 DB 테이블 | 40개 |
+| DB 테이블 | 40개 |
 | API 엔드포인트 | 50+ |
-| 통과 테스트 | 58개 (통합) + 43개 (unit) |
-| 커밋 수 | 10+ |
-| 신규 문서 | 오프라인 sync 스펙, OpenAPI v1, Android 개발 가이드 |
+| 통과 테스트 | 58개 (통합) + 43개 (unit) + 36개 (Android JVM) |
+| 구현 화면 수 | 웹 22종 + Android 9종 + iOS 8종 = **39종** |
+| 모바일 진도 | Android 70% / iOS 60% |
+| 신규 문서 | 오프라인 sync 스펙, OpenAPI v1, Android 개발 가이드, 디자인 가이드 |
+| 도메인 | pigos.io (2026-05-18 확보) |
 
 ---
 
