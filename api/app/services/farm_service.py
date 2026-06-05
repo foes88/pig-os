@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError
 from app.db.models.config import FarmConfig
-from app.db.models.platform import Farm, Organization, UserFarm
+from app.core.permissions import get_accessible_farm_ids
+from app.db.models.platform import Farm, Organization, User, UserFarm
 from app.db.models.sow import Building, Sow
 from app.schemas.farm import FarmConfigSet, FarmCreate, FarmResponse, FarmUpdate, OnboardingStatus
 
@@ -35,11 +36,14 @@ async def create_farm(
     return farm
 
 
-async def list_farms(db: AsyncSession, user_id: UUID) -> list[Farm]:
+async def list_farms(db: AsyncSession, user: User) -> list[Farm]:
+    farm_ids = await get_accessible_farm_ids(user, db)
+    if not farm_ids:
+        return []
+
     rows = await db.scalars(
         select(Farm)
-        .join(UserFarm, UserFarm.farm_id == Farm.id)
-        .where(UserFarm.user_id == user_id, Farm.active.is_(True))
+        .where(Farm.id.in_(farm_ids), Farm.active.is_(True))
         .order_by(Farm.created_at)
     )
     return list(rows)

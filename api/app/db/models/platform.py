@@ -108,7 +108,7 @@ class User(Base):
     )  # ADMIN / COMPANY / FARM_OWNER / FARM_MANAGER / FARM_WORKER / VIEWER / API_CLIENT
     system_role: Mapped[str] = mapped_column(
         String(30), nullable=False, default="FARM_OWNER"
-    )  # SUPER_ADMIN | VENDOR_ADMIN | DISTRIBUTOR_ADMIN | DEALER_ADMIN | FARM_OWNER | FARM_MANAGER | FARM_WORKER | VET
+    )  # SUPER_ADMIN | VENDOR_ADMIN | DISTRIBUTOR_ADMIN | DEALER_ADMIN | FARM_* | VET | VIEWER | API_CLIENT
     language: Mapped[str] = mapped_column(String(5), default="en")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

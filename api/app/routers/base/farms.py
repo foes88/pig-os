@@ -9,7 +9,7 @@ router = APIRouter(prefix="/farms", tags=["Farms"])
 
 @router.get("", response_model=list[FarmResponse])
 async def list_farms(db: DbDep, current_user: CurrentUser):
-    farms = await farm_service.list_farms(db, current_user.id)
+    farms = await farm_service.list_farms(db, current_user)
     return [FarmResponse.model_validate(f) for f in farms]
 
 

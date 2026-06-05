@@ -59,7 +59,8 @@ async def get_farm_context(
 ) -> Farm:
     """
     Validates that the current user has access to the requested farm.
-    ADMIN role can access any farm. Others must be in user_farms.
+    SUPER_ADMIN can access any farm. Other roles are checked through
+    organization hierarchy or explicit user_farms membership.
     """
     farm = await db.get(Farm, farm_id)
     if not farm or not farm.active:
@@ -110,6 +111,6 @@ def require_addon(addon_code: str):
 def require_role(*roles: str):
     """Guard that ensures current user has one of the specified roles."""
     async def _check(current_user: CurrentUser) -> None:
-        if current_user.role not in roles:
+        if effective_system_role(current_user) not in roles:
             raise ForbiddenError(f"Required role: {' or '.join(roles)}")
     return Depends(_check)

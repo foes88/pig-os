@@ -32,9 +32,28 @@ def upgrade() -> None:
     op.add_column('users',
         sa.Column('system_role', sa.String(30), nullable=False, server_default='FARM_OWNER')
     )
-    # Migrate existing role values to system_role
-    op.execute("UPDATE users SET system_role = role WHERE role IN ('ADMIN','VENDOR_ADMIN','DISTRIBUTOR_ADMIN','DEALER_ADMIN')")
-    op.execute("UPDATE users SET system_role = 'FARM_OWNER' WHERE role NOT IN ('ADMIN','VENDOR_ADMIN','DISTRIBUTOR_ADMIN','DEALER_ADMIN')")
+    # Migrate existing role values to system_role without silently changing
+    # farm-level permissions. Legacy ADMIN becomes the new global admin role.
+    op.execute("""
+        UPDATE users
+        SET system_role = CASE
+            WHEN role = 'ADMIN' THEN 'SUPER_ADMIN'
+            WHEN role = 'COMPANY' THEN 'VENDOR_ADMIN'
+            WHEN role IN (
+                'SUPER_ADMIN',
+                'VENDOR_ADMIN',
+                'DISTRIBUTOR_ADMIN',
+                'DEALER_ADMIN',
+                'FARM_OWNER',
+                'FARM_MANAGER',
+                'FARM_WORKER',
+                'VET',
+                'VIEWER',
+                'API_CLIENT'
+            ) THEN role
+            ELSE 'FARM_OWNER'
+        END
+    """)
 
     op.create_index('idx_users_system_role', 'users', ['system_role'])
 
