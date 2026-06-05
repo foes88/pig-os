@@ -34,8 +34,14 @@
 | DB | PostgreSQL 16+ (Shared Schema + farm_id) + TimescaleDB (IoT) |
 | Cache | Redis 7+ |
 | Infra | AWS (싱가포르 리전) + Docker + Kubernetes |
-| Offline Sync | WatermelonDB (모바일 로컬 SQLite) |
+| Mobile Android | Kotlin + Jetpack Compose + Room + WorkManager + Retrofit |
+| Mobile iOS | Swift + SwiftUI (Android 안정화 후 Phase 2) |
+| Offline Sync | Room (Android) / Core Data (iOS) — sync protocol: docs/specs/2026-05-19_offline-sync-spec.md |
 | Background Jobs | ARQ (Redis 기반) |
+
+> **Mobile 결정 근거 (2026-06-05)**: 현장 작업자 + Android 우선 + 오프라인 입력 + 저사양 기기 + 백그라운드 동기화 조합에서
+> React Native보다 Native가 더 안정적. Room/WorkManager/DataStore로 오프라인-퍼스트 아키텍처가 구조적으로 깔끔하고,
+> 카메라·푸시·배터리·네트워크 복구 대응도 Native가 유리. 공용 자산: FastAPI API, OpenAPI 스펙, sync protocol, KPI 공식, 디자인 토큰.
 
 ---
 
