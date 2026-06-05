@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AddonNotSubscribedError, ForbiddenError, UnauthorizedError
 from app.core.security import decode_access_token
+from app.core.permissions import can_access_farm, effective_system_role
 from app.db.session import AsyncSessionLocal
 from app.db.models.platform import AddonSubscription, Farm, User, UserFarm
 
@@ -64,17 +65,17 @@ async def get_farm_context(
     if not farm or not farm.active:
         raise ForbiddenError("Farm not found or inactive")
 
-    if current_user.role == "ADMIN":
+    role = effective_system_role(current_user)
+
+    # SUPER_ADMIN은 모든 농장 접근
+    if role == "SUPER_ADMIN":
         return farm
 
-    result = await db.execute(
-        select(UserFarm).where(
-            UserFarm.user_id == current_user.id,
-            UserFarm.farm_id == farm_id,
-        )
-    )
-    if not result.scalar_one_or_none():
+    # ORG 레벨 롤(VENDOR/DISTRIBUTOR/DEALER_ADMIN): 트리 기반 접근
+    # FARM 레벨 롤: user_farms 기반 접근
+    if not await can_access_farm(current_user, farm_id, db):
         raise ForbiddenError("No access to this farm")
+
     return farm
 
 

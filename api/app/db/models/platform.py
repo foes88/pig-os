@@ -12,10 +12,12 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import INET, JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -24,13 +26,25 @@ from app.db.base import Base
 
 
 class Organization(Base):
+    """
+    계층 구조: VENDOR → DISTRIBUTOR → DEALER → INDEPENDENT(농가 직접 가입)
+    parent_org_id: NULL = 최상위(업체). 하위 조직은 parent_org_id 설정.
+    org_level: 0=VENDOR, 1=DISTRIBUTOR, 2=DEALER, 3=INDEPENDENT
+    """
     __tablename__ = "organizations"
+    __table_args__ = (
+        Index("idx_org_parent", "parent_org_id", postgresql_where=text("parent_org_id IS NOT NULL")),
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     org_type: Mapped[str] = mapped_column(
         String(20), nullable=False, default="INDEPENDENT"
-    )  # INDEPENDENT / INTEGRATOR / COOPERATIVE / GOVERNMENT
+    )  # VENDOR | DISTRIBUTOR | DEALER | INDEPENDENT
+    org_level: Mapped[int] = mapped_column(SmallInteger(), nullable=False, default=0)
+    parent_org_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=True
+    )
     country: Mapped[str] = mapped_column(String(2), nullable=False)
     timezone: Mapped[str] = mapped_column(String(50), nullable=False, default="UTC")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -38,6 +52,10 @@ class Organization(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
+    parent: Mapped["Organization | None"] = relationship(
+        "Organization", remote_side="Organization.id", back_populates="children"
+    )
+    children: Mapped[list["Organization"]] = relationship("Organization", back_populates="parent")
     farms: Mapped[list["Farm"]] = relationship(back_populates="organization")
     users: Mapped[list["User"]] = relationship(back_populates="organization")
 
@@ -88,6 +106,9 @@ class User(Base):
     role: Mapped[str] = mapped_column(
         String(30), nullable=False, default="FARM_WORKER"
     )  # ADMIN / COMPANY / FARM_OWNER / FARM_MANAGER / FARM_WORKER / VIEWER / API_CLIENT
+    system_role: Mapped[str] = mapped_column(
+        String(30), nullable=False, default="FARM_OWNER"
+    )  # SUPER_ADMIN | VENDOR_ADMIN | DISTRIBUTOR_ADMIN | DEALER_ADMIN | FARM_OWNER | FARM_MANAGER | FARM_WORKER | VET
     language: Mapped[str] = mapped_column(String(5), default="en")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

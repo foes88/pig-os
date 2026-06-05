@@ -3,12 +3,11 @@ Public endpoint — no auth required.
 Receives pilot signup from pigos.io landing page.
 """
 import re
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, field_validator
 
-from app.db.session import get_db
+from app.core.dependencies import DbDep
 from app.db.models.pilot_signup import PilotSignup
 
 router = APIRouter(prefix="/pilot-signups", tags=["public"])
@@ -66,7 +65,7 @@ class PilotSignupOut(BaseModel):
 @router.post("", response_model=PilotSignupOut, status_code=status.HTTP_201_CREATED)
 async def create_pilot_signup(
     body: PilotSignupIn,
-    db: AsyncSession = Depends(get_db),
+    db: DbDep,
 ) -> PilotSignupOut:
     signup = PilotSignup(
         name=body.name,

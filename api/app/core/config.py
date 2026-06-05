@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     environment: str = "development"
     cors_origins: list[str] = ["https://pigos.io", "https://app.pigos.io"]
 
+    # Supabase (파일럿 신청용 + 프로덕션 DB)
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
