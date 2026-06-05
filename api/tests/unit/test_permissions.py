@@ -21,3 +21,13 @@ def test_effective_system_role_maps_legacy_company():
 
 def test_effective_system_role_falls_back_for_blank_values():
     assert effective_system_role(_user("", "")) == "FARM_OWNER"
+
+
+def test_effective_system_role_rejects_unknown_system_role():
+    # Unrecognized system_role must fail-safe to FARM_OWNER, not pass through.
+    assert effective_system_role(_user("FARM_OWNER", "UNKNOWN_ROLE")) == "FARM_OWNER"
+
+
+def test_effective_system_role_rejects_unknown_legacy_role():
+    # Unrecognized legacy role with no system_role must also fail-safe.
+    assert effective_system_role(_user("MYSTERY_ROLE", "")) == "FARM_OWNER"

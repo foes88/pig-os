@@ -10,17 +10,21 @@ Dependency hierarchy:
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Path, status
+from fastapi import Depends, Path
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import AddonNotSubscribedError, ForbiddenError, UnauthorizedError
-from app.core.security import decode_access_token
+from app.core.exceptions import (
+    AddonNotSubscribedError,
+    ForbiddenError,
+    UnauthorizedError,
+)
 from app.core.permissions import can_access_farm, effective_system_role
+from app.core.security import decode_access_token
+from app.db.models.platform import AddonSubscription, Farm, User
 from app.db.session import AsyncSessionLocal
-from app.db.models.platform import AddonSubscription, Farm, User, UserFarm
 
 _bearer = HTTPBearer()
 

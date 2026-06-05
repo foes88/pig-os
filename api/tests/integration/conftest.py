@@ -7,6 +7,7 @@ import os
 import uuid
 from datetime import datetime, UTC
 from typing import AsyncGenerator
+from urllib.parse import urlparse, urlunparse
 
 import pytest
 import pytest_asyncio
@@ -25,9 +26,15 @@ from app.core.dependencies import get_db
 
 # ── Test DB URL ───────────────────────────────────────────────────────────────
 def _make_test_url(url: str) -> str:
-    from urllib.parse import urlparse, urlunparse
     p = urlparse(url)
     return urlunparse(p._replace(path="/pigos_test"))
+
+
+def _assert_test_database(url: str) -> None:
+    database_name = urlparse(url).path.lstrip("/")
+    if not database_name.lower().endswith("_test"):
+        raise RuntimeError(f"Refusing to reset non-test database: {database_name}")
+
 
 _ASYNC_TEST_URL = os.getenv("TEST_DATABASE_URL", _make_test_url(settings.database_url))
 _SYNC_TEST_URL = _ASYNC_TEST_URL.replace("postgresql+asyncpg", "postgresql+psycopg2")
@@ -42,6 +49,13 @@ _async_engine = create_async_engine(_ASYNC_TEST_URL, echo=False, future=True, po
 @pytest.fixture(scope="session", autouse=True)
 def create_tables():
     """세션 시작 시 한 번만 테이블 생성 (sync 엔진 사용)."""
+    _assert_test_database(_SYNC_TEST_URL)
+    with _sync_engine.begin() as conn:
+        conn.exec_driver_sql("DROP VIEW IF EXISTS v_sow_npd, v_farm_psy CASCADE")
+        conn.exec_driver_sql(
+            "DROP FUNCTION IF EXISTS effective_metric_values(VARCHAR, VARCHAR, VARCHAR)"
+        )
+    Base.metadata.drop_all(_sync_engine)
     Base.metadata.create_all(_sync_engine)
     yield
     _sync_engine.dispose()

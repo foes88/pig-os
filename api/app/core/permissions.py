@@ -22,6 +22,8 @@ FARM_LEVEL_ROLES = {
     "API_CLIENT",
 }
 
+_KNOWN_ROLES = ORG_LEVEL_ROLES | FARM_LEVEL_ROLES
+
 WRITE_ROLES = {
     "SUPER_ADMIN",
     "VENDOR_ADMIN",
@@ -56,13 +58,17 @@ ORG_TREE_CTE = """
 
 
 def effective_system_role(user: User) -> str:
-    """Return the explicit system role, or map legacy roles safely."""
+    """Return the explicit system role, or map legacy roles safely.
+
+    Unrecognized values fail-safe to FARM_OWNER; always returns from _KNOWN_ROLES.
+    """
     system_role = (user.system_role or "").strip()
     if system_role:
-        return system_role
+        return system_role if system_role in _KNOWN_ROLES else "FARM_OWNER"
 
     legacy_role = (user.role or "").strip()
-    return LEGACY_SYSTEM_ROLE_MAP.get(legacy_role, legacy_role or "FARM_OWNER")
+    mapped = LEGACY_SYSTEM_ROLE_MAP.get(legacy_role, legacy_role or "FARM_OWNER")
+    return mapped if mapped in _KNOWN_ROLES else "FARM_OWNER"
 
 
 async def get_accessible_org_ids(user: User, db: AsyncSession) -> set[UUID]:
@@ -128,7 +134,10 @@ async def can_access_farm(user: User, farm_id: UUID, db: AsyncSession) -> bool:
 
     if role == "SUPER_ADMIN":
         result = await db.execute(
-            text("SELECT EXISTS(SELECT 1 FROM farms WHERE id = :farm_id AND active = TRUE)"),
+            text(
+                "SELECT EXISTS("
+                "SELECT 1 FROM farms WHERE id = :farm_id AND active = TRUE)"
+            ),
             {"farm_id": farm_id},
         )
         return bool(result.scalar())

@@ -59,6 +59,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Preserve system_role values back into the legacy role column before dropping.
+    # SUPER_ADMIN → ADMIN, VENDOR_ADMIN → COMPANY, all others kept as-is.
+    op.execute("""
+        UPDATE users
+        SET role = CASE
+            WHEN system_role = 'SUPER_ADMIN' THEN 'ADMIN'
+            WHEN system_role = 'VENDOR_ADMIN' THEN 'COMPANY'
+            ELSE system_role
+        END
+    """)
     op.drop_index('idx_users_system_role', table_name='users')
     op.drop_column('users', 'system_role')
     op.drop_index('idx_org_parent', table_name='organizations')
