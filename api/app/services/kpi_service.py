@@ -30,12 +30,18 @@ async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict
     for row in rows:
         if row.metric_code == metric_code:
             return {
-                "avg":    float(row.benchmark_avg)  if row.benchmark_avg  else None,
-                "top25":  float(row.benchmark_top25) if row.benchmark_top25 else None,
-                "target": float(row.target_value)   if row.target_value   else None,
-                "unit":   row.unit_code or "",
+                "avg":      float(row.benchmark_avg)       if row.benchmark_avg       else None,
+                "top25":    float(row.benchmark_top25)     if row.benchmark_top25     else None,
+                "target":   float(row.target_value)        if row.target_value        else None,
+                "warning":  float(row.warning_threshold)   if row.warning_threshold   else None,
+                "critical": float(row.critical_threshold)  if row.critical_threshold  else None,
+                "direction": str(row.alert_direction)      if row.alert_direction     else "below",
+                "unit":     row.unit_code or "",
             }
-    return {"avg": None, "top25": None, "target": None, "unit": ""}
+    return {
+        "avg": None, "top25": None, "target": None,
+        "warning": None, "critical": None, "direction": "below", "unit": "",
+    }
 
 
 

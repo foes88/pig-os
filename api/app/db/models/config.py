@@ -57,13 +57,16 @@ class DefaultMetricValue(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     scope_type: Mapped[str] = mapped_column(String(20), nullable=False)
     # system / market / region / farm
-    scope_code: Mapped[str] = mapped_column(String(20), nullable=False)
+    scope_code: Mapped[str] = mapped_column(String(50), nullable=False)
     metric_code: Mapped[str] = mapped_column(String(50), nullable=False)
     # PSY / MSY / NPD / FCR / MORTALITY
     default_value: Mapped[float | None] = mapped_column(Numeric(10, 2))
     benchmark_avg: Mapped[float | None] = mapped_column(Numeric(10, 2))
     benchmark_top25: Mapped[float | None] = mapped_column(Numeric(10, 2))
     target_value: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    warning_threshold: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    critical_threshold: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    alert_direction: Mapped[str] = mapped_column(String(10), nullable=False, server_default="below")
     unit_code: Mapped[str | None] = mapped_column(String(20))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -84,7 +87,7 @@ class ScopeKpiRecommendation(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     scope_type: Mapped[str] = mapped_column(String(20), nullable=False)  # system / market / region
-    scope_code: Mapped[str] = mapped_column(String(20), nullable=False)
+    scope_code: Mapped[str] = mapped_column(String(50), nullable=False)
     kpi_code: Mapped[str] = mapped_column(String(50), nullable=False)
     display_priority: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     is_base: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

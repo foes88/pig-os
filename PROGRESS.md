@@ -1,7 +1,7 @@
 # PigOS 진행 상황
 
 ## 현재 작업
-**UI Shell 통합** — 7단계 진행 중 (A안: `(app)` 라우트 그룹 신설)
+**MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
 ## UI Shell 체크리스트
 
@@ -18,7 +18,11 @@
   - [x] `BottomNav` 의 `/dashboard` 링크를 `/`로 수정
   - [x] `Sidebar` 에서 collapsed 상태를 Shell로 lift-up + `hidden md:flex` 모바일 대응
 - [x] **8단계: 검증·커밋** — `tsc --noEmit` 통과 (기존 badge 타입 에러 포함 수정) + commit 완료
-- [ ] **백엔드 /chat 엔드포인트** 존재 확인 (`chatApi.query` → FastAPI `POST /api/v1/farms/{farm_id}/chat/query`)
+- [x] **백엔드 /chat 엔드포인트** 연결 확인 + 프론트-백 타입 계약 완전 일치
+- [x] **Record 페이지 리디자인** — Event Flow 레이아웃 (좌: 모돈 목록+검색, 우: 이벤트 드로어), 분만 스테퍼+자동계산+난이도+양자조정
+- [x] **Essential 페이지 10종** — /legal, /verify-email, /settings/(profile·billing·delete-account), /announcements, /support, /maintenance, /update
+- [x] **Rule Engine DB화** — `default_metric_values`에 warning/critical/direction 컬럼 추가, `effective_metric_values()` 업데이트, KR/US/BR/CN/VN 5개국 시드, base.py 하드코딩 완전 제거, 76/76 unit test pass
+- [ ] **다음**: Sidebar /farrowing·/reports 404 처리, Supabase 마이그레이션 적용, 배포
 
 ## 전략 메모 (월간 보고 포함 대상)
 
