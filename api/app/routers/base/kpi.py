@@ -10,7 +10,7 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from app.core.dependencies import DbDep, FarmDep
-from app.schemas.kpi import DashboardKpi, NpdBreakdown, PsyDetail
+from app.schemas.kpi import DashboardKpi, KpiTrend, NpdBreakdown, PsyDetail
 from app.services import kpi_service
 
 router = APIRouter(prefix="/farms/{farm_id}/kpi", tags=["KPI"])
@@ -36,15 +36,28 @@ async def psy(
     return await kpi_service.calculate_psy(db, farm.id, year)
 
 
+@router.get("/trend", response_model=list[KpiTrend])
+async def trend(
+    farm: FarmDep,
+    db: DbDep,
+    months: int = Query(default=6, ge=1, le=24, description="조회 개월 수"),
+    kpi: str = Query(default="psy"),
+):
+    """Monthly KPI trend — last N months. All three KPIs returned per period."""
+    return await kpi_service.get_trend(db, farm.id, months)
+
+
 @router.get("/npd", response_model=NpdBreakdown)
 async def npd(
     farm: FarmDep,
     db: DbDep,
-    start: date = Query(default=None, description="Period start (default: Jan 1 this year)"),
+    start: date = Query(default=None, description="Period start (default: Jan 1 this year)"),  # noqa: E501
     end: date = Query(default=None, description="Period end (default: today)"),
 ):
     """NPD breakdown: WEI days + return/empty days."""
     today = date.today()
     period_start = start or today.replace(month=1, day=1)
     period_end = end or today
-    return await kpi_service.calculate_npd_breakdown(db, farm.id, period_start, period_end)
+    return await kpi_service.calculate_npd_breakdown(  # noqa: E501
+        db, farm.id, period_start, period_end
+    )

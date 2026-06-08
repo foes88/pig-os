@@ -14,7 +14,7 @@ class Alert(BaseModel):
 
 
 class DashboardKpi(BaseModel):
-    """Main KPI dashboard — Base tier (free). Flat structure for frontend compatibility."""
+    """Main KPI dashboard — Base tier (free). Flat structure for frontend."""
     farm_id: UUID
     as_of: date
 
@@ -31,7 +31,7 @@ class DashboardKpi(BaseModel):
 
 
 class _KpiValueInternal(BaseModel):
-    """Internal use only — rich KPI value with benchmarks. Not exposed in API responses."""
+    """Internal — rich KPI value with benchmarks. Not exposed in API responses."""
     value: float | None
     benchmark_avg: float | None
     benchmark_top25: float | None
@@ -60,3 +60,10 @@ class NpdBreakdown(BaseModel):
     empty_days: float | None
     npd_target: float | None
     benchmark_avg: float | None
+
+
+class KpiTrend(BaseModel):
+    period: str        # "YYYY-MM"
+    psy: float | None
+    npd: float | None
+    farrowing_rate: float | None

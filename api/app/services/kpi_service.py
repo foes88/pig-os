@@ -2,7 +2,8 @@
 KPI calculation service — Base tier.
 
 PSY, MSY, NPD from DB views + Rule Engine alerts.
-Benchmarks resolved via effective_metric_values() DB function (farm → region → market → system).
+Benchmarks resolved via effective_metric_values() DB function
+(farm → region → market → system).
 """
 from datetime import date
 from uuid import UUID
@@ -10,33 +11,33 @@ from uuid import UUID
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.config import FarmConfig
-from app.db.models.sow import Sow
 from app.db.models.platform import Farm
+from app.db.models.sow import Sow
 from app.engine import RuleContext, RuleEngine, StructuredResult
-from app.engine.rules import base as _base_rules  # ensure rules are registered  # noqa: F401
-from app.schemas.kpi import Alert, DashboardKpi, NpdBreakdown, PsyDetail
-
-_DEFAULT_NPD_ALERT = 35
+from app.engine.rules import (
+    base as _base_rules,  # ensure rules are registered  # noqa: F401
+)
+from app.schemas.kpi import Alert, DashboardKpi, KpiTrend, NpdBreakdown, PsyDetail
 
 
 async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict:
     rows = await db.execute(
         text(
-            "SELECT * FROM effective_metric_values(:farm_code, :region_code, :market_code)"
+            "SELECT * FROM effective_metric_values"
+            "(:farm_code, :region_code, :market_code)"
         ),
-        {"farm_code": str(farm.id), "region_code": farm.country, "market_code": "SYSTEM"},
+        {"farm_code": str(farm.id), "region_code": farm.country, "market_code": "SYSTEM"},  # noqa: E501
     )
     for row in rows:
         if row.metric_code == metric_code:
             return {
-                "avg":      float(row.benchmark_avg)       if row.benchmark_avg       else None,
-                "top25":    float(row.benchmark_top25)     if row.benchmark_top25     else None,
-                "target":   float(row.target_value)        if row.target_value        else None,
-                "warning":  float(row.warning_threshold)   if row.warning_threshold   else None,
-                "critical": float(row.critical_threshold)  if row.critical_threshold  else None,
-                "direction": str(row.alert_direction)      if row.alert_direction     else "below",
-                "unit":     row.unit_code or "",
+                "avg":       float(row.benchmark_avg)      if row.benchmark_avg      else None,  # noqa: E501
+                "top25":     float(row.benchmark_top25)    if row.benchmark_top25    else None,  # noqa: E501
+                "target":    float(row.target_value)       if row.target_value       else None,  # noqa: E501
+                "warning":   float(row.warning_threshold)  if row.warning_threshold  else None,  # noqa: E501
+                "critical":  float(row.critical_threshold) if row.critical_threshold else None,  # noqa: E501
+                "direction": str(row.alert_direction)      if row.alert_direction     else "below",  # noqa: E501
+                "unit":      row.unit_code or "",
             }
     return {
         "avg": None, "top25": None, "target": None,
@@ -161,18 +162,104 @@ async def build_rule_context(
     )
 
 
+async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[KpiTrend]:
+    """
+    Monthly KPI trend for the last N months.
+    PSY is annualized from monthly weanings / current active sow count.
+    """
+    months = max(1, min(months, 24))
+    rows = await db.execute(
+        text(
+            """
+            WITH months AS (
+                SELECT (date_trunc('month', CURRENT_DATE)
+                    - make_interval(months => s))::date AS m
+                FROM generate_series(0, :months - 1) AS s
+            ),
+            sow_cnt AS (
+                SELECT COUNT(*)::float AS n
+                FROM sows
+                WHERE farm_id = :farm_id AND deleted_at IS NULL
+            ),
+            weans_by_month AS (
+                SELECT date_trunc('month', weaning_date)::date AS m,
+                       COUNT(*)::float AS cnt
+                FROM weanings
+                WHERE farm_id = :farm_id
+                  AND weaning_date >= (date_trunc('month', CURRENT_DATE)
+                      - make_interval(months => :months - 1))
+                GROUP BY 1
+            ),
+            farrows_by_month AS (
+                SELECT date_trunc('month', farrowing_date)::date AS m,
+                       COUNT(*)::float AS cnt
+                FROM farrowings
+                WHERE farm_id = :farm_id
+                  AND farrowing_date >= (date_trunc('month', CURRENT_DATE)
+                      - make_interval(months => :months - 1))
+                GROUP BY 1
+            ),
+            matings_by_month AS (
+                SELECT date_trunc('month', mating_date)::date AS m,
+                       COUNT(*)::float AS cnt
+                FROM matings
+                WHERE farm_id = :farm_id
+                  AND mating_date >= (date_trunc('month', CURRENT_DATE)
+                      - make_interval(months => :months - 1))
+                GROUP BY 1
+            ),
+            npd_by_month AS (
+                SELECT date_trunc('month', weaning_date)::date AS m,
+                       AVG(wei_days) AS avg_npd
+                FROM v_sow_npd
+                WHERE farm_id = :farm_id
+                  AND weaning_date >= (date_trunc('month', CURRENT_DATE)
+                      - make_interval(months => :months - 1))
+                  AND wei_days IS NOT NULL
+                GROUP BY 1
+            )
+            SELECT
+                to_char(months.m, 'YYYY-MM') AS period,
+                CASE
+                    WHEN sow_cnt.n > 0 AND weans_by_month.cnt IS NOT NULL
+                    THEN ROUND(((weans_by_month.cnt / sow_cnt.n) * 12)::numeric, 1)
+                    ELSE NULL
+                END AS psy,
+                ROUND(npd_by_month.avg_npd::numeric, 1) AS npd,
+                CASE
+                    WHEN matings_by_month.cnt > 0 AND farrows_by_month.cnt IS NOT NULL
+                    THEN ROUND(
+                        (farrows_by_month.cnt / matings_by_month.cnt * 100)::numeric, 1
+                    )
+                    ELSE NULL
+                END AS farrowing_rate
+            FROM months
+            CROSS JOIN sow_cnt
+            LEFT JOIN weans_by_month   ON weans_by_month.m   = months.m
+            LEFT JOIN farrows_by_month ON farrows_by_month.m = months.m
+            LEFT JOIN matings_by_month ON matings_by_month.m = months.m
+            LEFT JOIN npd_by_month     ON npd_by_month.m     = months.m
+            ORDER BY months.m
+            """
+        ),
+        {"farm_id": str(farm_id), "months": months},
+    )
+    return [
+        KpiTrend(
+            period=row.period,
+            psy=float(row.psy) if row.psy is not None else None,
+            npd=float(row.npd) if row.npd is not None else None,
+            farrowing_rate=(
+                float(row.farrowing_rate) if row.farrowing_rate is not None else None
+            ),
+        )
+        for row in rows
+    ]
+
+
 async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     today = date.today()
     year  = today.year
-
-    # NPD alert threshold from farm config
-    cfg = await db.scalar(
-        select(FarmConfig).where(
-            FarmConfig.farm_id == farm.id,
-            FarmConfig.config_key == "NPD_ALERT_THRESHOLD",
-        )
-    )
-    npd_threshold = int(cfg.config_value) if cfg else _DEFAULT_NPD_ALERT
 
     # PSY
     psy_detail = await calculate_psy(db, farm.id, year)
@@ -180,7 +267,9 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     psy_value  = psy_detail.psy if psy_detail else None
 
     # NPD (year-to-date)
-    npd_detail = await calculate_npd_breakdown(db, farm.id, date(today.year, 1, 1), today)
+    npd_detail = await calculate_npd_breakdown(  # noqa: E501
+        db, farm.id, date(today.year, 1, 1), today
+    )
     npd_bench  = await _get_benchmark(db, "NPD", farm)
 
     # Sow counts
@@ -206,7 +295,7 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
-        kpi={"PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},
+        kpi={"PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
         benchmarks={"PSY": psy_bench, "NPD": npd_bench},
         sow_counts=counts,
     )
@@ -217,7 +306,9 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
             rule_id=f.rule_id,
             kpi=f.kpi,
             severity=f.severity,
-            message=f.kpi + (f": {f.current_value:.1f}" if f.current_value is not None else ""),
+            message=f.kpi + (  # noqa: E501
+                f": {f.current_value:.1f}" if f.current_value is not None else ""
+            ),
             current_value=f.current_value,
             target_value=f.target_value,
         )
@@ -231,7 +322,10 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         psy=psy_value,
         npd=npd_detail.avg_npd,
         farrowing_rate=farrowing_rate,
-        active_sows=sum(counts.get(s, 0) for s in ("ACTIVE", "GESTATING", "LACTATING", "WEANED", "DRY")),
+        active_sows=sum(
+            counts.get(s, 0)
+            for s in ("ACTIVE", "GESTATING", "LACTATING", "WEANED", "DRY")
+        ),
         gestating=counts.get("GESTATING", 0),
         lactating=counts.get("LACTATING", 0),
         weaned=counts.get("WEANED", 0),
