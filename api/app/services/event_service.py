@@ -11,14 +11,20 @@ PigPlan 로직 기반 핵심 규칙:
 - 이유두수: born_alive + foster_in - foster_out - deaths 이하
 - 산차: 분만 완료 시 sow.parity += 1
 """
-from datetime import date, datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationError, ConflictError
-from app.db.models.events import Farrowing, Mating, PigletEvent, ReproductiveEvent, Weaning
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.db.models.events import (
+    Farrowing,
+    Mating,
+    PigletEvent,
+    ReproductiveEvent,
+    Weaning,
+)
 from app.db.models.platform import AuditLog
 from app.db.models.sow import BreedingCycle, Sow
 from app.schemas.events import (
@@ -364,6 +370,54 @@ async def record_reproductive_event(
                 cycle.ended_at = datetime.now(UTC)
 
     await _audit(db, user_id, farm_id, "CREATE", "reproductive_events", event.id, req.model_dump(mode="json"))
+    await db.commit()
+    await db.refresh(event)
+    return event
+
+
+async def record_piglet_event(
+    db: AsyncSession,
+    farm_id: UUID,
+    user_id: UUID,
+    req: PigletEventCreate,
+) -> PigletEvent:
+    sow = await _get_active_sow(db, farm_id, req.sow_id)
+
+    if req.farrowing_id:
+        farrowing = await db.scalar(
+            select(Farrowing).where(
+                Farrowing.id == req.farrowing_id,
+                Farrowing.sow_id == sow.id,
+                Farrowing.deleted_at.is_(None),
+            )
+        )
+        if not farrowing:
+            raise NotFoundError(f"Farrowing {req.farrowing_id} not found for this sow")
+    else:
+        farrowing = await db.scalar(
+            select(Farrowing)
+            .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
+            .order_by(Farrowing.farrowing_date.desc())
+            .limit(1)
+        )
+        if not farrowing:
+            raise NotFoundError("No active farrowing found for this sow")
+
+    event = PigletEvent(
+        farm_id=farm_id,
+        farrowing_id=farrowing.id,
+        sow_id=req.sow_id,
+        event_date=req.event_date,
+        event_type=req.event_type,
+        piglet_count=req.piglet_count,
+        reason=req.reason,
+        target_sow_id=req.target_sow_id,
+        target_farrowing_id=req.target_farrowing_id,
+        notes=req.notes,
+        created_by=user_id,
+    )
+    db.add(event)
+    await _audit(db, user_id, farm_id, "CREATE", "piglet_events", event.id, req.model_dump(mode="json"))
     await db.commit()
     await db.refresh(event)
     return event

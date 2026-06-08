@@ -19,8 +19,12 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
     items: [
       { href: "/",         icon: "⊞", label: { en: "Home",         ko: "홈",        zh: "首页",   es: "Inicio",    vi: "Trang chủ" } },
       { href: "/sows",     icon: "⬡", label: { en: "Sows",         ko: "모돈",      zh: "母猪",   es: "Cerdas",    vi: "Nái" }, badge: null },
+      { href: "/boars",    icon: "♂", label: { en: "Boars",        ko: "웅돈",      zh: "公猪",   es: "Verracos",  vi: "Heo đực" } },
       { href: "/farrowing",icon: "◫", label: { en: "Farrowing",    ko: "분만사",    zh: "产房",   es: "Partos",    vi: "Đẻ" } },
+      { href: "/record",   icon: "✎", label: { en: "Record",       ko: "번식기록",  zh: "记录",   es: "Registro",  vi: "Ghi chép" } },
+      { href: "/kpi",      icon: "◈", label: { en: "KPI",          ko: "KPI",       zh: "指标",   es: "KPI",       vi: "KPI" } },
       { href: "/reports",  icon: "▤", label: { en: "Reports",       ko: "보고서",    zh: "报告",   es: "Informes",  vi: "Báo cáo" } },
+      { href: "/chat",     icon: "◉", label: { en: "Ask AI",        ko: "AI 문의",   zh: "问AI",   es: "Preguntar", vi: "Hỏi AI" } },
     ],
   },
   {

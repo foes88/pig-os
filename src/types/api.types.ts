@@ -226,10 +226,51 @@ export interface CreateReproductiveEventRequest {
 }
 
 export interface SowCullRequest {
-  reason: "CULLED" | "DEAD" | "SOLD";
-  event_date: string;
-  cull_reason?: string;
+  removal_type: "CULLED" | "DEAD" | "SOLD" | "TRANSFER";
+  removal_date: string;
+  reason_category?: "REPRODUCTIVE" | "LAMENESS" | "DISEASE" | "AGE" | "PERFORMANCE" | "INJURY" | "BEHAVIOR" | "UNKNOWN" | "OTHER";
+  reason_detail?: string;
+  body_weight_kg?: number;
+  sale_price?: number;
+  sale_currency?: string;
   notes?: string;
+}
+
+export interface RemovalRecord {
+  id: string;
+  farm_id: string;
+  sow_id: string;
+  removal_date: string;
+  removal_type: string;
+  reason_category?: string;
+  reason_detail?: string;
+  body_weight_kg?: number;
+  sale_price?: number;
+  sale_currency?: string;
+  created_at: string;
+}
+
+export interface CreatePigletEventRequest {
+  sow_id: string;
+  farrowing_id?: string;
+  event_date: string;
+  event_type: "STILLBORN_REMOVAL" | "DEATH" | "FOSTER_IN" | "FOSTER_OUT";
+  piglet_count: number;
+  reason?: "CRUSHING" | "SCOURS" | "STARVATION" | "CONGENITAL" | "HYPOTHERMIA" | "OTHER";
+  target_sow_id?: string;
+  notes?: string;
+}
+
+export interface PigletEventRecord {
+  id: string;
+  farm_id: string;
+  farrowing_id: string;
+  sow_id: string;
+  event_date: string;
+  event_type: string;
+  piglet_count: number;
+  reason?: string;
+  created_at: string;
 }
 
 // ── Piglet Groups (자돈) ──────────────────────────────────────────────────────

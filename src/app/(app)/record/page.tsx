@@ -14,18 +14,20 @@ import type {
   CreateWeaningRequest,
   CreateReproductiveEventRequest,
   SowCullRequest,
+  CreatePigletEventRequest,
 } from "@/types/api.types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-type EventType = "farrowing" | "mating" | "weaning" | "repro" | "cull";
+type EventType = "farrowing" | "mating" | "weaning" | "repro" | "cull" | "piglet_death";
 
 const EVENT_TYPES: { value: EventType; label: string; color: string; bg: string }[] = [
-  { value: "farrowing", label: "분만",   color: "#0E9F6E", bg: "#0E9F6E18" },
-  { value: "mating",    label: "교배",   color: "#2563EB", bg: "#2563EB18" },
-  { value: "weaning",   label: "이유",   color: "#D97706", bg: "#D9770618" },
-  { value: "repro",     label: "임신사고", color: "#7C3AED", bg: "#7C3AED18" },
-  { value: "cull",      label: "도폐사", color: "#DC2626", bg: "#DC262618" },
+  { value: "farrowing",    label: "분만",     color: "#0E9F6E", bg: "#0E9F6E18" },
+  { value: "mating",       label: "교배",     color: "#2563EB", bg: "#2563EB18" },
+  { value: "weaning",      label: "이유",     color: "#D97706", bg: "#D9770618" },
+  { value: "repro",        label: "임신사고",  color: "#7C3AED", bg: "#7C3AED18" },
+  { value: "cull",         label: "도폐사",   color: "#DC2626", bg: "#DC262618" },
+  { value: "piglet_death", label: "포유자돈폐사", color: "#9D174D", bg: "#9D174D18" },
 ];
 
 const STATUS_BADGE: Record<SowStatus, string> = {
@@ -250,6 +252,9 @@ export default function RecordPage() {
               )}
               {eventType === "cull" && (
                 <CullPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+              )}
+              {eventType === "piglet_death" && (
+                <PigletDeathPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
               )}
             </div>
           </div>
@@ -530,25 +535,41 @@ function ReproPanel({ farmId, sow, onSaved }: PanelProps) {
 
 // ─── Cull Panel ───────────────────────────────────────────────────────────────
 
-const CULL_REASONS = [
-  { value: "CULLED", label: "도태 (저생산성/노령/지제불량 등)" },
-  { value: "DEAD",   label: "폐사" },
-  { value: "SOLD",   label: "판매" },
+const REMOVAL_TYPES = [
+  { value: "CULLED",   label: "도태 (저생산성/노령/지제불량 등)" },
+  { value: "DEAD",     label: "폐사" },
+  { value: "SOLD",     label: "판매" },
+  { value: "TRANSFER", label: "전출" },
+];
+
+const REASON_CATEGORIES = [
+  { value: "REPRODUCTIVE", label: "번식 문제" },
+  { value: "LAMENESS",     label: "지제 불량" },
+  { value: "DISEASE",      label: "질병" },
+  { value: "AGE",          label: "노령 (고산차)" },
+  { value: "PERFORMANCE",  label: "저생산성" },
+  { value: "INJURY",       label: "외상/부상" },
+  { value: "BEHAVIOR",     label: "행동 문제" },
+  { value: "UNKNOWN",      label: "원인 불명" },
+  { value: "OTHER",        label: "기타" },
 ];
 
 function CullPanel({ farmId, sow, onSaved }: PanelProps) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<SowCullRequest>({ reason: "CULLED", event_date: today() });
+  const [form, setForm] = useState<SowCullRequest>({
+    removal_type: "CULLED",
+    removal_date: today(),
+  });
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: (goNext: boolean) =>
       sowsApi.cull(farmId, sow.id, form).then(() => goNext),
     onSuccess: (goNext) => {
-      const label = CULL_REASONS.find((r) => r.value === form.reason)?.label.split(" ")[0] ?? "";
+      const label = REMOVAL_TYPES.find((r) => r.value === form.removal_type)?.label.split(" ")[0] ?? "";
       onSaved(`${sow.ear_tag} ${label} 처리 완료`, sow.id, goNext);
       queryClient.invalidateQueries({ queryKey: queryKeys.sows.list(farmId, {}) });
-      setForm({ reason: "CULLED", event_date: today() });
+      setForm({ removal_type: "CULLED", removal_date: today() });
       setError(null);
     },
     onError: (err: unknown) => setError(apiError(err)),
@@ -560,24 +581,99 @@ function CullPanel({ farmId, sow, onSaved }: PanelProps) {
         처리 후 모돈은 비활성화됩니다
       </div>
       <Field label="처리 유형 *">
-        <select value={form.reason}
-          onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value as SowCullRequest["reason"] }))}
+        <select value={form.removal_type}
+          onChange={(e) => setForm((f) => ({ ...f, removal_type: e.target.value as SowCullRequest["removal_type"] }))}
           className="input">
-          {CULL_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          {REMOVAL_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </Field>
       <Field label="처리일 *">
+        <input type="date" value={form.removal_date}
+          onChange={(e) => setForm((f) => ({ ...f, removal_date: e.target.value }))}
+          className="input" />
+      </Field>
+      <Field label="사유 분류">
+        <select value={form.reason_category ?? ""}
+          onChange={(e) => setForm((f) => ({ ...f, reason_category: (e.target.value || undefined) as SowCullRequest["reason_category"] }))}
+          className="input">
+          <option value="">선택 안 함</option>
+          {REASON_CATEGORIES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+        </select>
+      </Field>
+      <Field label="상세 사유">
+        <input value={form.reason_detail ?? ""}
+          onChange={(e) => setForm((f) => ({ ...f, reason_detail: e.target.value || undefined }))}
+          placeholder="예: 8산 이상 노령, 지제 불량" className="input" />
+      </Field>
+      {error && <p className="text-xs text-danger">{error}</p>}
+      <SaveFooter disabled={!form.removal_date} loading={mutation.isPending}
+        onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+    </div>
+  );
+}
+
+// ─── Piglet Death Panel ───────────────────────────────────────────────────────
+
+const PIGLET_DEATH_REASONS = [
+  { value: "CRUSHING",    label: "압사" },
+  { value: "SCOURS",      label: "설사/장염" },
+  { value: "STARVATION",  label: "기아/허약" },
+  { value: "CONGENITAL",  label: "선천성 기형" },
+  { value: "HYPOTHERMIA", label: "저체온" },
+  { value: "OTHER",       label: "기타" },
+];
+
+function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<CreatePigletEventRequest>({
+    sow_id: sow.id,
+    event_date: today(),
+    event_type: "DEATH",
+    piglet_count: 1,
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: (goNext: boolean) =>
+      eventsApi.pigletEvents.create(farmId, { ...form, sow_id: sow.id }).then(() => goNext),
+    onSuccess: (goNext) => {
+      onSaved(`${sow.ear_tag} 포유자돈 ${form.piglet_count}두 폐사 기록`, sow.id, goNext);
+      queryClient.invalidateQueries({ queryKey: queryKeys.sows.list(farmId, {}) });
+      setForm({ sow_id: sow.id, event_date: today(), event_type: "DEATH", piglet_count: 1 });
+      setError(null);
+    },
+    onError: (err: unknown) => setError(apiError(err)),
+  });
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <div className="bg-pink-50 border border-pink-100 rounded-xl px-4 py-3 text-xs text-pink-700">
+        포유 중 자돈 폐사를 기록합니다. 현재 포유 중인 분만 기록에 자동 연결됩니다.
+      </div>
+      <Field label="폐사일 *">
         <input type="date" value={form.event_date}
           onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
           className="input" />
       </Field>
-      <Field label="사유">
-        <input value={form.cull_reason ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, cull_reason: e.target.value }))}
-          placeholder="예: 8산 이상 노령, 지제 불량" className="input" />
+      <Field label="폐사두수 *">
+        <Stepper label="" value={form.piglet_count} onChange={(v) => setForm((f) => ({ ...f, piglet_count: v }))}
+          min={1} max={30} colorClass="text-danger" />
+      </Field>
+      <Field label="폐사 원인">
+        <select value={form.reason ?? ""}
+          onChange={(e) => setForm((f) => ({ ...f, reason: (e.target.value || undefined) as CreatePigletEventRequest["reason"] }))}
+          className="input">
+          <option value="">선택 안 함</option>
+          {PIGLET_DEATH_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+        </select>
+      </Field>
+      <Field label="메모">
+        <input value={form.notes ?? ""}
+          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value || undefined }))}
+          placeholder="특이사항 입력" className="input" />
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveFooter disabled={false} loading={mutation.isPending}
+      <SaveFooter disabled={!form.event_date} loading={mutation.isPending}
         onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
     </div>
   );

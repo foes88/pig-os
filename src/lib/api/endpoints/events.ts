@@ -2,10 +2,12 @@ import { apiClient } from "@/lib/api/client";
 import type {
   CreateFarrowingRequest,
   CreateMatingRequest,
+  CreatePigletEventRequest,
   CreateReproductiveEventRequest,
   CreateWeaningRequest,
   Farrowing,
   Mating,
+  PigletEventRecord,
   ReproductiveEvent,
   Weaning,
 } from "@/types/api.types";
@@ -47,6 +49,20 @@ export const eventsApi = {
     create: (farmId: string, body: CreateReproductiveEventRequest) =>
       apiClient
         .post<ReproductiveEvent>(`/api/v1/farms/${farmId}/events/reproductive`, body)
+        .then((r) => r.data),
+  },
+
+  pigletEvents: {
+    list: (farmId: string, sowId?: string, farrowingId?: string) =>
+      apiClient
+        .get<PigletEventRecord[]>(`${base(farmId)}/piglet_events`, {
+          params: { sow_id: sowId, farrowing_id: farrowingId },
+        })
+        .then((r) => r.data),
+
+    create: (farmId: string, body: CreatePigletEventRequest) =>
+      apiClient
+        .post<PigletEventRecord>(`${base(farmId)}/piglet_events`, body)
         .then((r) => r.data),
   },
 };

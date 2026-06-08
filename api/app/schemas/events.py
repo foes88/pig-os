@@ -3,8 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.schemas.common import OrmBase, UUIDMixin
-
+from app.schemas.common import UUIDMixin
 
 # ── Mating ──────────────────────────────────────────────────────────────────
 
@@ -112,7 +111,7 @@ class ReproductiveEventResponse(UUIDMixin):
 # ── Piglet event ──────────────────────────────────────────────────────────────
 
 class PigletEventCreate(BaseModel):
-    farrowing_id: UUID
+    farrowing_id: UUID | None = None  # None → auto-lookup most recent farrowing
     sow_id: UUID
     event_date: date
     event_type: str = Field(..., pattern="^(STILLBORN_REMOVAL|DEATH|FOSTER_IN|FOSTER_OUT)$")
