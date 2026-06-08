@@ -26,7 +26,11 @@
 - [x] **Weaning 버그 수정** — farrowing_id Optional 처리 + 최근 분만 자동 조회
 - [x] **모돈 도폐사 관리** — removals 테이블 + cull_sow (AuditLog 연동) + GET /sows/removals 이력 조회
 - [x] **Supabase 운영 DB 마이그레이션** — SQL Editor로 전체 스키마(e3f9a2b4c8d1) 적용 완료
-- [ ] **다음**: 프론트 /farrowing·/reports 페이지 완성, i18n, 배포
+- [x] **번식기록 6종 완성** — 교배/분만/이유/임신사고/도폐사/포유자돈폐사 API 연동 + CullPanel 필드 수정
+- [x] **포유자돈폐사 API** — POST/GET /events/piglet_events, farrowing_id 자동조회, AuditLog
+- [x] **웅돈관리** — /boars 페이지 + boarsApi 신규, Sidebar 메뉴 추가
+- [x] **Sidebar 메뉴 추가** — /record, /kpi, /chat, /boars(웅돈) 추가 (총 10개 메뉴)
+- [ ] **다음**: /farrowing·/reports 페이지 완성, i18n, 배포
 
 ## 전략 메모 (월간 보고 포함 대상)
 
