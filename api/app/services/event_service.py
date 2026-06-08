@@ -228,15 +228,26 @@ async def record_weaning(
 ) -> Weaning:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
 
-    farrowing = await db.scalar(
-        select(Farrowing).where(
-            Farrowing.id == req.farrowing_id,
-            Farrowing.sow_id == sow.id,
-            Farrowing.deleted_at.is_(None),
+    if req.farrowing_id:
+        farrowing = await db.scalar(
+            select(Farrowing).where(
+                Farrowing.id == req.farrowing_id,
+                Farrowing.sow_id == sow.id,
+                Farrowing.deleted_at.is_(None),
+            )
         )
-    )
-    if not farrowing:
-        raise NotFoundError(f"Farrowing {req.farrowing_id} not found for this sow")
+        if not farrowing:
+            raise NotFoundError(f"Farrowing {req.farrowing_id} not found for this sow")
+    else:
+        # farrowing_id 미전달 시 가장 최근 미이유 분만 자동 조회
+        farrowing = await db.scalar(
+            select(Farrowing)
+            .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
+            .order_by(Farrowing.farrowing_date.desc())
+            .limit(1)
+        )
+        if not farrowing:
+            raise NotFoundError("No farrowing found for this sow")
 
     # 중복 이유 검증 (피그플랜 dedup: 동일 farrowing_id로 이유 1회만)
     existing_weaning = await db.scalar(
@@ -270,7 +281,7 @@ async def record_weaning(
     weaning = Weaning(
         farm_id=farm_id,
         sow_id=req.sow_id,
-        farrowing_id=req.farrowing_id,
+        farrowing_id=farrowing.id,
         breeding_cycle_id=farrowing.breeding_cycle_id,
         weaning_date=req.weaning_date,
         weaned_count=req.weaned_count,
