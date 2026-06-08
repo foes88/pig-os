@@ -13,7 +13,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-
 # ── Push payloads (client → server) ──────────────────────────────────────────
 
 class SyncMating(BaseModel):
@@ -54,7 +53,14 @@ class SyncWeaning(BaseModel):
 class SyncReproductiveEvent(BaseModel):
     id: UUID
     sow_id: UUID
-    event_type: str           # RETURN_TO_ESTRUS | ABORTION | EMPTY | CULL | DEATH
+    event_type: str = Field(
+        ...,
+        pattern=(
+            "^(RETURN_TO_ESTRUS|ABORTION|EMPTY|INFERTILE|"
+            "CULLED|DEAD|TRANSFER_OUT|SOLD|HEAT_DETECTED|"
+            "CULL|DEATH)$"  # CULL/DEATH: backward-compat aliases
+        ),
+    )
     event_date: str
     notes: str | None = None
     client_created_at: datetime

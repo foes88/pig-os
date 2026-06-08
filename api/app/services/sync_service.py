@@ -30,7 +30,7 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.events import Farrowing, Mating, ReproductiveEvent, Weaning
-from app.db.models.health import HealthEvent
+from app.db.models.health import HealthEvent, Removal
 from app.db.models.ops import PeriodLock, SyncLog
 from app.db.models.platform import AuditLog, Farm
 from app.db.models.sow import Sow
@@ -42,8 +42,8 @@ from app.schemas.sync import (
     SyncHealthEvent,
     SyncMating,
     SyncRejected,
-    SyncRequest,
     SyncReproductiveEvent,
+    SyncRequest,
     SyncResponse,
     SyncWeaning,
 )
@@ -363,8 +363,33 @@ async def _process_reproductive(
         )
         db.add(event)
         db.add(_audit(farm_id, "reproductive_event", item.id, "CREATE", item.model_dump(mode="json")))
-        if item.event_type in ("CULL", "DEATH"):
-            sow.status = "CULLED" if item.event_type == "CULL" else "DEAD"
+
+        # Normalise legacy aliases (CULL→CULLED, DEATH→DEAD)
+        _alias = {"CULL": "CULLED", "DEATH": "DEAD"}
+        normalised = _alias.get(item.event_type, item.event_type)
+
+        # Sow status transitions (mirrors event_service.record_reproductive_event)
+        _status_map = {
+            "CULLED": "CULLED", "DEAD": "DEAD", "SOLD": "SOLD",
+            "TRANSFER_OUT": "TRANSFER_OUT",
+            "RETURN_TO_ESTRUS": "ACTIVE",
+            "EMPTY": "DRY",
+            "INFERTILE": "DRY",
+        }
+        if normalised in _status_map:
+            sow.status = _status_map[normalised]
+
+        # Soft-delete + Removal record for terminal exits
+        if normalised in ("CULLED", "DEAD", "SOLD", "TRANSFER_OUT"):
+            now_utc = datetime.now(UTC)
+            sow.exit_date = now_utc
+            sow.deleted_at = now_utc
+            db.add(Removal(
+                farm_id=farm_id,
+                sow_id=sow.id,
+                removal_date=event_date,
+                removal_type=normalised,
+            ))
 
     return SyncAccepted(id=item.id, entity="reproductive_event", action="created"), None, None
 
@@ -454,9 +479,20 @@ async def _pull_server_changes(
     return ServerChanges(
         sows=       [to_dict(s, ["id","ear_tag","status","parity","updated_at"]) for s in sows if not s.deleted_at],
         matings=    [to_dict(m, ["id","sow_id","mating_date","mating_type","updated_at"]) for m in matings if not m.deleted_at],
-        farrowings= [to_dict(f, ["id","sow_id","farrowing_date","born_alive","total_born","updated_at"]) for f in farrowings if not f.deleted_at],
-        weanings=   [to_dict(w, ["id","sow_id","weaning_date","weaned_count","updated_at"]) for w in weanings if not w.deleted_at],
-        reproductive_events=[to_dict(r, ["id","sow_id","event_type","event_date","updated_at"]) for r in repro if not r.deleted_at],
+        farrowings= [to_dict(f, [
+            "id","sow_id","mating_id","breeding_cycle_id",
+            "farrowing_date","total_born","born_alive",
+            "stillborn","mummified","farrowing_ease",
+            "notes","updated_at",
+        ]) for f in farrowings if not f.deleted_at],
+        weanings=   [to_dict(w, [
+            "id","sow_id","farrowing_id","breeding_cycle_id",
+            "weaning_date","weaned_count","weaning_age_days",
+            "avg_weaning_weight_kg","notes","updated_at",
+        ]) for w in weanings if not w.deleted_at],
+        reproductive_events=[to_dict(r, [
+            "id","sow_id","mating_id","event_type","event_date","notes","updated_at",
+        ]) for r in repro if not r.deleted_at],
         health_events=[to_dict(h, ["id","sow_id","event_date","updated_at"]) for h in health if not h.deleted_at],
         period_locks=[to_dict(l, ["id","period_year","period_month","locked_at"]) for l in locks],
         deleted_ids=deleted,
