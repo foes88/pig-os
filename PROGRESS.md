@@ -22,7 +22,11 @@
 - [x] **Record 페이지 리디자인** — Event Flow 레이아웃 (좌: 모돈 목록+검색, 우: 이벤트 드로어), 분만 스테퍼+자동계산+난이도+양자조정
 - [x] **Essential 페이지 10종** — /legal, /verify-email, /settings/(profile·billing·delete-account), /announcements, /support, /maintenance, /update
 - [x] **Rule Engine DB화** — `default_metric_values`에 warning/critical/direction 컬럼 추가, `effective_metric_values()` 업데이트, KR/US/BR/CN/VN 5개국 시드, base.py 하드코딩 완전 제거, 76/76 unit test pass
-- [ ] **다음**: Sidebar /farrowing·/reports 404 처리, Supabase 마이그레이션 적용, 배포
+- [x] **KPI trend 엔드포인트** — GET /kpi/trend (월별 PSY/NPD/FR), unit 15개 추가, 91/91 pass
+- [x] **Weaning 버그 수정** — farrowing_id Optional 처리 + 최근 분만 자동 조회
+- [x] **모돈 도폐사 관리** — removals 테이블 + cull_sow (AuditLog 연동) + GET /sows/removals 이력 조회
+- [x] **Supabase 운영 DB 마이그레이션** — SQL Editor로 전체 스키마(e3f9a2b4c8d1) 적용 완료
+- [ ] **다음**: 프론트 /farrowing·/reports 페이지 완성, i18n, 배포
 
 ## 전략 메모 (월간 보고 포함 대상)
 
