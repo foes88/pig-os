@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.schemas.common import OrmBase, UUIDMixin
+from app.schemas.common import UUIDMixin
 
 
 class SowCreate(BaseModel):
@@ -25,12 +25,34 @@ class SowUpdate(BaseModel):
     rfid_tag: str | None = None
 
 
+_REMOVAL_TYPES = "^(CULLED|DEAD|SOLD|TRANSFER)$"
+_REASON_CATEGORIES = (
+    "^(REPRODUCTIVE|LAMENESS|DISEASE|AGE|PERFORMANCE|INJURY|BEHAVIOR|UNKNOWN|OTHER)$"
+)
+
 class SowCullRequest(BaseModel):
-    """도폐사/판매 처리 — 모돈을 비활성화하고 이력을 남긴다."""
-    reason: str = Field(..., pattern="^(CULLED|DEAD|SOLD)$")
-    event_date: date
-    cull_reason: str | None = Field(None, max_length=200)  # 도태 사유 (저생산성/노령/질병 등)
+    """도폐사/판매 처리 — removals 이력 테이블에 기록."""
+    removal_type: str = Field(..., pattern=_REMOVAL_TYPES)
+    removal_date: date
+    reason_category: str | None = Field(None, pattern=_REASON_CATEGORIES)
+    reason_detail: str | None = Field(None, max_length=500)
+    body_weight_kg: float | None = Field(None, gt=0, le=500)
+    sale_price: float | None = Field(None, ge=0)
+    sale_currency: str | None = Field(None, min_length=3, max_length=3)
     notes: str | None = None
+
+
+class RemovalResponse(UUIDMixin):
+    farm_id: UUID
+    sow_id: UUID
+    removal_date: date
+    removal_type: str
+    reason_category: str | None
+    reason_detail: str | None
+    body_weight_kg: float | None
+    sale_price: float | None
+    sale_currency: str | None
+    created_at: datetime
 
 
 class SowResponse(UUIDMixin):
