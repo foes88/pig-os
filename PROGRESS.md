@@ -35,6 +35,9 @@
 - [x] **sync piglet_events 푸시** — SyncChanges.piglet_events + _process_piglet_event()
 - [x] **sync removals 풀** — ServerChanges.removals + _pull_server_changes() 보완
 - [x] **api.types.ts 보완** — SyncPigletEvent, SyncChanges.piglet_events, ServerChanges.removals
+- [x] **/notifications 페이지** — KPI 알림 목록 (CRITICAL/WARNING/INFO/OK 구분, dashboard.alerts 연동)
+- [x] **/addons 페이지** — Addon 스토어 (8종 카드, AI Insight Beta + 출시예정 7종)
+- [x] **/reports 페이지 강화** — SVG 바차트 + 차트/표 전환, KPI 카드 클릭으로 트렌드 전환
 - [ ] **다음**: i18n (5개 언어), 배포 (Vercel/AWS)
 
 ## 전략 메모 (월간 보고 포함 대상)
