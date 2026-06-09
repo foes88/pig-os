@@ -503,12 +503,26 @@ export interface SyncHealthEvent {
   client_created_at: string;
 }
 
+export interface SyncPigletEvent {
+  id: string;
+  sow_id: string;
+  farrowing_id?: string;
+  event_date: string;
+  event_type: "STILLBORN_REMOVAL" | "DEATH" | "FOSTER_IN" | "FOSTER_OUT";
+  piglet_count: number;
+  reason?: "CRUSHING" | "SCOURS" | "STARVATION" | "CONGENITAL" | "HYPOTHERMIA" | "OTHER";
+  target_sow_id?: string;
+  notes?: string;
+  client_created_at: string;
+}
+
 export interface SyncChanges {
   matings?: SyncMating[];
   farrowings?: SyncFarrowing[];
   weanings?: SyncWeaning[];
   reproductive_events?: SyncReproductiveEvent[];
   health_events?: SyncHealthEvent[];
+  piglet_events?: SyncPigletEvent[];
 }
 
 export interface SyncRequest {
@@ -547,6 +561,8 @@ export interface ServerChanges {
   weanings: Record<string, unknown>[];
   reproductive_events: Record<string, unknown>[];
   health_events: Record<string, unknown>[];
+  piglet_events: Record<string, unknown>[];
+  removals: Record<string, unknown>[];
   period_locks: Record<string, unknown>[];
   deleted_ids: string[];
 }
