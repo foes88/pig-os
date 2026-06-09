@@ -29,7 +29,13 @@ from uuid import UUID, uuid4
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.events import Farrowing, Mating, ReproductiveEvent, Weaning
+from app.db.models.events import (
+    Farrowing,
+    Mating,
+    PigletEvent,
+    ReproductiveEvent,
+    Weaning,
+)
 from app.db.models.health import HealthEvent, Removal
 from app.db.models.ops import PeriodLock, SyncLog
 from app.db.models.platform import AuditLog, Farm
@@ -41,6 +47,7 @@ from app.schemas.sync import (
     SyncFarrowing,
     SyncHealthEvent,
     SyncMating,
+    SyncPigletEvent,
     SyncRejected,
     SyncReproductiveEvent,
     SyncRequest,
@@ -438,6 +445,65 @@ async def _process_health_event(
     return SyncAccepted(id=item.id, entity="health_event", action="created"), None, None
 
 
+# ── Piglet event validation ───────────────────────────────────────────────────
+
+async def _process_piglet_event(
+    db: AsyncSession,
+    farm_id: UUID,
+    item: SyncPigletEvent,
+    dry_run: bool,
+) -> tuple[SyncAccepted | None, SyncRejected | None, SyncConflict | None]:
+
+    event_date = _parse_date(item.event_date)
+
+    if _is_future_date(event_date):
+        return None, SyncRejected(id=item.id, entity="piglet_event", reason="FUTURE_DATE",
+                                   detail={"event_date": item.event_date}), None
+
+    lock = await _check_period_locked(db, farm_id, event_date)
+    if lock:
+        return None, SyncRejected(id=item.id, entity="piglet_event", reason="PERIOD_LOCKED",
+                                   detail={"period": f"{event_date.year}-{event_date.month:02d}"}), None
+
+    sow = await _get_sow(db, farm_id, item.sow_id)
+    if not sow:
+        return None, SyncRejected(id=item.id, entity="piglet_event", reason="SOW_NOT_FOUND",
+                                   detail={"sow_id": str(item.sow_id)}), None
+
+    existing_by_id = await db.get(PigletEvent, item.id)
+    if existing_by_id:
+        return SyncAccepted(id=item.id, entity="piglet_event", action="merged"), None, None
+
+    if not dry_run:
+        # Resolve farrowing_id: explicit or auto-lookup latest for this sow
+        farrowing_id = item.farrowing_id
+        if farrowing_id is None:
+            farrowing = await db.scalar(
+                select(Farrowing)
+                .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
+                .order_by(Farrowing.farrowing_date.desc())
+                .limit(1)
+            )
+            if not farrowing:
+                return None, SyncRejected(
+                    id=item.id, entity="piglet_event", reason="NO_ACTIVE_FARROWING",
+                    detail={"sow_id": str(item.sow_id)},
+                ), None
+            farrowing_id = farrowing.id
+
+        event = PigletEvent(
+            id=item.id, farm_id=farm_id, sow_id=sow.id,
+            farrowing_id=farrowing_id,
+            event_date=event_date, event_type=item.event_type,
+            piglet_count=item.piglet_count, reason=item.reason,
+            target_sow_id=item.target_sow_id, notes=item.notes,
+        )
+        db.add(event)
+        db.add(_audit(farm_id, "piglet_event", item.id, "CREATE", item.model_dump(mode="json")))
+
+    return SyncAccepted(id=item.id, entity="piglet_event", action="created"), None, None
+
+
 # ── Server pull ───────────────────────────────────────────────────────────────
 
 async def _pull_server_changes(
@@ -461,6 +527,10 @@ async def _pull_server_changes(
     weanings   = list(await db.scalars(q(Weaning)))
     repro      = list(await db.scalars(q(ReproductiveEvent)))
     health     = list(await db.scalars(q(HealthEvent)))
+    piglet_evs = list(await db.scalars(q(PigletEvent)))
+    removals   = list(await db.scalars(
+        select(Removal).where(Removal.farm_id == farm_id, Removal.created_at >= since)
+    ))
     locks      = list(await db.scalars(
         select(PeriodLock).where(PeriodLock.farm_id == farm_id, PeriodLock.locked_at >= since)
     ))
@@ -494,6 +564,15 @@ async def _pull_server_changes(
             "id","sow_id","mating_id","event_type","event_date","notes","updated_at",
         ]) for r in repro if not r.deleted_at],
         health_events=[to_dict(h, ["id","sow_id","event_date","updated_at"]) for h in health if not h.deleted_at],
+        piglet_events=[to_dict(p, [
+            "id","sow_id","farrowing_id","event_date","event_type",
+            "piglet_count","reason","target_sow_id","notes","created_at",
+        ]) for p in piglet_evs if not p.deleted_at],
+        removals=[to_dict(r, [
+            "id","sow_id","removal_date","removal_type",
+            "reason_category","reason_detail","body_weight_kg",
+            "sale_price","sale_currency","created_at",
+        ]) for r in removals],
         period_locks=[to_dict(l, ["id","period_year","period_month","locked_at"]) for l in locks],
         deleted_ids=deleted,
     )
@@ -522,7 +601,8 @@ async def process_sync(
         len(req.changes.farrowings) +
         len(req.changes.weanings) +
         len(req.changes.reproductive_events) +
-        len(req.changes.health_events)
+        len(req.changes.health_events) +
+        len(req.changes.piglet_events)
     )
     if total_items > _MAX_ITEMS_PER_REQUEST:
         return SyncResponse(
@@ -559,6 +639,7 @@ async def process_sync(
                 (req.changes.weanings,            _process_weaning),
                 (req.changes.reproductive_events, _process_reproductive),
                 (req.changes.health_events,       _process_health_event),
+                (req.changes.piglet_events,       _process_piglet_event),
             ]
 
             for items, processor in processors:
@@ -620,7 +701,9 @@ async def process_sync(
                 len(server_changes.farrowings) +
                 len(server_changes.weanings) +
                 len(server_changes.reproductive_events) +
-                len(server_changes.health_events)
+                len(server_changes.health_events) +
+                len(server_changes.piglet_events) +
+                len(server_changes.removals)
             ),
             conflicts_found=len(conflicts),
             conflicts_resolved=len([c for c in accepted if c.action == "merged"]),
@@ -633,7 +716,8 @@ async def process_sync(
     pulled_count = (
         len(server_changes.sows) + len(server_changes.matings) +
         len(server_changes.farrowings) + len(server_changes.weanings) +
-        len(server_changes.reproductive_events) + len(server_changes.health_events)
+        len(server_changes.reproductive_events) + len(server_changes.health_events) +
+        len(server_changes.piglet_events) + len(server_changes.removals)
     )
 
     return SyncResponse(

@@ -79,12 +79,30 @@ class SyncHealthEvent(BaseModel):
     client_created_at: datetime
 
 
+class SyncPigletEvent(BaseModel):
+    id: UUID
+    sow_id: UUID
+    farrowing_id: UUID | None = None   # None → server auto-looks up latest farrowing
+    event_date: str
+    event_type: str = Field(
+        ..., pattern="^(STILLBORN_REMOVAL|DEATH|FOSTER_IN|FOSTER_OUT)$"
+    )
+    piglet_count: int = Field(..., ge=1)
+    reason: str | None = Field(
+        None, pattern="^(CRUSHING|SCOURS|STARVATION|CONGENITAL|HYPOTHERMIA|OTHER)$"
+    )
+    target_sow_id: UUID | None = None
+    notes: str | None = None
+    client_created_at: datetime
+
+
 class SyncChanges(BaseModel):
     matings:             list[SyncMating]            = Field(default_factory=list)
     farrowings:          list[SyncFarrowing]         = Field(default_factory=list)
     weanings:            list[SyncWeaning]           = Field(default_factory=list)
     reproductive_events: list[SyncReproductiveEvent] = Field(default_factory=list)
     health_events:       list[SyncHealthEvent]       = Field(default_factory=list)
+    piglet_events:       list[SyncPigletEvent]       = Field(default_factory=list)
 
 
 # ── Sync request ──────────────────────────────────────────────────────────────
@@ -134,6 +152,8 @@ class ServerChanges(BaseModel):
     weanings:            list[dict] = Field(default_factory=list)
     reproductive_events: list[dict] = Field(default_factory=list)
     health_events:       list[dict] = Field(default_factory=list)
+    piglet_events:       list[dict] = Field(default_factory=list)
+    removals:            list[dict] = Field(default_factory=list)   # sow removals (CULLED/DEAD/SOLD/TRANSFER)
     period_locks:        list[dict] = Field(default_factory=list)   # locked months
     deleted_ids:         list[str]  = Field(default_factory=list)   # soft-deleted UUIDs
 
