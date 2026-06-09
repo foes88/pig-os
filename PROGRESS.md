@@ -30,7 +30,12 @@
 - [x] **포유자돈폐사 API** — POST/GET /events/piglet_events, farrowing_id 자동조회, AuditLog
 - [x] **웅돈관리** — /boars 페이지 + boarsApi 신규, Sidebar 메뉴 추가
 - [x] **Sidebar 메뉴 추가** — /record, /kpi, /chat, /boars(웅돈) 추가 (총 10개 메뉴)
-- [ ] **다음**: /farrowing·/reports 페이지 완성, i18n, 배포
+- [x] **/farrowing · /reports 페이지** — API 연결 완료 (이전 세션에서 완성됨 확인)
+- [x] **Codex 교차검증 체크리스트** — `docs/CODEX_VALIDATION.md` (8개 섹션, P0~P2 우선순위)
+- [x] **sync piglet_events 푸시** — SyncChanges.piglet_events + _process_piglet_event()
+- [x] **sync removals 풀** — ServerChanges.removals + _pull_server_changes() 보완
+- [x] **api.types.ts 보완** — SyncPigletEvent, SyncChanges.piglet_events, ServerChanges.removals
+- [ ] **다음**: i18n (5개 언어), 배포 (Vercel/AWS)
 
 ## 전략 메모 (월간 보고 포함 대상)
 
