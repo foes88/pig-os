@@ -231,7 +231,8 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ## 자율 실행 플랜 (Multi-Day Autonomous Sprint)
 
-> 현재 상태 (2026-06-10 저녁 갱신):
+> 현재 상태 (2026-06-10 갱신):
+> - **Phase 1 (이벤트 입력 검증 Validators) 완료** — app/validators/ 6모듈 + event_service 연결, unit 134/134 통과
 > - 백엔드 API 13개 라우터 완성, Rule Engine 구현됨, 테스트 106/106 통과
 > - **모돈 상태 코드 v2 적용 완료** (GILT/OPEN/PREGNANT/LACTATING/ACCIDENT — P2-2 완료, 재작업 금지)
 > - **완료된 UI**: 로그인/온보딩 라이트모드+공식로고, Sidebar(lucide+그룹핑), /settings 허브,
@@ -247,11 +248,11 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 > `api/app/validators/` 폴더 신규 생성. 각 파일은 Pydantic validator + raise HTTPException(422) 패턴.
 
-- [ ] **[P1-1] validators/__init__.py + base.py**
+- [x] **[P1-1] validators/__init__.py + base.py**
   - `ValidationError` 커스텀 예외 정의
   - `validate_date_after(date, reference, field_name)` 공통 헬퍼
 
-- [ ] **[P1-2] validators/farrowing.py** — 분만 검증
+- [x] **[P1-2] validators/farrowing.py** — 분만 검증
   - `total_born > 35` → 422 `"Total Born cannot exceed 35"`
   - `stillborn > 25` or `mummified > 25` → 422
   - `born_alive > total_born` → 422
@@ -259,22 +260,22 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - `avg_birth_weight > 3.0` → 422 `"Average birth weight cannot exceed 3.0 kg"`
   - unit test: `tests/unit/test_farrowing_validator.py` (정상케이스 5개 + 오류케이스 7개)
 
-- [ ] **[P1-3] validators/weaning.py** — 이유 검증
+- [x] **[P1-3] validators/weaning.py** — 이유 검증
   - `weaned != nursing_head - (deaths + transfers_out - transfers_in)` → 422
   - 메시지에 공식 명시: `"Weaned count must equal: nursing_head - (deaths + out - in)"`
   - unit test: `tests/unit/test_weaning_validator.py`
 
-- [ ] **[P1-4] validators/mating.py** — 교배 검증
+- [x] **[P1-4] validators/mating.py** — 교배 검증
   - 모돈 상태 `GILT / OPEN / ACCIDENT`만 허용, 나머지 422
   - `boar_2 is set AND boar_1 is None` → 422 `"Boar 1 required before Boar 2"`
   - `boar_3 is set AND boar_2 is None` → 422
   - unit test: `tests/unit/test_mating_validator.py`
 
-- [ ] **[P1-5] validators/cross_fostering.py** — 양자 검증
+- [x] **[P1-5] validators/cross_fostering.py** — 양자 검증
   - `transfer_count > 25` → 422 `"Cross-fostering cannot exceed 25 piglets per transfer"`
   - unit test: `tests/unit/test_cross_fostering_validator.py`
 
-- [ ] **[P1-6] validators/date_rules.py** — 날짜 범위 검증
+- [x] **[P1-6] validators/date_rules.py** — 날짜 범위 검증
   - 이벤트 날짜 < `sow.entry_date` → 422
   - 이벤트 날짜 > `sow.cull_date` (도폐사 후) → 422
   - 교배일 < 이전 이유일 → 422
@@ -282,7 +283,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 이유일 < 이전 분만일 → 422
   - unit test: `tests/unit/test_date_rules.py`
 
-- [ ] **[P1-7] validators를 event_service.py에 연결**
+- [x] **[P1-7] validators를 event_service.py에 연결**
   - Farrowing/Weaning/Mating/CrossFostering 이벤트 처리 전 해당 validator 호출
   - 기존 서비스 코드 수정 (Pydantic 스키마 레벨 검증과 분리)
 

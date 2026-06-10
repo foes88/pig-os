@@ -84,3 +84,13 @@
 - [x] **로그인/온보딩 라이트모드** — 공식 로고, 2단 레이아웃, 5개 언어 (기본 ko)
 - [x] **Addon 스토어 리디자인** — Data Dividend 히어로 + 카테고리 필터
 - [x] **가입 500 해결 검증** — onboarding/complete, auth/register 둘 다 201 실측
+
+## 2026-06-10 — Phase 1 이벤트 입력 검증 (Backend Validators) 완료
+- [x] **[P1-1]** `app/validators/base.py` + `__init__.py` — ValidationError(422) 재사용 + 날짜 헬퍼
+- [x] **[P1-2]** `validators/farrowing.py` — TB<=35, SB/MUM<=25, BA<=TB, 암수합, 체중<=3.0kg (12 tests)
+- [x] **[P1-3]** `validators/weaning.py` — 이유두수 항등식 weaned=nursing-(deaths+out-in) (7 tests)
+- [x] **[P1-4]** `validators/mating.py` — 상태 GILT/OPEN/ACCIDENT + 웅돈 순차 (9 tests)
+- [x] **[P1-5]** `validators/cross_fostering.py` — 양자 <=25/transfer (3 tests)
+- [x] **[P1-6]** `validators/date_rules.py` — 입식/제거 경계 + 교배/분만/이유 순서 (12 tests)
+- [x] **[P1-7]** `event_service.py` 연결 — mating/farrowing/weaning/piglet 처리 전 validator 호출
+- 검증: unit 134/134 pass (기존 91 + 신규 43). 샌드박스 Python 3.10 + UTC shim 환경.
