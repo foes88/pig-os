@@ -94,3 +94,9 @@
 - [x] **[P1-6]** `validators/date_rules.py` — 입식/제거 경계 + 교배/분만/이유 순서 (12 tests)
 - [x] **[P1-7]** `event_service.py` 연결 — mating/farrowing/weaning/piglet 처리 전 validator 호출
 - 검증: unit 134/134 pass (기존 91 + 신규 43). 샌드박스 Python 3.10 + UTC shim 환경.
+
+## 2026-06-10 — Phase 2 모돈 상태 전이 + 알람 (Backend)
+- [x] **[P2-1]** `validators/sow_state.py` — ALLOWED_TRANSITIONS 전이 강제 (17 tests)
+- [x] **[P2-3]** `services/alert_service.py` — 6 과기한 유형 + 3 도태기준, farm_configs 임계값 (pure classify, 20 tests)
+- [x] **[P2-4]** `routers/base/alerts.py` + `schemas/alert.py` — GET /alerts/overdue, /alerts/cull-candidates, main.py 등록
+- 검증: unit 171/171 pass, FastAPI 앱 빌드 + 라우트 등록 확인. (P2-2 상태코드 v2는 기완료)

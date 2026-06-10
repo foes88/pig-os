@@ -291,7 +291,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ### Phase 2 — 모돈 상태 전이 + 알람 엔드포인트 (Backend)
 
-- [ ] **[P2-1] validators/sow_state.py** — 상태 전이 강제
+- [x] **[P2-1] validators/sow_state.py** — 상태 전이 강제
   - 전이 허용 맵:
     ```python
     ALLOWED_TRANSITIONS = {
@@ -322,7 +322,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
     4. `sows` 라우터, 서비스, 필터 쿼리 전체 `ACTIVE/GESTATING/WEANED/DRY` → 신규 값으로 교체
   - Alembic migration: `alembic revision -m "upgrade_sow_status_codes"`
 
-- [ ] **[P2-3] Alert Service 신규 구현**
+- [x] **[P2-3] Alert Service 신규 구현**
   - `api/app/services/alert_service.py` 신규
   - `get_overdue_sows(farm_id, db, farm_config)` — 6유형 반환
     ```python
@@ -346,7 +346,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
     - parity > 7 AND 마지막 이유두수 < 9
     - gilt age > 300일 미교배
 
-- [ ] **[P2-4] Alert Router 신규 구현**
+- [x] **[P2-4] Alert Router 신규 구현**
   - `api/app/routers/base/alerts.py` 신규
   - `GET /api/v1/farms/{farm_id}/alerts/overdue` → 6유형 목록
   - `GET /api/v1/farms/{farm_id}/alerts/cull-candidates` → 도태 권고 목록
