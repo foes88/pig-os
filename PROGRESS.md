@@ -74,3 +74,13 @@
 - Docker Compose 로컬 개발환경 완료
 - Next.js 15 프론트엔드 기반 완료
 - API Contract 검증 + 수정 완료 (unit 43/43 pass)
+
+## 2026-06-10 (저녁) — 상태 코드 v2 + CRUD 완성
+- [x] **모돈 상태 코드 v2** — GILT/OPEN/PREGNANT/LACTATING/ACCIDENT (SCREEN_MENU_SPEC 정렬, Alembic d2a8c5e7f1b3, 건유(DRY) 제거, 웹/모바일 이유 전이 불일치 수정, 테스트 106/106)
+- [x] **모돈 수정/도폐사·판매 UI** — 수정 모달 + 도태/폐사/판매/전출 모달 (사유 9종)
+- [x] **웅돈 CRUD** — 등록/수정/상태변경 완성
+- [x] **/settings 허브 페이지** — 계정/농장/지원/기타 섹션
+- [x] **Sidebar 개편** — 공식 로고 + lucide 아이콘 + 그룹핑(돈군관리/기록/분석) + 5개 언어 현지 용어
+- [x] **로그인/온보딩 라이트모드** — 공식 로고, 2단 레이아웃, 5개 언어 (기본 ko)
+- [x] **Addon 스토어 리디자인** — Data Dividend 히어로 + 카테고리 필터
+- [x] **가입 500 해결 검증** — onboarding/complete, auth/register 둘 다 201 실측
