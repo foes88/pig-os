@@ -2,7 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Stat, AIBubble, AIAction, Card, PipeItem } from "@/components/ui";
+import Link from "next/link";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
+import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { Alert } from "@/types/api.types";
@@ -23,6 +25,17 @@ export default function Dashboard() {
     queryFn:  () => kpiApi.dashboard(farmId!),
     enabled:  !!farmId,
     refetchInterval: 5 * 60 * 1000,
+  });
+
+  const { data: overdueData } = useQuery({
+    queryKey: queryKeys.alerts.overdue(farmId ?? ""),
+    queryFn: () => alertsApi.overdue(farmId!),
+    enabled: !!farmId,
+  });
+  const { data: cullData } = useQuery({
+    queryKey: queryKeys.alerts.cullCandidates(farmId ?? ""),
+    queryFn: () => alertsApi.cullCandidates(farmId!),
+    enabled: !!farmId,
   });
 
   const farmName = user?.name ?? "My Farm";
@@ -91,6 +104,21 @@ export default function Dashboard() {
               valueColor="var(--color-purple)"
             />
           </div>
+
+          {/* Overdue management link */}
+          <Link
+            href="/alerts"
+            className="flex items-center justify-between gap-3 border border-border rounded-xl px-4 py-3 mb-6 hover:border-primary transition bg-surface"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-warning text-lg">⚠</span>
+              <div>
+                <div className="text-sm font-bold text-text">관리대상 모돈 {overdueData?.total ?? 0}두</div>
+                <div className="text-[11px] text-text3">번식 주기 과기한 + 도태권고 {cullData?.length ?? 0}건</div>
+              </div>
+            </div>
+            <span className="text-xs text-primary font-semibold">관리 알림 보기 →</span>
+          </Link>
 
           {/* Pipeline */}
           <div className="flex gap-1 mb-6">
