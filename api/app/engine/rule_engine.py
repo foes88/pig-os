@@ -56,6 +56,7 @@ class Finding:
     target_value: float | None
     causes: list[str] = field(default_factory=list)
     recommended_actions: list[str] = field(default_factory=list)
+    grade: str | None = None  # absolute KPI band label (e.g. PSY grade), severity stays benchmark-driven
     detail: dict[str, Any] = field(default_factory=dict)
 
 

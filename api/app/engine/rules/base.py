@@ -39,6 +39,25 @@ def _severity_from_bench(value: float, bench: dict, direction: str) -> Severity 
         return Severity.WARNING
 
 
+# ── PSY grade (absolute band per SCREEN_MENU_SPEC) ─────────────────────────────
+
+PSY_GRADES = (
+    ("Excellence", 28.0),
+    ("Advanced", 24.0),
+    ("Stable", 20.0),
+)
+
+
+def psy_grade(psy: float | None) -> str | None:
+    """Absolute PSY band: Excellence>=28, Advanced 24-27.9, Stable 20-23.9, Developing<20."""
+    if psy is None:
+        return None
+    for name, floor in PSY_GRADES:
+        if psy >= floor:
+            return name
+    return "Developing"
+
+
 # ── NPD overdue ───────────────────────────────────────────────────────────────
 
 async def _npd_overdue(ctx: RuleContext) -> list[Finding]:
@@ -124,6 +143,7 @@ async def _psy_analysis(ctx: RuleContext) -> list[Finding]:
         target_value=bench.get("warning"),
         causes=causes,
         recommended_actions=actions,
+        grade=psy_grade(psy),
         detail={"benchmark_avg": bench.get("avg")},
     )]
 
