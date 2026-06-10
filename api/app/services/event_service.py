@@ -36,6 +36,15 @@ from app.schemas.events import (
     ReproductiveEventCreate,
     WeaningCreate,
 )
+from app.validators.cross_fostering import validate_cross_fostering
+from app.validators.date_rules import (
+    validate_event_within_sow_lifespan,
+    validate_farrowing_after_mating,
+    validate_mating_after_last_weaning,
+    validate_weaning_after_farrowing,
+)
+from app.validators.farrowing import validate_farrowing
+from app.validators.mating import validate_mating
 
 # 피그플랜 기준 상수
 GESTATION_MIN_DAYS = 100
@@ -101,6 +110,23 @@ async def _check_vfd_compliance(
         )
 
 
+def _as_date(value):
+    """Coerce a (timezone-aware) datetime column to a plain ``date`` for validators."""
+    if value is None:
+        return None
+    return value.date() if isinstance(value, datetime) else value
+
+
+async def _last_weaning_date(db: AsyncSession, sow_id: UUID):
+    """Most recent weaning date for a sow (None if never weaned)."""
+    return await db.scalar(
+        select(Weaning.weaning_date)
+        .where(Weaning.sow_id == sow_id, Weaning.deleted_at.is_(None))
+        .order_by(Weaning.weaning_date.desc())
+        .limit(1)
+    )
+
+
 async def _get_active_sow(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> Sow:
     sow = await db.scalar(
         select(Sow).where(Sow.id == sow_id, Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
@@ -146,11 +172,18 @@ async def record_mating(
 ) -> Mating:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
 
-    # 교배 가능 상태 검증
-    if sow.status not in MATABLE_STATUSES:
-        raise ValidationError(
-            f"Sow status is '{sow.status}'. Mating only allowed when status is one of {MATABLE_STATUSES}"
-        )
+    # 교배 가능 상태 + 날짜 검증 (app.validators)
+    validate_mating(sow_status=sow.status)
+    validate_event_within_sow_lifespan(
+        event_date=req.mating_date,
+        entry_date=_as_date(sow.entry_date),
+        exit_date=_as_date(sow.exit_date),
+        event_name="Mating",
+    )
+    validate_mating_after_last_weaning(
+        mating_date=req.mating_date,
+        last_weaning_date=await _last_weaning_date(db, sow.id),
+    )
 
     cycle = await _get_open_cycle(db, sow.id)
 
@@ -248,6 +281,23 @@ async def record_farrowing(
             f"total_born ({req.total_born}) != born_alive + stillborn + mummified ({expected_total})"
         )
 
+    # 분만 입력값 한도 + 날짜 순서 검증 (app.validators)
+    validate_farrowing(
+        total_born=req.total_born,
+        born_alive=req.born_alive,
+        stillborn=req.stillborn,
+        mummified=req.mummified,
+    )
+    validate_event_within_sow_lifespan(
+        event_date=req.farrowing_date,
+        entry_date=_as_date(sow.entry_date),
+        exit_date=_as_date(sow.exit_date),
+        event_name="Farrowing",
+    )
+    validate_farrowing_after_mating(
+        farrowing_date=req.farrowing_date, mating_date=mating.mating_date
+    )
+
     farrowing = Farrowing(
         farm_id=farm_id,
         sow_id=req.sow_id,
@@ -318,6 +368,11 @@ async def record_weaning(
     )
     if existing_weaning:
         raise ConflictError(f"Weaning already recorded for farrowing {req.farrowing_id}")
+
+    # 이유일 > 분만일 순서 검증 (app.validators)
+    validate_weaning_after_farrowing(
+        weaning_date=req.weaning_date, farrowing_date=farrowing.farrowing_date
+    )
 
     # 포유기간 검증 (10~60일)
     nursing_days = (req.weaning_date - farrowing.farrowing_date).days
@@ -462,6 +517,10 @@ async def record_piglet_event(
         )
         if not farrowing:
             raise NotFoundError("No active farrowing found for this sow")
+
+    # 양자 이동 두수 한도 검증 (app.validators)
+    if req.event_type in ("FOSTER_IN", "FOSTER_OUT"):
+        validate_cross_fostering(transfer_count=req.piglet_count)
 
     event = PigletEvent(
         farm_id=farm_id,
