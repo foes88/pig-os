@@ -3,7 +3,25 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.schemas.common import OrmBase, UUIDMixin
+from app.schemas.common import UUIDMixin
+
+
+CURRENCY_SYMBOLS: dict[str, str] = {
+    "KRW": "₩", "USD": "$", "CNY": "¥", "BRL": "R$", "VND": "₫",
+    "EUR": "€", "GBP": "£", "THB": "฿", "PHP": "₱", "IDR": "Rp",
+}
+
+
+class FarmLocalConfig(BaseModel):
+    """Resolved market/region defaults for this farm — used by frontend for unit display."""
+    weight_unit: str                       # kg | lb
+    currency_code: str                     # KRW / USD / CNY …
+    currency_symbol: str                   # ₩ / $ / ¥ …
+    min_wean_period: int | None            # compliance minimum weaning age (days)
+    requires_traceability: bool
+    requires_antibiotic_tracking: bool
+    slaughter_weight_target_kg: float | None   # country-typical target, converted for display
+    market_code: str | None
 
 
 class FarmCreate(BaseModel):

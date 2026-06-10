@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep
-from app.schemas.farm import FarmResponse, FarmUpdate
+from app.schemas.farm import FarmLocalConfig, FarmResponse, FarmUpdate
 from app.services import farm_service
 
 router = APIRouter(prefix="/farms", tags=["Farms"])
@@ -16,6 +16,12 @@ async def list_farms(db: DbDep, current_user: CurrentUser):
 @router.get("/{farm_id}", response_model=FarmResponse)
 async def get_farm(farm: FarmDep):
     return FarmResponse.model_validate(farm)
+
+
+@router.get("/{farm_id}/config", response_model=FarmLocalConfig)
+async def get_farm_local_config(farm: FarmDep, db: DbDep):
+    """Resolved unit/currency/compliance config for this farm's country."""
+    return await farm_service.get_local_config(db, farm)
 
 
 @router.patch("/{farm_id}", response_model=FarmResponse)

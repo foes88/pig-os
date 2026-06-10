@@ -1,9 +1,25 @@
 from datetime import date, datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.common import UUIDMixin
+
+
+# ── Event Definitions ────────────────────────────────────────────────────────
+
+class EventDefinitionResponse(BaseModel):
+    event_code: str
+    category: str
+    label_en: str
+    label_ko: str | None
+    label_vi: str | None
+    required_fields: dict[str, Any] | None
+    regional_applicability: str
+
+    model_config = {"from_attributes": True}
+
 
 # ── Mating ──────────────────────────────────────────────────────────────────
 

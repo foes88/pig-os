@@ -76,6 +76,27 @@ export interface OnboardingResponse {
 
 // ─── Farms ────────────────────────────────────────────────────────────────────
 
+export interface FarmLocalConfig {
+  weight_unit: "kg" | "lb";
+  currency_code: string;
+  currency_symbol: string;
+  min_wean_period: number | null;
+  requires_traceability: boolean;
+  requires_antibiotic_tracking: boolean;
+  slaughter_weight_target_kg: number | null;
+  market_code: string | null;
+}
+
+export interface EventDefinition {
+  event_code: string;
+  category: string;
+  label_en: string;
+  label_ko: string | null;
+  label_vi: string | null;
+  required_fields: Record<string, string> | null;
+  regional_applicability: string;
+}
+
 export interface Farm {
   id: string;
   name: string;

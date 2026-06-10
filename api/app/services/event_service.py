@@ -18,6 +18,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.db.models.config import ComplianceProfile, RegionDefault
+from app.db.models.master import MedicationCatalog
 from app.db.models.events import (
     Farrowing,
     Mating,
@@ -45,6 +47,57 @@ MAX_WEANED_COUNT = 30
 
 # 교배 가능 상태 (피그플랜: 이유 후 ACTIVE로 복귀, 후보돈도 ACTIVE)
 MATABLE_STATUSES = {"ACTIVE", "WEANED", "DRY"}
+
+
+async def _get_compliance(db: AsyncSession, farm_id: UUID) -> ComplianceProfile | None:
+    """Resolve compliance profile for a farm via region_defaults chain."""
+    from app.db.models.platform import Farm as FarmModel
+    farm = await db.get(FarmModel, farm_id)
+    if not farm or not farm.country:
+        return None
+    region = await db.scalar(
+        select(RegionDefault).where(RegionDefault.region_code == farm.country.upper())
+    )
+    if not region or not region.compliance_profile_code:
+        return None
+    return await db.scalar(
+        select(ComplianceProfile).where(
+            ComplianceProfile.profile_code == region.compliance_profile_code
+        )
+    )
+
+
+async def _check_wean_compliance(db: AsyncSession, farm_id: UUID, nursing_days: int) -> None:
+    """Raise ValidationError if weaning is below the country's minimum legal wean age."""
+    compliance = await _get_compliance(db, farm_id)
+    if compliance and compliance.min_wean_period and nursing_days < compliance.min_wean_period:
+        raise ValidationError(
+            f"Weaning at {nursing_days} days is below the minimum {compliance.min_wean_period} days "
+            f"required by compliance profile '{compliance.profile_code}'"
+        )
+
+
+async def _check_vfd_compliance(
+    db: AsyncSession, farm_id: UUID, drug_code: str | None
+) -> None:
+    """
+    US: Raise ValidationError if the medication requires a VFD (Veterinary Feed Directive)
+    and no override flag is provided.
+    """
+    if not drug_code:
+        return
+    from app.db.models.platform import Farm as FarmModel
+    farm = await db.get(FarmModel, farm_id)
+    if not farm or farm.country.upper() != "US":
+        return
+    med = await db.scalar(
+        select(MedicationCatalog).where(MedicationCatalog.active_substance == drug_code)
+    )
+    if med and med.vfd_required_us:
+        raise ValidationError(
+            f"Medication '{drug_code}' requires a Veterinary Feed Directive (VFD) in the US. "
+            "Ensure a signed VFD is on file before recording this treatment."
+        )
 
 
 async def _get_active_sow(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> Sow:
@@ -271,6 +324,9 @@ async def record_weaning(
         raise ValidationError(
             f"Nursing period {nursing_days} days is outside {NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range"
         )
+
+    # 컴플라이언스: 국가별 최소 이유일령 검증
+    await _check_wean_compliance(db, farm_id, nursing_days)
 
     # 이유두수 검증: foster 이벤트 반영
     foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)

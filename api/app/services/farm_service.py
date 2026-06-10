@@ -1,14 +1,20 @@
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError
-from app.db.models.config import FarmConfig
+from app.db.models.config import ComplianceProfile, FarmConfig, RegionDefault
 from app.core.permissions import get_accessible_farm_ids
-from app.db.models.platform import Farm, Organization, User, UserFarm
+from app.db.models.platform import Farm, User, UserFarm
 from app.db.models.sow import Building, Sow
-from app.schemas.farm import FarmConfigSet, FarmCreate, FarmResponse, FarmUpdate, OnboardingStatus
+from app.schemas.farm import (
+    CURRENCY_SYMBOLS,
+    FarmConfigSet,
+    FarmCreate,
+    FarmLocalConfig,
+    FarmUpdate,
+    OnboardingStatus,
+)
 
 
 def _generate_farm_code(country: str, org_id: UUID) -> str:
@@ -87,6 +93,56 @@ async def set_farm_configs(db: AsyncSession, farm_id: UUID, req: FarmConfigSet) 
             results.append(cfg)
     await db.commit()
     return results
+
+
+async def get_local_config(db: AsyncSession, farm: Farm) -> FarmLocalConfig:
+    """
+    Resolve weight_unit, currency, compliance profile for this farm.
+    Priority: farm.country → region_defaults → market_defaults → hardcoded fallback.
+    """
+    region = await db.scalar(
+        select(RegionDefault).where(RegionDefault.region_code == (farm.country or "").upper())
+    )
+
+    weight_unit = (region.weight_unit if region and region.weight_unit else None) or "kg"
+    currency_code = (region.currency_code if region and region.currency_code else None) or farm.currency or "USD"
+
+    # Compliance profile
+    compliance: ComplianceProfile | None = None
+    profile_code = region.compliance_profile_code if region else None
+    if profile_code:
+        compliance = await db.scalar(
+            select(ComplianceProfile).where(ComplianceProfile.profile_code == profile_code)
+        )
+
+    # Slaughter weight from default_metric_values
+    slaughter_kg: float | None = None
+    try:
+        row = await db.execute(
+            text(
+                "SELECT default_value FROM default_metric_values"
+                " WHERE metric_code = 'SLAUGHTER_WEIGHT'"
+                "   AND scope_type = 'region' AND scope_code = :region"
+                " LIMIT 1"
+            ),
+            {"region": (farm.country or "").upper()},
+        )
+        rec = row.fetchone()
+        if rec:
+            slaughter_kg = float(rec.default_value)
+    except Exception:
+        pass
+
+    return FarmLocalConfig(
+        weight_unit=weight_unit,
+        currency_code=currency_code,
+        currency_symbol=CURRENCY_SYMBOLS.get(currency_code, currency_code),
+        min_wean_period=compliance.min_wean_period if compliance else None,
+        requires_traceability=compliance.requires_traceability if compliance else False,
+        requires_antibiotic_tracking=compliance.requires_antibiotic_tracking if compliance else False,
+        slaughter_weight_target_kg=slaughter_kg,
+        market_code=region.market_code if region else None,
+    )
 
 
 async def get_onboarding_status(db: AsyncSession, farm_id: UUID) -> OnboardingStatus:

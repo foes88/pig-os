@@ -12,7 +12,9 @@ from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep
 from app.db.models.events import Farrowing, Mating, PigletEvent, Weaning
+from app.db.models.master import EventDefinition
 from app.schemas.events import (
+    EventDefinitionResponse,
     FarrowingCreate,
     FarrowingResponse,
     MatingCreate,
@@ -27,6 +29,33 @@ from app.schemas.events import (
 from app.services import event_service
 
 router = APIRouter(prefix="/farms/{farm_id}/events", tags=["Events"])
+
+
+@router.get("/definitions", response_model=list[EventDefinitionResponse])
+async def list_event_definitions(farm: FarmDep, db: DbDep):
+    """
+    Return event types applicable to this farm's country.
+    Filters regional_applicability: ALL always included;
+    comma-separated ISO codes included only if farm.country matches.
+    Phase filter: MVP only.
+    """
+    rows = list(await db.scalars(
+        select(EventDefinition)
+        .where(EventDefinition.phase == "MVP")
+        .order_by(EventDefinition.sort_order)
+    ))
+    country = (farm.country or "").upper()
+
+    def _applicable(ev: EventDefinition) -> bool:
+        ra = (ev.regional_applicability or "ALL").upper()
+        if ra == "ALL":
+            return True
+        return country in [c.strip() for c in ra.split(",")]
+
+    return [
+        EventDefinitionResponse.model_validate(r)
+        for r in rows if _applicable(r)
+    ]
 
 
 @router.get("/matings", response_model=list[MatingResponse])

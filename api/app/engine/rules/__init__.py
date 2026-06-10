@@ -1,3 +1,3 @@
-# Import base rules to trigger self-registration into RuleRegistry.
+# Import rules to trigger self-registration into RuleRegistry.
 # Addon rules are imported in their respective addon packages.
-from app.engine.rules import base  # noqa: F401
+from app.engine.rules import base, disease  # noqa: F401

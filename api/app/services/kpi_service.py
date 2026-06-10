@@ -11,11 +11,14 @@ from uuid import UUID
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.health import HealthEvent
+from app.db.models.master import DiseaseCode
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
 from app.engine import RuleContext, RuleEngine, StructuredResult
 from app.engine.rules import (
-    base as _base_rules,  # ensure rules are registered  # noqa: F401
+    base as _base_rules,       # ensure rules are registered  # noqa: F401
+    disease as _disease_rules,  # noqa: F401
 )
 from app.schemas.kpi import Alert, DashboardKpi, KpiTrend, NpdBreakdown, PsyDetail
 
@@ -117,6 +120,47 @@ async def _sow_counts(db: AsyncSession, farm_id: UUID) -> dict[str, int]:
     return {row.status: row.cnt for row in rows}
 
 
+async def _recent_notifiable_diseases(db: AsyncSession, farm_id: UUID) -> list[dict]:
+    """
+    Query health events from the last 30 days that have a notifiable disease_code.
+    Returns aggregated list for disease rule injection.
+    """
+    from datetime import timedelta
+    cutoff = date.today() - timedelta(days=30)
+    rows = await db.execute(
+        select(
+            HealthEvent.disease_code,
+            func.count().label("event_count"),
+        )
+        .where(
+            HealthEvent.farm_id == farm_id,
+            HealthEvent.disease_code.isnot(None),
+            HealthEvent.event_date >= cutoff,
+            HealthEvent.deleted_at.is_(None),
+        )
+        .group_by(HealthEvent.disease_code)
+    )
+    disease_events = {row.disease_code: row.event_count for row in rows}
+    if not disease_events:
+        return []
+
+    disease_rows = await db.scalars(
+        select(DiseaseCode).where(
+            DiseaseCode.disease_code.in_(list(disease_events.keys())),
+            DiseaseCode.notifiable.is_(True),
+        )
+    )
+    return [
+        {
+            "disease_code": d.disease_code,
+            "label_en": d.label_en,
+            "prevalence": d.regional_prevalence or {},
+            "event_count": disease_events[d.disease_code],
+        }
+        for d in disease_rows
+    ]
+
+
 async def build_rule_context(
     db: AsyncSession,
     farm: Farm,
@@ -149,6 +193,9 @@ async def build_rule_context(
             "NPD": npd_detail.avg_npd,
         }
 
+    # Disease prevalence extra context
+    notifiable_diseases = await _recent_notifiable_diseases(db, farm.id)
+
     return RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
@@ -159,6 +206,7 @@ async def build_rule_context(
         },
         sow_counts=counts,
         as_of=today,
+        extra={"recent_notifiable_diseases": notifiable_diseases},
     )
 
 

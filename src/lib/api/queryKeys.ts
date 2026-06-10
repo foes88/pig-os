@@ -8,6 +8,8 @@ export const queryKeys = {
   farms: {
     all: () => ["farms"] as const,
     detail: (farmId: string) => ["farms", farmId] as const,
+    localConfig: (farmId: string) => ["farms", farmId, "config"] as const,
+    eventDefinitions: (farmId: string) => ["farms", farmId, "event-definitions"] as const,
   },
 
   sows: {
