@@ -37,24 +37,24 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
       {
         href: "/",
         icon: LayoutDashboard,
-        label: { en: "Dashboard", ko: "대시보드", zh: "首页", es: "Inicio", vi: "Trang chủ" },
+        label: { en: "Dashboard", ko: "대시보드", zh: "总览", es: "Panel", vi: "Tổng quan" },
       },
     ],
   },
   {
-    label: { en: "Breeding", ko: "번식 관리", zh: "繁殖管理", es: "Reproducción", vi: "Phối giống" },
+    label: { en: "Herd", ko: "돈군 관리", zh: "猪群管理", es: "Hato", vi: "Đàn heo" },
     items: [
-      { href: "/sows",      icon: PiggyBank,        label: { en: "Sows",       ko: "모돈",     zh: "母猪",   es: "Cerdas",   vi: "Nái" } },
-      { href: "/boars",     icon: Heart,             label: { en: "Boars",      ko: "웅돈",     zh: "公猪",   es: "Verracos", vi: "Heo đực" } },
-      { href: "/farrowing", icon: Baby,              label: { en: "Farrowing",  ko: "분만사",   zh: "产房",   es: "Partos",   vi: "Đẻ" } },
-      { href: "/record",    icon: ClipboardList,     label: { en: "Records",    ko: "번식기록", zh: "记录",   es: "Registros",vi: "Ghi chép" } },
+      { href: "/sows",      icon: PiggyBank, label: { en: "Sows",      ko: "모돈",   zh: "母猪",   es: "Cerdas",   vi: "Heo nái" } },
+      { href: "/boars",     icon: Heart,     label: { en: "Boars",     ko: "웅돈",   zh: "公猪",   es: "Verracos", vi: "Heo nọc" } },
+      { href: "/piglets",   icon: Layers,    label: { en: "Piglets",   ko: "자돈",   zh: "仔猪",   es: "Lechones", vi: "Heo con" } },
+      { href: "/finishers", icon: Beef,      label: { en: "Finishers", ko: "비육돈", zh: "育肥猪", es: "Engorde",  vi: "Heo thịt" } },
     ],
   },
   {
-    label: { en: "Production", ko: "생산돈", zh: "生产猪", es: "Producción", vi: "Heo thịt" },
+    label: { en: "Records", ko: "기록", zh: "记录", es: "Registros", vi: "Ghi chép" },
     items: [
-      { href: "/piglets",   icon: Layers,            label: { en: "Piglets",    ko: "자돈",     zh: "仔猪",   es: "Lechones",     vi: "Heo con" } },
-      { href: "/finishers", icon: Beef,              label: { en: "Finishers",  ko: "비육돈",   zh: "育肥猪", es: "Finalización", vi: "Heo thịt" } },
+      { href: "/record",    icon: ClipboardList, label: { en: "Data Entry", ko: "기록 입력", zh: "数据录入", es: "Captura de datos", vi: "Nhập dữ liệu" } },
+      { href: "/farrowing", icon: Baby,          label: { en: "Farrowing",  ko: "분만사",    zh: "产房",     es: "Maternidad",       vi: "Chuồng đẻ" } },
     ],
   },
   {

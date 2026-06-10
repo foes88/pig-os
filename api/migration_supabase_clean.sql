@@ -1,10 +1,16 @@
+` file. Installation may result in an incomplete environment.
+ 
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Generating static SQL
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS alembic_version (
+CREATE TABLE alembic_version (
     version_num VARCHAR(32) NOT NULL, 
     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
 );
 
+INFO  [alembic.runtime.migration] Running upgrade  -> f36cde9d762c, initial_schema
 -- Running upgrade  -> f36cde9d762c
 
 CREATE TABLE audit_log (
@@ -787,6 +793,7 @@ CREATE INDEX idx_weanings_farm_sow ON weanings (farm_id, sow_id);
 
 INSERT INTO alembic_version (version_num) VALUES ('f36cde9d762c') RETURNING alembic_version.version_num;
 
+INFO  [alembic.runtime.migration] Running upgrade f36cde9d762c -> a7cda1c25637, add_piglet_groups_table
 -- Running upgrade f36cde9d762c -> a7cda1c25637
 
 CREATE TABLE piglet_groups (
@@ -821,6 +828,7 @@ UPDATE alembic_version SET version_num='a7cda1c25637' WHERE alembic_version.vers
 
 -- Running upgrade a7cda1c25637 -> 1cbe4adb7e13
 
+INFO  [alembic.runtime.migration] Running upgrade a7cda1c25637 -> 1cbe4adb7e13, add_piglet_transfers_table
 CREATE TABLE piglet_transfers (
     id UUID NOT NULL, 
     farm_id UUID NOT NULL, 
@@ -851,6 +859,7 @@ CREATE INDEX idx_pt_source_sow ON piglet_transfers (source_sow_id);
 
 UPDATE alembic_version SET version_num='1cbe4adb7e13' WHERE alembic_version.version_num = 'a7cda1c25637';
 
+INFO  [alembic.runtime.migration] Running upgrade 1cbe4adb7e13 -> 6cbf1c758818, add_pilot_signups_table
 -- Running upgrade 1cbe4adb7e13 -> 6cbf1c758818
 
 CREATE TABLE pilot_signups (
@@ -874,6 +883,7 @@ CREATE UNIQUE INDEX idx_pilot_signups_email ON pilot_signups (lower(email));
 
 UPDATE alembic_version SET version_num='6cbf1c758818' WHERE alembic_version.version_num = '1cbe4adb7e13';
 
+INFO  [alembic.runtime.migration] Running upgrade 6cbf1c758818 -> a1273623b95d, add_org_hierarchy_and_role_expansion
 -- Running upgrade 6cbf1c758818 -> a1273623b95d
 
 ALTER TABLE organizations ADD COLUMN parent_org_id UUID;
@@ -909,6 +919,7 @@ CREATE INDEX idx_users_system_role ON users (system_role);
 
 UPDATE alembic_version SET version_num='a1273623b95d' WHERE alembic_version.version_num = '6cbf1c758818';
 
+INFO  [alembic.runtime.migration] Running upgrade a1273623b95d -> b6f6e3a9c2d1, add_kpi_views_and_metric_defaults
 -- Running upgrade a1273623b95d -> b6f6e3a9c2d1
 
 INSERT INTO default_metric_values
@@ -1013,6 +1024,7 @@ CREATE OR REPLACE VIEW v_sow_npd AS
 
 UPDATE alembic_version SET version_num='b6f6e3a9c2d1' WHERE alembic_version.version_num = 'a1273623b95d';
 
+INFO  [alembic.runtime.migration] Running upgrade b6f6e3a9c2d1 -> c7d4e2a1f9b0, widen_metric_scope_codes
 -- Running upgrade b6f6e3a9c2d1 -> c7d4e2a1f9b0
 
 ALTER TABLE default_metric_values ALTER COLUMN scope_code TYPE VARCHAR(50);
@@ -1021,6 +1033,7 @@ ALTER TABLE scope_kpi_recommendations ALTER COLUMN scope_code TYPE VARCHAR(50);
 
 UPDATE alembic_version SET version_num='c7d4e2a1f9b0' WHERE alembic_version.version_num = 'b6f6e3a9c2d1';
 
+INFO  [alembic.runtime.migration] Running upgrade c7d4e2a1f9b0 -> e3f9a2b4c8d1, add_rule_thresholds_and_global_markets
 -- Running upgrade c7d4e2a1f9b0 -> e3f9a2b4c8d1
 
 ALTER TABLE default_metric_values

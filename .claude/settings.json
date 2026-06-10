@@ -1,0 +1,33 @@
+﻿{
+    "dangerouslySkipPermissions":  true,
+    "permissions":  {
+                        "defaultMode":  "bypassPermissions",
+                        "allow":  [
+                                      "Bash(npx tsc)",
+                                      "Bash(npx tsc *)",
+                                      "Bash(npm run build)",
+                                      "Bash(npm run lint)",
+                                      "Bash(npm run typecheck)",
+                                      "Bash(python *)",
+                                      "Bash(python3 *)",
+                                      "Bash(pip show *)",
+                                      "Bash(pip list)",
+                                      "Bash(curl -s *)"
+                                  ]
+                    },
+    "skipDangerousModePermissionPrompt":  true,
+    "hooks":  {
+                  "PreToolUse":  [
+                                     {
+                                         "matcher":  "Bash",
+                                         "hooks":  [
+                                                       {
+                                                           "type":  "command",
+                                                           "command":  "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.sh\"",
+                                                           "timeout":  10
+                                                       }
+                                                   ]
+                                     }
+                                 ]
+              }
+}
