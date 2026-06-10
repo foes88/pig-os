@@ -106,3 +106,9 @@
 - [x] **[P3-1]** `engine/rules/reproduction.py` — wsi.overdue(10/14), rts.rate_high(15/25), pwmr.high(15/20, method A/B), 벤치마크 오버라이드 가능
 - [x] **[P3-3]** `tests/unit/test_reproduction_rules.py` — 경계값 17 cases
 - 검증: unit 188/188 pass, 규칙 8종 등록 확인.
+
+## 2026-06-10 — Phase 4 프론트엔드 (부분: P4-1/P4-4/P4-5)
+- [x] **[P4-1]** `/alerts` 페이지 + alertsApi + 타입 + queryKeys + Sidebar 메뉴 (요약카드/테이블/도태권고, /record 링크)
+- [x] **[P4-4]** 대시보드 관리대상 모돈 카드 + /alerts 링크 + 도태권고 건수
+- [x] **[P4-5]** QuickInputDrawer 이모지 → lucide-react 아이콘
+- 검증: npx tsc --noEmit 통과(EXIT 0). (P4-2 모돈수정모달 기완료, P4-3 상세페이지·P4-6 record 모바일은 후속)

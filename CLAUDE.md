@@ -380,7 +380,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ### Phase 4 — 프론트엔드 완성
 
-- [ ] **[P4-1] /alerts 페이지 신규** `src/app/(app)/alerts/page.tsx`
+- [x] **[P4-1] /alerts 페이지 신규** `src/app/(app)/alerts/page.tsx`
   - 상단 요약 카드: 유형별 건수 (6유형 + 도태권고)
   - 관리대상 모돈 테이블: 유형 / 귀표번호 / 상태 / 경과일수 / 액션버튼
   - 액션버튼: 교배입력 → `/record?tab=mating&sowId={id}`, 이유입력 → `/record?tab=weaning&sowId={id}`
@@ -397,12 +397,12 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 산차별 성적 테이블
   - 현재 상태 + 다음 예정 이벤트 (farm_config 기준)
 
-- [ ] **[P4-4] Dashboard KPI 카드 Alerts 연동**
+- [x] **[P4-4] Dashboard KPI 카드 Alerts 연동**
   - 관리대상 모돈 수 카드 추가 (`GET /alerts/overdue` 건수 합산)
   - 클릭 시 `/alerts`로 이동
   - 도태권고 건수 badge
 
-- [ ] **[P4-5] QuickInputDrawer 아이콘 교체**
+- [x] **[P4-5] QuickInputDrawer 아이콘 교체**
   - 이모지(💉🐖🌱) → lucide-react 아이콘으로 교체
   - 버튼별 적절한 아이콘 선택 (Heart, Baby, Baby 등)
 
