@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  AlertTriangle,
   LayoutDashboard,
   PiggyBank,
   Baby,
@@ -73,6 +74,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
+  { href: "/alerts", icon: AlertTriangle, label: { en: "Alerts", ko: "관리 알림", zh: "预警", es: "Alertas", vi: "Cảnh báo" } },
   { href: "/notifications", icon: Bell,     label: { en: "Notifications", ko: "알림", zh: "通知", es: "Notificaciones", vi: "Thông báo" } },
   { href: "/settings",      icon: Settings, label: { en: "Settings",      ko: "설정", zh: "设置", es: "Configuración",   vi: "Cài đặt" } },
 ];

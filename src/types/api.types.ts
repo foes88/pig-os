@@ -603,3 +603,37 @@ export interface SyncResponse {
   require_full_sync: boolean;
   stats: Record<string, number>;
 }
+
+// ── Alerts / Tasks (Phase 2 backend) ──────────────────────────────────────────
+
+export type OverdueType =
+  | "gilt_no_estrus"
+  | "gilt_overdue_mating"
+  | "pregnant_overdue_farrowing"
+  | "lactating_overdue_weaning"
+  | "open_overdue_mating"
+  | "accident_overdue_mating";
+
+export interface OverdueSow {
+  type: OverdueType;
+  sow_id: string;
+  ear_tag: string;
+  status: SowStatus;
+  parity: number;
+  overdue_days: number;
+}
+
+export interface OverdueSummary {
+  total: number;
+  counts: Record<string, number>;
+  items: OverdueSow[];
+}
+
+export interface CullCandidate {
+  sow_id: string;
+  ear_tag: string;
+  status: SowStatus;
+  parity: number;
+  reasons: string[];
+  last_weaned: number | null;
+}

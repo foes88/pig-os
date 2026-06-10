@@ -38,4 +38,9 @@ export const queryKeys = {
   chat: {
     history: (farmId: string) => ["chat", "history", farmId] as const,
   },
+
+  alerts: {
+    overdue: (farmId: string) => ["alerts", "overdue", farmId] as const,
+    cullCandidates: (farmId: string) => ["alerts", "cull", farmId] as const,
+  },
 } as const;
