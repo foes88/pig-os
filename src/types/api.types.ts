@@ -149,8 +149,10 @@ export interface CreateSowRequest {
 }
 
 export interface UpdateSowRequest {
-  status?: SowStatus;
-  notes?: string;
+  ear_tag?: string;
+  breed?: string;
+  rfid_tag?: string;
+  building_id?: string;
 }
 
 // ─── Events ───────────────────────────────────────────────────────────────────

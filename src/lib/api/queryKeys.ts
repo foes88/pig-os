@@ -13,6 +13,7 @@ export const queryKeys = {
   },
 
   sows: {
+    all: (farmId: string) => ["sows", farmId] as const,
     list: (farmId: string, params?: Record<string, unknown>) =>
       ["sows", farmId, params] as const,
     detail: (farmId: string, sowId: string) =>

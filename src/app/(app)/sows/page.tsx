@@ -3,10 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Pencil, LogOut, X } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
-import type { SowStatus, SowEntryType, CreateSowRequest } from "@/types/api.types";
+import type {
+  Sow,
+  SowStatus,
+  SowEntryType,
+  CreateSowRequest,
+  UpdateSowRequest,
+  SowCullRequest,
+} from "@/types/api.types";
 
 const STATUS_TABS: { label: string; value: SowStatus | "ALL" }[] = [
   { label: "전체", value: "ALL" },
@@ -34,6 +42,8 @@ export default function SowsPage() {
   const [statusFilter, setStatusFilter] = useState<SowStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editTarget, setEditTarget] = useState<Sow | null>(null);
+  const [cullTarget, setCullTarget] = useState<Sow | null>(null);
   const [page, setPage] = useState(1);
 
   const params = {
@@ -127,6 +137,7 @@ export default function SowsPage() {
                   <th className="text-left px-4 py-3 font-medium">품종</th>
                   <th className="text-left px-4 py-3 font-medium">입식일</th>
                   <th className="text-left px-4 py-3 font-medium">비고</th>
+                  <th className="text-right px-4 py-3 font-medium">관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -153,6 +164,26 @@ export default function SowsPage() {
                       </td>
                       <td className="px-4 py-3 text-text3 text-xs max-w-[160px] truncate">
                         {sow.breed_company ?? "-"}
+                      </td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setEditTarget(sow)}
+                            title="수정"
+                            className="p-1.5 rounded-md text-text3 hover:text-text hover:bg-bg2 transition"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          {sow.status !== "CULLED" && sow.status !== "DEAD" && (
+                            <button
+                              onClick={() => setCullTarget(sow)}
+                              title="도폐사/판매 처리"
+                              className="p-1.5 rounded-md text-text3 hover:text-red-500 hover:bg-red-50 transition"
+                            >
+                              <LogOut size={13} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -190,10 +221,284 @@ export default function SowsPage() {
           onClose={() => setShowAddModal(false)}
           onSuccess={() => {
             setShowAddModal(false);
-            queryClient.invalidateQueries({ queryKey: queryKeys.sows.list(farmId, {}) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.sows.all(farmId) });
           }}
         />
       )}
+
+      {/* Edit Sow Modal */}
+      {editTarget && (
+        <EditSowModal
+          farmId={farmId}
+          sow={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSuccess={() => {
+            setEditTarget(null);
+            queryClient.invalidateQueries({ queryKey: queryKeys.sows.all(farmId) });
+          }}
+        />
+      )}
+
+      {/* Cull Sow Modal */}
+      {cullTarget && (
+        <CullSowModal
+          farmId={farmId}
+          sow={cullTarget}
+          onClose={() => setCullTarget(null)}
+          onSuccess={() => {
+            setCullTarget(null);
+            queryClient.invalidateQueries({ queryKey: queryKeys.sows.all(farmId) });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditSowModal({
+  farmId,
+  sow,
+  onClose,
+  onSuccess,
+}: {
+  farmId: string;
+  sow: Sow;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [form, setForm] = useState<UpdateSowRequest>({
+    ear_tag: sow.ear_tag,
+    breed: sow.breed ?? "",
+    rfid_tag: sow.rfid_tag ?? "",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      sowsApi.update(farmId, sow.id, {
+        ear_tag: form.ear_tag,
+        breed: form.breed || undefined,
+        rfid_tag: form.rfid_tag || undefined,
+      }),
+    onSuccess,
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(typeof msg === "string" ? msg : "수정 실패");
+    },
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold">모돈 수정 — {sow.ear_tag}</h2>
+          <button onClick={onClose} className="p-1 rounded-md text-text3 hover:text-text hover:bg-bg2 transition">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <Field label="귀표 번호 *">
+            <input
+              value={form.ear_tag}
+              onChange={(e) => setForm((f) => ({ ...f, ear_tag: e.target.value }))}
+              className="input"
+            />
+          </Field>
+          <Field label="품종">
+            <input
+              value={form.breed ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, breed: e.target.value }))}
+              placeholder="예: Yorkshire, Landrace"
+              className="input"
+            />
+          </Field>
+          <Field label="RFID 태그">
+            <input
+              value={form.rfid_tag ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, rfid_tag: e.target.value }))}
+              placeholder="RFID 번호"
+              className="input"
+            />
+          </Field>
+        </div>
+
+        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+
+        <div className="flex gap-2 mt-5">
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">
+            취소
+          </button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!form.ear_tag?.trim() || mutation.isPending}
+            className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
+          >
+            {mutation.isPending ? "저장 중..." : "저장"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const REMOVAL_TYPES: { value: SowCullRequest["removal_type"]; label: string }[] = [
+  { value: "CULLED",   label: "도태" },
+  { value: "DEAD",     label: "폐사" },
+  { value: "SOLD",     label: "판매" },
+  { value: "TRANSFER", label: "전출" },
+];
+
+const REASON_CATEGORIES: { value: NonNullable<SowCullRequest["reason_category"]>; label: string }[] = [
+  { value: "REPRODUCTIVE", label: "번식 장애" },
+  { value: "LAMENESS",     label: "지제 불량" },
+  { value: "DISEASE",      label: "질병" },
+  { value: "AGE",          label: "노령" },
+  { value: "PERFORMANCE",  label: "성적 불량" },
+  { value: "INJURY",       label: "부상" },
+  { value: "BEHAVIOR",     label: "행동 문제" },
+  { value: "UNKNOWN",      label: "원인 불명" },
+  { value: "OTHER",        label: "기타" },
+];
+
+function CullSowModal({
+  farmId,
+  sow,
+  onClose,
+  onSuccess,
+}: {
+  farmId: string;
+  sow: Sow;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [form, setForm] = useState<SowCullRequest>({
+    removal_type: "CULLED",
+    removal_date: new Date().toISOString().slice(0, 10),
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: () => sowsApi.cull(farmId, sow.id, form),
+    onSuccess,
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(typeof msg === "string" ? msg : "처리 실패");
+    },
+  });
+
+  const isSold = form.removal_type === "SOLD";
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-bold">도폐사·판매 처리 — {sow.ear_tag}</h2>
+          <button onClick={onClose} className="p-1 rounded-md text-text3 hover:text-text hover:bg-bg2 transition">
+            <X size={16} />
+          </button>
+        </div>
+        <p className="text-xs text-text3 mb-4">처리 후 모돈 목록에서 제외되며 removals 이력에 기록됩니다</p>
+
+        <div className="space-y-3">
+          <Field label="처리 구분 *">
+            <div className="grid grid-cols-4 gap-1.5">
+              {REMOVAL_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, removal_type: t.value }))}
+                  className={`py-2 rounded-lg text-xs font-semibold border transition ${
+                    form.removal_type === t.value
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white text-text2 border-border hover:border-text3/50"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="처리일 *">
+            <input
+              type="date"
+              value={form.removal_date}
+              onChange={(e) => setForm((f) => ({ ...f, removal_date: e.target.value }))}
+              className="input"
+            />
+          </Field>
+          <Field label="사유">
+            <select
+              value={form.reason_category ?? ""}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  reason_category: (e.target.value || undefined) as SowCullRequest["reason_category"],
+                }))
+              }
+              className="input"
+            >
+              <option value="">선택</option>
+              {REASON_CATEGORIES.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
+          </Field>
+          {isSold && (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="체중 (kg)">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.body_weight_kg ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, body_weight_kg: e.target.value ? Number(e.target.value) : undefined }))
+                  }
+                  className="input"
+                />
+              </Field>
+              <Field label="판매가">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.sale_price ?? ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      sale_price: e.target.value ? Number(e.target.value) : undefined,
+                      sale_currency: e.target.value ? "KRW" : undefined,
+                    }))
+                  }
+                  className="input"
+                />
+              </Field>
+            </div>
+          )}
+          <Field label="비고">
+            <input
+              value={form.notes ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value || undefined }))}
+              placeholder="상세 사유 등"
+              className="input"
+            />
+          </Field>
+        </div>
+
+        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+
+        <div className="flex gap-2 mt-5">
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">
+            취소
+          </button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!form.removal_date || mutation.isPending}
+            className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50 transition"
+          >
+            {mutation.isPending ? "처리 중..." : "처리 확정"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
