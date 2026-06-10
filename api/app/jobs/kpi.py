@@ -62,7 +62,7 @@ async def _calculate_farm_kpi(
     ) or 0
     gestating = await db.scalar(
         select(func.count()).select_from(Sow).where(
-            Sow.farm_id == farm_id, Sow.status == "GESTATING", Sow.deleted_at.is_(None)
+            Sow.farm_id == farm_id, Sow.status == "PREGNANT", Sow.deleted_at.is_(None)
         )
     ) or 0
     lactating = await db.scalar(

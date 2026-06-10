@@ -372,10 +372,11 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         farrowing_rate=farrowing_rate,
         active_sows=sum(
             counts.get(s, 0)
-            for s in ("ACTIVE", "GESTATING", "LACTATING", "WEANED", "DRY")
+            for s in ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")
         ),
-        gestating=counts.get("GESTATING", 0),
+        # 응답 필드명은 모바일 호환 유지: gestating=임신(PREGNANT), weaned=공태 계열(OPEN+ACCIDENT)
+        gestating=counts.get("PREGNANT", 0),
         lactating=counts.get("LACTATING", 0),
-        weaned=counts.get("WEANED", 0),
+        weaned=counts.get("OPEN", 0) + counts.get("ACCIDENT", 0),
         alerts=alerts,
     )

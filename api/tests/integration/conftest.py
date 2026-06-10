@@ -141,7 +141,7 @@ async def test_sow(db: AsyncSession, test_farm: Farm) -> Sow:
         farm_id=test_farm.id,
         ear_tag=f"SOW-{uuid.uuid4().hex[:6].upper()}",
         parity=0,
-        status="ACTIVE",
+        status="GILT",
         entry_date=datetime.now(UTC),
         entry_type="GILT",
     )

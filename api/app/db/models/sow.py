@@ -66,8 +66,15 @@ class Sow(Base):
     breed: Mapped[str | None] = mapped_column(String(50))
     breed_company: Mapped[str | None] = mapped_column(String(30))
     genetics_id: Mapped[str | None] = mapped_column(String(50))
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE")
-    # ACTIVE / GESTATING / LACTATING / WEANED / DRY / CULLED / DEAD
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="GILT")
+    # 번식 상태 머신 — docs/SCREEN_MENU_SPEC.md "Sow Status Definitions" 준수
+    # (모바일 sync 프로토콜과 공유 — 값 변경 시 모바일 스펙 협의 필수):
+    #   GILT      후보돈(입식, 미교배)                → 교배 가능
+    #   OPEN      공태(이유 후 / 경산돈 전입)         → 교배 가능
+    #   PREGNANT  임신(교배 기록 시 전이)
+    #   LACTATING 포유(분만 기록 시 전이)
+    #   ACCIDENT  번식사고(재발/공태판정/유산/불임)   → 교배 가능
+    #   CULLED / DEAD / SOLD / TRANSFER  제거(removals 이력 + soft-delete)
     entry_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     entry_type: Mapped[str] = mapped_column(String(20), nullable=False)
     # GILT / PURCHASE / TRANSFER / BORN

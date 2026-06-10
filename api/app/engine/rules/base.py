@@ -171,7 +171,7 @@ RuleRegistry.register(Rule("farrowing.low_rate", "farrowing", "Low farrowing rat
 async def _inventory_zero(ctx: RuleContext) -> list[Finding]:
     active = sum(
         ctx.sow_counts.get(s, 0)
-        for s in ("ACTIVE", "GESTATING", "LACTATING", "WEANED", "DRY")
+        for s in ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")
     )
     if active > 0:
         return []

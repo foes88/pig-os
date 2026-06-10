@@ -45,8 +45,9 @@ NURSING_MAX_DAYS = 60
 MAX_MATING_PER_CYCLE = 5
 MAX_WEANED_COUNT = 30
 
-# 교배 가능 상태 (피그플랜: 이유 후 ACTIVE로 복귀, 후보돈도 ACTIVE)
-MATABLE_STATUSES = {"ACTIVE", "WEANED", "DRY"}
+# 교배 가능 상태 — docs/SCREEN_MENU_SPEC.md 상태 정의 기준
+# GILT(후보돈) / OPEN(공태) / ACCIDENT(번식사고 후 재교배 대기)
+MATABLE_STATUSES = {"GILT", "OPEN", "ACCIDENT"}
 
 
 async def _get_compliance(db: AsyncSession, farm_id: UUID) -> ComplianceProfile | None:
@@ -193,7 +194,7 @@ async def record_mating(
     db.add(mating)
     await db.flush()
 
-    sow.status = "GESTATING"
+    sow.status = "PREGNANT"
     cycle.cycle_status = "MATED"
     cycle.mating_count = mating_number
 
@@ -355,8 +356,8 @@ async def record_weaning(
     db.add(weaning)
     await db.flush()
 
-    # 이유 후 ACTIVE 복귀 (피그플랜: 이유 후 바로 재교배 가능)
-    sow.status = "ACTIVE"
+    # 이유 → 공태 복귀 (SCREEN_MENU_SPEC: Weaning = Lactating → Open)
+    sow.status = "OPEN"
 
     if farrowing.breeding_cycle_id:
         cycle = await db.get(BreedingCycle, farrowing.breeding_cycle_id)
@@ -410,8 +411,11 @@ async def record_reproductive_event(
     terminal_map = {
         "CULLED": "CULLED",
         "DEAD": "DEAD",
-        "RETURN_TO_ESTRUS": "ACTIVE",  # 반정 → 재교배 가능
-        "EMPTY": "DRY",
+        # 번식사고 → ACCIDENT (재교배 대기). SCREEN_MENU_SPEC: RTS → Accident
+        "RETURN_TO_ESTRUS": "ACCIDENT",
+        "EMPTY": "ACCIDENT",
+        "INFERTILE": "ACCIDENT",
+        "ABORTION": "ACCIDENT",
     }
     if req.event_type in terminal_map:
         sow.status = terminal_map[req.event_type]

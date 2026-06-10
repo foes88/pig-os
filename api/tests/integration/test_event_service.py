@@ -64,7 +64,7 @@ class TestRecordMating:
         assert mating.breeding_cycle_id is not None
 
         await db.refresh(test_sow)
-        assert test_sow.status == "GESTATING"
+        assert test_sow.status == "PREGNANT"
 
     async def test_remating_in_same_cycle_increments_number(
         self, db: AsyncSession, test_farm: Farm, test_sow: Sow, test_user
@@ -98,9 +98,9 @@ class TestRecordMating:
             db, test_farm.id, test_user.id, mating_req(test_sow.id)
         )
         await db.refresh(test_sow)
-        assert test_sow.status == "GESTATING"
+        assert test_sow.status == "PREGNANT"
 
-        with pytest.raises(ValidationError, match="GESTATING"):
+        with pytest.raises(ValidationError, match="PREGNANT"):
             await event_service.record_mating(
                 db, test_farm.id, test_user.id,
                 mating_req(test_sow.id, date(2026, 1, 5))
@@ -218,7 +218,7 @@ class TestRecordWeaning:
         assert weaning.weaning_age_days == 21  # 4/25 → 5/16
 
         await db.refresh(test_sow)
-        assert test_sow.status == "ACTIVE"
+        assert test_sow.status == "OPEN"
 
     async def test_duplicate_weaning_raises(
         self, db: AsyncSession, test_farm: Farm, test_sow: Sow, test_user
@@ -305,7 +305,7 @@ class TestFullBreedingCycle:
         교배(1/1) → 분만(4/25) → 이유(5/16) → 재교배(5/20) → ...
         """
         assert test_sow.parity == 0
-        assert test_sow.status == "ACTIVE"
+        assert test_sow.status == "GILT"
 
         # === 산차 1 ===
         m1 = await event_service.record_mating(
@@ -329,7 +329,7 @@ class TestFullBreedingCycle:
         )
         await db.refresh(test_sow)
         assert test_sow.parity == 1
-        assert test_sow.status == "ACTIVE"
+        assert test_sow.status == "OPEN"
         assert w1.weaning_age_days == 21
 
         # === 산차 2 ===
@@ -354,7 +354,7 @@ class TestFullBreedingCycle:
         )
         await db.refresh(test_sow)
         assert test_sow.parity == 2
-        assert test_sow.status == "ACTIVE"
+        assert test_sow.status == "OPEN"
 
         # === 산차 3: 반정 후 재교배 ===
         m3a = await event_service.record_mating(
@@ -372,7 +372,7 @@ class TestFullBreedingCycle:
             )
         )
         await db.refresh(test_sow)
-        assert test_sow.status == "ACTIVE"  # 반정 후 재교배 가능
+        assert test_sow.status == "ACCIDENT"  # 반정 → 사고 상태, 재교배 가능
 
         m3b = await event_service.record_mating(
             db, test_farm.id, test_user.id,

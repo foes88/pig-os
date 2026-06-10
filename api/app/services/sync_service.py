@@ -141,8 +141,8 @@ async def _process_mating(
     if existing_by_id:
         return SyncAccepted(id=item.id, entity="mating", action="merged"), None, None
 
-    # 5. Sow status check — valid states for mating
-    valid_for_mating = ("ACTIVE", "WEANED", "DRY")
+    # 5. Sow status check — valid states for mating (SCREEN_MENU_SPEC 상태 정의)
+    valid_for_mating = ("GILT", "OPEN", "ACCIDENT")
     if sow.status not in valid_for_mating:
         return None, SyncRejected(
             id=item.id, entity="mating", reason="STATUS_CONFLICT",
@@ -189,7 +189,7 @@ async def _process_mating(
         )
         db.add(mating)
         db.add(_audit(farm_id, "mating", item.id, "CREATE", item.model_dump(mode="json")))
-        sow.status = "GESTATING"
+        sow.status = "PREGNANT"
 
     return SyncAccepted(id=item.id, entity="mating", action="created"), None, None
 
@@ -223,12 +223,12 @@ async def _process_farrowing(
     if existing_by_id:
         return SyncAccepted(id=item.id, entity="farrowing", action="merged"), None, None
 
-    if sow.status != "GESTATING":
+    if sow.status != "PREGNANT":
         return None, SyncRejected(
             id=item.id, entity="farrowing", reason="STATUS_CONFLICT",
             detail={
                 "sow_id": str(item.sow_id), "current_status": sow.status,
-                "allowed_statuses": ["GESTATING"],
+                "allowed_statuses": ["PREGNANT"],
                 "message": f"Cannot record farrowing for sow in {sow.status} status",
             },
         ), None
@@ -329,7 +329,7 @@ async def _process_weaning(
         )
         db.add(weaning)
         db.add(_audit(farm_id, "weaning", item.id, "CREATE", item.model_dump(mode="json")))
-        sow.status = "WEANED"
+        sow.status = "OPEN"
 
     return SyncAccepted(id=item.id, entity="weaning", action="created"), None, None
 
@@ -379,9 +379,9 @@ async def _process_reproductive(
         _status_map = {
             "CULLED": "CULLED", "DEAD": "DEAD", "SOLD": "SOLD",
             "TRANSFER_OUT": "TRANSFER_OUT",
-            "RETURN_TO_ESTRUS": "ACTIVE",
-            "EMPTY": "DRY",
-            "INFERTILE": "DRY",
+            "RETURN_TO_ESTRUS": "ACCIDENT",
+            "EMPTY": "ACCIDENT",
+            "INFERTILE": "ACCIDENT",
         }
         if normalised in _status_map:
             sow.status = _status_map[normalised]

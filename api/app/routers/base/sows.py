@@ -25,7 +25,7 @@ router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 async def list_sows(
     farm: FarmDep,
     db: DbDep,
-    status: str | None = Query(None, description="ACTIVE|GESTATING|LACTATING|WEANED|DRY"),  # noqa: E501
+    status: str | None = Query(None, description="GILT|OPEN|PREGNANT|LACTATING|ACCIDENT"),  # noqa: E501
     building_id: UUID | None = Query(None),
     parity_min: int | None = Query(None, ge=0),
     parity_max: int | None = Query(None, le=20),
@@ -76,6 +76,8 @@ async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: Cu
         building_id=body.building_id,
         parity=body.parity,
         source_farm_id=body.source_farm_id,
+        # 미경산(parity=0) → 후보돈, 경산돈 전입 → 공태로 입식
+        status="GILT" if (body.parity or 0) == 0 else "OPEN",
     )
     db.add(sow)
     await db.commit()

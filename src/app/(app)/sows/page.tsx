@@ -16,23 +16,27 @@ import type {
   SowCullRequest,
 } from "@/types/api.types";
 
+// SCREEN_MENU_SPEC: All / Gilt / Open / Pregnant / Lactating / Accident / Culled
 const STATUS_TABS: { label: string; value: SowStatus | "ALL" }[] = [
-  { label: "전체", value: "ALL" },
-  { label: "공태", value: "ACTIVE" },
-  { label: "임신", value: "GESTATING" },
-  { label: "포유", value: "LACTATING" },
-  { label: "이유", value: "WEANED" },
-  { label: "건유", value: "DRY" },
+  { label: "전체",   value: "ALL" },
+  { label: "후보돈", value: "GILT" },
+  { label: "공태",   value: "OPEN" },
+  { label: "임신",   value: "PREGNANT" },
+  { label: "포유",   value: "LACTATING" },
+  { label: "사고",   value: "ACCIDENT" },
+  { label: "도태",   value: "CULLED" },
 ];
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  ACTIVE:    { label: "공태",  cls: "bg-slate-100 text-slate-600" },
-  GESTATING: { label: "임신",  cls: "bg-blue-50 text-blue-600" },
-  LACTATING: { label: "포유",  cls: "bg-green-50 text-green-600" },
-  WEANED:    { label: "이유",  cls: "bg-amber-50 text-amber-600" },
-  DRY:       { label: "건유",  cls: "bg-purple-50 text-purple-600" },
-  CULLED:    { label: "도태",  cls: "bg-red-50 text-red-500" },
-  DEAD:      { label: "폐사",  cls: "bg-gray-100 text-gray-500" },
+  GILT:      { label: "후보돈", cls: "bg-cyan-50 text-cyan-600" },
+  OPEN:      { label: "공태",   cls: "bg-slate-100 text-slate-600" },
+  PREGNANT:  { label: "임신",   cls: "bg-blue-50 text-blue-600" },
+  LACTATING: { label: "포유",   cls: "bg-green-50 text-green-600" },
+  ACCIDENT:  { label: "사고",   cls: "bg-orange-50 text-orange-600" },
+  CULLED:    { label: "도태",   cls: "bg-red-50 text-red-500" },
+  DEAD:      { label: "폐사",   cls: "bg-gray-100 text-gray-500" },
+  SOLD:      { label: "판매",   cls: "bg-emerald-50 text-emerald-600" },
+  TRANSFER:  { label: "전출",   cls: "bg-amber-50 text-amber-600" },
 };
 
 export default function SowsPage() {

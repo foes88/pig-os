@@ -31,18 +31,20 @@ const EVENT_TYPES: { value: EventType; label: string; color: string; bg: string 
 ];
 
 const STATUS_BADGE: Record<SowStatus, string> = {
-  ACTIVE:    "bg-blue-50 text-blue-600 border-blue-100",
-  GESTATING: "bg-purple-50 text-purple-600 border-purple-100",
+  GILT:      "bg-cyan-50 text-cyan-600 border-cyan-100",
+  OPEN:      "bg-blue-50 text-blue-600 border-blue-100",
+  PREGNANT:  "bg-purple-50 text-purple-600 border-purple-100",
   LACTATING: "bg-green-50 text-green-600 border-green-100",
-  WEANED:    "bg-amber-50 text-amber-700 border-amber-100",
-  DRY:       "bg-gray-100 text-gray-500 border-gray-200",
+  ACCIDENT:  "bg-orange-50 text-orange-600 border-orange-100",
   CULLED:    "bg-red-50 text-red-500 border-red-100",
   DEAD:      "bg-gray-100 text-gray-400 border-gray-200",
+  SOLD:      "bg-emerald-50 text-emerald-600 border-emerald-100",
+  TRANSFER:  "bg-amber-50 text-amber-600 border-amber-100",
 };
 
 const STATUS_KO: Record<SowStatus, string> = {
-  ACTIVE: "공태", GESTATING: "임신", LACTATING: "포유",
-  WEANED: "이유", DRY: "건유", CULLED: "도태", DEAD: "폐사",
+  GILT: "후보돈", OPEN: "공태", PREGNANT: "임신", LACTATING: "포유",
+  ACCIDENT: "사고", CULLED: "도태", DEAD: "폐사", SOLD: "판매", TRANSFER: "전출",
 };
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────

@@ -110,14 +110,17 @@ export interface Farm {
 
 // ─── Sows ─────────────────────────────────────────────────────────────────────
 
+// docs/SCREEN_MENU_SPEC.md "Sow Status Definitions" 기준
 export type SowStatus =
-  | "ACTIVE"
-  | "GESTATING"
-  | "LACTATING"
-  | "WEANED"
-  | "DRY"
+  | "GILT"      // 후보돈 — 입식, 미교배
+  | "OPEN"      // 공태 — 이유 후 교배 대기
+  | "PREGNANT"  // 임신
+  | "LACTATING" // 포유
+  | "ACCIDENT"  // 번식사고 — 재발/공태판정/유산, 재교배 대기
   | "CULLED"
-  | "DEAD";
+  | "DEAD"
+  | "SOLD"
+  | "TRANSFER";
 
 export interface Sow {
   id: string;
