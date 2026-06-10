@@ -22,6 +22,14 @@ export interface CreateBoarRequest {
   semen_quality?: string;
 }
 
+export interface UpdateBoarRequest {
+  ear_tag?: string;
+  breed?: string;
+  breed_company?: string;
+  status?: Boar["status"];
+  semen_quality?: string;
+}
+
 const base = (farmId: string) => `/api/v1/farms/${farmId}/boars`;
 
 export const boarsApi = {
@@ -35,4 +43,7 @@ export const boarsApi = {
 
   create: (farmId: string, body: CreateBoarRequest) =>
     apiClient.post<Boar>(base(farmId), body).then((r) => r.data),
+
+  update: (farmId: string, boarId: string, body: UpdateBoarRequest) =>
+    apiClient.patch<Boar>(`${base(farmId)}/${boarId}`, body).then((r) => r.data),
 };

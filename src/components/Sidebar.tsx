@@ -1,7 +1,25 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  PiggyBank,
+  Baby,
+  Heart,
+  ClipboardList,
+  BarChart3,
+  FileText,
+  MessageSquareText,
+  Layers,
+  Store,
+  Bell,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Beef,
+} from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import type { Locale } from "@/i18n/config";
 
@@ -9,42 +27,54 @@ type L = Record<Locale, string>;
 
 interface NavItem {
   href: string;
-  icon: string;
+  icon: React.ElementType;
   label: L;
-  badge?: string | number | null;
 }
 
 const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
   {
     items: [
-      { href: "/",         icon: "⊞", label: { en: "Home",         ko: "홈",        zh: "首页",   es: "Inicio",    vi: "Trang chủ" } },
-      { href: "/sows",     icon: "⬡", label: { en: "Sows",         ko: "모돈",      zh: "母猪",   es: "Cerdas",    vi: "Nái" }, badge: null },
-      { href: "/boars",    icon: "♂", label: { en: "Boars",        ko: "웅돈",      zh: "公猪",   es: "Verracos",  vi: "Heo đực" } },
-      { href: "/farrowing",icon: "◫", label: { en: "Farrowing",    ko: "분만사",    zh: "产房",   es: "Partos",    vi: "Đẻ" } },
-      { href: "/record",   icon: "✎", label: { en: "Record",       ko: "번식기록",  zh: "记录",   es: "Registro",  vi: "Ghi chép" } },
-      { href: "/kpi",      icon: "◈", label: { en: "KPI",          ko: "KPI",       zh: "指标",   es: "KPI",       vi: "KPI" } },
-      { href: "/reports",  icon: "▤", label: { en: "Reports",       ko: "보고서",    zh: "报告",   es: "Informes",  vi: "Báo cáo" } },
-      { href: "/chat",     icon: "◉", label: { en: "Ask AI",        ko: "AI 문의",   zh: "问AI",   es: "Preguntar", vi: "Hỏi AI" } },
+      {
+        href: "/",
+        icon: LayoutDashboard,
+        label: { en: "Dashboard", ko: "대시보드", zh: "首页", es: "Inicio", vi: "Trang chủ" },
+      },
+    ],
+  },
+  {
+    label: { en: "Breeding", ko: "번식 관리", zh: "繁殖管理", es: "Reproducción", vi: "Phối giống" },
+    items: [
+      { href: "/sows",      icon: PiggyBank,        label: { en: "Sows",       ko: "모돈",     zh: "母猪",   es: "Cerdas",   vi: "Nái" } },
+      { href: "/boars",     icon: Heart,             label: { en: "Boars",      ko: "웅돈",     zh: "公猪",   es: "Verracos", vi: "Heo đực" } },
+      { href: "/farrowing", icon: Baby,              label: { en: "Farrowing",  ko: "분만사",   zh: "产房",   es: "Partos",   vi: "Đẻ" } },
+      { href: "/record",    icon: ClipboardList,     label: { en: "Records",    ko: "번식기록", zh: "记录",   es: "Registros",vi: "Ghi chép" } },
     ],
   },
   {
     label: { en: "Production", ko: "생산돈", zh: "生产猪", es: "Producción", vi: "Heo thịt" },
     items: [
-      { href: "/piglets",  icon: "◎", label: { en: "Piglets",      ko: "자돈",      zh: "仔猪",   es: "Lechones",     vi: "Heo con" } },
-      { href: "/finishers",icon: "▣", label: { en: "Finishers",    ko: "비육돈",    zh: "育肥猪",  es: "Finalización", vi: "Heo thịt" } },
+      { href: "/piglets",   icon: Layers,            label: { en: "Piglets",    ko: "자돈",     zh: "仔猪",   es: "Lechones",     vi: "Heo con" } },
+      { href: "/finishers", icon: Beef,              label: { en: "Finishers",  ko: "비육돈",   zh: "育肥猪", es: "Finalización", vi: "Heo thịt" } },
+    ],
+  },
+  {
+    label: { en: "Analytics", ko: "분석", zh: "分析", es: "Análisis", vi: "Phân tích" },
+    items: [
+      { href: "/kpi",     icon: BarChart3,   label: { en: "KPI",     ko: "KPI",    zh: "指标",  es: "KPI",      vi: "KPI" } },
+      { href: "/reports", icon: FileText,    label: { en: "Reports", ko: "보고서", zh: "报告",  es: "Informes", vi: "Báo cáo" } },
     ],
   },
   {
     label: { en: "Addons", ko: "Addon", zh: "插件", es: "Addons", vi: "Tiện ích" },
     items: [
-      { href: "/addons",   icon: "✦", label: { en: "Addon Store",  ko: "Addon 스토어", zh: "插件商店", es: "Tienda de Addons", vi: "Cửa hàng" } },
+      { href: "/addons", icon: Store, label: { en: "Addon Store", ko: "Addon 스토어", zh: "插件商店", es: "Tienda", vi: "Cửa hàng" } },
     ],
   },
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
-  { href: "/notifications", icon: "🔔", label: { en: "Notifications", ko: "알림", zh: "通知",  es: "Notificaciones", vi: "Thông báo" } },
-  { href: "/settings",      icon: "⚙",  label: { en: "Settings",      ko: "설정", zh: "设置",  es: "Configuración",  vi: "Cài đặt" } },
+  { href: "/notifications", icon: Bell,     label: { en: "Notifications", ko: "알림", zh: "通知", es: "Notificaciones", vi: "Thông báo" } },
+  { href: "/settings",      icon: Settings, label: { en: "Settings",      ko: "설정", zh: "设置", es: "Configuración",   vi: "Cài đặt" } },
 ];
 
 interface SidebarProps {
@@ -66,31 +96,37 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       style={{ width: w }}
       className="hidden md:flex fixed top-0 left-0 h-screen bg-surface border-r border-border flex-col z-50 transition-all duration-200 overflow-hidden"
     >
-      {/* Logo + collapse toggle */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-border flex-shrink-0">
-        {!collapsed && (
-          <div className="flex items-center gap-2">
-            {/* Logo mark */}
-            <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xs font-black">P</span>
-              <span className="absolute w-2 h-1.5 bg-snout rounded-sm" style={{ marginTop: 4, marginLeft: 4 }} />
-            </div>
-            <span className="text-sm font-black tracking-tight text-text">
-              Pig<span className="text-primary">OS</span>
-            </span>
+      {/* Logo */}
+      <div className="flex items-center justify-between px-3 py-3 border-b border-border flex-shrink-0">
+        {collapsed ? (
+          <div className="flex items-center justify-center w-full">
+            <Image
+              src="/logos/pigos-symbol-light.svg"
+              alt="PigOS"
+              width={28}
+              height={28}
+              className="object-contain"
+              priority
+            />
           </div>
-        )}
-        {collapsed && (
-          <div className="w-7 h-7 rounded-lg bg-navy flex items-center justify-center mx-auto">
-            <span className="text-white text-xs font-black">P</span>
-          </div>
+        ) : (
+          <Link href="/" className="flex-1">
+            <Image
+              src="/logos/pigos-logo-horizontal-light.svg"
+              alt="PigOS"
+              width={96}
+              height={36}
+              className="object-contain object-left"
+              priority
+            />
+          </Link>
         )}
         <button
           onClick={onCollapse}
-          className={`text-muted hover:text-text transition text-xs ${collapsed ? "mx-auto mt-2" : ""}`}
+          className="ml-1 p-1 rounded-md text-muted hover:text-text hover:bg-bg2 transition flex-shrink-0"
           title={collapsed ? "Expand" : "Collapse"}
         >
-          {collapsed ? "›" : "‹"}
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
@@ -98,9 +134,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       {!collapsed && (
         <div className="px-4 py-2.5 border-b border-border">
           <div className="text-[10px] text-muted uppercase tracking-widest mb-0.5">Farm</div>
-          <div className="text-xs font-semibold text-text truncate">
-            {user?.name ?? "My Farm"}
-          </div>
+          <div className="text-xs font-semibold text-text truncate">{user?.name ?? "My Farm"}</div>
         </div>
       )}
 
@@ -109,30 +143,29 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} className="mb-1">
             {!collapsed && group.label && (
-              <div className="px-4 py-1 text-[9px] font-bold text-faint uppercase tracking-widest">
+              <div className="px-4 pt-3 pb-1 text-[9px] font-bold text-faint uppercase tracking-widest">
                 {t(group.label)}
               </div>
             )}
             {group.items.map((item) => {
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+              const isActive =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname === item.href || pathname?.startsWith(item.href + "/");
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   title={collapsed ? t(item.label) : undefined}
-                  className={`flex items-center gap-3 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
+                  className={`flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
                     isActive
-                      ? "bg-primary-soft text-primary font-semibold"
+                      ? "bg-primary/8 text-primary font-semibold"
                       : "text-muted hover:bg-bg2 hover:text-text"
                   } ${collapsed ? "justify-center" : ""}`}
                 >
-                  <span className="text-base flex-shrink-0">{item.icon}</span>
-                  {!collapsed && (
-                    <span className="flex-1 text-[13px]">{t(item.label)}</span>
-                  )}
-                  {!collapsed && item.badge && (
-                    <span className="font-mono text-[10px] text-muted">{item.badge}</span>
-                  )}
+                  <Icon size={15} className="flex-shrink-0" />
+                  {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
                 </Link>
               );
             })}
@@ -144,13 +177,13 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       <div className="px-3 pb-3">
         <button
           onClick={onAskAI}
-          className={`w-full flex items-center gap-2.5 rounded-xl py-2.5 text-sm font-semibold text-white transition ${
+          className={`w-full flex items-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition ${
             collapsed ? "justify-center px-2" : "px-3"
           }`}
           style={{ background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)" }}
         >
-          <span className="text-base">✦</span>
-          {!collapsed && <span>PigOS AI</span>}
+          <MessageSquareText size={14} />
+          {!collapsed && <span>Ask AI</span>}
         </button>
       </div>
 
@@ -158,16 +191,17 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       <div className="border-t border-border py-2">
         {BOTTOM_ITEMS.map((item) => {
           const isActive = pathname === item.href;
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               title={collapsed ? t(item.label) : undefined}
-              className={`flex items-center gap-3 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
-                isActive ? "bg-primary-soft text-primary font-semibold" : "text-muted hover:bg-bg2 hover:text-text"
+              className={`flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
+                isActive ? "bg-primary/8 text-primary font-semibold" : "text-muted hover:bg-bg2 hover:text-text"
               } ${collapsed ? "justify-center" : ""}`}
             >
-              <span className="text-base flex-shrink-0">{item.icon}</span>
+              <Icon size={15} className="flex-shrink-0" />
               {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
             </Link>
           );

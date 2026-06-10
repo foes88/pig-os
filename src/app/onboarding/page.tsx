@@ -1,30 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+
 import { authApi } from "@/lib/api/endpoints/auth";
 import { useAuthStore } from "@/store/auth.store";
 import type { OnboardingRequest } from "@/types/api.types";
 
-const STEPS = ["농장 정보", "관리자 계정", "확인"] as const;
+const STEPS = ["Farm Info", "Account", "Confirm"] as const;
 
 const FARM_TYPES = [
-  { value: "SOW_FARM",          label: "모돈 전문 농장" },
-  { value: "FARROW_TO_FINISH",  label: "일관 사육 농장" },
-  { value: "NURSERY",           label: "자돈 농장" },
-  { value: "FINISHER",          label: "비육 농장" },
+  { value: "SOW_FARM",         label: "Sow farm" },
+  { value: "FARROW_TO_FINISH", label: "Farrow-to-finish" },
+  { value: "NURSERY",          label: "Nursery" },
+  { value: "FINISHER",         label: "Finisher" },
 ];
 
 const COUNTRIES = [
-  { value: "KR", label: "대한민국" },
-  { value: "US", label: "미국" },
-  { value: "PH", label: "필리핀" },
-  { value: "VN", label: "베트남" },
-  { value: "TH", label: "태국" },
-  { value: "BR", label: "브라질" },
-  { value: "MX", label: "멕시코" },
-  { value: "CN", label: "중국" },
+  { value: "KR", label: "South Korea" },
+  { value: "US", label: "United States" },
+  { value: "CN", label: "China" },
+  { value: "VN", label: "Vietnam" },
+  { value: "TH", label: "Thailand" },
+  { value: "PH", label: "Philippines" },
+  { value: "BR", label: "Brazil" },
+  { value: "MX", label: "Mexico" },
 ];
 
 type Form = OnboardingRequest;
@@ -64,7 +66,7 @@ export default function OnboardingPage() {
     },
     onError: (err: unknown) => {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "가입 중 오류가 발생했습니다.");
+      setError(typeof detail === "string" ? detail : "Something went wrong. Please try again.");
     },
   });
 
@@ -81,160 +83,210 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-[520px]">
+
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="text-2xl font-extrabold text-white tracking-tight mb-1">
-            Pig<span className="text-[#0D7C66]">OS</span>
-          </div>
-          <p className="text-xs text-slate-400">The operating system for global pig farming</p>
+        <div className="flex justify-center mb-8">
+          <Image
+            src="/logos/pigos-logo-horizontal-light.svg"
+            alt="PigOS"
+            width={140}
+            height={53}
+            className="object-contain"
+            priority
+          />
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="flex items-center justify-center gap-0 mb-8">
           {STEPS.map((label, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition ${
-                i < step ? "bg-[#0D7C66] text-white" :
-                i === step ? "bg-white text-[#0F172A]" :
-                "bg-white/10 text-slate-400"
-              }`}>
-                {i < step ? "✓" : i + 1}
+            <div key={i} className="flex items-center">
+              <div className="flex flex-col items-center gap-1.5">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold border-2 transition-all ${
+                  i < step
+                    ? "bg-[#2563EB] border-[#2563EB] text-white"
+                    : i === step
+                    ? "bg-white border-[#2563EB] text-[#2563EB]"
+                    : "bg-white border-slate-200 text-slate-400"
+                }`}>
+                  {i < step ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6 9 17l-5-5"/>
+                    </svg>
+                  ) : (
+                    i + 1
+                  )}
+                </div>
+                <span className={`text-xs ${i === step ? "text-slate-700 font-medium" : "text-slate-400"}`}>
+                  {label}
+                </span>
               </div>
-              <span className={`text-xs ${i === step ? "text-white font-medium" : "text-slate-500"}`}>{label}</span>
-              {i < STEPS.length - 1 && <span className="text-slate-600 mx-1">→</span>}
+              {i < STEPS.length - 1 && (
+                <div className={`h-px w-16 mx-3 mb-5 ${i < step ? "bg-[#2563EB]" : "bg-slate-200"}`} />
+              )}
             </div>
           ))}
         </div>
 
         {/* Card */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
           {step === 0 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-white mb-4">농장 정보</h2>
-              <OField label="조직/회사명 *">
-                <input value={form.org_name} onChange={(e) => set("org_name", e.target.value)} placeholder="예: 위즈레이크 양돈" className="oinput" />
-              </OField>
-              <OField label="농장 이름 *">
-                <input value={form.farm_name} onChange={(e) => set("farm_name", e.target.value)} placeholder="예: 본장" className="oinput" />
-              </OField>
-              <OField label="국가 *">
-                <select value={form.country} onChange={(e) => set("country", e.target.value)} className="oinput">
-                  {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </OField>
-              <OField label="농장 유형">
-                <select value={form.farm_type} onChange={(e) => set("farm_type", e.target.value as Form["farm_type"])} className="oinput">
-                  {FARM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-              </OField>
-              <OField label="모돈 두수">
-                <input type="number" min={1} value={form.sow_count ?? ""} onChange={(e) => set("sow_count", Number(e.target.value))} placeholder="예: 500" className="oinput" />
-              </OField>
+              <div className="mb-6">
+                <h2 className="text-lg font-bold text-slate-900">Farm information</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Tell us about your farm operation</p>
+              </div>
+              <Field label="Organization / Company *">
+                <input value={form.org_name} onChange={(e) => set("org_name", e.target.value)}
+                  placeholder="e.g. WiseLake Farm Co." className="fin" />
+              </Field>
+              <Field label="Farm name *">
+                <input value={form.farm_name} onChange={(e) => set("farm_name", e.target.value)}
+                  placeholder="e.g. Main Farm" className="fin" />
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Country *">
+                  <select value={form.country} onChange={(e) => set("country", e.target.value)} className="fin">
+                    {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  </select>
+                </Field>
+                <Field label="Farm type">
+                  <select value={form.farm_type} onChange={(e) => set("farm_type", e.target.value as Form["farm_type"])} className="fin">
+                    {FARM_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <Field label="Sow count">
+                <input type="number" min={1} value={form.sow_count ?? ""}
+                  onChange={(e) => set("sow_count", Number(e.target.value))}
+                  placeholder="e.g. 500" className="fin" />
+              </Field>
             </div>
           )}
 
           {step === 1 && (
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-white mb-4">관리자 계정</h2>
-              <OField label="이름 *">
-                <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="홍길동" className="oinput" />
-              </OField>
-              <OField label="이메일 *">
-                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="farmer@example.com" className="oinput" />
-              </OField>
-              <OField label="비밀번호 * (8자 이상)">
-                <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} placeholder="••••••••" className="oinput" />
-              </OField>
-              <OField label="비밀번호 확인 *">
-                <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="••••••••" className="oinput" />
+              <div className="mb-6">
+                <h2 className="text-lg font-bold text-slate-900">Create your account</h2>
+                <p className="text-sm text-slate-500 mt-0.5">You'll use this to sign in to PigOS</p>
+              </div>
+              <Field label="Full name *">
+                <input value={form.name} onChange={(e) => set("name", e.target.value)}
+                  placeholder="e.g. John Kim" className="fin" />
+              </Field>
+              <Field label="Email address *">
+                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)}
+                  placeholder="farmer@example.com" className="fin" />
+              </Field>
+              <Field label="Password * (min. 8 characters)">
+                <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)}
+                  placeholder="••••••••" className="fin" />
+              </Field>
+              <Field label="Confirm password *">
+                <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                  placeholder="••••••••" className={`fin ${confirmPw && form.password !== confirmPw ? "!border-red-400" : ""}`} />
                 {confirmPw && form.password !== confirmPw && (
-                  <p className="text-xs text-red-400 mt-1">비밀번호가 일치하지 않습니다.</p>
+                  <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
                 )}
-              </OField>
+              </Field>
             </div>
           )}
 
           {step === 2 && (
             <div>
-              <h2 className="text-lg font-bold text-white mb-4">등록 확인</h2>
-              <div className="space-y-2 text-sm">
+              <div className="mb-6">
+                <h2 className="text-lg font-bold text-slate-900">Confirm & start</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Review your details before creating your account</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
                 {[
-                  ["조직", form.org_name],
-                  ["농장", form.farm_name],
-                  ["국가", COUNTRIES.find((c) => c.value === form.country)?.label ?? form.country],
-                  ["유형", FARM_TYPES.find((t) => t.value === form.farm_type)?.label ?? form.farm_type ?? ""],
-                  ["모돈", `${form.sow_count ?? "-"}두`],
-                  ["이름", form.name],
-                  ["이메일", form.email],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex justify-between py-1.5 border-b border-white/10">
-                    <span className="text-slate-400">{label}</span>
-                    <span className="text-white font-medium">{value}</span>
+                  ["Organization", form.org_name],
+                  ["Farm", form.farm_name],
+                  ["Country", COUNTRIES.find((c) => c.value === form.country)?.label ?? form.country],
+                  ["Farm type", FARM_TYPES.find((t) => t.value === form.farm_type)?.label ?? form.farm_type ?? ""],
+                  ["Sow count", `${form.sow_count ?? "-"} head`],
+                  ["Name", form.name],
+                  ["Email", form.email],
+                ].map(([label, value], idx, arr) => (
+                  <div key={label} className={`flex justify-between px-4 py-3 text-sm ${idx < arr.length - 1 ? "border-b border-slate-100" : ""}`}>
+                    <span className="text-slate-500">{label}</span>
+                    <span className="text-slate-900 font-medium">{value}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-500 mt-4">
-                무료로 시작합니다. 신용카드 불필요.
+              <p className="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Free to start. No credit card required.
               </p>
             </div>
           )}
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mt-4">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mt-4">
+              <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           <div className="flex gap-3 mt-6">
             {step > 0 && (
-              <button
-                onClick={() => setStep((s) => s - 1)}
-                className="flex-1 border border-white/20 text-white rounded-xl py-2.5 text-sm hover:bg-white/5 transition"
-              >
-                이전
+              <button onClick={() => setStep((s) => s - 1)}
+                className="flex-1 h-11 border border-slate-300 text-slate-700 rounded-lg text-sm
+                  font-medium hover:bg-slate-50 transition">
+                Back
               </button>
             )}
-            <button
-              onClick={next}
+            <button onClick={next}
               disabled={!canProceed() || mutation.isPending}
-              className="flex-1 bg-[#0D7C66] hover:bg-[#0D7C66]/90 disabled:opacity-50 text-white font-semibold rounded-xl py-2.5 text-sm transition"
-            >
-              {mutation.isPending ? "처리 중..." : step === 2 ? "무료로 시작하기" : "다음"}
+              className="flex-1 h-11 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50
+                text-white font-semibold rounded-lg text-sm transition shadow-sm shadow-blue-200/60">
+              {mutation.isPending ? "Creating account…" : step === 2 ? "Get started free" : "Continue"}
             </button>
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-600 mt-4">
-          이미 계정이 있으신가요?{" "}
-          <a href="/login" className="text-[#0D7C66] hover:underline">로그인</a>
+        <p className="text-center text-sm text-slate-500 mt-5">
+          Already have an account?{" "}
+          <a href="/login" className="text-[#2563EB] hover:underline font-medium">Sign in</a>
         </p>
+        <p className="text-center text-xs text-slate-400 mt-3">© 2026 WiseLake Inc.</p>
       </div>
 
       <style>{`
-        .oinput {
+        .fin {
           width: 100%;
-          padding: 0.625rem 0.875rem;
+          height: 44px;
+          padding: 0 0.875rem;
           border-radius: 0.5rem;
-          background: rgba(255,255,255,0.07);
-          border: 1px solid rgba(255,255,255,0.12);
-          color: white;
+          background: #fff;
+          border: 1px solid #CBD5E1;
+          color: #0f172a;
           font-size: 0.875rem;
           outline: none;
-          transition: border-color 0.15s;
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .oinput:focus { border-color: #0D7C66; }
-        .oinput option { background: #1E293B; color: white; }
+        .fin:focus {
+          border-color: #2563EB;
+          box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+        }
+        .fin::placeholder { color: #94a3b8; }
       `}</style>
     </div>
   );
 }
 
-function OField({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-slate-300 mb-1.5">{label}</label>
+      <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
       {children}
     </div>
   );

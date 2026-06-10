@@ -1,38 +1,237 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { authApi } from "@/lib/api/endpoints/auth";
 import { useAuthStore } from "@/store/auth.store";
 
+// ── i18n ──────────────────────────────────────────────────────────────────────
+const LANGS = ["en", "ko", "zh", "es", "vi"] as const;
+type Lang = (typeof LANGS)[number];
+
+const LANG_LABELS: Record<Lang, string> = {
+  en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt",
+};
+
+const T: Record<Lang, {
+  heading: string; subheading: string;
+  email: string; password: string;
+  submit: string; submitting: string;
+  forgotPassword: string; noAccount: string; register: string;
+  errEmail: string; errPassword: string;
+  errInvalid: string; errFormat: string; errServer: string;
+}> = {
+  en: {
+    heading: "Welcome back",
+    subheading: "Sign in to your PigOS account",
+    email: "Email address", password: "Password",
+    submit: "Sign in", submitting: "Signing in…",
+    forgotPassword: "Forgot password?",
+    noAccount: "New to PigOS?", register: "Create a free account",
+    errEmail: "Enter a valid email address", errPassword: "Enter your password",
+    errInvalid: "Email or password is incorrect",
+    errFormat: "Please check your input format",
+    errServer: "Server error. Please try again.",
+  },
+  ko: {
+    heading: "다시 오셨군요",
+    subheading: "PigOS 계정에 로그인하세요",
+    email: "이메일 주소", password: "비밀번호",
+    submit: "로그인", submitting: "로그인 중…",
+    forgotPassword: "비밀번호 찾기",
+    noAccount: "PigOS가 처음이신가요?", register: "무료로 시작하기",
+    errEmail: "올바른 이메일을 입력하세요", errPassword: "비밀번호를 입력하세요",
+    errInvalid: "이메일 또는 비밀번호가 올바르지 않습니다",
+    errFormat: "입력 형식을 확인해 주세요",
+    errServer: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+  },
+  zh: {
+    heading: "欢迎回来",
+    subheading: "登录您的 PigOS 账户",
+    email: "邮箱地址", password: "密码",
+    submit: "登录", submitting: "登录中…",
+    forgotPassword: "忘记密码？",
+    noAccount: "初次使用 PigOS？", register: "免费注册",
+    errEmail: "请输入有效的邮箱地址", errPassword: "请输入密码",
+    errInvalid: "邮箱或密码不正确",
+    errFormat: "请检查您的输入格式",
+    errServer: "服务器错误，请稍后重试。",
+  },
+  es: {
+    heading: "Bienvenido de nuevo",
+    subheading: "Inicia sesión en PigOS",
+    email: "Correo electrónico", password: "Contraseña",
+    submit: "Iniciar sesión", submitting: "Iniciando…",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    noAccount: "¿Nuevo en PigOS?", register: "Crea una cuenta gratis",
+    errEmail: "Ingresa un correo válido", errPassword: "Ingresa tu contraseña",
+    errInvalid: "Correo o contraseña incorrectos",
+    errFormat: "Verifica el formato de tus datos",
+    errServer: "Error de servidor. Inténtalo de nuevo.",
+  },
+  vi: {
+    heading: "Chào mừng trở lại",
+    subheading: "Đăng nhập vào tài khoản PigOS",
+    email: "Địa chỉ email", password: "Mật khẩu",
+    submit: "Đăng nhập", submitting: "Đang đăng nhập…",
+    forgotPassword: "Quên mật khẩu?",
+    noAccount: "Lần đầu dùng PigOS?", register: "Tạo tài khoản miễn phí",
+    errEmail: "Nhập địa chỉ email hợp lệ", errPassword: "Nhập mật khẩu của bạn",
+    errInvalid: "Email hoặc mật khẩu không đúng",
+    errFormat: "Vui lòng kiểm tra định dạng nhập liệu",
+    errServer: "Lỗi máy chủ. Vui lòng thử lại.",
+  },
+};
+
+// ── Schema ────────────────────────────────────────────────────────────────────
 const schema = z.object({
-  email: z.string().email("올바른 이메일을 입력하세요"),
-  password: z.string().min(1, "비밀번호를 입력하세요"),
+  email: z.string().email("invalid"),
+  password: z.string().min(1, "required"),
 });
 type FormValues = z.infer<typeof schema>;
 
+// ── Sub-components ────────────────────────────────────────────────────────────
+function LanguageSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+          text-slate-500 bg-white border border-slate-200 hover:border-slate-300
+          hover:text-slate-700 shadow-sm transition select-none"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        {LANG_LABELS[lang]}
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-1.5 w-40 rounded-xl border border-slate-200
+          bg-white shadow-lg py-1 z-50">
+          {LANGS.map((l) => (
+            <button key={l} type="button"
+              onClick={() => { onChange(l); setOpen(false); }}
+              className={`w-full text-left px-4 py-2 text-sm transition hover:bg-slate-50
+                ${l === lang ? "text-[#2563EB] font-semibold" : "text-slate-600"}`}>
+              {LANG_LABELS[l]}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BrandPanel() {
+  return (
+    <div className="hidden lg:flex lg:w-[40%] flex-col justify-between
+      bg-[#0D1B3E] px-12 py-12 relative overflow-hidden">
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)`,
+          backgroundSize: "40px 40px",
+        }} />
+      {/* Radial glow */}
+      <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] rounded-full
+        bg-blue-500/10 blur-[80px] pointer-events-none" />
+
+      {/* Logo */}
+      <div className="relative z-10">
+        <Image
+          src="/logos/pigos-logo-horizontal-dark.svg"
+          alt="PigOS"
+          width={220}
+          height={84}
+          className="object-contain object-left"
+          priority
+        />
+      </div>
+
+      {/* Main message */}
+      <div className="relative z-10 flex-1 flex flex-col justify-center py-12">
+        <p className="text-white/60 text-xs font-semibold tracking-widest uppercase mb-4">
+          Farm Operating System
+        </p>
+        <h2 className="text-white text-3xl font-bold leading-snug mb-6">
+          AI-powered operating system<br />
+          for global pig farm operations.
+        </h2>
+        <div className="space-y-3">
+          {[
+            { icon: "◈", text: "27 yrs of field expertise" },
+            { icon: "◎", text: "5 global markets supported" },
+            { icon: "◉", text: "AI-powered KPI alerts" },
+          ].map(({ icon, text }) => (
+            <div key={text} className="flex items-center gap-3">
+              <span className="text-[#FF5A66] text-base">{icon}</span>
+              <span className="text-white/70 text-sm">{text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="relative z-10">
+        <p className="text-white/30 text-xs">© 2026 WiseLake Inc.</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
+
+  const [lang, setLang] = useState<Lang>("ko");
   const [serverError, setServerError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  useEffect(() => {
+    const stored = localStorage.getItem("pigos_lang") as Lang | null;
+    if (stored && LANGS.includes(stored)) setLang(stored);
+  }, []);
+
+  const switchLang = (l: Lang) => {
+    setLang(l);
+    localStorage.setItem("pigos_lang", l);
+  };
+
+  const t = T[lang];
+
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+  });
 
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
     try {
       const data = await authApi.login(values);
-
-      // Save to Zustand store (persisted to localStorage)
       setAuth(
         {
           id: data.user_id,
@@ -45,87 +244,133 @@ export default function LoginPage() {
         data.refresh_token,
         data.farm_ids[0],
       );
-
-      // Set lightweight session cookie for middleware route protection
       document.cookie = `pigos_session=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-
-      const next = searchParams.get("next") ?? "/";
-      router.replace(next);
+      router.replace(searchParams.get("next") ?? "/");
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 401) {
-        setServerError("이메일 또는 비밀번호가 올바르지 않습니다.");
-      } else if (status === 422) {
-        setServerError("입력 형식을 확인해 주세요.");
-      } else {
-        setServerError("서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
-      }
+      if (status === 401) setServerError(t.errInvalid);
+      else if (status === 422) setServerError(t.errFormat);
+      else setServerError(t.errServer);
     }
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur">
-      <h1 className="text-xl font-bold text-white mb-6">로그인</h1>
+    <div className="min-h-screen flex w-full">
+      <BrandPanel />
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-        {/* Email */}
-        <div>
-          <label className="block text-sm text-slate-300 mb-1.5">이메일</label>
-          <input
-            type="email"
-            autoComplete="email"
-            placeholder="farmer@example.com"
-            {...register("email")}
-            className={`w-full px-4 py-2.5 rounded-lg bg-white/10 border text-white placeholder:text-slate-500
-              text-sm outline-none transition focus:border-[#2563EB]
-              ${errors.email ? "border-red-500" : "border-white/20"}`}
-          />
-          {errors.email && (
-            <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        {/* Password */}
-        <div>
-          <label className="block text-sm text-slate-300 mb-1.5">비밀번호</label>
-          <input
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            {...register("password")}
-            className={`w-full px-4 py-2.5 rounded-lg bg-white/10 border text-white placeholder:text-slate-500
-              text-sm outline-none transition focus:border-[#2563EB]
-              ${errors.password ? "border-red-500" : "border-white/20"}`}
-          />
-          {errors.password && (
-            <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>
-          )}
-        </div>
-
-        {/* Server error */}
-        {serverError && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
-            <p className="text-sm text-red-400">{serverError}</p>
+      {/* ── Right: Login form ── */}
+      <div className="flex-1 flex flex-col bg-white lg:bg-slate-50">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-8 pt-8">
+          {/* Mobile-only logo */}
+          <div className="lg:hidden">
+            <Image
+              src="/logos/pigos-logo-horizontal-light.svg"
+              alt="PigOS"
+              width={120}
+              height={46}
+              className="object-contain"
+              priority
+            />
           </div>
-        )}
+          <div className="lg:ml-auto">
+            <LanguageSelector lang={lang} onChange={switchLang} />
+          </div>
+        </div>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#2563EB] hover:bg-blue-500 disabled:opacity-50
-            text-white font-semibold py-2.5 rounded-lg text-sm transition mt-2"
-        >
-          {isSubmitting ? "로그인 중..." : "로그인"}
-        </button>
-      </form>
+        {/* Form area */}
+        <div className="flex-1 flex items-center justify-center px-6 py-12">
+          <div className="w-full max-w-[420px]">
+            {/* Heading */}
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-slate-900">{t.heading}</h1>
+              <p className="text-sm text-slate-500 mt-1">{t.subheading}</p>
+            </div>
 
-      <p className="text-center text-xs text-slate-500 mt-6">
-        계정이 없으신가요?{" "}
-        <a href="/onboarding" className="text-[#2563EB] hover:underline">
-          무료로 시작하기
-        </a>
-      </p>
+            <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  {t.email}
+                </label>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  placeholder="farmer@example.com"
+                  {...register("email")}
+                  className={`w-full h-11 px-3.5 rounded-lg text-sm text-slate-900
+                    placeholder:text-slate-400 outline-none border bg-white transition
+                    focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]
+                    ${errors.email ? "border-red-400" : "border-[#CBD5E1]"}`}
+                />
+                {errors.email && (
+                  <p className="text-xs text-red-500 mt-1">{t.errEmail}</p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-medium text-slate-700">{t.password}</label>
+                  <a href="#" className="text-xs text-[#2563EB] hover:underline">
+                    {t.forgotPassword}
+                  </a>
+                </div>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  {...register("password")}
+                  className={`w-full h-11 px-3.5 rounded-lg text-sm text-slate-900
+                    placeholder:text-slate-400 outline-none border bg-white transition
+                    focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]
+                    ${errors.password ? "border-red-400" : "border-[#CBD5E1]"}`}
+                />
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{t.errPassword}</p>
+                )}
+              </div>
+
+              {/* Server error */}
+              {serverError && (
+                <div className="flex items-start gap-2.5 bg-red-50 border border-red-200
+                  rounded-lg px-4 py-3">
+                  <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <p className="text-sm text-red-600">{serverError}</p>
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-11 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50
+                  text-white font-semibold rounded-lg text-sm transition shadow-sm
+                  shadow-blue-200/60"
+              >
+                {isSubmitting ? t.submitting : t.submit}
+              </button>
+            </form>
+
+            <p className="text-sm text-slate-500 text-center mt-6">
+              {t.noAccount}{" "}
+              <a href="/onboarding" className="text-[#2563EB] hover:underline font-medium">
+                {t.register}
+              </a>
+            </p>
+
+            <p className="text-xs text-slate-400 text-center mt-8">
+              © 2026 WiseLake Inc. · pigos.io
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
