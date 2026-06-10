@@ -142,7 +142,8 @@ async def test_sow(db: AsyncSession, test_farm: Farm) -> Sow:
         ear_tag=f"SOW-{uuid.uuid4().hex[:6].upper()}",
         parity=0,
         status="GILT",
-        entry_date=datetime.now(UTC),
+        # 과거 고정 날짜 — date_rules validator(이벤트일 ≥ 입식일)와 충돌 방지
+        entry_date=datetime(2024, 1, 1, tzinfo=UTC),
         entry_type="GILT",
     )
     db.add(sow)
