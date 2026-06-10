@@ -100,3 +100,9 @@
 - [x] **[P2-3]** `services/alert_service.py` — 6 과기한 유형 + 3 도태기준, farm_configs 임계값 (pure classify, 20 tests)
 - [x] **[P2-4]** `routers/base/alerts.py` + `schemas/alert.py` — GET /alerts/overdue, /alerts/cull-candidates, main.py 등록
 - 검증: unit 171/171 pass, FastAPI 앱 빌드 + 라우트 등록 확인. (P2-2 상태코드 v2는 기완료)
+
+## 2026-06-10 — Phase 3 Rule Engine 확장 (Reproduction Rules)
+- [x] **[P3-2]** Finding.grade 필드 + psy_grade 헬퍼(Excellence/Advanced/Stable/Developing), psy.below_target에 부착 (severity는 벤치마크 기반 유지)
+- [x] **[P3-1]** `engine/rules/reproduction.py` — wsi.overdue(10/14), rts.rate_high(15/25), pwmr.high(15/20, method A/B), 벤치마크 오버라이드 가능
+- [x] **[P3-3]** `tests/unit/test_reproduction_rules.py` — 경계값 17 cases
+- 검증: unit 188/188 pass, 규칙 8종 등록 확인.

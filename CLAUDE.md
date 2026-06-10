@@ -357,7 +357,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ### Phase 3 — Rule Engine 확장 (Reproduction Rules)
 
-- [ ] **[P3-1] engine/rules/reproduction.py 신규**
+- [x] **[P3-1] engine/rules/reproduction.py 신규**
   - `wsi.overdue`: WSI > 10일 → WARNING, > 14일 → CRITICAL
   - `rts.rate_high`: RTS율 > 15% → WARNING, > 25% → CRITICAL
   - `pwmr.high`:
@@ -367,12 +367,12 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
     - `Finding`에 `method: "A"` or `"B"` 명시
   - Rule Registry에 등록
 
-- [ ] **[P3-2] engine/rules/base.py PSY 등급 확장**
+- [x] **[P3-2] engine/rules/base.py PSY 등급 확장**
   - `psy.below_target` 규칙을 4등급으로 확장
   - Grade 1 (≥28): OK, Grade 2 (24-28): INFO, Grade 3 (20-24): WARNING, Grade 4 (<20): CRITICAL
   - `Finding`에 `grade: str` 필드 추가 (rule_engine.py의 `Finding` dataclass 수정)
 
-- [ ] **[P3-3] Rule Engine 테스트**
+- [x] **[P3-3] Rule Engine 테스트**
   - `tests/unit/test_rule_engine.py`
   - 각 규칙별 WARNING/CRITICAL 경계값 테스트
 
