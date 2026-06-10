@@ -19,6 +19,7 @@ from app.addons import AddonRegistry
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.routers.base import (
+    alerts,
     auth,
     boars,
     chat,
@@ -92,6 +93,7 @@ app.include_router(sync.router,        prefix=V1)
 app.include_router(finishers.router,   prefix=V1)
 app.include_router(piglets.router,     prefix=V1)
 app.include_router(boars.router,       prefix=V1)
+app.include_router(alerts.router,      prefix=V1)
 
 # ── Addon routers (auto-discovered from AddonRegistry) ───────────────────────
 for addon in AddonRegistry.all():
