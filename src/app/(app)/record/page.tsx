@@ -126,9 +126,9 @@ export default function RecordPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] pb-16 md:pb-0">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-3.5rem)] pb-16 md:pb-0">
       {/* ── LEFT: Sow list ───────────────────────────────────────── */}
-      <div className="w-72 shrink-0 flex flex-col border-r border-border bg-surface">
+      <div className="w-full md:w-72 shrink-0 flex flex-col max-h-[38vh] md:max-h-none border-b md:border-b-0 md:border-r border-border bg-surface">
         <div className="px-4 py-3 border-b border-border">
           <h1 className="text-sm font-extrabold tracking-tight mb-2">이벤트 기록</h1>
           <input
