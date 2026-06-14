@@ -160,3 +160,11 @@
 - [x] **[P12-6]** notifications 심각도 필터 탭 (전체/위험/주의/정보)
 - [x] **[P4-6]** /record 모바일 상하 스택 레이아웃 (반응형)
 - 검증: tsc clean (5개 커밋 연속)
+
+## 2026-06-10 — Phase 12/5/10 연속 배치
+- [x] **[P12-2]** 모돈 상세 이벤트 삭제+롤백 UI (eventsApi.remove, 확인 다이얼로그)
+- [x] **[P5-2]** 5개 언어 sowStatus i18n 키 (정합성 105키 유지)
+- [x] **[P10-2]** 검증 오류 E2E 통합 테스트 7케이스 (수집 OK, Docker DB 실행)
+- [x] **[P10-3]** 알람 서비스 통합 테스트 4케이스 (today= 결정적, 수집 OK)
+- 통합 테스트는 샌드박스에 Docker Postgres 없어 '수집/구문 검증'까지 — 사용자 머신 `uv run pytest tests/` 실행 필요
+- 검증: unit 219/219, tsc clean

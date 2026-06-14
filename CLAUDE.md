@@ -539,12 +539,12 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 이유두수 공식 검증 (nursing_head - deaths = weaned)
   - 최종 KPI(PSY) 계산값 검증
 
-- [ ] **[P10-2] 검증 오류 E2E 테스트**
+- [x] **[P10-2] 검증 오류 E2E 테스트**
   - `tests/integration/test_validation_errors.py`
   - 시나리오별 422 응답 코드 + 오류 메시지 검증
   - 커버리지: farrowing(7개), weaning(3개), mating(3개), state_transition(5개)
 
-- [ ] **[P10-3] 알람 서비스 통합 테스트**
+- [x] **[P10-3] 알람 서비스 통합 테스트**
   - `tests/integration/test_alert_service.py`
   - fixture: 과기한 모돈 6유형 시나리오 세팅
   - 도태 권고 3기준 각각 검증
