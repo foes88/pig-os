@@ -63,6 +63,8 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
     items: [
       { href: "/kpi",     icon: BarChart3,   label: { en: "KPI",     ko: "KPI",    zh: "指标",  es: "KPI",      vi: "KPI" } },
       { href: "/reports", icon: FileText,    label: { en: "Reports", ko: "보고서", zh: "报告",  es: "Informes", vi: "Báo cáo" } },
+      { href: "/reports/reproduction", icon: FileText, label: { en: "Repro Report", ko: "번식 성적", zh: "繁殖报告", es: "Repro.", vi: "BC sinh sản" } },
+      { href: "/reports/grow-finish",  icon: Beef,     label: { en: "Grow-Finish",  ko: "비육 성적", zh: "育肥报告", es: "Engorde", vi: "BC vỗ béo" } },
     ],
   },
   {

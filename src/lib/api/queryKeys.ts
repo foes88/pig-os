@@ -13,6 +13,15 @@ export const queryKeys = {
     reproConfig: (farmId: string) => ["farms", farmId, "repro-config"] as const,
   },
 
+  reports: {
+    reproduction: (farmId: string, start: string, end: string, period: string) =>
+      ["reports", "reproduction", farmId, start, end, period] as const,
+    growFinish: (farmId: string, start: string, end: string) =>
+      ["reports", "grow-finish", farmId, start, end] as const,
+    sowHistory: (farmId: string, sowId: string) =>
+      ["reports", "sow-history", farmId, sowId] as const,
+  },
+
   sows: {
     all: (farmId: string) => ["sows", farmId] as const,
     list: (farmId: string, params?: Record<string, unknown>) =>

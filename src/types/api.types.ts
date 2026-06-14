@@ -675,3 +675,48 @@ export interface UpdateFinisherGroupRequest {
   avg_entry_weight_kg?: number | null;
   notes?: string | null;
 }
+
+// ── Reports (Phase 7 backend) ─────────────────────────────────────────────────
+
+export interface ReproductionRow {
+  period: string;
+  total_matings: number;
+  total_farrowings: number;
+  total_weanings: number;
+  fr: number | null;
+  avg_tb: number | null;
+  avg_ba: number | null;
+  avg_weaned: number | null;
+  avg_lactation_days: number | null;
+  pwmr_a: number | null;
+  pwmr_b: number | null;
+  rts_rate: number | null;
+}
+
+export interface GrowFinishRow {
+  group_code: string;
+  start_date: string;
+  end_date: string | null;
+  head_in: number;
+  head_out: number | null;
+  avg_entry_weight_kg: number | null;
+  avg_exit_weight_kg: number | null;
+  adg_g: number | null;
+  fcr: number | null;
+  mortality_rate: number | null;
+}
+
+export interface SowHistoryCycle {
+  parity: number;
+  mating_date: string | null;
+  boar_ids: string[];
+  farrowing_date: string | null;
+  tb: number | null;
+  ba: number | null;
+  sb: number | null;
+  mum: number | null;
+  weaned: number | null;
+  weaning_date: string | null;
+  lactation_days: number | null;
+  status: string;
+}
