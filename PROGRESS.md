@@ -137,3 +137,9 @@
 - [x] **[P11-5]** `docs/DEVELOPMENT.md` 로컬 온보딩 가이드
 - [P11-3] Dockerfile/compose/`/health` 기존 존재 확인
 - [x] **[P5-4]** i18n 키 정합성 감사 — 5개 언어 × 98키 완전 일치(누락/초과 0) 스크립트 검증
+
+## 2026-06-10 — Phase 12 CRUD (백엔드)
+- [x] **[P12-1 백엔드]** events PATCH/DELETE (matings/farrowings/weanings) + 상태 롤백(rollback_status_on_delete, 5 tests) + period_locks 423 + 다운스트림 가드
+- [x] **[P12-3 백엔드]** finishers PATCH (FinisherGroupUpdate)
+- 잔여(프론트): P12-1/2 이벤트 수정·삭제 UI, P12-3 그룹 수정 모달, P12-4 페이지네이션, P12-5 CSV, P12-6 알림 개선
+- 검증: backend unit 219/219 (event_rollback 5 신규), 라우트 등록 확인
