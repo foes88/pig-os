@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.platform import Farm
 from app.engine import RuleEngine, RuleContext
-from app.engine.renderer import render_text
+from app.engine.llm_renderer import render as llm_render
 from app.engine.rules import base as _base_rules  # noqa: F401  ensure registration
 from app.schemas.chat import ChatQuery, ChatResponse, FindingOut
 from app.services.kpi_service import build_rule_context
@@ -45,6 +45,8 @@ async def handle_query(
     db: AsyncSession,
     farm: Farm,
     query: ChatQuery,  # farm_id resolved by router via get_farm_context
+    use_llm: bool = False,  # Addon #1 (AI Insight) — enabled per farm subscription
+    usage_count: int = 0,   # farm's LLM calls this month (for quota fallback)
 ) -> ChatResponse:
     intent = classify_intent(query.question)
 
@@ -53,7 +55,9 @@ async def handle_query(
     # Base tier only; pass active addon codes here when Addon subscriptions are checked
     result = await RuleEngine.evaluate(ctx, intent=intent, tiers=["base"])
 
-    answer = render_text(result, locale=query.locale)
+    answer, used_renderer = await llm_render(
+        result, locale=query.locale, use_llm=use_llm, usage_count=usage_count
+    )
 
     findings_out = [
         FindingOut(
@@ -75,5 +79,5 @@ async def handle_query(
         findings=findings_out,
         farm_id=farm.id,
         as_of=str(result.as_of),
-        renderer="template",
+        renderer=used_renderer,
     )
