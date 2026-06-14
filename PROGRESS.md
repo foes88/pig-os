@@ -154,3 +154,9 @@
 ## 2026-06-10 — Phase 9-3 / Phase 12-3 프론트
 - [x] **[P9-3]** `/finishers` 그룹 수정 모달 추가 (EditGroupModal, finishersApi.update 연동) — 목록/입식/출하/수정 완비
 - 검증: tsc clean
+
+## 2026-06-10 — Phase 12/4 프론트 마무리 배치
+- [x] **[P12-4]** finishers 페이지네이션 (boars+finishers 완료)
+- [x] **[P12-6]** notifications 심각도 필터 탭 (전체/위험/주의/정보)
+- [x] **[P4-6]** /record 모바일 상하 스택 레이아웃 (반응형)
+- 검증: tsc clean (5개 커밋 연속)
