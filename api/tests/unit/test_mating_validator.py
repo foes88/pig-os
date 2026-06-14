@@ -1,8 +1,8 @@
 """Unit tests for mating validator (eligible status + sequential boar slots)."""
 import pytest
 
-from app.validators.mating import validate_mating
 from app.validators.base import ValidationError
+from app.validators.mating import validate_mating
 
 
 class TestMatingValidatorValid:

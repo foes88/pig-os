@@ -3,8 +3,8 @@ KPI trend 계산 로직 단위 테스트.
 DB 없이 순수 공식으로 검증.
 """
 import pytest
-from app.schemas.kpi import KpiTrend
 
+from app.schemas.kpi import KpiTrend
 
 # ── trend 계산 공식 ────────────────────────────────────────────────────────────
 

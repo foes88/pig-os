@@ -17,10 +17,11 @@ Renderer consumes StructuredResult:
 """
 from __future__ import annotations
 
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any, Callable, Coroutine
+from typing import Any
 from uuid import UUID
 
 

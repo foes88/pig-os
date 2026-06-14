@@ -14,7 +14,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.platform import Farm
-from app.engine import RuleEngine, RuleContext
+from app.engine import RuleContext, RuleEngine
 from app.engine.llm_renderer import render as llm_render
 from app.engine.rules import base as _base_rules  # noqa: F401  ensure registration
 from app.schemas.chat import ChatQuery, ChatResponse, FindingOut

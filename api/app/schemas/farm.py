@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 from app.schemas.common import UUIDMixin
 
-
 CURRENCY_SYMBOLS: dict[str, str] = {
     "KRW": "₩", "USD": "$", "CNY": "¥", "BRL": "R$", "VND": "₫",
     "EUR": "€", "GBP": "£", "THB": "฿", "PHP": "₱", "IDR": "Rp",

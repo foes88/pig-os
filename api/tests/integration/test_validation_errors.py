@@ -2,21 +2,21 @@
 Validation errors E2E (Phase 1/2 validators) — service-level, mirrors test_event_service.py.
 Runs against the pigos_test DB (Docker). Each test is transaction-isolated.
 """
-import pytest
 from datetime import date
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ValidationError
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
-from app.services import event_service
 from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
     PigletEventCreate,
     WeaningCreate,
 )
+from app.services import event_service
 
 
 async def _mate(db, farm, sow, user, d=date(2026, 1, 1)):

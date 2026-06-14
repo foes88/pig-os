@@ -15,14 +15,14 @@ import logging
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import AsyncSessionLocal
 from app.db.models.events import Farrowing, Mating, Weaning
 from app.db.models.ops import KpiSnapshot
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
+from app.db.session import AsyncSessionLocal
 
 log = logging.getLogger(__name__)
 

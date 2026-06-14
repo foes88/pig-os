@@ -12,16 +12,14 @@ PigPlan 로직 기반 핵심 규칙:
 - 산차: 분만 완료 시 sow.parity += 1
 """
 from datetime import UTC, date, datetime
-
-from fastapi import HTTPException
 from uuid import UUID
 
+from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.config import ComplianceProfile, RegionDefault
-from app.db.models.master import MedicationCatalog
 from app.db.models.events import (
     Farrowing,
     Mating,
@@ -29,6 +27,7 @@ from app.db.models.events import (
     ReproductiveEvent,
     Weaning,
 )
+from app.db.models.master import MedicationCatalog
 from app.db.models.platform import AuditLog
 from app.db.models.sow import BreedingCycle, Sow
 from app.schemas.events import (

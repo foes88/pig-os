@@ -1,8 +1,8 @@
 """Unit tests for cross-fostering validator (per-transfer cap)."""
 import pytest
 
-from app.validators.cross_fostering import validate_cross_fostering
 from app.validators.base import ValidationError
+from app.validators.cross_fostering import validate_cross_fostering
 
 
 class TestCrossFosteringValidator:

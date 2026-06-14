@@ -15,6 +15,7 @@ Adding a new Addon:
   Nothing else changes in the base code.
 """
 from dataclasses import dataclass, field
+
 from fastapi import APIRouter
 
 

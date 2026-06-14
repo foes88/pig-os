@@ -17,7 +17,9 @@ from app.db.models.platform import Farm
 from app.db.models.sow import Sow
 from app.engine import RuleContext, RuleEngine, StructuredResult
 from app.engine.rules import (
-    base as _base_rules,       # ensure rules are registered  # noqa: F401
+    base as _base_rules,  # ensure rules are registered  # noqa: F401
+)
+from app.engine.rules import (
     disease as _disease_rules,  # noqa: F401
 )
 from app.schemas.kpi import Alert, DashboardKpi, KpiTrend, NpdBreakdown, PsyDetail

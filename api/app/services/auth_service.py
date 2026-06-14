@@ -16,8 +16,14 @@ from app.core.security import (
 )
 from app.db.models.config import FarmConfig
 from app.db.models.platform import Farm, Organization, RefreshToken, User, UserFarm
+from app.schemas.auth import (
+    LoginResponse,
+    OnboardingCompleteRequest,
+    OnboardingCompleteResponse,
+    RegisterRequest,
+    TokenResponse,
+)
 from app.services.farm_service import _generate_farm_code
-from app.schemas.auth import LoginResponse, OnboardingCompleteRequest, OnboardingCompleteResponse, RegisterRequest, TokenResponse
 
 
 def _hash_token(token: str) -> str:

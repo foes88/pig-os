@@ -6,7 +6,6 @@ Runs on pigos_test (Docker).
 import uuid
 from datetime import UTC, date, datetime, timedelta
 
-import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.events import Farrowing, Mating, Weaning

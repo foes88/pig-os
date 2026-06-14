@@ -3,25 +3,23 @@
 피그플랜 실데이터 패턴 기반 시나리오.
 실제 test DB에 쓰고 rollback으로 격리.
 """
-import pytest
-import pytest_asyncio
-from datetime import date, datetime, UTC
+from datetime import date
 from uuid import uuid4
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.events import PigletEvent
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
-from app.services import event_service
 from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
-    WeaningCreate,
     ReproductiveEventCreate,
+    WeaningCreate,
 )
-
+from app.services import event_service
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -345,7 +343,7 @@ class TestFullBreedingCycle:
                 born_alive=11, stillborn=2, mummified=1,
             )
         )
-        w2 = await event_service.record_weaning(
+        await event_service.record_weaning(
             db, test_farm.id, test_user.id,
             WeaningCreate(
                 sow_id=test_sow.id, farrowing_id=f2.id,
@@ -379,7 +377,7 @@ class TestFullBreedingCycle:
             MatingCreate(sow_id=test_sow.id, mating_date=date(2025, 10, 29), mating_type="AI")
         )
         assert m3b.mating_number == 1  # 새 사이클
-        f3 = await event_service.record_farrowing(
+        await event_service.record_farrowing(
             db, test_farm.id, test_user.id,
             FarrowingCreate(
                 sow_id=test_sow.id, mating_id=m3b.id,

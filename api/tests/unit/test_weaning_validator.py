@@ -1,8 +1,8 @@
 """Unit tests for weaning validator (head-count identity)."""
 import pytest
 
-from app.validators.weaning import validate_weaning
 from app.validators.base import ValidationError
+from app.validators.weaning import validate_weaning
 
 
 class TestWeaningValidatorValid:

@@ -53,6 +53,7 @@ class TestFullBreedingCycle:
 
     async def test_weaned_not_exceeding_born_alive(self, db: AsyncSession, test_farm: Farm, test_sow: Sow, test_user):
         import pytest
+
         from app.core.exceptions import ValidationError
         m = await event_service.record_mating(
             db, test_farm.id, test_user.id,

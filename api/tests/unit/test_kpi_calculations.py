@@ -3,10 +3,11 @@ KPI 계산 로직 단위 테스트.
 DB 없이 순수 파이썬 함수로 검증.
 PigPlan 벤치마크 기준: PSY 30.4, 분만율 92.3%, 평균 이유수 12.4
 """
-import pytest
 from datetime import date
-from app.jobs.kpi import _period_bounds
 
+import pytest
+
+from app.jobs.kpi import _period_bounds
 
 # ── _period_bounds ─────────────────────────────────────────────────────────────
 

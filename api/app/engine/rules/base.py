@@ -12,7 +12,6 @@ Registered rules:
 """
 from app.engine.rule_engine import Finding, Rule, RuleContext, RuleRegistry, Severity
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def _severity_from_bench(value: float, bench: dict, direction: str) -> Severity | None:

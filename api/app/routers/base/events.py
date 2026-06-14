@@ -14,20 +14,20 @@ from app.core.dependencies import CurrentUser, DbDep, FarmDep
 from app.db.models.events import Farrowing, Mating, PigletEvent, Weaning
 from app.db.models.master import EventDefinition
 from app.schemas.events import (
-    FarrowingUpdate,
-    MatingUpdate,
-    WeaningUpdate,
     EventDefinitionResponse,
     FarrowingCreate,
     FarrowingResponse,
+    FarrowingUpdate,
     MatingCreate,
     MatingResponse,
+    MatingUpdate,
     PigletEventCreate,
     PigletEventResponse,
     ReproductiveEventCreate,
     ReproductiveEventResponse,
     WeaningCreate,
     WeaningResponse,
+    WeaningUpdate,
 )
 from app.services import event_service
 

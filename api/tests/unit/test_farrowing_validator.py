@@ -1,8 +1,8 @@
 """Unit tests for farrowing validator — 5 valid + 7 invalid cases."""
 import pytest
 
-from app.validators.farrowing import validate_farrowing
 from app.validators.base import ValidationError
+from app.validators.farrowing import validate_farrowing
 
 
 class TestFarrowingValidatorValid:

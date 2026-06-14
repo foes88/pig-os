@@ -23,8 +23,8 @@ from app.db.models.events import (
     ReproductiveEvent,
     Weaning,
 )
-from app.db.models.ops import FinisherGroup
 from app.db.models.health import FeedRecord
+from app.db.models.ops import FinisherGroup
 from app.db.models.sow import BreedingCycle
 
 RTS_EVENT_TYPES = ("RETURN_TO_ESTRUS", "ABORTION", "EMPTY", "INFERTILE")

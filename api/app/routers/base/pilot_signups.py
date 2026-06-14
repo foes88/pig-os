@@ -3,9 +3,10 @@ Public endpoint — no auth required.
 Receives pilot signup from pigos.io landing page.
 """
 import re
-from sqlalchemy.exc import IntegrityError
+
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, field_validator
+from sqlalchemy.exc import IntegrityError
 
 from app.core.dependencies import DbDep
 from app.db.models.pilot_signup import PilotSignup

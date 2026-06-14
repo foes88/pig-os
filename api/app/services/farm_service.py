@@ -3,8 +3,8 @@ from uuid import UUID
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.config import ComplianceProfile, FarmConfig, RegionDefault
 from app.core.permissions import get_accessible_farm_ids
+from app.db.models.config import ComplianceProfile, FarmConfig, RegionDefault
 from app.db.models.platform import Farm, User, UserFarm
 from app.db.models.sow import Building, Sow
 from app.schemas.farm import (

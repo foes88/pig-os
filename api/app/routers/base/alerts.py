@@ -3,10 +3,11 @@ Alerts / Tasks router — overdue sows + cull recommendations.
 
 Reference: docs/SCREEN_MENU_SPEC.md → "Alerts / Tasks".
 """
+from fastapi import APIRouter
+
 from app.core.dependencies import DbDep, FarmDep
 from app.schemas.alert import CullCandidate, OverdueSow, OverdueSummary
 from app.services import alert_service
-from fastapi import APIRouter
 
 router = APIRouter(prefix="/farms/{farm_id}/alerts", tags=["Alerts"])
 

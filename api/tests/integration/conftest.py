@@ -5,24 +5,25 @@ Integration test fixtures.
 """
 import os
 import uuid
-from datetime import datetime, UTC
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 from urllib.parse import urlparse, urlunparse
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
+from app.core.dependencies import get_db
 from app.db.base import Base
 from app.db.models import *  # noqa: F401,F403 — registers all models
 from app.db.models.platform import Farm, Organization, User
 from app.db.models.sow import Sow
 from app.main import app
-from app.core.dependencies import get_db
+
 
 # ── Test DB URL ───────────────────────────────────────────────────────────────
 def _make_test_url(url: str) -> str:

@@ -28,8 +28,15 @@ dev-dependencies = [
     "mypy>=1.11",
 ]
 
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+# Style/modernization rules that conflict with the existing hand-formatted style.
+# Real-bug rules (F-codes) stay enabled.
+ignore = ["E501", "E701", "E702", "UP042", "UP046", "E741"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

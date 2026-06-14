@@ -5,16 +5,13 @@ DB 없이 RuleContext를 직접 생성해 규칙 함수를 호출.
 import asyncio
 from uuid import uuid4
 
-import pytest
-
 from app.engine.rule_engine import RuleContext, Severity
 from app.engine.rules.base import (
+    _farrowing_rate_low,
     _npd_overdue,
     _psy_analysis,
-    _farrowing_rate_low,
     _severity_from_bench,
 )
-
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 

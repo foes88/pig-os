@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.common import UUIDMixin
 
-
 # ── Event Definitions ────────────────────────────────────────────────────────
 
 class EventDefinitionResponse(BaseModel):

@@ -6,10 +6,21 @@ from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    Boolean, Date, DateTime, ForeignKey, Index, Integer, Numeric,
-    SmallInteger, String, Text, UniqueConstraint, func,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
