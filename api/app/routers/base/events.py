@@ -7,13 +7,16 @@ All events are validated in event_service, which also handles:
 """
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep
 from app.db.models.events import Farrowing, Mating, PigletEvent, Weaning
 from app.db.models.master import EventDefinition
 from app.schemas.events import (
+    FarrowingUpdate,
+    MatingUpdate,
+    WeaningUpdate,
     EventDefinitionResponse,
     FarrowingCreate,
     FarrowingResponse,
@@ -194,3 +197,42 @@ async def record_piglet_event(
     """
     event = await event_service.record_piglet_event(db, farm.id, current_user.id, body)
     return PigletEventResponse.model_validate(event)
+
+
+
+# ── Edit / delete (Phase 12) — status rollback + period-lock guard ────────────
+
+@router.patch("/matings/{mating_id}", response_model=MatingResponse)
+async def update_mating(mating_id: UUID, body: MatingUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    ev = await event_service.update_mating(db, farm.id, current_user.id, mating_id, body)
+    return MatingResponse.model_validate(ev)
+
+
+@router.delete("/matings/{mating_id}", status_code=204)
+async def delete_mating(mating_id: UUID, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    await event_service.delete_mating(db, farm.id, current_user.id, mating_id)
+    return Response(status_code=204)
+
+
+@router.patch("/farrowings/{farrowing_id}", response_model=FarrowingResponse)
+async def update_farrowing(farrowing_id: UUID, body: FarrowingUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    ev = await event_service.update_farrowing(db, farm.id, current_user.id, farrowing_id, body)
+    return FarrowingResponse.model_validate(ev)
+
+
+@router.delete("/farrowings/{farrowing_id}", status_code=204)
+async def delete_farrowing(farrowing_id: UUID, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    await event_service.delete_farrowing(db, farm.id, current_user.id, farrowing_id)
+    return Response(status_code=204)
+
+
+@router.patch("/weanings/{weaning_id}", response_model=WeaningResponse)
+async def update_weaning(weaning_id: UUID, body: WeaningUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    ev = await event_service.update_weaning(db, farm.id, current_user.id, weaning_id, body)
+    return WeaningResponse.model_validate(ev)
+
+
+@router.delete("/weanings/{weaning_id}", status_code=204)
+async def delete_weaning(weaning_id: UUID, farm: FarmDep, db: DbDep, current_user: CurrentUser):
+    await event_service.delete_weaning(db, farm.id, current_user.id, weaning_id)
+    return Response(status_code=204)

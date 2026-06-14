@@ -11,7 +11,9 @@ PigPlan 로직 기반 핵심 규칙:
 - 이유두수: born_alive + foster_in - foster_out - deaths 이하
 - 산차: 분만 완료 시 sow.parity += 1
 """
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+
+from fastapi import HTTPException
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -540,3 +542,146 @@ async def record_piglet_event(
     await db.commit()
     await db.refresh(event)
     return event
+
+
+# ── Event edit / delete (Phase 12) ────────────────────────────────────────────
+
+# Sow status to restore when an event is deleted (undo its forward transition).
+ROLLBACK_STATUS_ON_DELETE: dict[str, str] = {
+    "mating": "OPEN",         # PREGNANT → OPEN
+    "farrowing": "PREGNANT",  # LACTATING → PREGNANT
+    "weaning": "LACTATING",   # OPEN → LACTATING
+}
+
+
+def rollback_status_on_delete(event_type: str) -> str:
+    """Pure: the sow status to restore after deleting ``event_type``."""
+    try:
+        return ROLLBACK_STATUS_ON_DELETE[event_type]
+    except KeyError as e:
+        raise ValidationError(f"Cannot roll back unknown event type '{event_type}'") from e
+
+
+async def _ensure_period_unlocked(db: AsyncSession, farm_id: UUID, d: date) -> None:
+    """Raise 423 if the month containing ``d`` is closed in period_locks."""
+    from app.db.models.ops import PeriodLock
+    lock = await db.scalar(
+        select(PeriodLock).where(
+            PeriodLock.farm_id == farm_id,
+            PeriodLock.period_year == d.year,
+            PeriodLock.period_month == d.month,
+            PeriodLock.unlocked_at.is_(None),
+        )
+    )
+    if lock:
+        raise HTTPException(
+            status_code=423,
+            detail=f"Period {d.year}-{d.month:02d} is locked; unlock it before editing.",
+        )
+
+
+async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
+    m = await db.scalar(select(Mating).where(
+        Mating.id == mating_id, Mating.farm_id == farm_id, Mating.deleted_at.is_(None)))
+    if not m:
+        raise NotFoundError(f"Mating {mating_id} not found")
+    await _ensure_period_unlocked(db, farm_id, m.mating_date)
+    data = body.model_dump(exclude_unset=True)
+    if "mating_date" in data and data["mating_date"]:
+        await _ensure_period_unlocked(db, farm_id, data["mating_date"])
+    for k, v in data.items():
+        setattr(m, k, v)
+    await _audit(db, user_id, farm_id, "UPDATE", "matings", m.id, data)
+    await db.commit(); await db.refresh(m)
+    return m
+
+
+async def delete_mating(db, farm_id, user_id, mating_id) -> None:
+    m = await db.scalar(select(Mating).where(
+        Mating.id == mating_id, Mating.farm_id == farm_id, Mating.deleted_at.is_(None)))
+    if not m:
+        raise NotFoundError(f"Mating {mating_id} not found")
+    await _ensure_period_unlocked(db, farm_id, m.mating_date)
+    if await db.scalar(select(Farrowing).where(
+            Farrowing.mating_id == m.id, Farrowing.deleted_at.is_(None))):
+        raise ConflictError("Cannot delete a mating that already has a farrowing")
+    m.deleted_at = datetime.now(UTC)
+    sow = await _get_active_sow(db, farm_id, m.sow_id)
+    sow.status = rollback_status_on_delete("mating")
+    if m.breeding_cycle_id:
+        cycle = await db.get(BreedingCycle, m.breeding_cycle_id)
+        if cycle:
+            cycle.cycle_status = "FAILED"
+            cycle.ended_at = datetime.now(UTC)
+    await _audit(db, user_id, farm_id, "DELETE", "matings", m.id, {"id": str(m.id)})
+    await db.commit()
+
+
+async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowing:
+    f = await db.scalar(select(Farrowing).where(
+        Farrowing.id == farrowing_id, Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None)))
+    if not f:
+        raise NotFoundError(f"Farrowing {farrowing_id} not found")
+    await _ensure_period_unlocked(db, farm_id, f.farrowing_date)
+    data = body.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        setattr(f, k, v)
+    f.total_born = f.born_alive + f.stillborn + f.mummified
+    validate_farrowing(total_born=f.total_born, born_alive=f.born_alive,
+                       stillborn=f.stillborn, mummified=f.mummified)
+    await _audit(db, user_id, farm_id, "UPDATE", "farrowings", f.id, data)
+    await db.commit(); await db.refresh(f)
+    return f
+
+
+async def delete_farrowing(db, farm_id, user_id, farrowing_id) -> None:
+    f = await db.scalar(select(Farrowing).where(
+        Farrowing.id == farrowing_id, Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None)))
+    if not f:
+        raise NotFoundError(f"Farrowing {farrowing_id} not found")
+    await _ensure_period_unlocked(db, farm_id, f.farrowing_date)
+    if await db.scalar(select(Weaning).where(
+            Weaning.farrowing_id == f.id, Weaning.deleted_at.is_(None))):
+        raise ConflictError("Cannot delete a farrowing that already has a weaning")
+    f.deleted_at = datetime.now(UTC)
+    sow = await _get_active_sow(db, farm_id, f.sow_id)
+    sow.status = rollback_status_on_delete("farrowing")
+    sow.parity = max(0, sow.parity - 1)  # undo the increment from record_farrowing
+    if f.breeding_cycle_id:
+        cycle = await db.get(BreedingCycle, f.breeding_cycle_id)
+        if cycle:
+            cycle.cycle_status = "MATED"
+    await _audit(db, user_id, farm_id, "DELETE", "farrowings", f.id, {"id": str(f.id)})
+    await db.commit()
+
+
+async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
+    w = await db.scalar(select(Weaning).where(
+        Weaning.id == weaning_id, Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None)))
+    if not w:
+        raise NotFoundError(f"Weaning {weaning_id} not found")
+    await _ensure_period_unlocked(db, farm_id, w.weaning_date)
+    data = body.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        setattr(w, k, v)
+    await _audit(db, user_id, farm_id, "UPDATE", "weanings", w.id, data)
+    await db.commit(); await db.refresh(w)
+    return w
+
+
+async def delete_weaning(db, farm_id, user_id, weaning_id) -> None:
+    w = await db.scalar(select(Weaning).where(
+        Weaning.id == weaning_id, Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None)))
+    if not w:
+        raise NotFoundError(f"Weaning {weaning_id} not found")
+    await _ensure_period_unlocked(db, farm_id, w.weaning_date)
+    w.deleted_at = datetime.now(UTC)
+    sow = await _get_active_sow(db, farm_id, w.sow_id)
+    sow.status = rollback_status_on_delete("weaning")
+    if w.breeding_cycle_id:
+        cycle = await db.get(BreedingCycle, w.breeding_cycle_id)
+        if cycle:
+            cycle.cycle_status = "FARROWED"
+            cycle.ended_at = None
+    await _audit(db, user_id, farm_id, "DELETE", "weanings", w.id, {"id": str(w.id)})
+    await db.commit()

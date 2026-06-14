@@ -149,3 +149,26 @@ class PigletEventResponse(UUIDMixin):
     piglet_count: int
     reason: str | None
     created_at: datetime
+
+
+# ── Update bodies (Phase 12 — edit/delete) ────────────────────────────────────
+
+class MatingUpdate(BaseModel):
+    mating_date: date | None = None
+    boar_id: UUID | None = None
+    notes: str | None = None
+
+
+class FarrowingUpdate(BaseModel):
+    farrowing_date: date | None = None
+    born_alive: int | None = Field(None, ge=0)
+    stillborn: int | None = Field(None, ge=0)
+    mummified: int | None = Field(None, ge=0)
+    notes: str | None = None
+
+
+class WeaningUpdate(BaseModel):
+    weaning_date: date | None = None
+    weaned_count: int | None = Field(None, ge=0, le=30)
+    avg_weaning_weight_kg: float | None = Field(None, gt=0)
+    notes: str | None = None
