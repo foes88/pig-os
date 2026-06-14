@@ -31,6 +31,7 @@ from app.routers.base import (
     orgs,
     piglets,
     pilot_signups,
+    reports,
     sows,
     sync,
 )
@@ -94,6 +95,7 @@ app.include_router(finishers.router,   prefix=V1)
 app.include_router(piglets.router,     prefix=V1)
 app.include_router(boars.router,       prefix=V1)
 app.include_router(alerts.router,      prefix=V1)
+app.include_router(reports.router,     prefix=V1)
 
 # ── Addon routers (auto-discovered from AddonRegistry) ───────────────────────
 for addon in AddonRegistry.all():
