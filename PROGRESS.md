@@ -129,3 +129,11 @@
 - [x] **[P8-2]** `/settings/benchmarks` — 국가별 KPI 참고표 + 현재 농장 설정값
 - [x] **[P8-3]** settings 허브에 번식설정/벤치마크 링크 추가
 - 검증: backend unit 214/214, frontend tsc clean
+
+## 2026-06-10 — Phase 11 배포 준비 + Phase 5 i18n 감사
+- [x] **[P11-1]** `src/.env.example` + `api/.env.example`에 LLM/Sentry 옵션 키
+- [x] **[P11-2]** `src/vercel.json` (nextjs, icn1)
+- [x] **[P11-4]** `.github/workflows/ci.yml` (ruff+pytest+tsc+build, PR→development, 수동 배포)
+- [x] **[P11-5]** `docs/DEVELOPMENT.md` 로컬 온보딩 가이드
+- [P11-3] Dockerfile/compose/`/health` 기존 존재 확인
+- [x] **[P5-4]** i18n 키 정합성 감사 — 5개 언어 × 98키 완전 일치(누락/초과 0) 스크립트 검증

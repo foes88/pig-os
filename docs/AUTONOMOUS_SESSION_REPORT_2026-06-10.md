@@ -184,3 +184,27 @@ b92bc58 feat(phase2): [P2-4] alerts router + schema + register
 - 다음 권장: **Phase 8 (Settings 프론트)** — 단, `PATCH /farms/{id}/config`(번식 파라미터 저장) 백엔드
   엔드포인트 신규가 선행 필요. 그 외 Phase 5(i18n)·9·11·12·13은 독립적으로 착수 가능,
   Phase 6·10(통합 테스트)은 Docker Postgres 필요.
+
+---
+
+## 8. 추가 진행 (3차 — Settings/Deploy/i18n)
+
+| Phase | 항목 | 검증 |
+|-------|------|------|
+| 8 | P8-1 repro config GET/PATCH `/farms/{id}/config/repro` (백) + `/settings/farm` 폼(프론트) | backend unit +8, tsc clean |
+| 8 | P8-2 `/settings/benchmarks` 참고표 + 현재값 / P8-3 settings 허브 링크 | tsc clean |
+| 11 | P11-1 env 템플릿, P11-2 vercel.json, P11-4 CI workflow, P11-5 DEVELOPMENT.md (P11-3 기존) | JSON/YAML 파싱 OK |
+| 5 | P5-4 i18n 키 정합성 — **5개 언어 × 98키 완전 일치** | 스크립트 검증 |
+
+### 3차 누적
+- 백엔드 유닛 **214/214**, 프론트 tsc clean
+- 완료 Phase: 1·2·3·7 전체, 4(부분), 8 전체, 11(P11-3 포함 사실상 전체), 14(부분), 5(P5-4)
+
+### 남은 항목 & 환경 메모
+- **Phase 13 (Vitest)**: 이 샌드박스는 `npm install`(vitest 등)이 마운트 속도로 타임아웃 →
+  미설치. 깨끗한 tsc 베이스라인 보호를 위해 config 미추가. **사용자 머신에서**:
+  `cd src && npm i -D vitest @testing-library/react @testing-library/user-event @vitejs/plugin-react jsdom @testing-library/jest-dom`
+  후 `vitest.config.ts`(jsdom) + `src/tests/setup.ts` 추가 → 스모크 테스트 작성.
+- **Phase 6 / 10 (통합 테스트)**: Docker Postgres 필요 → 샌드박스 실행 불가. 코드 작성은 가능.
+- **Phase 5 P5-1/2/3**: 신규 페이지(alerts/settings) 하드코딩 한국어를 messages 키로 전환 필요.
+- **Phase 4 P4-3/P4-6, Phase 9, Phase 12**: 독립 착수 가능(프론트 tsc / 백 유닛으로 검증 가능).

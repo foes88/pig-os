@@ -426,7 +426,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - "LACTATING" → en: "Lactating", ko: "포유", zh: "哺乳", es: "Lactante", vi: "Nuôi con"
   - "ACCIDENT" → en: "RTS/Accident", ko: "사고", zh: "事故", es: "Accidente", vi: "Sự cố"
 - [ ] **[P5-3] 에러 메시지 i18n** — validator 422 메시지들 다국어화
-- [ ] **[P5-4] 누락 키 전수 점검** — en 기준 다른 언어에 없는 키 발견 시 번역 추가
+- [x] **[P5-4] 누락 키 전수 점검** — en 기준 다른 언어에 없는 키 발견 시 번역 추가
 
 ---
 
@@ -558,12 +558,12 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ### Phase 11 — 배포 준비 (Deployment)
 
-- [ ] **[P11-1] 환경 변수 템플릿 정비**
+- [x] **[P11-1] 환경 변수 템플릿 정비**
   - `.env.example` (백엔드): DATABASE_URL, REDIS_URL, JWT_SECRET, OPENAI_API_KEY(옵션), SENTRY_DSN(옵션)
   - `src/.env.example` (프론트): NEXT_PUBLIC_API_URL, NEXT_PUBLIC_SUPABASE_URL(옵션)
   - 실제 비밀값 절대 포함 금지
 
-- [ ] **[P11-2] Vercel 배포 설정**
+- [x] **[P11-2] Vercel 배포 설정**
   - `vercel.json`: Next.js 15 빌드 설정, env 매핑
   - `src/next.config.ts`: API 프록시 설정 (`/api/v1` → FastAPI 서버)
 
@@ -572,13 +572,13 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - `api/docker-compose.prod.yml` 프로덕션 compose
   - Health check 엔드포인트: `GET /health` → `{ status: "ok", version: "..." }`
 
-- [ ] **[P11-4] GitHub Actions CI 설정**
+- [x] **[P11-4] GitHub Actions CI 설정**
   - `.github/workflows/ci.yml`
   - 트리거: PR to development 브랜치
   - 단계: Python lint(ruff) + pytest + TypeScript tsc --noEmit + Next.js build
   - 운영 배포는 수동 트리거만 허용 (auto-deploy 금지)
 
-- [ ] **[P11-5] 로컬 개발 온보딩 문서**
+- [x] **[P11-5] 로컬 개발 온보딩 문서**
   - `docs/DEVELOPMENT.md` 신규 (간단한 로컬 실행 가이드)
   - `docker-compose up` → API + DB + Redis 실행
   - `npm run dev` → 프론트 실행
