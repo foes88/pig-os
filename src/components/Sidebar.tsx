@@ -21,7 +21,10 @@ import {
   ChevronRight,
   Beef,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
+import { alertsApi } from "@/lib/api/endpoints/alerts";
+import { queryKeys } from "@/lib/api/queryKeys";
 import type { Locale } from "@/i18n/config";
 
 type L = Record<Locale, string>;
@@ -92,6 +95,14 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const w = collapsed ? 64 : 224;
+  const farmId = useAuthStore((s) => s.activeFarmId);
+  const { data: overdue } = useQuery({
+    queryKey: queryKeys.alerts.overdue(farmId ?? ""),
+    queryFn: () => alertsApi.overdue(farmId!),
+    enabled: !!farmId,
+    refetchInterval: 5 * 60 * 1000,
+  });
+  const alertCount = overdue?.total ?? 0;
 
   const t = (obj: L) => obj[lang];
 
@@ -207,6 +218,11 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
             >
               <Icon size={15} className="flex-shrink-0" />
               {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
+              {!collapsed && item.href === "/alerts" && alertCount > 0 && (
+                <span className="ml-auto text-[10px] font-bold bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
+                  {alertCount}
+                </span>
+              )}
             </Link>
           );
         })}
