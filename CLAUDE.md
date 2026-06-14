@@ -418,14 +418,14 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 > 새 UI(Phase 1~4에서 추가되는 텍스트)에 대해서만 키 추가 작업 필요.
 > `src/messages/` 아래 en/ko/zh/es/vi 5개 파일 동시 업데이트 필수.
 
-- [ ] **[P5-1] /alerts 페이지 i18n 키 추가** (Phase 4-1에서 생성한 텍스트)
+- [x] **[P5-1] /alerts 페이지 i18n 키 추가** (Phase 4-1에서 생성한 텍스트)
 - [x] **[P5-2] Sow 상태 용어 i18n 정렬**
   - "OPEN" → en: "Open", ko: "공태", zh: "空怀", es: "Vacía", vi: "Nái trống"
   - "GILT" → en: "Gilt", ko: "후보돈", zh: "后备母猪", es: "Gilta", vi: "Heo nái hậu bị"
   - "PREGNANT" → en: "Pregnant", ko: "임신", zh: "妊娠", es: "Gestante", vi: "Mang thai"
   - "LACTATING" → en: "Lactating", ko: "포유", zh: "哺乳", es: "Lactante", vi: "Nuôi con"
   - "ACCIDENT" → en: "RTS/Accident", ko: "사고", zh: "事故", es: "Accidente", vi: "Sự cố"
-- [ ] **[P5-3] 에러 메시지 i18n** — validator 422 메시지들 다국어화
+- [x] **[P5-3] 에러 메시지 i18n** — validator 422 메시지들 다국어화
 - [x] **[P5-4] 누락 키 전수 점검** — en 기준 다른 언어에 없는 키 발견 시 번역 추가
 
 ---
@@ -525,7 +525,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 그룹 상세: 주간 성적 입력 (체중/사료/폐사) 폼
   - GET `/api/v1/farms/{farm_id}/finisher-groups` 연동
 
-- [ ] **[P9-4] Sidebar 메뉴 최종 정비** (⚠️ 2026-06-10 부분 완료: lucide 아이콘 + 공식 로고 + 그룹핑(대시보드/돈군관리/기록/분석/Addon) + 5개 언어 현지 용어 + active 하이라이트 적용됨. `src/components/Sidebar.tsx` 먼저 읽고 기존 구조 유지할 것 — 전면 재작성 금지)
+- [x] **[P9-4] Sidebar 메뉴 최종 정비** (⚠️ 2026-06-10 부분 완료: lucide 아이콘 + 공식 로고 + 그룹핑(대시보드/돈군관리/기록/분석/Addon) + 5개 언어 현지 용어 + active 하이라이트 적용됨. `src/components/Sidebar.tsx` 먼저 읽고 기존 구조 유지할 것 — 전면 재작성 금지)
   - 잔여: Alerts 메뉴 항목 추가 + unread badge (숫자) — P4-1 /alerts 페이지 완성 후
 
 ---

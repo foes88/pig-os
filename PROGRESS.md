@@ -176,3 +176,9 @@
 - [x] **[P10-4]** test_reports — 번식 월별집계 + 비육 ADG/폐사율
 - [x] **[P6-1]** 통합 테스트 기반 (conftest db/client fixture 기존 + 위 4파일 추가)
 - 모두 pytest 수집 통과. 실행은 사용자 머신 `cd api && uv run pytest tests/`(Docker pigos_test 필요).
+
+## 2026-06-10 — Phase 9-4 / Phase 5 i18n 완료
+- [x] **[P9-4]** Sidebar Alerts 실시간 과기한 배지 (5분 refetch)
+- [x] **[P5-1]** alerts i18n 키 5개 언어 (title + 6유형 + 도태)
+- [x] **[P5-3]** validation 422 메시지 i18n 키 5개 언어
+- 검증: 5개 언어 정합성 123키, tsc clean
