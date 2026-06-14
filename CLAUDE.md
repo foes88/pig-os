@@ -487,18 +487,18 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 > `/settings/` 하위 페이지. Next.js 라우트: `(app)/settings/` 폴더.
 
-- [ ] **[P8-1] Farm Config 설정 페이지** `src/app/(app)/settings/farm/page.tsx`
+- [x] **[P8-1] Farm Config 설정 페이지** `src/app/(app)/settings/farm/page.tsx`
   - 농장 기본 설정 편집: 임신기간(Gestation Length, 기본 114일), 포유기간(Lactation Length, 기본 21일), WSI 목표(Target WSI, 기본 7일), 후보돈 초교배 목표일령(Gilt First Mating Target, 기본 240일), 출하일령(Slaughter Age, 기본 180일)
   - PATCH `/api/v1/farms/{farm_id}/config` 연동
   - 저장 시 즉시 적용(alert 기준일 변경)
   - 숫자 범위 검증: gestation 100-120, lactation 14-28, wsi 5-14
 
-- [ ] **[P8-2] Benchmark 설정 페이지** `src/app/(app)/settings/benchmarks/page.tsx`
+- [x] **[P8-2] Benchmark 설정 페이지** `src/app/(app)/settings/benchmarks/page.tsx`
   - 국가별 벤치마크 목표값 표시 (읽기 전용 참고용)
   - 표: KPI 이름 / 현재값 / KR 벤치 / US 벤치 / BR 벤치 / CN 벤치
   - 데이터: `GET /api/v1/farms/{farm_id}/kpi/snapshots` + `GET /api/v1/farms/{farm_id}/config`
 
-- [ ] **[P8-3] Settings Sidebar 연결**
+- [x] **[P8-3] Settings Sidebar 연결**
   - Sidebar에 "Settings" 메뉴 그룹 추가
   - 하위: Farm Config / Benchmarks / Profile / Billing
 

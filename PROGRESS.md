@@ -123,3 +123,9 @@
 - [x] **[P14-2]** `chat_service.py` — use_llm/usage_count 파라미터 + rendered_by 반환
 - [~] **[P14-3]** 쿼터 폴백(within_quota) 구현 완료; 영속 llm_usage_logs 테이블/마이그레이션은 DB 필요로 deferred
 - 검증: unit 206/206 pass (외부 API 호출 없음 — 폴백 경로만 테스트)
+
+## 2026-06-10 — Phase 8 설정 페이지 (Settings)
+- [x] **[P8-1]** 백엔드 `GET/PATCH /farms/{id}/config/repro` (resolve_repro_config + 범위검증, unit 8) + 프론트 `/settings/farm` 폼
+- [x] **[P8-2]** `/settings/benchmarks` — 국가별 KPI 참고표 + 현재 농장 설정값
+- [x] **[P8-3]** settings 허브에 번식설정/벤치마크 링크 추가
+- 검증: backend unit 214/214, frontend tsc clean
