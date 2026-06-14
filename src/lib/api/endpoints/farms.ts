@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import type { EventDefinition, Farm, FarmLocalConfig } from "@/types/api.types";
+import type { EventDefinition, Farm, FarmLocalConfig, FarmReproConfig } from "@/types/api.types";
 
 const BASE = "/api/v1/farms";
 
@@ -15,4 +15,10 @@ export const farmsApi = {
 
   getEventDefinitions: (farmId: string) =>
     apiClient.get<EventDefinition[]>(`${BASE}/${farmId}/events/definitions`).then((r) => r.data),
+
+  getReproConfig: (farmId: string) =>
+    apiClient.get<FarmReproConfig>(`${BASE}/${farmId}/config/repro`).then((r) => r.data),
+
+  updateReproConfig: (farmId: string, body: Partial<FarmReproConfig>) =>
+    apiClient.patch<FarmReproConfig>(`${BASE}/${farmId}/config/repro`, body).then((r) => r.data),
 };

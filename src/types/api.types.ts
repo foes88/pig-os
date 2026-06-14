@@ -637,3 +637,11 @@ export interface CullCandidate {
   reasons: string[];
   last_weaned: number | null;
 }
+
+export interface FarmReproConfig {
+  gestation_days: number;
+  lactation_days: number;
+  wei_target_days: number;
+  gilt_first_mating_age: number;
+  slaughter_age: number;
+}

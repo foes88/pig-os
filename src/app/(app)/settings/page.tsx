@@ -8,6 +8,8 @@ import {
   Globe,
   Bell,
   Building2,
+  Sliders,
+  Target,
   FileText,
   LifeBuoy,
   Megaphone,
@@ -51,6 +53,8 @@ export default function SettingsPage() {
       title: "농장",
       items: [
         { icon: Building2,  label: "농장 정보",   desc: "농장명, 국가, 모돈 규모",     href: "/settings/profile" },
+        { icon: Sliders,    label: "번식 설정",   desc: "임신/포유/WSI/출하 기준일",   href: "/settings/farm" },
+        { icon: Target,     label: "벤치마크",    desc: "국가별 KPI 목표값",           href: "/settings/benchmarks" },
         { icon: CreditCard, label: "구독 및 결제", desc: "현재 플랜: Free",            href: "/settings/billing" },
       ],
     },

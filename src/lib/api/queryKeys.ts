@@ -10,6 +10,7 @@ export const queryKeys = {
     detail: (farmId: string) => ["farms", farmId] as const,
     localConfig: (farmId: string) => ["farms", farmId, "config"] as const,
     eventDefinitions: (farmId: string) => ["farms", farmId, "event-definitions"] as const,
+    reproConfig: (farmId: string) => ["farms", farmId, "repro-config"] as const,
   },
 
   sows: {
