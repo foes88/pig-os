@@ -419,7 +419,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 > `src/messages/` 아래 en/ko/zh/es/vi 5개 파일 동시 업데이트 필수.
 
 - [ ] **[P5-1] /alerts 페이지 i18n 키 추가** (Phase 4-1에서 생성한 텍스트)
-- [ ] **[P5-2] Sow 상태 용어 i18n 정렬**
+- [x] **[P5-2] Sow 상태 용어 i18n 정렬**
   - "OPEN" → en: "Open", ko: "공태", zh: "空怀", es: "Vacía", vi: "Nái trống"
   - "GILT" → en: "Gilt", ko: "후보돈", zh: "后备母猪", es: "Gilta", vi: "Heo nái hậu bị"
   - "PREGNANT" → en: "Pregnant", ko: "임신", zh: "妊娠", es: "Gestante", vi: "Mang thai"
