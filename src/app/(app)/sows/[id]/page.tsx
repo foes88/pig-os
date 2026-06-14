@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
+import { farmsApi } from "@/lib/api/endpoints/farms";
 import { useAuthStore } from "@/store/auth.store";
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
@@ -47,6 +48,12 @@ export default function SowDetailPage() {
     enabled: !!farmId && !!id,
   });
 
+  const { data: reproConfig } = useQuery({
+    queryKey: ["farms", farmId, "repro-config"],
+    queryFn: () => farmsApi.getReproConfig(farmId!),
+    enabled: !!farmId,
+  });
+
   if (!farmId) return null;
 
   if (sowLoading) {
@@ -71,6 +78,13 @@ export default function SowDetailPage() {
       return { mating: m, farrowing, weaning };
     })
     .sort((a, b) => b.mating.mating_date.localeCompare(a.mating.mating_date));
+
+  const lastMating = [...matings].map((m) => m.mating_date).sort().at(-1);
+  const lastFarrowing = [...farrowings].map((f) => f.farrowing_date).sort().at(-1);
+  const lastWeaning = [...weanings].map((w) => w.weaning_date).sort().at(-1);
+  const nextEvent = computeNextEvent(
+    sow.status, lastMating, lastFarrowing, lastWeaning, reproConfig,
+  );
 
   return (
     <div className="p-7 max-w-3xl">
@@ -108,6 +122,54 @@ export default function SowDetailPage() {
             <InfoCell label="입식일" value={sow.entry_date.slice(0, 10)} mono />
           </div>
         </div>
+
+        {/* 다음 예정 이벤트 (farm_config 기준) */}
+        {nextEvent && (
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 mb-5 flex items-center justify-between">
+            <div>
+              <div className="text-[11px] text-primary font-bold uppercase tracking-wide">다음 예정</div>
+              <div className="text-sm font-semibold text-text mt-0.5">{nextEvent.label}</div>
+            </div>
+            <div className="text-right font-mono text-sm font-bold text-primary">
+              {nextEvent.date ?? "—"}
+            </div>
+          </div>
+        )}
+
+        {/* 산차별 성적 */}
+        {timeline.some((t) => t.farrowing) && (
+          <div className="mb-5">
+            <h2 className="text-sm font-bold mb-3 text-text2">산차별 성적</h2>
+            <div className="border border-border rounded-xl overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-bg2 text-text3 text-[11px] uppercase tracking-wide">
+                    <th className="text-left font-semibold px-3 py-2">사이클</th>
+                    <th className="text-left font-semibold px-3 py-2">교배일</th>
+                    <th className="text-left font-semibold px-3 py-2">분만일</th>
+                    <th className="text-right font-semibold px-3 py-2">총산</th>
+                    <th className="text-right font-semibold px-3 py-2">생존</th>
+                    <th className="text-right font-semibold px-3 py-2">이유</th>
+                    <th className="text-right font-semibold px-3 py-2">이유일령</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeline.map(({ mating, farrowing, weaning }, i) => (
+                    <tr key={mating.id} className="border-t border-border">
+                      <td className="px-3 py-2 font-mono">{timeline.length - i}</td>
+                      <td className="px-3 py-2 font-mono text-text3">{mating.mating_date.slice(0, 10)}</td>
+                      <td className="px-3 py-2 font-mono text-text3">{farrowing?.farrowing_date.slice(0, 10) ?? "-"}</td>
+                      <td className="px-3 py-2 text-right font-mono">{farrowing?.total_born ?? "-"}</td>
+                      <td className="px-3 py-2 text-right font-mono">{farrowing?.born_alive ?? "-"}</td>
+                      <td className="px-3 py-2 text-right font-mono">{weaning?.weaned_count ?? "-"}</td>
+                      <td className="px-3 py-2 text-right font-mono">{weaning?.weaning_age_days ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* 번식 이력 타임라인 */}
         <div>
@@ -178,6 +240,30 @@ export default function SowDetailPage() {
         </div>
     </div>
   );
+}
+
+function computeNextEvent(
+  status: string,
+  lastMating: string | undefined,
+  lastFarrowing: string | undefined,
+  lastWeaning: string | undefined,
+  cfg: { gestation_days: number; lactation_days: number; wei_target_days: number } | undefined,
+): { label: string; date: string | null } | null {
+  if (status === "GILT") return { label: "초교배 권장", date: null };
+  if (!cfg) return null;
+  const addDays = (iso: string, d: number): string => {
+    const x = new Date(iso);
+    x.setDate(x.getDate() + d);
+    return x.toISOString().slice(0, 10);
+  };
+  if (status === "PREGNANT" && lastMating)
+    return { label: "분만 예정", date: addDays(lastMating, cfg.gestation_days) };
+  if (status === "LACTATING" && lastFarrowing)
+    return { label: "이유 예정", date: addDays(lastFarrowing, cfg.lactation_days) };
+  if (status === "OPEN" && lastWeaning)
+    return { label: "재교배 예정", date: addDays(lastWeaning, cfg.wei_target_days) };
+  if (status === "ACCIDENT") return { label: "재교배 필요", date: null };
+  return null;
 }
 
 function InfoCell({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
