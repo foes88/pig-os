@@ -136,5 +136,14 @@
     "back": "返回",
     "next": "下一步",
     "search": "搜索"
+  },
+  "sowStatus": {
+    "GILT": "后备母猪",
+    "OPEN": "空怀",
+    "PREGNANT": "妊娠",
+    "LACTATING": "哺乳",
+    "ACCIDENT": "事故",
+    "CULLED": "淘汰",
+    "DEAD": "死亡"
   }
 }

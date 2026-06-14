@@ -136,5 +136,14 @@
     "back": "Atrás",
     "next": "Siguiente",
     "search": "Buscar"
+  },
+  "sowStatus": {
+    "GILT": "Gilta",
+    "OPEN": "Vacía",
+    "PREGNANT": "Gestante",
+    "LACTATING": "Lactante",
+    "ACCIDENT": "Accidente",
+    "CULLED": "Descartada",
+    "DEAD": "Muerta"
   }
 }

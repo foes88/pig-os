@@ -136,5 +136,14 @@
     "back": "뒤로",
     "next": "다음",
     "search": "검색"
+  },
+  "sowStatus": {
+    "GILT": "후보돈",
+    "OPEN": "공태",
+    "PREGNANT": "임신",
+    "LACTATING": "포유",
+    "ACCIDENT": "사고",
+    "CULLED": "도태",
+    "DEAD": "폐사"
   }
 }

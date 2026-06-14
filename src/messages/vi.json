@@ -136,5 +136,14 @@
     "back": "Quay lại",
     "next": "Tiếp theo",
     "search": "Tìm kiếm"
+  },
+  "sowStatus": {
+    "GILT": "Heo nái hậu bị",
+    "OPEN": "Nái trống",
+    "PREGNANT": "Mang thai",
+    "LACTATING": "Nuôi con",
+    "ACCIDENT": "Sự cố",
+    "CULLED": "Loại thải",
+    "DEAD": "Chết"
   }
 }
