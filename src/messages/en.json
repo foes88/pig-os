@@ -145,5 +145,27 @@
     "ACCIDENT": "RTS/Accident",
     "CULLED": "Culled",
     "DEAD": "Dead"
+  },
+  "alerts": {
+    "title": "Alerts",
+    "overdueSows": "Overdue sows",
+    "cullRecommendations": "Cull recommendations",
+    "giltNoEstrus": "Gilt — no estrus",
+    "giltOverdueMating": "Gilt — overdue mating",
+    "pregnantOverdueFarrowing": "Farrowing overdue",
+    "lactatingOverdueWeaning": "Weaning overdue",
+    "openOverdueMating": "Re-service overdue",
+    "accidentOverdueMating": "RTS re-service overdue"
+  },
+  "validation": {
+    "totalBornMax": "Total Born cannot exceed 35",
+    "stillbornMax": "Stillborn cannot exceed 25",
+    "mummifiedMax": "Mummified cannot exceed 25",
+    "bornAliveExceedsTotal": "Born Alive cannot exceed Total Born",
+    "birthWeightMax": "Average birth weight cannot exceed 3.0 kg",
+    "weanedFormula": "Weaned must equal nursing − (deaths + out − in)",
+    "matingStatus": "Mating only allowed for Gilt/Open/Accident",
+    "crossFosteringMax": "Cross-fostering cannot exceed 25 piglets per transfer",
+    "periodLocked": "Period is locked; unlock before editing"
   }
 }

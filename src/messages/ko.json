@@ -145,5 +145,27 @@
     "ACCIDENT": "사고",
     "CULLED": "도태",
     "DEAD": "폐사"
+  },
+  "alerts": {
+    "title": "관리 알림",
+    "overdueSows": "관리 대상 모돈",
+    "cullRecommendations": "도태 권고",
+    "giltNoEstrus": "후보돈 발정 미확인",
+    "giltOverdueMating": "후보돈 교배 지연",
+    "pregnantOverdueFarrowing": "분만 예정일 초과",
+    "lactatingOverdueWeaning": "이유 지연",
+    "openOverdueMating": "공태 재교배 지연",
+    "accidentOverdueMating": "사고 후 재교배 지연"
+  },
+  "validation": {
+    "totalBornMax": "총산자수는 35두를 초과할 수 없습니다",
+    "stillbornMax": "사산은 25두를 초과할 수 없습니다",
+    "mummifiedMax": "미라는 25두를 초과할 수 없습니다",
+    "bornAliveExceedsTotal": "생존산은 총산을 초과할 수 없습니다",
+    "birthWeightMax": "평균 출생체중은 3.0kg을 초과할 수 없습니다",
+    "weanedFormula": "이유두수는 포유두수 − (폐사 + 전출 − 전입)과 같아야 합니다",
+    "matingStatus": "교배는 후보돈/공태/사고 상태에서만 가능합니다",
+    "crossFosteringMax": "양자는 1회 25두를 초과할 수 없습니다",
+    "periodLocked": "마감된 기간입니다. 수정하려면 잠금을 해제하세요"
   }
 }

@@ -145,5 +145,27 @@
     "ACCIDENT": "Accidente",
     "CULLED": "Descartada",
     "DEAD": "Muerta"
+  },
+  "alerts": {
+    "title": "Alertas",
+    "overdueSows": "Cerdas atrasadas",
+    "cullRecommendations": "Recomendaciones de descarte",
+    "giltNoEstrus": "Gilta — sin celo",
+    "giltOverdueMating": "Gilta — monta atrasada",
+    "pregnantOverdueFarrowing": "Parto atrasado",
+    "lactatingOverdueWeaning": "Destete atrasado",
+    "openOverdueMating": "Re-servicio atrasado",
+    "accidentOverdueMating": "Re-servicio RTS atrasado"
+  },
+  "validation": {
+    "totalBornMax": "El total nacidos no puede superar 35",
+    "stillbornMax": "Nacidos muertos no puede superar 25",
+    "mummifiedMax": "Momificados no puede superar 25",
+    "bornAliveExceedsTotal": "Nacidos vivos no puede superar el total",
+    "birthWeightMax": "El peso medio al nacer no puede superar 3.0 kg",
+    "weanedFormula": "Destetados debe igualar lactantes − (muertes + salidas − entradas)",
+    "matingStatus": "Monta solo permitida en Gilta/Vacía/Accidente",
+    "crossFosteringMax": "La adopción no puede superar 25 lechones por transferencia",
+    "periodLocked": "Período bloqueado; desbloquee antes de editar"
   }
 }

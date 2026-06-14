@@ -145,5 +145,27 @@
     "ACCIDENT": "事故",
     "CULLED": "淘汰",
     "DEAD": "死亡"
+  },
+  "alerts": {
+    "title": "预警",
+    "overdueSows": "超期母猪",
+    "cullRecommendations": "淘汰建议",
+    "giltNoEstrus": "后备母猪未发情",
+    "giltOverdueMating": "后备母猪配种超期",
+    "pregnantOverdueFarrowing": "分娩超期",
+    "lactatingOverdueWeaning": "断奶超期",
+    "openOverdueMating": "再配种超期",
+    "accidentOverdueMating": "事故后再配种超期"
+  },
+  "validation": {
+    "totalBornMax": "总产仔数不能超过35头",
+    "stillbornMax": "死胎不能超过25头",
+    "mummifiedMax": "木乃伊胎不能超过25头",
+    "bornAliveExceedsTotal": "活产数不能超过总产数",
+    "birthWeightMax": "平均出生体重不能超过3.0公斤",
+    "weanedFormula": "断奶数应等于哺乳数 −（死亡 + 转出 − 转入）",
+    "matingStatus": "仅后备/空怀/事故状态可配种",
+    "crossFosteringMax": "每次寄养不能超过25头仔猪",
+    "periodLocked": "该期间已锁定，请先解锁再编辑"
   }
 }

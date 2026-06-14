@@ -145,5 +145,27 @@
     "ACCIDENT": "Sự cố",
     "CULLED": "Loại thải",
     "DEAD": "Chết"
+  },
+  "alerts": {
+    "title": "Cảnh báo",
+    "overdueSows": "Nái quá hạn",
+    "cullRecommendations": "Đề xuất loại thải",
+    "giltNoEstrus": "Nái hậu bị chưa động dục",
+    "giltOverdueMating": "Nái hậu bị quá hạn phối",
+    "pregnantOverdueFarrowing": "Quá hạn đẻ",
+    "lactatingOverdueWeaning": "Quá hạn cai sữa",
+    "openOverdueMating": "Quá hạn phối lại",
+    "accidentOverdueMating": "Quá hạn phối lại sau sự cố"
+  },
+  "validation": {
+    "totalBornMax": "Tổng số đẻ ra không quá 35",
+    "stillbornMax": "Thai chết lưu không quá 25",
+    "mummifiedMax": "Thai khô không quá 25",
+    "bornAliveExceedsTotal": "Số sống không vượt tổng số đẻ",
+    "birthWeightMax": "Trọng lượng sơ sinh TB không quá 3.0 kg",
+    "weanedFormula": "Số cai sữa = số nuôi − (chết + chuyển ra − chuyển vào)",
+    "matingStatus": "Chỉ phối khi Hậu bị/Trống/Sự cố",
+    "crossFosteringMax": "Nuôi ghép không quá 25 con mỗi lần",
+    "periodLocked": "Kỳ đã khóa; mở khóa trước khi sửa"
   }
 }
