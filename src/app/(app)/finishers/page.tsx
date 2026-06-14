@@ -4,13 +4,19 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { finishersApi } from "@/lib/api/endpoints/finishers";
 import { useAuthStore } from "@/store/auth.store";
-import type { CreateFinisherGroupRequest, FinisherGroupShipRequest } from "@/types/api.types";
+import type {
+  CreateFinisherGroupRequest,
+  FinisherGroup,
+  FinisherGroupShipRequest,
+  UpdateFinisherGroupRequest,
+} from "@/types/api.types";
 
 export default function FinishersPage() {
   const farmId = useAuthStore((s) => s.activeFarmId);
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [shippingId, setShippingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [activeOnly, setActiveOnly] = useState(true);
 
   const { data: groups = [], isLoading } = useQuery({
@@ -112,14 +118,22 @@ export default function FinishersPage() {
                       )}
                     </div>
                   </div>
-                  {isActive && (
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setShippingId(g.id)}
-                      className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber-500/90 transition"
+                      onClick={() => setEditingId(g.id)}
+                      className="border border-border text-text2 px-3 py-2 rounded-lg text-xs font-semibold hover:border-primary transition"
                     >
-                      출하 처리
+                      수정
                     </button>
-                  )}
+                    {isActive && (
+                      <button
+                        onClick={() => setShippingId(g.id)}
+                        className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber-500/90 transition"
+                      >
+                        출하 처리
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -144,6 +158,18 @@ export default function FinishersPage() {
           onClose={() => setShippingId(null)}
           onSuccess={() => {
             setShippingId(null);
+            queryClient.invalidateQueries({ queryKey: ["finishers", farmId] });
+          }}
+        />
+      )}
+
+      {editingId && (
+        <EditGroupModal
+          farmId={farmId}
+          group={groups.find((g) => g.id === editingId)!}
+          onClose={() => setEditingId(null)}
+          onSuccess={() => {
+            setEditingId(null);
             queryClient.invalidateQueries({ queryKey: ["finishers", farmId] });
           }}
         />
@@ -242,6 +268,52 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
           <button onClick={() => mutation.mutate()} disabled={!form.head_count_out || mutation.isPending}
             className="flex-1 bg-amber-500 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
             {mutation.isPending ? "처리 중..." : "출하 완료"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditGroupModal({ farmId, group, onClose, onSuccess }: { farmId: string; group: FinisherGroup; onClose: () => void; onSuccess: () => void }) {
+  const [form, setForm] = useState<UpdateFinisherGroupRequest>({
+    batch_name: group.batch_name ?? "",
+    head_count_in: group.head_count_in,
+    avg_entry_weight_kg: group.avg_entry_weight_kg ?? undefined,
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: () => finishersApi.update(farmId, group.id, form),
+    onSuccess,
+    onError: (err: unknown) => {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : "수정 실패");
+    },
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+        <h2 className="text-base font-bold mb-1">그룹 수정</h2>
+        <p className="text-xs text-gray-400 mb-4 font-mono">{group.group_code}</p>
+        <div className="space-y-3">
+          <Field label="배치명">
+            <input value={form.batch_name ?? ""} onChange={(e) => setForm((f) => ({ ...f, batch_name: e.target.value }))} className="input" />
+          </Field>
+          <Field label="입식 두수 *">
+            <input type="number" min={1} value={form.head_count_in || ""} onChange={(e) => setForm((f) => ({ ...f, head_count_in: Number(e.target.value) }))} className="input" />
+          </Field>
+          <Field label="평균 입식 체중 (kg)">
+            <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} className="input" />
+          </Field>
+        </div>
+        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        <div className="flex gap-2 mt-5">
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">취소</button>
+          <button onClick={() => mutation.mutate()} disabled={!form.head_count_in || mutation.isPending}
+            className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
+            {mutation.isPending ? "저장 중..." : "저장"}
           </button>
         </div>
       </div>
