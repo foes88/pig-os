@@ -519,7 +519,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 탭 전환: Reproduction | Grow-Finish
   - Grow-Finish 테이블: ADG / FCR / 폐사율 / 입식두수
 
-- [ ] **[P9-3] /finishers 비육돈 페이지 완성**
+- [x] **[P9-3] /finishers 비육돈 페이지 완성**
   - 현재 상태 확인 후 누락 항목 보완
   - 그룹 목록: 그룹ID / 입식일 / 두수 / 현재주령 / ADG / FCR
   - 그룹 상세: 주간 성적 입력 (체중/사료/폐사) 폼

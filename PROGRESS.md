@@ -150,3 +150,7 @@
 - [x] **[P12-5 일부]** 보고서 CSV 클라이언트 내보내기 (BOM 포함 한글 호환)
 - [x] **[P12-1/3 프론트 API]** eventsApi update/remove, finishersApi update + 타입
 - Sidebar 분석 그룹에 번식/비육 보고서 링크 추가. tsc clean.
+
+## 2026-06-10 — Phase 9-3 / Phase 12-3 프론트
+- [x] **[P9-3]** `/finishers` 그룹 수정 모달 추가 (EditGroupModal, finishersApi.update 연동) — 목록/입식/출하/수정 완비
+- 검증: tsc clean
