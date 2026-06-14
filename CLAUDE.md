@@ -508,13 +508,13 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 > SCREEN_MENU_SPEC.md 기준 미구현 화면 확인 후 완성.
 
-- [ ] **[P9-1] /reports 페이지 번식 보고서 연동**
+- [x] **[P9-1] /reports 페이지 번식 보고서 연동**
   - Phase 7-1 API 연결
   - 기간 선택 UI (DateRangePicker — 3개월/6개월/1년/사용자지정)
   - 월별 테이블: PSY / NPD / FR / PWMR-A / PWMR-B / RTS율
   - CSV 다운로드 버튼 (`/reports/reproduction?format=csv`)
 
-- [ ] **[P9-2] /reports 비육 보고서 탭 추가**
+- [x] **[P9-2] /reports 비육 보고서 탭 추가**
   - Phase 7-2 API 연결
   - 탭 전환: Reproduction | Grow-Finish
   - Grow-Finish 테이블: ADG / FCR / 폐사율 / 입식두수

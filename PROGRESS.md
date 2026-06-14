@@ -143,3 +143,10 @@
 - [x] **[P12-3 백엔드]** finishers PATCH (FinisherGroupUpdate)
 - 잔여(프론트): P12-1/2 이벤트 수정·삭제 UI, P12-3 그룹 수정 모달, P12-4 페이지네이션, P12-5 CSV, P12-6 알림 개선
 - 검증: backend unit 219/219 (event_rollback 5 신규), 라우트 등록 확인
+
+## 2026-06-10 — Phase 9 보고서 화면 + Phase 12 프론트 API
+- [x] **[P9-1]** `/reports/reproduction` — Phase 7 API 연동, 기간 프리셋(3/6/12개월), 월별 테이블(교배/분만/이유/FR/총산/생존산/이유두수/PWMR-A·B/RTS), CSV 내보내기
+- [x] **[P9-2]** `/reports/grow-finish` — 그룹별 ADG/FCR/폐사율 테이블 + CSV
+- [x] **[P12-5 일부]** 보고서 CSV 클라이언트 내보내기 (BOM 포함 한글 호환)
+- [x] **[P12-1/3 프론트 API]** eventsApi update/remove, finishersApi update + 타입
+- Sidebar 분석 그룹에 번식/비육 보고서 링크 추가. tsc clean.
