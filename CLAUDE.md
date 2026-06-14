@@ -432,7 +432,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ### Phase 6 — 통합 테스트 + 배포 준비
 
-- [ ] **[P6-1] pytest 설정 + 통합 테스트 기반**
+- [x] **[P6-1] pytest 설정 + 통합 테스트 기반**
   - `tests/conftest.py`: TestClient + 테스트 DB fixture
   - `tests/integration/test_event_flow.py`: 교배→임신→분만→이유 전체 사이클 E2E
   - `tests/integration/test_validation_errors.py`: 각 validator 422 케이스
@@ -532,7 +532,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 ### Phase 10 — 통합 테스트 강화
 
-- [ ] **[P10-1] 번식 사이클 E2E 통합 테스트**
+- [x] **[P10-1] 번식 사이클 E2E 통합 테스트**
   - `tests/integration/test_full_breeding_cycle.py`
   - 시나리오: 후보돈 등록 → 교배(GILT→PREGNANT) → 분만(PREGNANT→LACTATING) → 이유(LACTATING→OPEN) → 교배(OPEN→PREGNANT) 2사이클
   - 각 단계 상태 전이 검증
@@ -549,7 +549,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - fixture: 과기한 모돈 6유형 시나리오 세팅
   - 도태 권고 3기준 각각 검증
 
-- [ ] **[P10-4] 보고서 API 통합 테스트**
+- [x] **[P10-4] 보고서 API 통합 테스트**
   - `tests/integration/test_reports.py`
   - fixture: 12개월 kpi_snapshots 시드 데이터
   - 월별/분기별/연간 집계 정확성 검증

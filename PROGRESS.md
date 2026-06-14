@@ -168,3 +168,11 @@
 - [x] **[P10-3]** 알람 서비스 통합 테스트 4케이스 (today= 결정적, 수집 OK)
 - 통합 테스트는 샌드박스에 Docker Postgres 없어 '수집/구문 검증'까지 — 사용자 머신 `uv run pytest tests/` 실행 필요
 - 검증: unit 219/219, tsc clean
+
+## 2026-06-10 — Phase 10 통합 테스트 (4파일 13케이스)
+- [x] **[P10-1]** test_full_breeding_cycle — 2산차 상태전이 + 이유두수 가드
+- [x] **[P10-2]** test_validation_errors — validator 7케이스
+- [x] **[P10-3]** test_alert_service — 과기한/도태 4케이스 (today= 결정적)
+- [x] **[P10-4]** test_reports — 번식 월별집계 + 비육 ADG/폐사율
+- [x] **[P6-1]** 통합 테스트 기반 (conftest db/client fixture 기존 + 위 4파일 추가)
+- 모두 pytest 수집 통과. 실행은 사용자 머신 `cd api && uv run pytest tests/`(Docker pigos_test 필요).
