@@ -24,6 +24,14 @@ class FinisherGroupShip(BaseModel):
     notes: str | None = None
 
 
+class FinisherGroupUpdate(BaseModel):
+    """그룹 수정 (입식 정보)"""
+    batch_name: str | None = Field(None, max_length=100)
+    head_count_in: int | None = Field(None, ge=1)
+    avg_entry_weight_kg: float | None = Field(None, gt=0)
+    notes: str | None = None
+
+
 class FinisherGroupResponse(UUIDMixin):
     farm_id: UUID
     group_code: str

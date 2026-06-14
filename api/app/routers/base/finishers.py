@@ -15,6 +15,7 @@ from app.schemas.finisher import (
     FinisherGroupCreate,
     FinisherGroupResponse,
     FinisherGroupShip,
+    FinisherGroupUpdate,
 )
 
 router = APIRouter(prefix="/farms/{farm_id}/finishers", tags=["Finishers"])
@@ -111,3 +112,21 @@ async def delete_finisher_group(group_id: UUID, farm: FarmDep, db: DbDep):
         raise NotFoundError(f"Finisher group {group_id} not found")
     group.deleted_at = datetime.now(UTC)
     await db.commit()
+
+
+@router.patch("/{group_id}", response_model=FinisherGroupResponse)
+async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm: FarmDep, db: DbDep):
+    group = await db.scalar(
+        select(FinisherGroup).where(
+            FinisherGroup.id == group_id,
+            FinisherGroup.farm_id == farm.id,
+            FinisherGroup.deleted_at.is_(None),
+        )
+    )
+    if not group:
+        raise NotFoundError(f"Finisher group {group_id} not found")
+    for k, v in body.model_dump(exclude_unset=True).items():
+        setattr(group, k, v)
+    await db.commit()
+    await db.refresh(group)
+    return FinisherGroupResponse.model_validate(group)
