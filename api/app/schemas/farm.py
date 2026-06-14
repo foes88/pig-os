@@ -78,3 +78,21 @@ class OnboardingStatus(BaseModel):
     has_buildings: bool
     onboarding_complete: bool
     completion_pct: int
+
+
+class FarmReproConfig(BaseModel):
+    """Resolved reproductive parameters (defaults applied) for the Farm settings page."""
+    gestation_days: int
+    lactation_days: int
+    wei_target_days: int
+    gilt_first_mating_age: int
+    slaughter_age: int
+
+
+class FarmReproConfigUpdate(BaseModel):
+    """Partial update of reproductive parameters; only provided fields are upserted."""
+    gestation_days: int | None = Field(None, ge=100, le=130)
+    lactation_days: int | None = Field(None, ge=10, le=40)
+    wei_target_days: int | None = Field(None, ge=1, le=30)
+    gilt_first_mating_age: int | None = Field(None, ge=180, le=400)
+    slaughter_age: int | None = Field(None, ge=120, le=300)

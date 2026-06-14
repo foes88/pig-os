@@ -12,6 +12,7 @@ from app.schemas.farm import (
     FarmConfigSet,
     FarmCreate,
     FarmLocalConfig,
+    FarmReproConfigUpdate,
     FarmUpdate,
     OnboardingStatus,
 )
@@ -171,3 +172,51 @@ async def get_onboarding_status(db: AsyncSession, farm_id: UUID) -> OnboardingSt
         onboarding_complete=all(checks),
         completion_pct=pct,
     )
+
+
+# ── Reproductive parameter config (Farm settings page) ────────────────────────
+
+REPRO_CONFIG_KEYS: dict[str, tuple[str, int]] = {
+    "gestation_days": ("GESTATION_DAYS", 114),
+    "lactation_days": ("LACTATION_DAYS", 21),
+    "wei_target_days": ("WEI_TARGET_DAYS", 7),
+    "gilt_first_mating_age": ("GILT_FIRST_MATING_AGE", 240),
+    "slaughter_age": ("SLAUGHTER_AGE", 180),
+}
+
+
+def resolve_repro_config(cfg: dict[str, str]) -> dict[str, int]:
+    """Apply defaults to a raw {config_key: value} dict → typed repro params."""
+    out: dict[str, int] = {}
+    for field, (key, default) in REPRO_CONFIG_KEYS.items():
+        try:
+            out[field] = int(cfg[key])
+        except (KeyError, ValueError, TypeError):
+            out[field] = default
+    return out
+
+
+async def get_repro_config(db: AsyncSession, farm_id: UUID) -> dict[str, int]:
+    rows = await db.scalars(select(FarmConfig).where(FarmConfig.farm_id == farm_id))
+    cfg = {r.config_key: r.config_value for r in rows}
+    return resolve_repro_config(cfg)
+
+
+async def set_repro_config(
+    db: AsyncSession, farm_id: UUID, body: FarmReproConfigUpdate
+) -> dict[str, int]:
+    for field, (key, _default) in REPRO_CONFIG_KEYS.items():
+        value = getattr(body, field, None)
+        if value is None:
+            continue
+        existing = await db.scalar(
+            select(FarmConfig).where(
+                FarmConfig.farm_id == farm_id, FarmConfig.config_key == key
+            )
+        )
+        if existing:
+            existing.config_value = str(value)
+        else:
+            db.add(FarmConfig(farm_id=farm_id, config_key=key, config_value=str(value)))
+    await db.commit()
+    return await get_repro_config(db, farm_id)

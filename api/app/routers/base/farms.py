@@ -1,7 +1,13 @@
 from fastapi import APIRouter
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep
-from app.schemas.farm import FarmLocalConfig, FarmResponse, FarmUpdate
+from app.schemas.farm import (
+    FarmLocalConfig,
+    FarmReproConfig,
+    FarmReproConfigUpdate,
+    FarmResponse,
+    FarmUpdate,
+)
 from app.services import farm_service
 
 router = APIRouter(prefix="/farms", tags=["Farms"])
@@ -28,3 +34,15 @@ async def get_farm_local_config(farm: FarmDep, db: DbDep):
 async def update_farm(body: FarmUpdate, farm: FarmDep, db: DbDep):
     updated = await farm_service.update_farm(db, farm, body)
     return FarmResponse.model_validate(updated)
+
+
+@router.get("/{farm_id}/config/repro", response_model=FarmReproConfig)
+async def get_repro_config(farm: FarmDep, db: DbDep):
+    """Resolved reproductive parameters (gestation/lactation/WSI/gilt age/slaughter age)."""
+    return await farm_service.get_repro_config(db, farm.id)
+
+
+@router.patch("/{farm_id}/config/repro", response_model=FarmReproConfig)
+async def update_repro_config(body: FarmReproConfigUpdate, farm: FarmDep, db: DbDep):
+    """Upsert reproductive parameters; alert thresholds take effect immediately."""
+    return await farm_service.set_repro_config(db, farm.id, body)
