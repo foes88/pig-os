@@ -57,12 +57,17 @@ export default function BoarsPage() {
   const [editTarget, setEditTarget] = useState<Boar | null>(null);
   const [form, setForm] = useState<CreateBoarRequest>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const { data: boars = [], isLoading, error } = useQuery({
     queryKey: ["boars", farmId, statusFilter],
     queryFn: () => boarsApi.list(farmId, statusFilter || undefined),
     enabled: !!farmId,
   });
+
+  const PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(boars.length / PER_PAGE));
+  const paged = boars.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["boars", farmId] });
 
@@ -201,7 +206,7 @@ export default function BoarsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {boars.map((boar: Boar) => (
+              {paged.map((boar: Boar) => (
                 <tr key={boar.id} className="hover:bg-bg2/50 transition-colors">
                   <td className="px-4 py-3 font-mono font-semibold text-text">{boar.ear_tag}</td>
                   <td className="px-4 py-3 text-text1">{boar.breed ?? "—"}</td>
@@ -243,6 +248,27 @@ export default function BoarsPage() {
               ))}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border text-xs text-text3">
+              <span>전체 {boars.length}두 · {page}/{totalPages} 페이지</span>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary"
+                >
+                  이전
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary"
+                >
+                  다음
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
