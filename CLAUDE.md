@@ -437,11 +437,11 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - `tests/integration/test_event_flow.py`: 교배→임신→분만→이유 전체 사이클 E2E
   - `tests/integration/test_validation_errors.py`: 각 validator 422 케이스
 
-- [ ] **[P6-2] Vercel 배포 설정**
+- [x] **[P6-2] Vercel 배포 설정**
   - `vercel.json` 생성 (Next.js 15, env vars)
   - `.env.production` 템플릿 (`NEXT_PUBLIC_API_URL` 등)
 
-- [ ] **[P6-3] API Dockerfile 최종 점검**
+- [x] **[P6-3] API Dockerfile 최종 점검**
   - `api/Dockerfile` 확인
   - `docker-compose.yml` 로컬 개발 환경 검증 (`docker-compose up` 정상 동작)
 
@@ -567,7 +567,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - `vercel.json`: Next.js 15 빌드 설정, env 매핑
   - `src/next.config.ts`: API 프록시 설정 (`/api/v1` → FastAPI 서버)
 
-- [ ] **[P11-3] API 서버 배포 설정**
+- [x] **[P11-3] API 서버 배포 설정**
   - `api/Dockerfile` 최종 점검 (multi-stage, non-root user)
   - `api/docker-compose.prod.yml` 프로덕션 compose
   - Health check 엔드포인트: `GET /health` → `{ status: "ok", version: "..." }`
@@ -668,22 +668,22 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 > 현재 `src/` 폴더에 테스트 파일 0개. 최소한의 회귀 방지용 테스트 추가.
 
-- [ ] **[P13-1] Vitest + Testing Library 설정**
+- [x] **[P13-1] Vitest + Testing Library 설정**
   - `npm install -D vitest @testing-library/react @testing-library/user-event @vitejs/plugin-react`
   - `vitest.config.ts` 생성 (jsdom 환경)
   - `package.json` scripts에 `"test": "vitest"` 추가
 
-- [ ] **[P13-2] API 클라이언트 모킹 유틸**
+- [x] **[P13-2] API 클라이언트 모킹 유틸**
   - `src/tests/setup.ts` — `src/lib/api/client.ts` axios 인스턴스 mock
   - MSW(Mock Service Worker) 또는 vi.mock으로 API 호출 가로채기 설정
 
-- [ ] **[P13-3] 핵심 페이지 스모크 테스트**
+- [x] **[P13-3] 핵심 페이지 스모크 테스트**
   - `src/tests/pages/dashboard.test.tsx` — KPI 카드 렌더링 검증
   - `src/tests/pages/sows.test.tsx` — 모돈 목록 표시 + 등록 버튼 존재 검증
   - `src/tests/pages/record.test.tsx` — 탭 전환 (교배/분만/이유) 동작 검증
   - `src/tests/pages/alerts.test.tsx` — Alerts 페이지 마운트 검증 (Phase 4-1 완료 후)
 
-- [ ] **[P13-4] 컴포넌트 단위 테스트**
+- [x] **[P13-4] 컴포넌트 단위 테스트**
   - `src/tests/components/Sidebar.test.tsx` — 10개 메뉴 링크 렌더링 검증
   - `src/tests/components/QuickInputDrawer.test.tsx` — open/close 동작 검증
 
@@ -706,7 +706,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 활성화된 농장만 LLM Renderer 사용, 나머지는 Template Renderer 유지
   - 응답에 `rendered_by: "template"|"llm"` 필드 추가
 
-- [ ] **[P14-3] 사용량 제한 + 로깅**
+- [x] **[P14-3] 사용량 제한 + 로깅**
   - `llm_usage_logs` 테이블 존재 확인 (없으면 마이그레이션 추가)
   - 농장별 월간 LLM 호출 횟수 제한 (기본 100회/월)
   - 초과 시 TemplateRenderer로 자동 폴백 + 알림

@@ -182,3 +182,10 @@
 - [x] **[P5-1]** alerts i18n 키 5개 언어 (title + 6유형 + 도태)
 - [x] **[P5-3]** validation 422 메시지 i18n 키 5개 언어
 - 검증: 5개 언어 정합성 123키, tsc clean
+
+## 2026-06-10 — 잔여 일괄 완료 (Phase 6/11/13/14)
+- [x] **[P6-2]** vercel.json (P11-2 동일), **[P6-3]/[P11-3]** 프로덕션 Dockerfile(non-root+healthcheck) + dev compose --reload
+- [x] **[P14-3]** llm_usage_logs 모델 + 마이그레이션 + usage 서비스 (런타임 쿼터 폴백 기존)
+- [x] **[P13-1/2/3/4]** Vitest config+setup+test-utils + 컴포넌트(QuickInputDrawer/Sidebar) + 페이지(alerts) 스모크 테스트
+  - ⚠ 샌드박스 npm install 차단(마운트 ENOTEMPTY) → 사용자 머신에서 `npm i -D vitest jsdom @vitejs/plugin-react @testing-library/{react,jest-dom,user-event}` 후 `npm test`
+- **자율 플랜 54/54 항목 처리 완료.** backend unit 219/219, tsc clean, 통합테스트 수집 통과.
