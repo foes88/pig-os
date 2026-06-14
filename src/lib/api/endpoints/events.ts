@@ -9,6 +9,9 @@ import type {
   Mating,
   PigletEventRecord,
   ReproductiveEvent,
+  UpdateFarrowingRequest,
+  UpdateMatingRequest,
+  UpdateWeaningRequest,
   Weaning,
 } from "@/types/api.types";
 
@@ -23,6 +26,12 @@ export const eventsApi = {
 
     create: (farmId: string, body: CreateMatingRequest) =>
       apiClient.post<Mating>(`${base(farmId)}/matings`, body).then((r) => r.data),
+
+    update: (farmId: string, id: string, body: UpdateMatingRequest) =>
+      apiClient.patch<Mating>(`${base(farmId)}/matings/${id}`, body).then((r) => r.data),
+
+    remove: (farmId: string, id: string) =>
+      apiClient.delete(`${base(farmId)}/matings/${id}`).then(() => undefined),
   },
 
   farrowings: {
@@ -33,6 +42,12 @@ export const eventsApi = {
 
     create: (farmId: string, body: CreateFarrowingRequest) =>
       apiClient.post<Farrowing>(`${base(farmId)}/farrowings`, body).then((r) => r.data),
+
+    update: (farmId: string, id: string, body: UpdateFarrowingRequest) =>
+      apiClient.patch<Farrowing>(`${base(farmId)}/farrowings/${id}`, body).then((r) => r.data),
+
+    remove: (farmId: string, id: string) =>
+      apiClient.delete(`${base(farmId)}/farrowings/${id}`).then(() => undefined),
   },
 
   weanings: {
@@ -43,6 +58,12 @@ export const eventsApi = {
 
     create: (farmId: string, body: CreateWeaningRequest) =>
       apiClient.post<Weaning>(`${base(farmId)}/weanings`, body).then((r) => r.data),
+
+    update: (farmId: string, id: string, body: UpdateWeaningRequest) =>
+      apiClient.patch<Weaning>(`${base(farmId)}/weanings/${id}`, body).then((r) => r.data),
+
+    remove: (farmId: string, id: string) =>
+      apiClient.delete(`${base(farmId)}/weanings/${id}`).then(() => undefined),
   },
 
   reproductive: {

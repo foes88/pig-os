@@ -645,3 +645,33 @@ export interface FarmReproConfig {
   gilt_first_mating_age: number;
   slaughter_age: number;
 }
+
+// ── Event / group update bodies (Phase 12 CRUD) ───────────────────────────────
+
+export interface UpdateMatingRequest {
+  mating_date?: string;
+  boar_id?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateFarrowingRequest {
+  farrowing_date?: string;
+  born_alive?: number;
+  stillborn?: number;
+  mummified?: number;
+  notes?: string | null;
+}
+
+export interface UpdateWeaningRequest {
+  weaning_date?: string;
+  weaned_count?: number;
+  avg_weaning_weight_kg?: number | null;
+  notes?: string | null;
+}
+
+export interface UpdateFinisherGroupRequest {
+  batch_name?: string | null;
+  head_count_in?: number;
+  avg_entry_weight_kg?: number | null;
+  notes?: string | null;
+}

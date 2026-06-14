@@ -3,6 +3,7 @@ import type {
   CreateFinisherGroupRequest,
   FinisherGroup,
   FinisherGroupShipRequest,
+  UpdateFinisherGroupRequest,
 } from "@/types/api.types";
 
 const base = (farmId: string) => `/api/v1/farms/${farmId}/finishers`;
@@ -20,6 +21,9 @@ export const finishersApi = {
     apiClient
       .post<FinisherGroup>(`${base(farmId)}/${groupId}/ship`, body)
       .then((r) => r.data),
+
+  update: (farmId: string, groupId: string, body: UpdateFinisherGroupRequest) =>
+    apiClient.patch<FinisherGroup>(`${base(farmId)}/${groupId}`, body).then((r) => r.data),
 
   delete: (farmId: string, groupId: string) =>
     apiClient.delete(`${base(farmId)}/${groupId}`),
