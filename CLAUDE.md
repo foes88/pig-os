@@ -451,7 +451,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 
 > 보고서는 스냅샷 기반 조회. 기간(start_date~end_date)과 집계 단위(monthly/quarterly/annual) 파라미터 수신.
 
-- [ ] **[P7-1] 번식 성적 보고서 API**
+- [x] **[P7-1] 번식 성적 보고서 API**
   - `GET /api/v1/farms/{farm_id}/reports/reproduction`
   - 파라미터: `start_date`, `end_date`, `period=monthly|quarterly|annual`
   - 반환: 기간별 `{ period, psy, npd, fr, pwmr_a, pwmr_b, total_matings, total_farrowings, total_weanings, avg_tb, avg_ba, avg_weaned, avg_lactation_days, rts_rate }`
@@ -459,7 +459,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - 기간 범위 초과(>2년) 시 400 반환
   - unit test: 3개월 데이터 fixture → 월별 3행 반환 검증
 
-- [ ] **[P7-2] 비육 성적 보고서 API**
+- [x] **[P7-2] 비육 성적 보고서 API**
   - `GET /api/v1/farms/{farm_id}/reports/grow-finish`
   - 파라미터: `start_date`, `end_date`, `group_id?` (finisher_group 필터)
   - 반환: `{ period, adg_g, fcr, mortality_rate, avg_entry_weight_kg, avg_exit_weight_kg, total_head, total_groups }`
@@ -467,7 +467,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
   - FCR = total_feed_kg / total_gain_kg
   - unit test
 
-- [ ] **[P7-3] 모돈 이력 상세 엔드포인트**
+- [x] **[P7-3] 모돈 이력 상세 엔드포인트**
   - `GET /api/v1/sows/{sow_id}/history`
   - 반환: 산차별 번식 사이클 배열
     ```
@@ -477,7 +477,7 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
     ```
   - 미완료 사이클(현재 진행 중)은 `status: "in_progress"` + 빈 필드
 
-- [ ] **[P7-4] 보고서 라우터 등록**
+- [x] **[P7-4] 보고서 라우터 등록**
   - `api/app/routers/base/reports.py` (신규 또는 기존 확장)
   - main.py에 등록
 
