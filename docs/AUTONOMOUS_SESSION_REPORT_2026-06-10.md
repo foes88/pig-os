@@ -208,3 +208,27 @@ b92bc58 feat(phase2): [P2-4] alerts router + schema + register
 - **Phase 6 / 10 (통합 테스트)**: Docker Postgres 필요 → 샌드박스 실행 불가. 코드 작성은 가능.
 - **Phase 5 P5-1/2/3**: 신규 페이지(alerts/settings) 하드코딩 한국어를 messages 키로 전환 필요.
 - **Phase 4 P4-3/P4-6, Phase 9, Phase 12**: 독립 착수 가능(프론트 tsc / 백 유닛으로 검증 가능).
+
+---
+
+## 9. 추가 진행 (4차 — Reports/CRUD/Detail 프론트)
+
+| Phase | 항목 | 검증 |
+|-------|------|------|
+| 12 | P12-1/3 프론트 API: events update/remove + finisher update 클라이언트 + 타입 | tsc clean |
+| 9 | P9-1 `/reports/reproduction`, P9-2 `/reports/grow-finish` (Phase 7 API + 기간 프리셋 + CSV) | tsc clean |
+| 9 | P9-3 `/finishers` 그룹 수정 모달 (finishersApi.update) | tsc clean |
+| 4 | P4-3 모돈 상세: 산차별 성적 테이블 + 다음 예정 이벤트(repro config) | tsc clean |
+| 12 | P12-4 boars 목록 페이지네이션 (20/page, 클라이언트) | tsc clean |
+| 12 | P12-5 보고서 CSV 내보내기 (BOM, 한글 호환) | tsc clean |
+
+### 4차 누적 현황
+- 백엔드 유닛 **219/219**, 프론트 **tsc clean**
+- 완료 Phase: **1·2·3·7·8 전체, 9(P9-1/2/3), 11 사실상 전체, 4(P4-1/3/4/5), 5(P5-4), 12(P12-1/3/4/5 부분), 14(P14-1/2)**
+- 자율 플랜 체크박스 **36/54**
+
+### 남은 항목 (정직)
+- **P12-1/2 프론트 이벤트 수정·삭제 UI**(record/sow detail 모달), **P12-6 알림 페이지 개선** — 착수 가능(tsc 검증)
+- **P4-6 record 모바일**, **P5-1/2/3 신규 페이지 i18n 키 전환** — 착수 가능
+- **P13 Vitest** — 샌드박스 `npm install` 타임아웃으로 미설치(절차만 문서화)
+- **P6 / P10 통합 테스트** — Docker Postgres 필요(샌드박스 실행 불가, 코드 작성만 가능)
