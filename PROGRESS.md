@@ -117,3 +117,9 @@
 - [x] **[P7-1/2/3]** `services/report_service.py` — 번식(기간 버킷팅: 월/분기/연), 비육(ADG/FCR/폐사율), 모돈 이력(산차별 사이클) 순수 빌더 + DB 래퍼
 - [x] **[P7-4]** `schemas/report.py` + `routers/base/reports.py` — /reports/reproduction·grow-finish·sows/{id}/history, >2년 400, main.py 등록
 - 검증: unit 199/199 pass, 3개 라우트 등록 확인. (스냅샷 스키마가 얇아 이벤트 테이블 직접 집계)
+
+## 2026-06-10 — Phase 14 Addon #1 AI Insight (LLM Renderer)
+- [x] **[P14-1]** `engine/llm_renderer.py` — 벤더 중립, lazy SDK, 템플릿 폴백(키없음/use_llm=False/쿼터초과)
+- [x] **[P14-2]** `chat_service.py` — use_llm/usage_count 파라미터 + rendered_by 반환
+- [~] **[P14-3]** 쿼터 폴백(within_quota) 구현 완료; 영속 llm_usage_logs 테이블/마이그레이션은 DB 필요로 deferred
+- 검증: unit 206/206 pass (외부 API 호출 없음 — 폴백 경로만 테스트)

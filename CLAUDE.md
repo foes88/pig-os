@@ -694,14 +694,14 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 > Rule Engine 구조에서 Renderer를 LLM으로 교체. MVP에서는 Template Renderer만 사용,
 > Addon #1 활성화 시 LLM API 호출로 자연어 설명 생성.
 
-- [ ] **[P14-1] LLM Renderer 구현**
+- [x] **[P14-1] LLM Renderer 구현**
   - `api/app/engine/llm_renderer.py` 신규
   - `TemplateRenderer`와 동일 인터페이스: `render(result: StructuredResult, lang: str) → str`
   - Claude API (`claude-haiku-4-5-20251001`) 사용 (저비용)
   - StructuredResult를 시스템 프롬프트에 주입 → "판단은 하지 말고 이 데이터를 자연어로 설명만 해"
   - `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` 환경변수 없으면 TemplateRenderer로 폴백
 
-- [ ] **[P14-2] chat_service.py 연결**
+- [x] **[P14-2] chat_service.py 연결**
   - `use_llm: bool = False` 파라미터 추가 (farm.addon_ai_insight 활성화 여부)
   - 활성화된 농장만 LLM Renderer 사용, 나머지는 Template Renderer 유지
   - 응답에 `rendered_by: "template"|"llm"` 필드 추가
