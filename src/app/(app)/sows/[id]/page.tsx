@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { farmsApi } from "@/lib/api/endpoints/farms";
@@ -53,6 +53,27 @@ export default function SowDetailPage() {
     queryFn: () => farmsApi.getReproConfig(farmId!),
     enabled: !!farmId,
   });
+
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["matings", farmId, id] });
+    qc.invalidateQueries({ queryKey: ["farrowings", farmId, id] });
+    qc.invalidateQueries({ queryKey: ["weanings", farmId, id] });
+    qc.invalidateQueries({ queryKey: ["sow", farmId, id] });
+  };
+  const delMating = useMutation({ mutationFn: (eid: string) => eventsApi.matings.remove(farmId!, eid), onSuccess: invalidate });
+  const delFarrowing = useMutation({ mutationFn: (eid: string) => eventsApi.farrowings.remove(farmId!, eid), onSuccess: invalidate });
+  const delWeaning = useMutation({ mutationFn: (eid: string) => eventsApi.weanings.remove(farmId!, eid), onSuccess: invalidate });
+
+  const deleteLatest = (cycle: { mating: { id: string }; farrowing?: { id: string }; weaning?: { id: string } }) => {
+    if (cycle.weaning) {
+      if (confirm("이유 기록을 삭제하면 모돈 상태가 포유로 롤백됩니다. 계속할까요?")) delWeaning.mutate(cycle.weaning.id);
+    } else if (cycle.farrowing) {
+      if (confirm("분만 기록을 삭제하면 모돈 상태가 임신으로 롤백되고 산차가 1 감소합니다. 계속할까요?")) delFarrowing.mutate(cycle.farrowing.id);
+    } else {
+      if (confirm("교배 기록을 삭제하면 모돈 상태가 공태로 롤백됩니다. 계속할까요?")) delMating.mutate(cycle.mating.id);
+    }
+  };
 
   if (!farmId) return null;
 
@@ -193,13 +214,21 @@ export default function SowDetailPage() {
                         {mating.mating_date.slice(0, 7)} 교배 사이클
                       </span>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      weaning ? "bg-green-50 text-green-600" :
-                      farrowing ? "bg-amber-50 text-amber-600" :
-                      "bg-blue-50 text-blue-600"
-                    }`}>
-                      {weaning ? "이유 완료" : farrowing ? "포유 중" : "임신 중"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        weaning ? "bg-green-50 text-green-600" :
+                        farrowing ? "bg-amber-50 text-amber-600" :
+                        "bg-blue-50 text-blue-600"
+                      }`}>
+                        {weaning ? "이유 완료" : farrowing ? "포유 중" : "임신 중"}
+                      </span>
+                      <button
+                        onClick={() => deleteLatest({ mating, farrowing, weaning })}
+                        className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-50"
+                      >
+                        최근 삭제
+                      </button>
+                    </div>
                   </div>
 
                   {/* 이벤트 스텝 */}
