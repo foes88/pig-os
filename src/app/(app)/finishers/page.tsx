@@ -18,12 +18,17 @@ export default function FinishersPage() {
   const [shippingId, setShippingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeOnly, setActiveOnly] = useState(true);
+  const [page, setPage] = useState(1);
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ["finishers", farmId, activeOnly],
     queryFn: () => finishersApi.list(farmId!, activeOnly),
     enabled: !!farmId,
   });
+
+  const PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(groups.length / PER_PAGE));
+  const paged = groups.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   if (!farmId) {
     return (
@@ -66,7 +71,7 @@ export default function FinishersPage() {
           </div>
         ) : (
           <div className="grid gap-3">
-            {groups.map((g) => {
+            {paged.map((g) => {
               const isActive = !g.end_date;
               const mortality = g.head_count_out != null
                 ? g.head_count_in - g.head_count_out
@@ -137,6 +142,18 @@ export default function FinishersPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-3 text-xs text-text3">
+            <span>전체 {groups.length}그룹 · {page}/{totalPages}</span>
+            <div className="flex gap-1.5">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+                className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">이전</button>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+                className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">다음</button>
+            </div>
           </div>
         )}
 
