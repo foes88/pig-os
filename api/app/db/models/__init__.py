@@ -30,7 +30,8 @@ from app.db.models.config import (  # noqa: F401
     RegionDefault,
     ScopeKpiRecommendation,
 )
-from app.db.models.ops import (  # noqa: F401
+from app.db.models.ops import (
+    LlmUsageLog,  # noqa: F401
     ApiKey,
     FinisherGroup,
     KpiSnapshot,

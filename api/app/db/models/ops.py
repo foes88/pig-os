@@ -211,3 +211,20 @@ class SyncLog(Base):
     error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_detail: Mapped[dict | None] = mapped_column(JSONB)
     duration_ms: Mapped[int | None] = mapped_column(Integer)
+
+
+class LlmUsageLog(Base):
+    """
+    Addon #1 (AI Insight) LLM call log — per farm per month, for quota enforcement.
+    chat_service counts current-month rows to decide template fallback.
+    """
+    __tablename__ = "llm_usage_logs"
+    __table_args__ = (Index("idx_llm_usage_farm_month", "farm_id", "year", "month"),)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    year: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    month: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    intent: Mapped[str | None] = mapped_column(String(50))
+    tokens: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
