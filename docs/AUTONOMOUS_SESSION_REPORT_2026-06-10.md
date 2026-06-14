@@ -153,3 +153,34 @@ b92bc58 feat(phase2): [P2-4] alerts router + schema + register
 
 > ⚠️ `git push`는 규칙대로 하지 않았습니다. 사용자 확인 후 직접 push 하세요.
 > 워킹트리의 기존 line-ending 정규화 변경(다수 문서/concepts 파일)은 이번 세션이 만든 것이 아니며 손대지 않았습니다.
+
+---
+
+## 7. 추가 진행 (2차 세션 이어서)
+
+> "검증 깔끔한 백엔드부터" 요청에 따라 추가 처리. 환경 리셋으로 shim/헬퍼 재구성 후 진행.
+
+### Phase 7 — 보고서 API (Reports Backend) ✅ 완료
+| 태스크 | 내용 | 테스트 |
+|--------|------|--------|
+| P7-1/2/3 | `services/report_service.py` — 번식(월/분기/연 버킷), 비육(ADG/FCR/폐사율), 모돈 이력(산차 사이클). 순수 빌더 + DB 래퍼 | 11 |
+| P7-4 | `schemas/report.py` + `routers/base/reports.py` — `/reports/reproduction·grow-finish·sows/{id}/history`, >2년 400, main.py 등록 | (앱 빌드) |
+> 참고: kpi_snapshots 스키마가 얇아(psy/npd/fcr/headcount만) **이벤트 테이블 직접 집계**로 구현.
+
+### Phase 14 — Addon #1 AI Insight (LLM Renderer) ✅ P14-1/2 완료, P14-3 부분
+| 태스크 | 내용 | 테스트 |
+|--------|------|--------|
+| P14-1 | `engine/llm_renderer.py` — 벤더 중립, lazy SDK import, **템플릿 폴백**(키없음/use_llm=False/쿼터초과) | 7 |
+| P14-2 | `chat_service.py` — `use_llm`/`usage_count` 파라미터 + `rendered_by` 반환 | (포함) |
+| P14-3 | `within_quota` 쿼터 폴백 구현 ✅ / 영속 `llm_usage_logs` 테이블·마이그레이션 **deferred(DB 필요)** | — |
+> 외부 유료 API 호출 금지 준수 — 키 없이 폴백 경로만 테스트.
+
+### 2차 누적 검증
+- **백엔드 유닛: 206 / 206 통과** (1차 188 → +18: report 11, llm 7)
+- 신규 커밋(2차): report_service, reports router/schema, llm_renderer, chat_service + docs
+
+### 갱신된 완료 현황 (자율 플랜 체크박스)
+- 완료: **Phase 1·2·3 전체, Phase 4(P4-1/4/5), Phase 7 전체, Phase 14(P14-1/2)**
+- 다음 권장: **Phase 8 (Settings 프론트)** — 단, `PATCH /farms/{id}/config`(번식 파라미터 저장) 백엔드
+  엔드포인트 신규가 선행 필요. 그 외 Phase 5(i18n)·9·11·12·13은 독립적으로 착수 가능,
+  Phase 6·10(통합 테스트)은 Docker Postgres 필요.
