@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { useQuery } from "@tanstack/react-query";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
@@ -15,6 +17,7 @@ const SEVERITY_STYLES: Record<Alert["severity"], { bg: string; dot: string; labe
 
 export default function NotificationsPage() {
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const [filter, setFilter] = useState<"ALL" | "CRITICAL" | "WARNING" | "INFO">("ALL");
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: queryKeys.kpi.dashboard(farmId ?? ""),
@@ -24,6 +27,7 @@ export default function NotificationsPage() {
 
   const alerts = dashboard?.alerts ?? [];
   const active = alerts.filter((a) => a.severity !== "OK");
+  const filtered = filter === "ALL" ? active : active.filter((a) => a.severity === filter);
   const ok = alerts.filter((a) => a.severity === "OK");
 
   if (!farmId) {
@@ -58,14 +62,35 @@ export default function NotificationsPage() {
         </div>
       )}
 
+      {/* Severity filter tabs */}
+      {alerts.length > 0 && (
+        <div className="flex gap-1.5 mb-4">
+          {(["ALL", "CRITICAL", "WARNING", "INFO"] as const).map((t) => {
+            const count = t === "ALL" ? active.length : active.filter((a) => a.severity === t).length;
+            const labels: Record<string, string> = { ALL: "전체", CRITICAL: "위험", WARNING: "주의", INFO: "정보" };
+            return (
+              <button
+                key={t}
+                onClick={() => setFilter(t)}
+                className={`text-xs font-semibold rounded-full px-3 py-1.5 border transition ${
+                  filter === t ? "bg-primary text-white border-primary" : "border-border text-text3 hover:border-primary"
+                }`}
+              >
+                {labels[t]} {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Active alerts */}
-      {active.length > 0 && (
+      {filtered.length > 0 && (
         <section className="mb-6">
           <div className="text-[11px] font-bold text-faint uppercase tracking-widest mb-2">
-            주의 필요 ({active.length})
+            주의 필요 ({filtered.length})
           </div>
           <div className="space-y-2">
-            {active.map((alert) => {
+            {filtered.map((alert) => {
               const s = SEVERITY_STYLES[alert.severity];
               return (
                 <div key={alert.rule_id} className={`border rounded-2xl px-4 py-3.5 ${s.bg}`}>
