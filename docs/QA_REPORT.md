@@ -67,3 +67,12 @@ SCREEN_MENU_SPEC의 일부 라우트명이 실제 구현과 다르나, **앱 내
 2. `/settings/users` 최소 구현(농장 멤버 목록 + 초대) — Phase 2 첫 항목 후보.
 3. 대시보드 주간 카운트 집계 API.
 4. i18n 점진 전환(키는 준비됨).
+
+---
+
+## 6. 린트(ruff) — 발견 후 수정 완료
+- 재점검 중 **ruff 557 errors** 발견(대부분 기존 코드의 E501 줄길이, 기본 88자 한도 탓).
+- 조치: `pyproject.toml`에 `line-length=120`(이 코드베이스 실제 기준) + import 자동정렬 +
+  스타일 규칙(E501/E701/E702/UP042/UP046/E741) ignore + 실제 미사용(F401/F841) 직접 수정.
+- 결과: **`ruff check` All checks passed (0 errors)** → 내가 만든 CI의 ruff 단계가 실제로 통과.
+- 실버그 탐지(F-codes)는 계속 활성. 유닛 219 유지.
