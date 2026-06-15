@@ -557,6 +557,15 @@
     "diffDifficult": "난산"
   },
   "notifications": {
+    "realtimeSection": "실시간 KPI",
+    "realtimeEmpty": "모든 KPI가 정상 범위입니다.",
+    "savedSection": "저장된 알림",
+    "markAllRead": "모두 읽음",
+    "filterUnread": "안 읽음만",
+    "savedEmpty": "저장된 알림이 없습니다.",
+    "unreadBadge": "안 읽음 {n}건",
+    "markRead": "읽음",
+    "loadMore": "더 보기",
     "selectFarm": "농장을 선택해주세요.",
     "title": "알림",
     "subtitle": "KPI 기반 자동 알림",

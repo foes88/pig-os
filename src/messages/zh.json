@@ -557,6 +557,15 @@
     "diffDifficult": "难产"
   },
   "notifications": {
+    "realtimeSection": "实时 KPI",
+    "realtimeEmpty": "所有 KPI 均在正常范围内。",
+    "savedSection": "已保存提醒",
+    "markAllRead": "全部标为已读",
+    "filterUnread": "仅未读",
+    "savedEmpty": "暂无已保存通知。",
+    "unreadBadge": "{n} 条未读",
+    "markRead": "已读",
+    "loadMore": "加载更多",
     "selectFarm": "请选择猪场。",
     "title": "通知",
     "subtitle": "基于KPI的自动提醒",

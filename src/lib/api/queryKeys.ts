@@ -58,4 +58,9 @@ export const queryKeys = {
   tasks: {
     list: (farmId: string, status: string) => ["tasks", farmId, status] as const,
   },
+
+  notifications: {
+    list: (farmId: string, unreadOnly: boolean) => ["notifications", farmId, unreadOnly] as const,
+    unread: (farmId: string) => ["notifications", "unread", farmId] as const,
+  },
 } as const;

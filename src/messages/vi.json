@@ -557,6 +557,15 @@
     "diffDifficult": "Khó đẻ"
   },
   "notifications": {
+    "realtimeSection": "KPI thời gian thực",
+    "realtimeEmpty": "Tất cả KPI đều trong ngưỡng.",
+    "savedSection": "Thông báo đã lưu",
+    "markAllRead": "Đánh dấu đã đọc tất cả",
+    "filterUnread": "Chỉ chưa đọc",
+    "savedEmpty": "Không có thông báo đã lưu.",
+    "unreadBadge": "{n} chưa đọc",
+    "markRead": "Đã đọc",
+    "loadMore": "Tải thêm",
     "selectFarm": "Vui lòng chọn trại.",
     "title": "Thông báo",
     "subtitle": "Cảnh báo tự động theo KPI",

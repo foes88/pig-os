@@ -15,6 +15,13 @@
 - [x] 통합 테스트 `tests/integration/test_notification_producer.py` (생성/멱등/수신자없음 3케이스) 작성.
 - 검증: ruff clean / import-smoke OK / unit 219/219 / 라우트 OpenAPI 등록 확인. **integration은 DB 필요 → 사용자 머신 재검증.** [degraded: no-db]
 
+## 2026-06-15 야간스프린트 — N2 웹 알림 페이지 연동 (P12-6 프론트)
+- [x] `lib/api/endpoints/notifications.ts` (list/markRead/markAllRead) + api.types.ts(NotificationItem/ListResponse/MarkReadResult) + queryKeys.notifications.
+- [x] notifications/page.tsx: 실시간 KPI 알림 유지 + 영구 알림 섹션(개별 읽음/전체읽음/미읽음 필터/related_entity 클릭 이동/더보기 페이지네이션).
+- [x] 배지 unread 연결: Sidebar(/notifications 항목 unread 배지) + Topbar Bell(alertCount=unread, onBell→/notifications) + BottomNav(alertCount=unread).
+- [x] i18n 5개 언어 +9키(realtimeSection/savedSection/markAllRead/filterUnread/savedEmpty/unreadBadge/markRead/loadMore/realtimeEmpty). 전수 정합성 873키 일치.
+- 검증: tsc --noEmit EXIT 0 / i18n 5×873 일치.
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 

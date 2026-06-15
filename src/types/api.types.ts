@@ -776,3 +776,32 @@ export interface SowHistoryCycle {
   lactation_days: number | null;
   status: string;
 }
+
+// ── Notifications (P12-6 영구 인앱 알림) ──────────────────────────────────────
+export interface NotificationItem {
+  id: string;
+  farm_id: string | null;
+  title: string;
+  body: string;
+  alert_type: string | null;
+  severity: "INFO" | "WARNING" | "CRITICAL" | null;
+  related_entity_type: string | null;
+  related_entity_id: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  items: NotificationItem[];
+  unread_count: number;
+  total: number;
+}
+
+export interface MarkReadResult {
+  updated: number;
+  unread_count: number;
+}
+
+export interface GenerateNotificationsResult {
+  created: number;
+}

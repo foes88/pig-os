@@ -557,6 +557,15 @@
     "diffDifficult": "Difícil"
   },
   "notifications": {
+    "realtimeSection": "KPI en tiempo real",
+    "realtimeEmpty": "Todos los KPI están dentro del rango.",
+    "savedSection": "Alertas guardadas",
+    "markAllRead": "Marcar todo leído",
+    "filterUnread": "Solo no leídas",
+    "savedEmpty": "No hay notificaciones guardadas.",
+    "unreadBadge": "{n} sin leer",
+    "markRead": "Leído",
+    "loadMore": "Cargar más",
     "selectFarm": "Seleccione una granja.",
     "title": "Notificaciones",
     "subtitle": "Alertas automáticas por KPI",

@@ -25,6 +25,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
+import { notificationsApi } from "@/lib/api/endpoints/notifications";
 import { queryKeys } from "@/lib/api/queryKeys";
 import type { Locale } from "@/i18n/config";
 
@@ -105,6 +106,13 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
     refetchInterval: 5 * 60 * 1000,
   });
   const alertCount = overdue?.total ?? 0;
+  const { data: notifUnread } = useQuery({
+    queryKey: queryKeys.notifications.unread(farmId ?? ""),
+    queryFn: () => notificationsApi.list({ farmId: farmId!, limit: 0 }),
+    enabled: !!farmId,
+    refetchInterval: 5 * 60 * 1000,
+  });
+  const unreadCount = notifUnread?.unread_count ?? 0;
 
   const t = (obj: L) => obj[lang];
 
@@ -223,6 +231,11 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
               {!collapsed && item.href === "/alerts" && alertCount > 0 && (
                 <span className="ml-auto text-[10px] font-bold bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
                   {alertCount}
+                </span>
+              )}
+              {!collapsed && item.href === "/notifications" && unreadCount > 0 && (
+                <span className="ml-auto text-[10px] font-bold bg-primary text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
+                  {unreadCount}
                 </span>
               )}
             </Link>
