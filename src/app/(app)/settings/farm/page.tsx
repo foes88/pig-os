@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { farmsApi } from "@/lib/api/endpoints/farms";
@@ -10,19 +11,20 @@ import type { FarmReproConfig } from "@/types/api.types";
 
 const FIELDS: {
   key: keyof FarmReproConfig;
-  label: string;
+  labelKey: string;
   min: number;
   max: number;
-  desc: string;
+  descKey: string;
 }[] = [
-  { key: "gestation_days",       label: "임신 기간",         min: 100, max: 130, desc: "분만 예정일 계산 기준 (기본 114일)" },
-  { key: "lactation_days",       label: "포유 기간",         min: 10,  max: 40,  desc: "이유 예정일 계산 기준 (기본 21일)" },
-  { key: "wei_target_days",      label: "WSI 목표",          min: 1,   max: 30,  desc: "이유→재교배 목표 간격 (기본 7일)" },
-  { key: "gilt_first_mating_age", label: "후보돈 초교배 일령", min: 180, max: 400, desc: "교배 지연 알림 기준 (기본 240일)" },
-  { key: "slaughter_age",        label: "출하 일령",         min: 120, max: 300, desc: "비육 출하 예정일 기준 (기본 180일)" },
+  { key: "gestation_days",        labelKey: "gestation",    min: 100, max: 130, descKey: "gestationDesc" },
+  { key: "lactation_days",        labelKey: "lactation",    min: 10,  max: 40,  descKey: "lactationDesc" },
+  { key: "wei_target_days",       labelKey: "wsi",          min: 1,   max: 30,  descKey: "wsiDesc" },
+  { key: "gilt_first_mating_age", labelKey: "giltAge",      min: 180, max: 400, descKey: "giltAgeDesc" },
+  { key: "slaughter_age",         labelKey: "slaughterAge", min: 120, max: 300, descKey: "slaughterAgeDesc" },
 ];
 
 export default function FarmConfigPage() {
+  const t = useTranslations("settingsFarm");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const qc = useQueryClient();
   const [form, setForm] = useState<FarmReproConfig | null>(null);
@@ -45,7 +47,7 @@ export default function FarmConfigPage() {
     },
   });
 
-  if (!farmId) return <div className="p-7 text-text3">농장을 선택해주세요.</div>;
+  if (!farmId) return <div className="p-7 text-text3">{t("selectFarm")}</div>;
 
   const setField = (key: keyof FarmReproConfig, value: number) =>
     setForm((f) => (f ? { ...f, [key]: value } : f));
@@ -56,9 +58,9 @@ export default function FarmConfigPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-7 py-6">
-      <h1 className="text-xl font-extrabold tracking-tight text-text mb-1">농장 번식 설정</h1>
+      <h1 className="text-xl font-extrabold tracking-tight text-text mb-1">{t("title")}</h1>
       <p className="text-[13px] text-text3 mb-6">
-        번식 주기 기준값 — 알림·예정일 계산에 즉시 반영됩니다.
+        {t("subtitle")}
       </p>
 
       {isLoading || !form ? (
@@ -76,8 +78,8 @@ export default function FarmConfigPage() {
               return (
                 <div key={fl.key} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-text">{fl.label}</div>
-                    <div className="text-[11px] text-text3 mt-0.5">{fl.desc}</div>
+                    <div className="text-sm font-semibold text-text">{t(fl.labelKey)}</div>
+                    <div className="text-[11px] text-text3 mt-0.5">{t(fl.descKey)}</div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <input
@@ -90,7 +92,7 @@ export default function FarmConfigPage() {
                         bad ? "border-danger text-danger" : "border-border text-text"
                       }`}
                     />
-                    <span className="text-xs text-text3 w-4">일</span>
+                    <span className="text-xs text-text3 w-4">{t("daysUnit")}</span>
                   </div>
                 </div>
               );
@@ -98,7 +100,7 @@ export default function FarmConfigPage() {
           </div>
 
           {outOfRange && (
-            <p className="text-xs text-danger mb-3">허용 범위를 벗어난 값이 있습니다.</p>
+            <p className="text-xs text-danger mb-3">{t("outOfRange")}</p>
           )}
 
           <button
@@ -107,10 +109,10 @@ export default function FarmConfigPage() {
             className="inline-flex items-center gap-2 bg-primary text-white text-sm font-semibold rounded-xl px-5 py-2.5 disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            {mut.isPending ? "저장 중..." : "저장"}
+            {mut.isPending ? t("saving") : t("save")}
           </button>
           {mut.isSuccess && !mut.isPending && (
-            <span className="ml-3 text-xs text-success font-semibold">저장되었습니다</span>
+            <span className="ml-3 text-xs text-success font-semibold">{t("saved")}</span>
           )}
         </>
       )}

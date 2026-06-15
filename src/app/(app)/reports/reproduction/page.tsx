@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { reportsApi } from "@/lib/api/endpoints/reports";
@@ -16,23 +17,23 @@ function monthsAgoISO(n: number): string {
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const PRESETS = [
-  { label: "최근 3개월", months: 3 },
-  { label: "최근 6개월", months: 6 },
-  { label: "최근 1년", months: 12 },
+  { labelKey: "p3m", months: 3 },
+  { labelKey: "p6m", months: 6 },
+  { labelKey: "p1y", months: 12 },
 ];
 
-const COLS: { key: keyof ReproductionRow; label: string; pct?: boolean }[] = [
-  { key: "total_matings", label: "교배" },
-  { key: "total_farrowings", label: "분만" },
-  { key: "total_weanings", label: "이유" },
-  { key: "fr", label: "분만율", pct: true },
-  { key: "avg_tb", label: "총산" },
-  { key: "avg_ba", label: "생존산" },
-  { key: "avg_weaned", label: "이유두수" },
-  { key: "avg_lactation_days", label: "포유일" },
-  { key: "pwmr_a", label: "PWMR-A", pct: true },
-  { key: "pwmr_b", label: "PWMR-B", pct: true },
-  { key: "rts_rate", label: "RTS율", pct: true },
+const COLS: { key: keyof ReproductionRow; labelKey: string; pct?: boolean }[] = [
+  { key: "total_matings", labelKey: "cMatings" },
+  { key: "total_farrowings", labelKey: "cFarrowings" },
+  { key: "total_weanings", labelKey: "cWeanings" },
+  { key: "fr", labelKey: "cFr", pct: true },
+  { key: "avg_tb", labelKey: "cAvgTb" },
+  { key: "avg_ba", labelKey: "cAvgBa" },
+  { key: "avg_weaned", labelKey: "cAvgWeaned" },
+  { key: "avg_lactation_days", labelKey: "cLactDays" },
+  { key: "pwmr_a", labelKey: "cPwmrA", pct: true },
+  { key: "pwmr_b", labelKey: "cPwmrB", pct: true },
+  { key: "rts_rate", labelKey: "cRts", pct: true },
 ];
 
 function fmt(v: number | null, pct?: boolean): string {
@@ -53,6 +54,7 @@ function downloadCsv(filename: string, headers: string[], rows: (string | number
 }
 
 export default function ReproductionReportPage() {
+  const t = useTranslations("reproReport");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [months, setMonths] = useState(6);
   const start = monthsAgoISO(months);
@@ -63,14 +65,14 @@ export default function ReproductionReportPage() {
     enabled: !!farmId,
   });
 
-  if (!farmId) return <div className="p-7 text-text3">농장을 선택해주세요.</div>;
+  if (!farmId) return <div className="p-7 text-text3">{t("selectFarm")}</div>;
 
   const rows = data ?? [];
 
   const exportCsv = () => {
     downloadCsv(
       `pigos_reproduction_${start}_${TODAY}.csv`,
-      ["기간", ...COLS.map((c) => c.label)],
+      [t("period"), ...COLS.map((c) => t(c.labelKey))],
       rows.map((r) => [r.period, ...COLS.map((c) => r[c.key] as number | null)]),
     );
   };
@@ -79,8 +81,8 @@ export default function ReproductionReportPage() {
     <div className="p-7 max-w-5xl">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight">번식 성적 보고서</h1>
-          <p className="text-xs text-text3 mt-0.5">월별 번식 KPI 집계</p>
+          <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
+          <p className="text-xs text-text3 mt-0.5">{t("subtitle")}</p>
         </div>
         <button
           onClick={exportCsv}
@@ -103,7 +105,7 @@ export default function ReproductionReportPage() {
                 : "border-border text-text3 hover:border-primary"
             }`}
           >
-            {p.label}
+            {t(p.labelKey)}
           </button>
         ))}
       </div>
@@ -112,16 +114,16 @@ export default function ReproductionReportPage() {
         <div className="h-40 bg-border rounded-2xl animate-pulse" />
       ) : rows.length === 0 ? (
         <div className="border border-border rounded-2xl py-16 text-center text-text3">
-          해당 기간 데이터가 없습니다.
+          {t("noData")}
         </div>
       ) : (
         <div className="border border-border rounded-2xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-bg2 text-text3 text-[11px] uppercase tracking-wide">
-                <th className="text-left font-semibold px-3 py-2.5 sticky left-0 bg-bg2">기간</th>
+                <th className="text-left font-semibold px-3 py-2.5 sticky left-0 bg-bg2">{t("period")}</th>
                 {COLS.map((c) => (
-                  <th key={c.key} className="text-right font-semibold px-3 py-2.5">{c.label}</th>
+                  <th key={c.key} className="text-right font-semibold px-3 py-2.5">{t(c.labelKey)}</th>
                 ))}
               </tr>
             </thead>
@@ -142,7 +144,7 @@ export default function ReproductionReportPage() {
       )}
 
       <p className="text-[11px] text-text3 mt-3">
-        ⚠ PWMR-A(폐사/이유+폐사)와 PWMR-B(총산-이유/총산)는 3–5%p 차이날 수 있습니다.
+        {t("pwmrNote")}
       </p>
     </div>
   );

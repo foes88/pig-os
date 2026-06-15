@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { reportsApi } from "@/lib/api/endpoints/reports";
@@ -16,9 +17,9 @@ function monthsAgoISO(n: number): string {
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const PRESETS = [
-  { label: "최근 6개월", months: 6 },
-  { label: "최근 1년", months: 12 },
-  { label: "최근 2년", months: 24 },
+  { labelKey: "p6m", months: 6 },
+  { labelKey: "p1y", months: 12 },
+  { labelKey: "p2y", months: 24 },
 ];
 
 function fmt(v: number | null, suffix = ""): string {
@@ -38,6 +39,7 @@ function downloadCsv(filename: string, headers: string[], rows: (string | number
 }
 
 export default function GrowFinishReportPage() {
+  const t = useTranslations("growFinish");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [months, setMonths] = useState(12);
   const start = monthsAgoISO(months);
@@ -48,14 +50,14 @@ export default function GrowFinishReportPage() {
     enabled: !!farmId,
   });
 
-  if (!farmId) return <div className="p-7 text-text3">농장을 선택해주세요.</div>;
+  if (!farmId) return <div className="p-7 text-text3">{t("selectFarm")}</div>;
 
   const rows: GrowFinishRow[] = data ?? [];
 
   const exportCsv = () => {
     downloadCsv(
       `pigos_grow_finish_${start}_${TODAY}.csv`,
-      ["그룹", "입식일", "종료일", "입식두수", "출하두수", "입식체중", "출하체중", "ADG(g)", "FCR", "폐사율"],
+      [t("cGroup"), t("cEntryDate"), t("cEndDate"), t("cHeadIn"), t("cHeadOut"), t("cEntryWt"), t("cExitWt"), "ADG(g)", "FCR", t("cMortality")],
       rows.map((r) => [
         r.group_code, r.start_date, r.end_date, r.head_in, r.head_out,
         r.avg_entry_weight_kg, r.avg_exit_weight_kg, r.adg_g, r.fcr, r.mortality_rate,
@@ -67,8 +69,8 @@ export default function GrowFinishReportPage() {
     <div className="p-7 max-w-5xl">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight">비육 성적 보고서</h1>
-          <p className="text-xs text-text3 mt-0.5">그룹별 ADG / FCR / 폐사율</p>
+          <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
+          <p className="text-xs text-text3 mt-0.5">{t("subtitle")}</p>
         </div>
         <button
           onClick={exportCsv}
@@ -91,7 +93,7 @@ export default function GrowFinishReportPage() {
                 : "border-border text-text3 hover:border-primary"
             }`}
           >
-            {p.label}
+            {t(p.labelKey)}
           </button>
         ))}
       </div>
@@ -100,19 +102,19 @@ export default function GrowFinishReportPage() {
         <div className="h-40 bg-border rounded-2xl animate-pulse" />
       ) : rows.length === 0 ? (
         <div className="border border-border rounded-2xl py-16 text-center text-text3">
-          해당 기간 데이터가 없습니다.
+          {t("noData")}
         </div>
       ) : (
         <div className="border border-border rounded-2xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-bg2 text-text3 text-[11px] uppercase tracking-wide">
-                <th className="text-left font-semibold px-3 py-2.5">그룹</th>
-                <th className="text-right font-semibold px-3 py-2.5">입식두수</th>
-                <th className="text-right font-semibold px-3 py-2.5">출하두수</th>
+                <th className="text-left font-semibold px-3 py-2.5">{t("cGroup")}</th>
+                <th className="text-right font-semibold px-3 py-2.5">{t("cHeadIn")}</th>
+                <th className="text-right font-semibold px-3 py-2.5">{t("cHeadOut")}</th>
                 <th className="text-right font-semibold px-3 py-2.5">ADG(g)</th>
                 <th className="text-right font-semibold px-3 py-2.5">FCR</th>
-                <th className="text-right font-semibold px-3 py-2.5">폐사율</th>
+                <th className="text-right font-semibold px-3 py-2.5">{t("cMortality")}</th>
               </tr>
             </thead>
             <tbody>
