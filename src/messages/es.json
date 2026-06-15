@@ -113,7 +113,15 @@
     "rcUnknown": "Desconocido",
     "rcOther": "Otro",
     "editTooltip": "Editar",
-    "removalTooltip": "Descarte/Venta"
+    "removalTooltip": "Descarte/Venta",
+    "fBreedCompany": "Empresa genética",
+    "fGenetics": "ID genético",
+    "fStatus": "Estado",
+    "etGilt": "Gilta",
+    "etPurchase": "Compra",
+    "etTransfer": "Traslado",
+    "etBorn": "Nacida en granja",
+    "editTerminalNote": "Esta cerda ya salió (eliminada/vendida). El estado se gestiona en el flujo de baja."
   },
   "events": {
     "mating": {
@@ -976,5 +984,31 @@
     "go": "Ir",
     "done": "Hecho",
     "dismiss": "Descartar"
+  },
+  "eventHistory": {
+    "title": "Eventos recientes",
+    "loading": "Cargando…",
+    "empty": "Aún no hay eventos reproductivos.",
+    "kind_mating": "Monta",
+    "kind_farrowing": "Parto",
+    "kind_weaning": "Destete",
+    "weaned": "Destetados",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "date": "Fecha",
+    "notes": "Notas",
+    "bornAlive": "Nacidos vivos",
+    "stillborn": "Mortinatos",
+    "mummified": "Momificados",
+    "weanedCount": "Destetados",
+    "avgWeight": "Peso prom.(kg)",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saveError": "Error al guardar.",
+    "deleting": "Eliminando…",
+    "deleteError": "Error al eliminar.",
+    "deleteConfirmTitle": "¿Eliminar este registro?",
+    "deleteConfirmBody": "Eliminar este registro revertirá el estado de la cerda. No se puede deshacer."
   }
 }

@@ -21,6 +21,10 @@ import type {
 // 라벨은 sowStatus i18n 키로 해석, tabAll은 sows.tabAll
 const STATUS_TABS: (SowStatus | "ALL")[] = ["ALL", "GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT", "CULLED"];
 
+// 활성(편집 가능) 상태 — 종료상태(CULLED/DEAD/SOLD/TRANSFER)는 도폐사 모달 전용
+const ACTIVE_SOW_STATUSES = ["GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT"] as const;
+type ActiveSowStatus = (typeof ACTIVE_SOW_STATUSES)[number];
+
 // 상태 → 배지 색상 (라벨은 sowStatus 키)
 const STATUS_CLS: Record<string, string> = {
   GILT:      "bg-cyan-50 text-cyan-600",
@@ -270,17 +274,35 @@ function EditSowModal({
   const [form, setForm] = useState<UpdateSowRequest>({
     ear_tag: sow.ear_tag,
     breed: sow.breed ?? "",
+    breed_company: sow.breed_company ?? "",
+    genetics_id: sow.genetics_id ?? "",
     rfid_tag: sow.rfid_tag ?? "",
+    parity: sow.parity,
+    entry_date: sow.entry_date ? sow.entry_date.slice(0, 10) : undefined,
+    entry_type: (sow.entry_type as UpdateSowRequest["entry_type"]) ?? undefined,
+    status: ACTIVE_SOW_STATUSES.includes(sow.status as ActiveSowStatus)
+      ? (sow.status as UpdateSowRequest["status"])
+      : undefined,
   });
   const [error, setError] = useState<string | null>(null);
   const t = useTranslations("sows");
+  const tStatus = useTranslations("sowStatus");
+
+  const isTerminal = !ACTIVE_SOW_STATUSES.includes(sow.status as ActiveSowStatus);
 
   const mutation = useMutation({
     mutationFn: () =>
       sowsApi.update(farmId, sow.id, {
         ear_tag: form.ear_tag,
         breed: form.breed || undefined,
+        breed_company: form.breed_company || undefined,
+        genetics_id: form.genetics_id || undefined,
         rfid_tag: form.rfid_tag || undefined,
+        parity: form.parity,
+        entry_date: form.entry_date || undefined,
+        entry_type: form.entry_type || undefined,
+        // 종료상태 모돈은 status 변경 불가(cull 모달 전용)
+        status: isTerminal ? undefined : form.status,
       }),
     onSuccess,
     onError: (err: unknown) => {
@@ -291,7 +313,7 @@ function EditSowModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold">{t("editTitle", { tag: sow.ear_tag })}</h2>
           <button onClick={onClose} className="p-1 rounded-md text-text3 hover:text-text hover:bg-bg2 transition">
@@ -307,24 +329,90 @@ function EditSowModal({
               className="input"
             />
           </Field>
-          <Field label={t("fBreed")}>
-            <input
-              value={form.breed ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, breed: e.target.value }))}
-              placeholder={t("phBreed")}
-              className="input"
-            />
-          </Field>
-          <Field label={t("fRfid")}>
-            <input
-              value={form.rfid_tag ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, rfid_tag: e.target.value }))}
-              placeholder={t("phRfid")}
-              className="input"
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("fBreed")}>
+              <input
+                value={form.breed ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, breed: e.target.value }))}
+                placeholder={t("phBreed")}
+                className="input"
+              />
+            </Field>
+            <Field label={t("fBreedCompany")}>
+              <input
+                value={form.breed_company ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, breed_company: e.target.value }))}
+                className="input"
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("fRfid")}>
+              <input
+                value={form.rfid_tag ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, rfid_tag: e.target.value }))}
+                placeholder={t("phRfid")}
+                className="input"
+              />
+            </Field>
+            <Field label={t("fGenetics")}>
+              <input
+                value={form.genetics_id ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, genetics_id: e.target.value }))}
+                className="input"
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("fParity")}>
+              <input
+                type="number" min={0} max={20}
+                value={form.parity ?? 0}
+                onChange={(e) => setForm((f) => ({ ...f, parity: +e.target.value }))}
+                className="input"
+              />
+            </Field>
+            <Field label={t("fStatus")}>
+              {isTerminal ? (
+                <input value={tStatus(sow.status)} disabled className="input opacity-60" />
+              ) : (
+                <select
+                  value={form.status ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as UpdateSowRequest["status"] }))}
+                  className="input"
+                >
+                  {ACTIVE_SOW_STATUSES.map((s) => (
+                    <option key={s} value={s}>{tStatus(s)}</option>
+                  ))}
+                </select>
+              )}
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("fEntryDate")}>
+              <input
+                type="date"
+                value={form.entry_date ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, entry_date: e.target.value }))}
+                className="input"
+              />
+            </Field>
+            <Field label={t("fEntryType")}>
+              <select
+                value={form.entry_type ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, entry_type: e.target.value as UpdateSowRequest["entry_type"] }))}
+                className="input"
+              >
+                <option value="GILT">{t("etGilt")}</option>
+                <option value="PURCHASE">{t("etPurchase")}</option>
+                <option value="TRANSFER">{t("etTransfer")}</option>
+                <option value="BORN">{t("etBorn")}</option>
+              </select>
+            </Field>
+          </div>
         </div>
 
+        {isTerminal && <p className="text-[11px] text-text3 mt-3">{t("editTerminalNote")}</p>}
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
 
         <div className="flex gap-2 mt-5">

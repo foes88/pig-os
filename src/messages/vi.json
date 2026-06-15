@@ -113,7 +113,15 @@
     "rcUnknown": "Không rõ",
     "rcOther": "Khác",
     "editTooltip": "Sửa",
-    "removalTooltip": "Loại/Bán"
+    "removalTooltip": "Loại/Bán",
+    "fBreedCompany": "Công ty giống",
+    "fGenetics": "Mã di truyền",
+    "fStatus": "Trạng thái",
+    "etGilt": "Hậu bị",
+    "etPurchase": "Mua",
+    "etTransfer": "Chuyển đến",
+    "etBorn": "Tự sản xuất",
+    "editTerminalNote": "Nái này đã xuất (loại/bán). Trạng thái quản lý qua quy trình loại thải."
   },
   "events": {
     "mating": {
@@ -976,5 +984,31 @@
     "go": "Đi",
     "done": "Xong",
     "dismiss": "Bỏ qua"
+  },
+  "eventHistory": {
+    "title": "Sự kiện gần đây",
+    "loading": "Đang tải…",
+    "empty": "Chưa có sự kiện sinh sản.",
+    "kind_mating": "Phối giống",
+    "kind_farrowing": "Đẻ",
+    "kind_weaning": "Cai sữa",
+    "weaned": "Cai sữa",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "date": "Ngày",
+    "notes": "Ghi chú",
+    "bornAlive": "Sống",
+    "stillborn": "Chết lưu",
+    "mummified": "Khô thai",
+    "weanedCount": "Số cai sữa",
+    "avgWeight": "KL TB(kg)",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "saveError": "Lưu thất bại.",
+    "deleting": "Đang xóa…",
+    "deleteError": "Xóa thất bại.",
+    "deleteConfirmTitle": "Xóa bản ghi này?",
+    "deleteConfirmBody": "Xóa bản ghi này sẽ hoàn tác trạng thái nái. Không thể khôi phục."
   }
 }

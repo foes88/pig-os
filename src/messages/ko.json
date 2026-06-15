@@ -113,7 +113,15 @@
     "rcUnknown": "원인 불명",
     "rcOther": "기타",
     "editTooltip": "수정",
-    "removalTooltip": "도폐사/판매 처리"
+    "removalTooltip": "도폐사/판매 처리",
+    "fBreedCompany": "종돈회사",
+    "fGenetics": "유전자ID",
+    "fStatus": "상태",
+    "etGilt": "후보돈",
+    "etPurchase": "구입",
+    "etTransfer": "전입",
+    "etBorn": "자가생산",
+    "editTerminalNote": "이 모돈은 이미 도폐사/판매 처리되었습니다. 상태는 도폐사 흐름에서 관리됩니다."
   },
   "events": {
     "mating": {
@@ -976,5 +984,31 @@
     "go": "이동",
     "done": "완료",
     "dismiss": "무시"
+  },
+  "eventHistory": {
+    "title": "최근 이벤트",
+    "loading": "불러오는 중…",
+    "empty": "아직 번식 이벤트가 없습니다.",
+    "kind_mating": "교배",
+    "kind_farrowing": "분만",
+    "kind_weaning": "이유",
+    "weaned": "이유두수",
+    "edit": "수정",
+    "delete": "삭제",
+    "date": "날짜",
+    "notes": "메모",
+    "bornAlive": "생존",
+    "stillborn": "사산",
+    "mummified": "미라",
+    "weanedCount": "이유두수",
+    "avgWeight": "평균체중(kg)",
+    "cancel": "취소",
+    "save": "저장",
+    "saving": "저장 중…",
+    "saveError": "저장에 실패했습니다.",
+    "deleting": "삭제 중…",
+    "deleteError": "삭제에 실패했습니다.",
+    "deleteConfirmTitle": "이 기록을 삭제할까요?",
+    "deleteConfirmBody": "이 기록을 삭제하면 모돈 상태가 롤백됩니다. 되돌릴 수 없습니다."
   }
 }

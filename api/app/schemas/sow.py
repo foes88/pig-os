@@ -19,10 +19,21 @@ class SowCreate(BaseModel):
 
 
 class SowUpdate(BaseModel):
+    """모돈 정보 수정 — DB 키값(id/farm_id)·이력성 필드 제외 전 항목 편집.
+
+    status는 활성 상태(GILT/OPEN/PREGNANT/LACTATING/ACCIDENT)만 허용 —
+    종료(CULLED/DEAD/SOLD/TRANSFER)는 /cull 엔드포인트(도폐사·판매 모달)로 처리.
+    """
     ear_tag: str | None = Field(None, max_length=30)
     building_id: UUID | None = None
-    breed: str | None = None
-    rfid_tag: str | None = None
+    breed: str | None = Field(None, max_length=50)
+    breed_company: str | None = Field(None, max_length=30)
+    genetics_id: str | None = Field(None, max_length=50)
+    rfid_tag: str | None = Field(None, max_length=50)
+    parity: int | None = Field(None, ge=0, le=20)
+    entry_date: datetime | None = None
+    entry_type: str | None = Field(None, pattern="^(GILT|PURCHASE|TRANSFER|BORN)$")
+    status: str | None = Field(None, pattern="^(GILT|OPEN|PREGNANT|LACTATING|ACCIDENT)$")
 
 
 _REMOVAL_TYPES = "^(CULLED|DEAD|SOLD|TRANSFER)$"
@@ -63,6 +74,7 @@ class SowResponse(UUIDMixin):
     status: str
     breed: str | None
     breed_company: str | None
+    genetics_id: str | None
     entry_date: datetime
     entry_type: str
     building_id: UUID | None

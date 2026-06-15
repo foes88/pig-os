@@ -113,7 +113,15 @@
     "rcUnknown": "原因不明",
     "rcOther": "其他",
     "editTooltip": "编辑",
-    "removalTooltip": "淘汰/销售处理"
+    "removalTooltip": "淘汰/销售处理",
+    "fBreedCompany": "种猪公司",
+    "fGenetics": "基因ID",
+    "fStatus": "状态",
+    "etGilt": "后备母猪",
+    "etPurchase": "购入",
+    "etTransfer": "转入",
+    "etBorn": "自繁",
+    "editTerminalNote": "该母猪已淘汰/售出，状态由淘汰流程管理。"
   },
   "events": {
     "mating": {
@@ -976,5 +984,31 @@
     "go": "前往",
     "done": "完成",
     "dismiss": "忽略"
+  },
+  "eventHistory": {
+    "title": "最近事件",
+    "loading": "加载中…",
+    "empty": "暂无繁殖事件。",
+    "kind_mating": "配种",
+    "kind_farrowing": "分娩",
+    "kind_weaning": "断奶",
+    "weaned": "断奶数",
+    "edit": "编辑",
+    "delete": "删除",
+    "date": "日期",
+    "notes": "备注",
+    "bornAlive": "活产",
+    "stillborn": "死产",
+    "mummified": "木乃伊",
+    "weanedCount": "断奶数",
+    "avgWeight": "均重(kg)",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中…",
+    "saveError": "保存失败。",
+    "deleting": "删除中…",
+    "deleteError": "删除失败。",
+    "deleteConfirmTitle": "删除此记录？",
+    "deleteConfirmBody": "删除此记录将回滚母猪状态，且无法撤销。"
   }
 }

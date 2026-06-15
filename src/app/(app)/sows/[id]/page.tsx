@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { farmsApi } from "@/lib/api/endpoints/farms";
+import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { useAuthStore } from "@/store/auth.store";
 
 // 상태 배지 색상 (라벨은 sowStatus 키)
@@ -271,6 +272,9 @@ export default function SowDetailPage() {
             </div>
           )}
         </div>
+
+        {/* 개별 이벤트 수정/삭제 (교배/분만/이유) */}
+        <RecentEventsSection farmId={farmId} sowId={id} limit={10} onChanged={invalidate} />
     </div>
   );
 }

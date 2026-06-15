@@ -113,7 +113,15 @@
     "rcUnknown": "Unknown",
     "rcOther": "Other",
     "editTooltip": "Edit",
-    "removalTooltip": "Removal/Sale"
+    "removalTooltip": "Removal/Sale",
+    "fBreedCompany": "Breed Co.",
+    "fGenetics": "Genetics ID",
+    "fStatus": "Status",
+    "etGilt": "Gilt",
+    "etPurchase": "Purchase",
+    "etTransfer": "Transfer",
+    "etBorn": "Born on-farm",
+    "editTerminalNote": "This sow has exited (culled/sold). Status is managed via the removal flow."
   },
   "events": {
     "mating": {
@@ -976,5 +984,31 @@
     "go": "Go",
     "done": "Done",
     "dismiss": "Dismiss"
+  },
+  "eventHistory": {
+    "title": "Recent Events",
+    "loading": "Loading…",
+    "empty": "No reproduction events yet.",
+    "kind_mating": "Mating",
+    "kind_farrowing": "Farrowing",
+    "kind_weaning": "Weaning",
+    "weaned": "Weaned",
+    "edit": "Edit",
+    "delete": "Delete",
+    "date": "Date",
+    "notes": "Notes",
+    "bornAlive": "Born Alive",
+    "stillborn": "Stillborn",
+    "mummified": "Mummified",
+    "weanedCount": "Weaned",
+    "avgWeight": "Avg Wt (kg)",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveError": "Failed to save.",
+    "deleting": "Deleting…",
+    "deleteError": "Failed to delete.",
+    "deleteConfirmTitle": "Delete this record?",
+    "deleteConfirmBody": "Deleting this record will roll back the sow's status. This cannot be undone."
   }
 }

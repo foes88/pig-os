@@ -136,6 +136,7 @@ export interface Sow {
   parity: number;
   breed: string | null;
   breed_company: string | null;
+  genetics_id: string | null;
   entry_date: string;
   entry_type: SowEntryType;
   building_id: string | null;
@@ -159,8 +160,15 @@ export interface CreateSowRequest {
 export interface UpdateSowRequest {
   ear_tag?: string;
   breed?: string;
+  breed_company?: string;
+  genetics_id?: string;
   rfid_tag?: string;
   building_id?: string;
+  parity?: number;
+  entry_date?: string;   // YYYY-MM-DD
+  entry_type?: "GILT" | "PURCHASE" | "TRANSFER" | "BORN";
+  // 활성 상태만 (종료는 cull 모달). SowStatus 중 활성 부분집합
+  status?: "GILT" | "OPEN" | "PREGNANT" | "LACTATING" | "ACCIDENT";
 }
 
 // ─── Events ───────────────────────────────────────────────────────────────────

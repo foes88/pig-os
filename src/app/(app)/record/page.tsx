@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
+import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type {
@@ -257,6 +258,8 @@ export default function RecordPage() {
               {eventType === "piglet_death" && (
                 <PigletDeathPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
               )}
+
+              <RecentEventsSection farmId={farmId} sowId={selectedSow.id} />
             </div>
           </div>
         )}
