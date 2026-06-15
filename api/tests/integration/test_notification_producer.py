@@ -22,7 +22,7 @@ async def _setup_overdue(db, farm, user, sow):
     db.add(UserFarm(user_id=user.id, farm_id=farm.id, role_override="FARM_OWNER"))
     today = date(2026, 6, 1)
     sow.status = "PREGNANT"
-    db.add(Mating(farm_id=farm.id, sow_id=sow.id, mating_date=today - timedelta(days=130)))
+    db.add(Mating(farm_id=farm.id, sow_id=sow.id, mating_date=today - timedelta(days=130), mating_type="AI", mating_number=1))
     await db.flush()
     return today
 
@@ -58,7 +58,7 @@ async def test_no_recipients_no_notifications(db, test_farm, test_sow):
     """OWNER/MANAGER 멤버가 없으면 생성 0건."""
     today = date(2026, 6, 1)
     test_sow.status = "PREGNANT"
-    db.add(Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=today - timedelta(days=130)))
+    db.add(Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=today - timedelta(days=130), mating_type="AI", mating_number=1))
     await db.flush()
 
     created = await notification_service.create_from_alerts(db, test_farm.id, today=today)

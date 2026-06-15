@@ -158,20 +158,22 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
             "related_entity_id": c["sow_id"],
         })
 
-    # 3) KPI 알림 (Rule Engine WARNING/CRITICAL) — 한 농장 KPI 오류가 전체를 막지 않도록 격리
+    # 3) KPI 알림 (Rule Engine WARNING/CRITICAL) — 한 농장 KPI 오류가 전체를 막지 않도록 격리.
+    # savepoint(begin_nested)로 감싸 KPI 집계 실패 시 외부 트랜잭션이 오염되지 않게 한다.
     farm = await db.get(Farm, farm_id)
     if farm is not None:
         try:
-            dash = await kpi_service.get_dashboard(db, farm)
-            for a in dash.alerts:
-                items.append({
-                    "alert_type": f"KPI_{a.kpi}",
-                    "severity": a.severity,
-                    "title": f"{a.kpi} alert",
-                    "body": a.message,
-                    "related_entity_type": "kpi",
-                    "related_entity_id": None,
-                })
+            async with db.begin_nested():
+                dash = await kpi_service.get_dashboard(db, farm)
+                for a in dash.alerts:
+                    items.append({
+                        "alert_type": f"KPI_{a.kpi}",
+                        "severity": a.severity,
+                        "title": f"{a.kpi} alert",
+                        "body": a.message,
+                        "related_entity_type": "kpi",
+                        "related_entity_id": None,
+                    })
         except Exception:  # noqa: BLE001 — KPI 집계 실패 시 과기한/도태 알림은 계속 생성
             pass
 
