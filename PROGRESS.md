@@ -1,5 +1,12 @@
 # PigOS 진행 상황
 
+## [야간스프린트 시작 2026-06-15 / DB_OK=false (partial)]
+- 환경: Cowork 샌드박스(리눅스). Docker/Postgres/psql 없음, root 불가 → 운영 DB·테스트 DB 연결 불가.
+- 그러나 시스템 Python 3.10 + `datetime.UTC` shim(/tmp/shim, 저장소 미변경)으로 **import-smoke + unit 테스트 실제 실행 가능**.
+- 베이스라인 green: `import app.main` OK / unit **219/219 pass** / ruff clean / `tsc --noEmit` EXIT 0.
+- 검증 게이트(이번 스프린트): ruff + tsc + import-smoke + unit pytest. **통합(integration)·Alembic은 DB 필요 → 사용자 머신에서 `uv run pytest tests/` 재검증 필요.**
+- 작업 트리 노트: 윈도우 마운트로 ~101개 파일이 CRLF 노이즈로 표시됨. 실제 WIP는 settings/users·login·onboarding·members.ts 4개(사용자 작업, 미변경 유지). 커밋 시 건드린 파일만 LF 정규화 후 add.
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
