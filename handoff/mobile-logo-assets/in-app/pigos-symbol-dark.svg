@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="PigOS Symbol 09">
+<title>PigOS Symbol 09</title>
+<g id="pigos-symbol-09">
+  <path d="M 209.29 370.85 A 334 334 0 0 1 381.50 204.55" fill="none" stroke="#FFFFFF" stroke-width="52" stroke-linecap="round"/>
+  <path d="M 642.50 204.55 A 334 334 0 0 1 814.71 370.85" fill="none" stroke="#FFFFFF" stroke-width="52" stroke-linecap="round"/>
+  <path d="M 814.71 653.15 A 334 334 0 0 1 642.50 819.45" fill="none" stroke="#FFFFFF" stroke-width="52" stroke-linecap="round"/>
+  <path d="M 381.50 819.45 A 334 334 0 0 1 209.29 653.15" fill="none" stroke="#FFFFFF" stroke-width="52" stroke-linecap="round"/>
+  <rect x="432" y="178" width="160" height="160" rx="34" fill="#FFFFFF"/>
+  <rect x="212" y="432" width="160" height="160" rx="34" fill="#FFFFFF"/>
+  <rect x="652" y="432" width="160" height="160" rx="34" fill="#FFFFFF"/>
+  <rect x="432" y="686" width="160" height="160" rx="34" fill="#FFFFFF"/>
+  <rect x="435" y="435" width="154" height="154" rx="30" fill="#FF5A66"/>
+</g>
+</svg>
