@@ -501,5 +501,31 @@
     "transferDone": "Hoàn tất chuyển",
     "processing": "Đang xử lý...",
     "processFailed": "Xử lý thất bại"
+  },
+  "farrowing": {
+    "selectFarm": "Vui lòng chọn trại.",
+    "title": "Chuồng đẻ",
+    "subtitle": "Đang nuôi con {n} con · tỷ lệ đẻ {fr}",
+    "statLactating": "Nái nuôi con",
+    "statFarrowingRate": "Tỷ lệ đẻ",
+    "statAvgBornAlive": "TB đẻ sống",
+    "statAvgStillborn": "TB chết lưu",
+    "headUnit": "con",
+    "lactatingTitle": "Nái đang nuôi con ({n} con)",
+    "lactatingEmpty": "Không có nái nuôi con",
+    "thEarTag": "Số tai",
+    "thParity": "Lứa",
+    "parityUnit": "Lứa {n}",
+    "more": "+{n} nữa",
+    "recentTitle": "Ca đẻ gần đây",
+    "loading": "Đang tải...",
+    "recentEmpty": "Chưa có ca đẻ",
+    "thDate": "Ngày",
+    "thBornAlive": "Sống",
+    "thStillborn": "Chết lưu",
+    "thTotalBorn": "Tổng đẻ",
+    "diffNormal": "Bình thường",
+    "diffAssisted": "Hỗ trợ",
+    "diffDifficult": "Khó đẻ"
   }
 }

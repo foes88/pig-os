@@ -501,5 +501,31 @@
     "transferDone": "전출 완료",
     "processing": "처리 중...",
     "processFailed": "처리 실패"
+  },
+  "farrowing": {
+    "selectFarm": "농장을 선택해주세요.",
+    "title": "분만사",
+    "subtitle": "포유 중 {n}두 · 분만율 {fr}",
+    "statLactating": "포유 모돈",
+    "statFarrowingRate": "분만율",
+    "statAvgBornAlive": "평균 실산자",
+    "statAvgStillborn": "평균 사산",
+    "headUnit": "두",
+    "lactatingTitle": "포유 중 모돈 ({n}두)",
+    "lactatingEmpty": "포유 중인 모돈이 없습니다",
+    "thEarTag": "이표",
+    "thParity": "산차",
+    "parityUnit": "{n}산",
+    "more": "외 {n}두",
+    "recentTitle": "최근 분만 기록",
+    "loading": "로딩 중...",
+    "recentEmpty": "분만 기록이 없습니다",
+    "thDate": "날짜",
+    "thBornAlive": "실산",
+    "thStillborn": "사산",
+    "thTotalBorn": "총산",
+    "diffNormal": "정상",
+    "diffAssisted": "도움",
+    "diffDifficult": "난산"
   }
 }

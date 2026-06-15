@@ -501,5 +501,31 @@
     "transferDone": "Transfer complete",
     "processing": "Processing...",
     "processFailed": "Processing failed"
+  },
+  "farrowing": {
+    "selectFarm": "Please select a farm.",
+    "title": "Farrowing house",
+    "subtitle": "Lactating {n} hd · farrowing rate {fr}",
+    "statLactating": "Lactating sows",
+    "statFarrowingRate": "Farrowing rate",
+    "statAvgBornAlive": "Avg born alive",
+    "statAvgStillborn": "Avg stillborn",
+    "headUnit": "hd",
+    "lactatingTitle": "Lactating sows ({n})",
+    "lactatingEmpty": "No lactating sows",
+    "thEarTag": "Tag",
+    "thParity": "Parity",
+    "parityUnit": "P{n}",
+    "more": "+{n} more",
+    "recentTitle": "Recent farrowings",
+    "loading": "Loading...",
+    "recentEmpty": "No farrowing records",
+    "thDate": "Date",
+    "thBornAlive": "Alive",
+    "thStillborn": "Stillborn",
+    "thTotalBorn": "Total",
+    "diffNormal": "Normal",
+    "diffAssisted": "Assisted",
+    "diffDifficult": "Difficult"
   }
 }

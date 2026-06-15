@@ -501,5 +501,31 @@
     "transferDone": "转出完成",
     "processing": "处理中...",
     "processFailed": "处理失败"
+  },
+  "farrowing": {
+    "selectFarm": "请选择猪场。",
+    "title": "产房",
+    "subtitle": "哺乳中 {n} 头 · 分娩率 {fr}",
+    "statLactating": "哺乳母猪",
+    "statFarrowingRate": "分娩率",
+    "statAvgBornAlive": "平均活产",
+    "statAvgStillborn": "平均死产",
+    "headUnit": "头",
+    "lactatingTitle": "哺乳中母猪 ({n}头)",
+    "lactatingEmpty": "暂无哺乳中母猪",
+    "thEarTag": "耳号",
+    "thParity": "胎次",
+    "parityUnit": "{n}胎",
+    "more": "另 {n}头",
+    "recentTitle": "最近分娩记录",
+    "loading": "加载中...",
+    "recentEmpty": "暂无分娩记录",
+    "thDate": "日期",
+    "thBornAlive": "活产",
+    "thStillborn": "死产",
+    "thTotalBorn": "总产",
+    "diffNormal": "正常",
+    "diffAssisted": "助产",
+    "diffDifficult": "难产"
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
@@ -8,13 +9,8 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { Farrowing } from "@/types/api.types";
 
-const DIFFICULTY_LABEL: Record<string, string> = {
-  NORMAL: "정상",
-  ASSISTED: "도움",
-  DIFFICULT: "난산",
-};
-
 export default function FarrowingPage() {
+  const t = useTranslations("farrowing");
   const farmId = useAuthStore((s) => s.activeFarmId);
 
   const { data: kpi } = useQuery({
@@ -38,7 +34,7 @@ export default function FarrowingPage() {
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text3">농장을 선택해주세요.</p>
+        <p className="text-text3">{t("selectFarm")}</p>
       </div>
     );
   }
@@ -62,9 +58,12 @@ export default function FarrowingPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight">분만사</h1>
+          <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
           <p className="text-xs text-text3 mt-0.5">
-            포유 중 {kpi?.lactating ?? 0}두 · 분만율 {kpi?.farrowing_rate != null ? `${kpi.farrowing_rate.toFixed(1)}%` : "-"}
+            {t("subtitle", {
+              n: kpi?.lactating ?? 0,
+              fr: kpi?.farrowing_rate != null ? `${kpi.farrowing_rate.toFixed(1)}%` : "-",
+            })}
           </p>
         </div>
       </div>
@@ -72,10 +71,10 @@ export default function FarrowingPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
-          { label: "포유 모돈", value: String(kpi?.lactating ?? 0), unit: "두", color: "text-success" },
-          { label: "분만율", value: kpi?.farrowing_rate != null ? kpi.farrowing_rate.toFixed(1) : "-", unit: "%", color: "text-primary" },
-          { label: "평균 실산자", value: avgBornAlive, unit: "두", color: "text-text" },
-          { label: "평균 사산", value: avgStillborn, unit: "두", color: "text-danger" },
+          { label: t("statLactating"), value: String(kpi?.lactating ?? 0), unit: t("headUnit"), color: "text-success" },
+          { label: t("statFarrowingRate"), value: kpi?.farrowing_rate != null ? kpi.farrowing_rate.toFixed(1) : "-", unit: "%", color: "text-primary" },
+          { label: t("statAvgBornAlive"), value: avgBornAlive, unit: t("headUnit"), color: "text-text" },
+          { label: t("statAvgStillborn"), value: avgStillborn, unit: t("headUnit"), color: "text-danger" },
         ].map(({ label, value, unit, color }) => (
           <div key={label} className="bg-surface border border-border rounded-2xl p-4">
             <div className="text-xs text-text3 mb-1">{label}</div>
@@ -89,31 +88,31 @@ export default function FarrowingPage() {
       <div className="grid md:grid-cols-2 gap-5">
         {/* 포유 중 모돈 */}
         <div>
-          <h2 className="text-sm font-bold text-text mb-3">포유 중 모돈 ({lactating.length}두)</h2>
+          <h2 className="text-sm font-bold text-text mb-3">{t("lactatingTitle", { n: lactating.length })}</h2>
           {lactating.length === 0 ? (
             <div className="bg-surface border border-border rounded-2xl p-8 text-center text-sm text-text3">
-              포유 중인 모돈이 없습니다
+              {t("lactatingEmpty")}
             </div>
           ) : (
             <div className="bg-surface border border-border rounded-2xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-text3">이표</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">산차</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-text3">{t("thEarTag")}</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">{t("thParity")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {lactating.slice(0, 15).map((sow, i) => (
                     <tr key={sow.id} className={i < lactating.length - 1 ? "border-b border-border" : ""}>
                       <td className="px-4 py-2.5 font-mono font-semibold text-text">{sow.ear_tag}</td>
-                      <td className="px-4 py-2.5 text-center text-text3">{sow.parity}산</td>
+                      <td className="px-4 py-2.5 text-center text-text3">{t("parityUnit", { n: sow.parity })}</td>
                     </tr>
                   ))}
                   {lactating.length > 15 && (
                     <tr>
                       <td colSpan={2} className="px-4 py-2 text-xs text-text3 text-center">
-                        외 {lactating.length - 15}두
+                        {t("more", { n: lactating.length - 15 })}
                       </td>
                     </tr>
                   )}
@@ -125,24 +124,24 @@ export default function FarrowingPage() {
 
         {/* 최근 분만 기록 */}
         <div>
-          <h2 className="text-sm font-bold text-text mb-3">최근 분만 기록</h2>
+          <h2 className="text-sm font-bold text-text mb-3">{t("recentTitle")}</h2>
           {isLoading ? (
             <div className="bg-surface border border-border rounded-2xl p-8 text-center text-sm text-text3">
-              로딩 중...
+              {t("loading")}
             </div>
           ) : recent.length === 0 ? (
             <div className="bg-surface border border-border rounded-2xl p-8 text-center text-sm text-text3">
-              분만 기록이 없습니다
+              {t("recentEmpty")}
             </div>
           ) : (
             <div className="bg-surface border border-border rounded-2xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-text3">날짜</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">실산</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">사산</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">총산</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-text3">{t("thDate")}</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">{t("thBornAlive")}</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">{t("thStillborn")}</th>
+                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-text3">{t("thTotalBorn")}</th>
                   </tr>
                 </thead>
                 <tbody>

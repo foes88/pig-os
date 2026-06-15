@@ -501,5 +501,31 @@
     "transferDone": "Transferencia completa",
     "processing": "Procesando...",
     "processFailed": "Error al procesar"
+  },
+  "farrowing": {
+    "selectFarm": "Seleccione una granja.",
+    "title": "Maternidad",
+    "subtitle": "Lactando {n} cab. · tasa de parto {fr}",
+    "statLactating": "Cerdas lactantes",
+    "statFarrowingRate": "Tasa de parto",
+    "statAvgBornAlive": "Prom. nacidos vivos",
+    "statAvgStillborn": "Prom. mortinatos",
+    "headUnit": "cab.",
+    "lactatingTitle": "Cerdas lactantes ({n})",
+    "lactatingEmpty": "No hay cerdas lactantes",
+    "thEarTag": "Arete",
+    "thParity": "Parto",
+    "parityUnit": "P{n}",
+    "more": "+{n} más",
+    "recentTitle": "Partos recientes",
+    "loading": "Cargando...",
+    "recentEmpty": "Sin registros de parto",
+    "thDate": "Fecha",
+    "thBornAlive": "Vivos",
+    "thStillborn": "Mortinatos",
+    "thTotalBorn": "Total",
+    "diffNormal": "Normal",
+    "diffAssisted": "Asistido",
+    "diffDifficult": "Difícil"
   }
 }
