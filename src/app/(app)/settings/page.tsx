@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   User,
+  Users,
   CreditCard,
   Globe,
   Bell,
@@ -32,6 +33,7 @@ interface SettingItem {
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
+  const tUsers = useTranslations("users");
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -55,6 +57,7 @@ export default function SettingsPage() {
       title: t("secFarm"),
       items: [
         { icon: Building2,  label: t("farmInfo"),    desc: t("farmInfoDesc"),    href: "/settings/profile" },
+        { icon: Users,      label: tUsers("title"),  desc: tUsers("subtitle"),   href: "/settings/users" },
         { icon: Sliders,    label: t("reproConfig"), desc: t("reproConfigDesc"), href: "/settings/farm" },
         { icon: Target,     label: t("benchmarks"),  desc: t("benchmarksDesc"),  href: "/settings/benchmarks" },
         { icon: CreditCard, label: t("billing"),     desc: t("billingDesc"),     href: "/settings/billing" },
