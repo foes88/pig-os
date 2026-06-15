@@ -3,6 +3,10 @@
 > 웹/백엔드 세션과 모바일(iOS/Android) 세션이 **이 문서 하나를 보고** 개발을 맞춘다.
 > 변경 시 이 문서를 먼저 갱신하고 양측에 공지. 최종 갱신: 2026-06-16.
 > API 라우트는 `GET http://<host>:8000/docs` (OpenAPI)와 항상 일치해야 한다.
+>
+> ⛔ **이 문서가 유일한 기준.** 모바일 레포의 옛 문서(`03-api-endpoints.md`,
+> `MOBILE_API_CHANGES_2026-06-09.md` 등)는 stale(모돈 상태값 오류·boars "미구현" 오인 등) →
+> **폐기**하고 이 계약서로 대체한다. 라이브 백엔드 라우트에서 직접 생성됨(커밋 66528f7+).
 
 ---
 
@@ -99,6 +103,9 @@
 - **모돈 상태(SowStatus v2)**: `GILT, OPEN, PREGNANT, LACTATING, ACCIDENT`(활성) / `CULLED, DEAD, SOLD, TRANSFER`(종료)
   - 상태 머신 출처: `docs/SCREEN_MENU_SPEC.md`. PATCH로는 활성값만, 종료는 `/cull` 전용.
 - **입식유형(entry_type)**: `GILT, PURCHASE, TRANSFER, BORN`
+- **번식 이벤트(reproductive) event_type (9종)**: `RETURN_TO_ESTRUS, ABORTION, EMPTY, INFERTILE, HEAT_DETECTED, CULLED, DEAD, TRANSFER_OUT, SOLD`
+  - `detected_method`(선택): `ULTRASOUND, VISUAL, BEHAVIOR, BLOOD_TEST`
+- ⚠️ `GET /sows?status=` 는 위 SowStatus 값만 허용 — 잘못된 값은 **422**(빈 목록 조용히 반환 아님). 옛 값(ACTIVE/GESTATING/DRY/WEANED) 사용 금지.
 - **Task 유형**: overdue 6유형(`gilt_no_estrus, gilt_overdue_mating, pregnant_overdue_farrowing, lactating_overdue_weaning, open_overdue_mating, accident_overdue_mating`) + `cull_candidate`
 - **알림 severity**: `INFO, WARNING, CRITICAL` / **alert_type**: `OVERDUE_*, CULL_CANDIDATE, KPI_*`
 - **역할**: `FARM_OWNER, FARM_MANAGER, FARM_WORKER, VET, VIEWER` (org: `SUPER_ADMIN` 등)

@@ -25,7 +25,11 @@ router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 async def list_sows(
     farm: FarmDep,
     db: DbDep,
-    status: str | None = Query(None, description="GILT|OPEN|PREGNANT|LACTATING|ACCIDENT"),  # noqa: E501
+    status: str | None = Query(
+        None,
+        pattern="^(GILT|OPEN|PREGNANT|LACTATING|ACCIDENT|CULLED|DEAD|SOLD|TRANSFER)$",
+        description="SowStatus v2. 잘못된 값은 422 (빈 목록 조용히 반환 방지)",
+    ),
     building_id: UUID | None = Query(None),
     parity_min: int | None = Query(None, ge=0),
     parity_max: int | None = Query(None, le=20),
