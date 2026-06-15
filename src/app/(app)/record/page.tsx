@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
@@ -21,13 +22,14 @@ import type {
 
 type EventType = "farrowing" | "mating" | "weaning" | "repro" | "cull" | "piglet_death";
 
-const EVENT_TYPES: { value: EventType; label: string; color: string; bg: string }[] = [
-  { value: "farrowing",    label: "분만",     color: "#0E9F6E", bg: "#0E9F6E18" },
-  { value: "mating",       label: "교배",     color: "#2563EB", bg: "#2563EB18" },
-  { value: "weaning",      label: "이유",     color: "#D97706", bg: "#D9770618" },
-  { value: "repro",        label: "임신사고",  color: "#7C3AED", bg: "#7C3AED18" },
-  { value: "cull",         label: "도폐사",   color: "#DC2626", bg: "#DC262618" },
-  { value: "piglet_death", label: "포유자돈폐사", color: "#9D174D", bg: "#9D174D18" },
+// label은 record.tabXxx 키로 해석
+const EVENT_TYPES: { value: EventType; labelKey: string; color: string; bg: string }[] = [
+  { value: "farrowing",    labelKey: "tabFarrowing",   color: "#0E9F6E", bg: "#0E9F6E18" },
+  { value: "mating",       labelKey: "tabMating",      color: "#2563EB", bg: "#2563EB18" },
+  { value: "weaning",      labelKey: "tabWeaning",     color: "#D97706", bg: "#D9770618" },
+  { value: "repro",        labelKey: "tabRepro",       color: "#7C3AED", bg: "#7C3AED18" },
+  { value: "cull",         labelKey: "tabCull",        color: "#DC2626", bg: "#DC262618" },
+  { value: "piglet_death", labelKey: "tabPigletDeath", color: "#9D174D", bg: "#9D174D18" },
 ];
 
 const STATUS_BADGE: Record<SowStatus, string> = {
@@ -40,11 +42,6 @@ const STATUS_BADGE: Record<SowStatus, string> = {
   DEAD:      "bg-gray-100 text-gray-400 border-gray-200",
   SOLD:      "bg-emerald-50 text-emerald-600 border-emerald-100",
   TRANSFER:  "bg-amber-50 text-amber-600 border-amber-100",
-};
-
-const STATUS_KO: Record<SowStatus, string> = {
-  GILT: "후보돈", OPEN: "공태", PREGNANT: "임신", LACTATING: "포유",
-  ACCIDENT: "사고", CULLED: "도태", DEAD: "폐사", SOLD: "판매", TRANSFER: "전출",
 };
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
@@ -85,6 +82,8 @@ function Stepper({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function RecordPage() {
+  const t = useTranslations("record");
+  const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [selectedSow, setSelectedSow] = useState<Sow | null>(null);
   const [eventType, setEventType] = useState<EventType>("farrowing");
@@ -120,7 +119,7 @@ export default function RecordPage() {
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text3">농장을 선택해주세요.</p>
+        <p className="text-text3">{t("selectFarm")}</p>
       </div>
     );
   }
@@ -130,11 +129,11 @@ export default function RecordPage() {
       {/* ── LEFT: Sow list ───────────────────────────────────────── */}
       <div className="w-full md:w-72 shrink-0 flex flex-col max-h-[38vh] md:max-h-none border-b md:border-b-0 md:border-r border-border bg-surface">
         <div className="px-4 py-3 border-b border-border">
-          <h1 className="text-sm font-extrabold tracking-tight mb-2">이벤트 기록</h1>
+          <h1 className="text-sm font-extrabold tracking-tight mb-2">{t("eventRecord")}</h1>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="이표 검색..."
+            placeholder={t("searchPlaceholder")}
             className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm outline-none focus:border-primary transition"
           />
         </div>
@@ -142,7 +141,7 @@ export default function RecordPage() {
           {sows.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-text3 text-xs gap-2">
               <span className="text-2xl">🐷</span>
-              <span>등록된 모돈이 없습니다</span>
+              <span>{t("emptyNoSows")}</span>
             </div>
           ) : (
             sows.map((sow) => {
@@ -165,10 +164,10 @@ export default function RecordPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold font-mono text-text truncate">{sow.ear_tag}</div>
-                    <div className="text-[11px] text-text3">{sow.parity}산차</div>
+                    <div className="text-[11px] text-text3">{t("paritySuffix", { n: sow.parity })}</div>
                   </div>
                   <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${STATUS_BADGE[sow.status]}`}>
-                    {STATUS_KO[sow.status]}
+                    {tStatus(sow.status)}
                   </span>
                 </button>
               );
@@ -176,7 +175,7 @@ export default function RecordPage() {
           )}
         </div>
         <div className="px-4 py-2 border-t border-border">
-          <p className="text-[11px] text-text3 font-mono">{doneIds.size} / {sows.length} 완료</p>
+          <p className="text-[11px] text-text3 font-mono">{t("doneCount", { done: doneIds.size, total: sows.length })}</p>
         </div>
       </div>
 
@@ -192,8 +191,8 @@ export default function RecordPage() {
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center text-2xl">🐷</div>
             <div>
-              <p className="text-base font-bold text-text1">왼쪽에서 모돈을 선택하세요</p>
-              <p className="text-xs text-text3 mt-1">또는 이표를 검색해 바로 입력</p>
+              <p className="text-base font-bold text-text1">{t("selectSowTitle")}</p>
+              <p className="text-xs text-text3 mt-1">{t("selectSowDesc")}</p>
             </div>
           </div>
         ) : (
@@ -205,7 +204,7 @@ export default function RecordPage() {
               </div>
               <div className="flex-1">
                 <div className="text-base font-extrabold font-mono tracking-tight">{selectedSow.ear_tag}</div>
-                <div className="text-xs text-text3">{selectedSow.parity}산차 · <span className={`font-semibold ${STATUS_BADGE[selectedSow.status].split(" ")[1]}`}>{STATUS_KO[selectedSow.status]}</span></div>
+                <div className="text-xs text-text3">{t("paritySuffix", { n: selectedSow.parity })} · <span className={`font-semibold ${STATUS_BADGE[selectedSow.status].split(" ")[1]}`}>{tStatus(selectedSow.status)}</span></div>
               </div>
               <button
                 onClick={() => setSelectedSow(null)}
@@ -229,7 +228,7 @@ export default function RecordPage() {
                       : "border-border bg-surface text-text3 hover:bg-border"
                   }`}
                 >
-                  {et.label}
+                  {t(et.labelKey)}
                 </button>
               ))}
             </div>
@@ -269,6 +268,7 @@ export default function RecordPage() {
 // ─── Farrowing Panel ──────────────────────────────────────────────────────────
 
 function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
   const [total, setTotal] = useState(0);
   const [still, setStill] = useState(0);
   const [mummy, setMummy] = useState(0);
@@ -289,21 +289,21 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
         born_alive: alive,
         stillborn: still,
         mummified: mummy,
-        notes: difficulty !== "NORMAL" ? `난이도: ${difficulty}` : undefined,
+        notes: difficulty !== "NORMAL" ? t("noteDifficulty", { d: difficulty }) : undefined,
       } as CreateFarrowingRequest).then(() => goNext),
     onSuccess: (goNext) => {
-      onSaved(`${sow.ear_tag} 분만 기록 완료 (생존 ${alive}두)`, sow.id, goNext);
+      onSaved(t("savedFarrowing", { tag: sow.ear_tag, n: alive }), sow.id, goNext);
       setTotal(0); setStill(0); setMummy(0); setWeight(1.4);
       setDifficulty("NORMAL"); setDate(today()); setError(null);
     },
-    onError: (err: unknown) => setError(apiError(err)),
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
   return (
     <div className="max-w-lg">
       {/* Date */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs font-semibold text-text3 w-16 shrink-0">분만일</label>
+        <label className="text-xs font-semibold text-text3 w-16 shrink-0">{t("farrowDate")}</label>
         <input
           type="date" value={date}
           onChange={(e) => setDate(e.target.value)}
@@ -313,9 +313,9 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
 
       {/* Steppers */}
       <div className="bg-surface border border-border rounded-2xl px-4 divide-y divide-border mb-3">
-        <Stepper label="총산자수" sub="Total born" value={total} onChange={setTotal} max={35} />
-        <Stepper label="사산" sub="Stillborn" value={still} onChange={setStill} colorClass="text-danger" />
-        <Stepper label="미라" sub="Mummified" value={mummy} onChange={setMummy} colorClass="text-warning" />
+        <Stepper label={t("totalBorn")} sub="Total born" value={total} onChange={setTotal} max={35} />
+        <Stepper label={t("stillborn")} sub="Stillborn" value={still} onChange={setStill} colorClass="text-danger" />
+        <Stepper label={t("mummified")} sub="Mummified" value={mummy} onChange={setMummy} colorClass="text-warning" />
       </div>
 
       {/* Auto-calc born alive */}
@@ -326,10 +326,10 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
       }`}>
         <div>
           <div className={`text-xs font-bold font-mono tracking-wider ${hasError ? "text-danger" : "text-success"}`}>
-            실산자수 (자동계산)
+            {t("bornAliveAuto")}
           </div>
           <div className="text-[11px] text-text3 mt-0.5">
-            {hasError ? "사산+미라가 총산자를 초과합니다" : "총산자 − 사산 − 미라"}
+            {hasError ? t("errExceed") : t("formula")}
           </div>
         </div>
         <span className={`text-[40px] font-extrabold font-mono tracking-tight ${hasError ? "text-danger" : "text-success"}`}>
@@ -340,7 +340,7 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
       {/* Birth weight */}
       <div className="bg-surface border border-border rounded-2xl px-5 py-3.5 flex items-center justify-between mb-3">
         <div>
-          <div className="text-sm font-semibold text-text">평균 생시체중</div>
+          <div className="text-sm font-semibold text-text">{t("avgBirthWeight")}</div>
           <div className="text-[11px] text-text3 mt-0.5">Avg birth weight</div>
         </div>
         <div className="flex items-center gap-3">
@@ -360,9 +360,9 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
 
       {/* Difficulty */}
       <div className="mb-4">
-        <div className="text-xs font-semibold text-text3 mb-2">분만 난이도</div>
+        <div className="text-xs font-semibold text-text3 mb-2">{t("difficulty")}</div>
         <div className="flex gap-2">
-          {([["NORMAL","정상"],["ASSISTED","도움"],["DIFFICULT","난산"]] as const).map(([k, l]) => (
+          {([["NORMAL", t("diffNormal")], ["ASSISTED", t("diffAssisted")], ["DIFFICULT", t("diffDifficult")]] as const).map(([k, l]) => (
             <button key={k} type="button" onClick={() => setDifficulty(k)}
               className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold transition ${
                 difficulty === k
@@ -378,8 +378,8 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
         className="w-full bg-blue-50 border border-dashed border-blue-200 rounded-2xl px-4 py-3 flex items-center gap-3 mb-5 hover:bg-blue-100 transition">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white text-sm font-bold">+</div>
         <div className="flex-1 text-left">
-          <div className="text-sm font-semibold text-primary">양자 조정 기록</div>
-          <div className="text-[11px] text-text3 mt-0.5">대리모로 자돈 이동 시 — PSY 정확도에 반영됩니다</div>
+          <div className="text-sm font-semibold text-primary">{t("fosterTitle")}</div>
+          <div className="text-[11px] text-text3 mt-0.5">{t("fosterDesc")}</div>
         </div>
         <span className="text-primary text-xs">›</span>
       </button>
@@ -393,6 +393,7 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
 // ─── Mating Panel ─────────────────────────────────────────────────────────────
 
 function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
   const [form, setForm] = useState<CreateMatingRequest>({
     sow_id: sow.id, mating_date: today(), mating_type: "AI", semen_batch: "", notes: "",
   });
@@ -402,34 +403,34 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
     mutationFn: (goNext: boolean) =>
       eventsApi.matings.create(farmId, { ...form, sow_id: sow.id }).then(() => goNext),
     onSuccess: (goNext) => {
-      onSaved(`${sow.ear_tag} 교배 기록 완료`, sow.id, goNext);
+      onSaved(t("savedMating", { tag: sow.ear_tag }), sow.id, goNext);
       setForm({ sow_id: sow.id, mating_date: today(), mating_type: "AI", semen_batch: "", notes: "" });
       setError(null);
     },
-    onError: (err: unknown) => setError(apiError(err)),
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
   return (
     <div className="max-w-lg space-y-4">
-      <Field label="교배일 *">
+      <Field label={t("matingDate")}>
         <input type="date" value={form.mating_date}
           onChange={(e) => setForm((f) => ({ ...f, mating_date: e.target.value }))}
           className="input" />
       </Field>
-      <Field label="교배 방법">
+      <Field label={t("matingMethod")}>
         <select value={form.mating_type}
           onChange={(e) => setForm((f) => ({ ...f, mating_type: e.target.value as "AI" | "NATURAL" }))}
           className="input">
-          <option value="AI">인공수정 (AI)</option>
-          <option value="NATURAL">자연교배</option>
+          <option value="AI">{t("methodAI")}</option>
+          <option value="NATURAL">{t("methodNatural")}</option>
         </select>
       </Field>
-      <Field label="정액 번호">
+      <Field label={t("semenNo")}>
         <input value={form.semen_batch ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, semen_batch: e.target.value }))}
-          placeholder="예: SB-2024-001" className="input" />
+          placeholder={t("phSemen")} className="input" />
       </Field>
-      <Field label="비고">
+      <Field label={t("note")}>
         <input value={form.notes ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
           className="input" />
@@ -444,6 +445,7 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
 // ─── Weaning Panel ────────────────────────────────────────────────────────────
 
 function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
   const [count, setCount] = useState(0);
   const [weight, setWeight] = useState("");
   const [date, setDate] = useState(today());
@@ -456,25 +458,25 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
         avg_weaning_weight_kg: weight ? Number(weight) : undefined,
       } as CreateWeaningRequest).then(() => goNext),
     onSuccess: (goNext) => {
-      onSaved(`${sow.ear_tag} 이유 기록 완료 (${count}두)`, sow.id, goNext);
+      onSaved(t("savedWeaning", { tag: sow.ear_tag, n: count }), sow.id, goNext);
       setCount(0); setWeight(""); setDate(today()); setError(null);
     },
-    onError: (err: unknown) => setError(apiError(err)),
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
   return (
     <div className="max-w-lg">
-      <Field label="이유일 *">
+      <Field label={t("weaningDate")}>
         <input type="date" value={date}
           onChange={(e) => setDate(e.target.value)} className="input mb-4" />
       </Field>
       <div className="bg-surface border border-border rounded-2xl px-4 divide-y divide-border mb-4">
-        <Stepper label="이유두수" sub="Weaned count" value={count} onChange={setCount} colorClass="text-warning" />
+        <Stepper label={t("weanedCount")} sub="Weaned count" value={count} onChange={setCount} colorClass="text-warning" />
       </div>
-      <Field label="평균 이유체중 (kg)">
+      <Field label={t("avgWeanWeight")}>
         <input type="number" step="0.1" min={0} value={weight}
           onChange={(e) => setWeight(e.target.value)}
-          placeholder="예: 7.5" className="input" />
+          placeholder={t("phWeanWeight")} className="input" />
       </Field>
       {error && <p className="text-xs text-danger mt-3">{error}</p>}
       <div className="mt-5">
@@ -487,15 +489,16 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
 
 // ─── Repro Panel ──────────────────────────────────────────────────────────────
 
-const REPRO_TYPES = [
-  { value: "RETURN_TO_ESTRUS", label: "반발정" },
-  { value: "ABORTION",         label: "유산" },
-  { value: "EMPTY",            label: "공태 확인" },
-  { value: "INFERTILE",        label: "불임" },
-  { value: "HEAT_DETECTED",    label: "발정 감지" },
+const REPRO_TYPE_KEYS = [
+  { value: "RETURN_TO_ESTRUS", key: "rRTS" },
+  { value: "ABORTION",         key: "rAbortion" },
+  { value: "EMPTY",            key: "rEmpty" },
+  { value: "INFERTILE",        key: "rInfertile" },
+  { value: "HEAT_DETECTED",    key: "rHeat" },
 ];
 
 function ReproPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
   const [form, setForm] = useState<CreateReproductiveEventRequest>({
     sow_id: sow.id, event_type: "RETURN_TO_ESTRUS", event_date: today(),
   });
@@ -505,25 +508,26 @@ function ReproPanel({ farmId, sow, onSaved }: PanelProps) {
     mutationFn: (goNext: boolean) =>
       eventsApi.reproductive.create(farmId, { ...form, sow_id: sow.id }).then(() => goNext),
     onSuccess: (goNext) => {
-      const label = REPRO_TYPES.find((t) => t.value === form.event_type)?.label ?? "";
-      onSaved(`${sow.ear_tag} ${label} 기록 완료`, sow.id, goNext);
+      const k = REPRO_TYPE_KEYS.find((x) => x.value === form.event_type)?.key;
+      const label = k ? t(k) : "";
+      onSaved(t("savedRepro", { tag: sow.ear_tag, label }), sow.id, goNext);
       setForm({ sow_id: sow.id, event_type: "RETURN_TO_ESTRUS", event_date: today() });
       setError(null);
     },
-    onError: (err: unknown) => setError(apiError(err)),
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
   return (
     <div className="max-w-lg space-y-4">
-      <p className="text-xs text-text3">반발정·유산·공태 등 비생산 이벤트 — NPD 계산에 반영됩니다</p>
-      <Field label="이벤트 유형 *">
+      <p className="text-xs text-text3">{t("reproDesc")}</p>
+      <Field label={t("eventType")}>
         <select value={form.event_type}
           onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value as CreateReproductiveEventRequest["event_type"] }))}
           className="input">
-          {REPRO_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+          {REPRO_TYPE_KEYS.map((rt) => <option key={rt.value} value={rt.value}>{t(rt.key)}</option>)}
         </select>
       </Field>
-      <Field label="발생일 *">
+      <Field label={t("eventDate")}>
         <input type="date" value={form.event_date}
           onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
           className="input" />
@@ -537,26 +541,28 @@ function ReproPanel({ farmId, sow, onSaved }: PanelProps) {
 
 // ─── Cull Panel ───────────────────────────────────────────────────────────────
 
-const REMOVAL_TYPES = [
-  { value: "CULLED",   label: "도태 (저생산성/노령/지제불량 등)" },
-  { value: "DEAD",     label: "폐사" },
-  { value: "SOLD",     label: "판매" },
-  { value: "TRANSFER", label: "전출" },
+const REMOVAL_TYPE_KEYS = [
+  { value: "CULLED",   key: "rmCulled" },
+  { value: "DEAD",     key: "rmDead" },
+  { value: "SOLD",     key: "rmSold" },
+  { value: "TRANSFER", key: "rmTransfer" },
 ];
 
-const REASON_CATEGORIES = [
-  { value: "REPRODUCTIVE", label: "번식 문제" },
-  { value: "LAMENESS",     label: "지제 불량" },
-  { value: "DISEASE",      label: "질병" },
-  { value: "AGE",          label: "노령 (고산차)" },
-  { value: "PERFORMANCE",  label: "저생산성" },
-  { value: "INJURY",       label: "외상/부상" },
-  { value: "BEHAVIOR",     label: "행동 문제" },
-  { value: "UNKNOWN",      label: "원인 불명" },
-  { value: "OTHER",        label: "기타" },
+const REASON_CATEGORY_KEYS = [
+  { value: "REPRODUCTIVE", key: "rcReproductive" },
+  { value: "LAMENESS",     key: "rcLameness" },
+  { value: "DISEASE",      key: "rcDisease" },
+  { value: "AGE",          key: "rcAge" },
+  { value: "PERFORMANCE",  key: "rcPerformance" },
+  { value: "INJURY",       key: "rcInjury" },
+  { value: "BEHAVIOR",     key: "rcBehavior" },
+  { value: "UNKNOWN",      key: "rcUnknown" },
+  { value: "OTHER",        key: "rcOther" },
 ];
 
 function CullPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
+  const tStatus = useTranslations("sowStatus");
   const queryClient = useQueryClient();
   const [form, setForm] = useState<SowCullRequest>({
     removal_type: "CULLED",
@@ -568,44 +574,44 @@ function CullPanel({ farmId, sow, onSaved }: PanelProps) {
     mutationFn: (goNext: boolean) =>
       sowsApi.cull(farmId, sow.id, form).then(() => goNext),
     onSuccess: (goNext) => {
-      const label = REMOVAL_TYPES.find((r) => r.value === form.removal_type)?.label.split(" ")[0] ?? "";
-      onSaved(`${sow.ear_tag} ${label} 처리 완료`, sow.id, goNext);
+      const label = tStatus(form.removal_type);
+      onSaved(t("savedCull", { tag: sow.ear_tag, label }), sow.id, goNext);
       queryClient.invalidateQueries({ queryKey: queryKeys.sows.list(farmId, {}) });
       setForm({ removal_type: "CULLED", removal_date: today() });
       setError(null);
     },
-    onError: (err: unknown) => setError(apiError(err)),
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
   return (
     <div className="max-w-lg space-y-4">
       <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs text-red-600">
-        처리 후 모돈은 비활성화됩니다
+        {t("cullWarn")}
       </div>
-      <Field label="처리 유형 *">
+      <Field label={t("removalType")}>
         <select value={form.removal_type}
           onChange={(e) => setForm((f) => ({ ...f, removal_type: e.target.value as SowCullRequest["removal_type"] }))}
           className="input">
-          {REMOVAL_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          {REMOVAL_TYPE_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
         </select>
       </Field>
-      <Field label="처리일 *">
+      <Field label={t("removalDate")}>
         <input type="date" value={form.removal_date}
           onChange={(e) => setForm((f) => ({ ...f, removal_date: e.target.value }))}
           className="input" />
       </Field>
-      <Field label="사유 분류">
+      <Field label={t("reasonCat")}>
         <select value={form.reason_category ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, reason_category: (e.target.value || undefined) as SowCullRequest["reason_category"] }))}
           className="input">
-          <option value="">선택 안 함</option>
-          {REASON_CATEGORIES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          <option value="">{t("selectNone")}</option>
+          {REASON_CATEGORY_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
         </select>
       </Field>
-      <Field label="상세 사유">
+      <Field label={t("reasonDetail")}>
         <input value={form.reason_detail ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, reason_detail: e.target.value || undefined }))}
-          placeholder="예: 8산 이상 노령, 지제 불량" className="input" />
+          placeholder={t("phReasonDetail")} className="input" />
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
       <SaveFooter disabled={!form.removal_date} loading={mutation.isPending}
@@ -616,16 +622,17 @@ function CullPanel({ farmId, sow, onSaved }: PanelProps) {
 
 // ─── Piglet Death Panel ───────────────────────────────────────────────────────
 
-const PIGLET_DEATH_REASONS = [
-  { value: "CRUSHING",    label: "압사" },
-  { value: "SCOURS",      label: "설사/장염" },
-  { value: "STARVATION",  label: "기아/허약" },
-  { value: "CONGENITAL",  label: "선천성 기형" },
-  { value: "HYPOTHERMIA", label: "저체온" },
-  { value: "OTHER",       label: "기타" },
+const PIGLET_DEATH_REASON_KEYS = [
+  { value: "CRUSHING",    key: "pcCrushing" },
+  { value: "SCOURS",      key: "pcScours" },
+  { value: "STARVATION",  key: "pcStarvation" },
+  { value: "CONGENITAL",  key: "pcCongenital" },
+  { value: "HYPOTHERMIA", key: "pcHypothermia" },
+  { value: "OTHER",       key: "pcOther" },
 ];
 
 function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CreatePigletEventRequest>({
     sow_id: sow.id,
@@ -639,40 +646,40 @@ function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
     mutationFn: (goNext: boolean) =>
       eventsApi.pigletEvents.create(farmId, { ...form, sow_id: sow.id }).then(() => goNext),
     onSuccess: (goNext) => {
-      onSaved(`${sow.ear_tag} 포유자돈 ${form.piglet_count}두 폐사 기록`, sow.id, goNext);
+      onSaved(t("savedPigletDeath", { tag: sow.ear_tag, n: form.piglet_count }), sow.id, goNext);
       queryClient.invalidateQueries({ queryKey: queryKeys.sows.list(farmId, {}) });
       setForm({ sow_id: sow.id, event_date: today(), event_type: "DEATH", piglet_count: 1 });
       setError(null);
     },
-    onError: (err: unknown) => setError(apiError(err)),
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
   return (
     <div className="max-w-lg space-y-4">
       <div className="bg-pink-50 border border-pink-100 rounded-xl px-4 py-3 text-xs text-pink-700">
-        포유 중 자돈 폐사를 기록합니다. 현재 포유 중인 분만 기록에 자동 연결됩니다.
+        {t("pdDesc")}
       </div>
-      <Field label="폐사일 *">
+      <Field label={t("deathDate")}>
         <input type="date" value={form.event_date}
           onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
           className="input" />
       </Field>
-      <Field label="폐사두수 *">
+      <Field label={t("deathCount")}>
         <Stepper label="" value={form.piglet_count} onChange={(v) => setForm((f) => ({ ...f, piglet_count: v }))}
           min={1} max={30} colorClass="text-danger" />
       </Field>
-      <Field label="폐사 원인">
+      <Field label={t("deathCause")}>
         <select value={form.reason ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, reason: (e.target.value || undefined) as CreatePigletEventRequest["reason"] }))}
           className="input">
-          <option value="">선택 안 함</option>
-          {PIGLET_DEATH_REASONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          <option value="">{t("selectNone")}</option>
+          {PIGLET_DEATH_REASON_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
         </select>
       </Field>
-      <Field label="메모">
+      <Field label={t("memo")}>
         <input value={form.notes ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value || undefined }))}
-          placeholder="특이사항 입력" className="input" />
+          placeholder={t("phMemo")} className="input" />
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
       <SaveFooter disabled={!form.event_date} loading={mutation.isPending}
@@ -692,6 +699,7 @@ type PanelProps = {
 function SaveFooter({
   disabled, loading, onSave, onSaveNext,
 }: { disabled: boolean; loading: boolean; onSave: () => void; onSaveNext: () => void }) {
+  const t = useTranslations("record");
   return (
     <div className="flex gap-2 pt-2">
       <button
@@ -700,7 +708,7 @@ function SaveFooter({
         onClick={onSave}
         className="flex-1 bg-surface border border-border text-text2 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-border transition"
       >
-        {loading ? "저장 중..." : "저장"}
+        {loading ? t("saving") : t("save")}
       </button>
       <button
         type="button"
@@ -708,7 +716,7 @@ function SaveFooter({
         onClick={onSaveNext}
         className="flex-[1.4] bg-success text-white py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:opacity-90 transition flex items-center justify-center gap-2"
       >
-        저장 후 다음 모돈 →
+        {t("saveNext")}
       </button>
     </div>
   );
@@ -727,10 +735,10 @@ function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function apiError(err: unknown): string {
+function apiError(err: unknown, fallback: string): string {
   const detail = (err as { response?: { data?: { detail?: string | { msg: string }[] } } })
     ?.response?.data?.detail;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) return detail.map((d) => d.msg).join(", ");
-  return "요청 처리 중 오류가 발생했습니다.";
+  return fallback;
 }
