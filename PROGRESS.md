@@ -22,6 +22,12 @@
 - [x] i18n 5개 언어 +9키(realtimeSection/savedSection/markAllRead/filterUnread/savedEmpty/unreadBadge/markRead/loadMore/realtimeEmpty). 전수 정합성 873키 일치.
 - 검증: tsc --noEmit EXIT 0 / i18n 5×873 일치.
 
+## 2026-06-15 야간스프린트 — N3 Task/알림 잡 자동화 (ARQ)
+- [x] `jobs/tasks.py::generate_tasks_job` — 전 활성 농장 순회 → task_service.generate_tasks (멱등). 농장별 오류 격리.
+- [x] `jobs/notifications.py::generate_notifications_job` — 전 활성 농장 순회 → notification_service.create_from_alerts (멱등).
+- [x] worker.py cron 등록: tasks 05:30 UTC, notifications 06:00 UTC (cron 5개, functions 6개).
+- 검증: ruff clean / import-smoke(WorkerSettings 로드·잡 등록 확인) / unit 219/219. [degraded: no-db — 실제 잡 실행은 DB+Redis 필요]
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 

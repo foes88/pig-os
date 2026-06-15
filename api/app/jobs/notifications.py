@@ -6,6 +6,12 @@ from __future__ import annotations
 
 import logging
 
+from sqlalchemy import select
+
+from app.db.models.platform import Farm
+from app.db.session import AsyncSessionLocal
+from app.services import notification_service
+
 log = logging.getLogger(__name__)
 
 
@@ -40,3 +46,30 @@ async def send_rule_alert(
     #   2. send_push_notification 잡 enqueue
     #   3. severity==CRITICAL → 이메일도 발송
     return f"stub:rule_alert:{farm_id}:{rule_id}"
+
+
+async def generate_notifications_job(ctx: dict) -> str:
+    """전 활성 농장 순회 — alert(과기한/도태/KPI) → IN_APP 영구 알림 멱등 생성 (P12-6).
+
+    스케줄: 매일 06:00 UTC (worker.py cron_jobs).
+    """
+    async with AsyncSessionLocal() as db:
+        farm_ids = list(await db.scalars(
+            select(Farm.id).where(Farm.deleted_at.is_(None))
+        ))
+
+    processed = 0
+    errors = 0
+    total_created = 0
+    for farm_id in farm_ids:
+        try:
+            async with AsyncSessionLocal() as db:
+                total_created += await notification_service.create_from_alerts(db, farm_id)
+            processed += 1
+        except Exception as e:  # noqa: BLE001 — 한 농장 실패 격리
+            log.error("generate_notifications farm=%s error=%s", farm_id, e)
+            errors += 1
+
+    result = f"notification generation done: {processed} farms, {total_created} created, {errors} errors"
+    log.info(result)
+    return result

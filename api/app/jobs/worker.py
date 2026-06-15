@@ -16,6 +16,8 @@ from app.jobs.kpi import (
     recalculate_farm_kpi,
     weekly_kpi_aggregation,
 )
+from app.jobs.notifications import generate_notifications_job
+from app.jobs.tasks import generate_tasks_job
 
 
 async def startup(ctx: dict) -> None:
@@ -37,6 +39,8 @@ class WorkerSettings:
         weekly_kpi_aggregation,
         monthly_kpi_aggregation,
         recalculate_farm_kpi,
+        generate_tasks_job,
+        generate_notifications_job,
     ]
 
     cron_jobs = [
@@ -46,6 +50,10 @@ class WorkerSettings:
         cron(weekly_kpi_aggregation, weekday=0, hour=0, minute=10),
         # 매월 1일 00:15 UTC — 지난 달 KPI
         cron(monthly_kpi_aggregation, day=1, hour=0, minute=15),
+        # 매일 05:30 UTC — alert 기반 Task 자동배정
+        cron(generate_tasks_job, hour=5, minute=30),
+        # 매일 06:00 UTC — alert→IN_APP 영구 알림 생성
+        cron(generate_notifications_job, hour=6, minute=0),
     ]
 
     on_startup = startup
