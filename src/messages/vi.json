@@ -940,5 +940,26 @@
         "b": "Dữ liệu chuẩn được ẩn danh với k≥10 để không nhận dạng được trại riêng lẻ."
       }
     ]
+  },
+  "util": {
+    "veTitle": "Kiểm tra email",
+    "veDesc1": "Chúng tôi đã gửi liên kết xác minh đến email của bạn.",
+    "veDesc2": "Nhấp vào liên kết để hoàn tất đăng ký.",
+    "veOpen": "Mở ứng dụng email",
+    "veNoEmail": "Chưa nhận được email?",
+    "veResend": "Gửi lại",
+    "veChange": "Đổi địa chỉ",
+    "mtTitle": "Đang bảo trì",
+    "mtDesc": "Chúng tôi đang cập nhật hệ thống để phục vụ tốt hơn.",
+    "mtEta": "Dự kiến xong 04:00 KST",
+    "mtNote": "Nhập liệu tại hiện trường vẫn dùng offline được và tự đồng bộ sau bảo trì.",
+    "upTitle": "Đã có phiên bản mới",
+    "upDesc": "Vui lòng cập nhật lên phiên bản mới nhất để dùng mượt mà.",
+    "upVersion": "v2.4.0 · Cập nhật bắt buộc",
+    "upWhat": "Có gì mới",
+    "upN1": "Thêm nhập bằng giọng nói",
+    "upN2": "Cải thiện độ chính xác phát hiện tổn thất AI",
+    "upN3": "Ổn định đồng bộ offline",
+    "upNow": "Cập nhật ngay"
   }
 }

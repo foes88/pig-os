@@ -940,5 +940,26 @@
         "b": "Los datos de referencia se anonimizan con k≥10 para que no se identifiquen granjas individuales."
       }
     ]
+  },
+  "util": {
+    "veTitle": "Revise su correo",
+    "veDesc1": "Enviamos un enlace de verificación a su correo.",
+    "veDesc2": "Haga clic en el enlace para completar el registro.",
+    "veOpen": "Abrir app de correo",
+    "veNoEmail": "¿No recibió el correo?",
+    "veResend": "Reenviar",
+    "veChange": "Cambiar dirección",
+    "mtTitle": "En mantenimiento",
+    "mtDesc": "Estamos actualizando el sistema para un mejor servicio.",
+    "mtEta": "ETA 04:00 KST",
+    "mtNote": "La entrada en campo sigue disponible sin conexión y se sincroniza automáticamente tras el mantenimiento.",
+    "upTitle": "Hay una nueva versión",
+    "upDesc": "Actualice a la última versión para un uso fluido.",
+    "upVersion": "v2.4.0 · Actualización requerida",
+    "upWhat": "Novedades",
+    "upN1": "Entrada por voz añadida",
+    "upN2": "Mejor precisión de detección de pérdidas IA",
+    "upN3": "Sincronización offline estabilizada",
+    "upNow": "Actualizar ahora"
   }
 }

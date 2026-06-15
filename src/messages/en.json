@@ -940,5 +940,26 @@
         "b": "Benchmark data is anonymized with k≥10 so individual farms cannot be identified."
       }
     ]
+  },
+  "util": {
+    "veTitle": "Check your email",
+    "veDesc1": "We sent a verification link to your email.",
+    "veDesc2": "Click the link to complete signup.",
+    "veOpen": "Open email app",
+    "veNoEmail": "Didn't get the email?",
+    "veResend": "Resend",
+    "veChange": "Change address",
+    "mtTitle": "Under maintenance",
+    "mtDesc": "We're updating the system for a better service.",
+    "mtEta": "ETA 04:00 KST",
+    "mtNote": "Field entry stays available offline and syncs automatically after maintenance.",
+    "upTitle": "A new version is out",
+    "upDesc": "Please update to the latest version for smooth use.",
+    "upVersion": "v2.4.0 · Required update",
+    "upWhat": "What's new",
+    "upN1": "Added voice input",
+    "upN2": "Improved AI loss-detection accuracy",
+    "upN3": "Stabilized offline sync",
+    "upNow": "Update now"
   }
 }
