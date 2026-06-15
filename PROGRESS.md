@@ -49,6 +49,37 @@
 - [x] docs/legal-review-notes.md (보강 조항/변호사 확정 필요/지역별 추가 검토 5개 시장).
 - 검증: tsc EXIT 0 / 5개 로케일 legal.terms·privacy 길이 동일(10/10) / 전체 i18n 키 정합성.
 
+## 2026-06-15 야간스프린트 — N7 QA/QC 종합 + 최종 요약
+### 최종 게이트 (전부 GREEN, 회귀 0)
+- 백엔드: ruff clean / `import app.main`+`app.jobs.worker` OK / **unit pytest 219/219** / integration 50개 수집(구문) OK.
+- 프론트: `tsc --noEmit` EXIT 0.
+- i18n: en 기준 **927키 × 5개 언어(en/ko/zh/es/vi) 완전 일치(누락/초과 0)**.
+
+### 오늘 한 일 (N1~N7 전부 완료)
+- N1 알림 영구화 Producer(create_from_alerts 멱등) + POST /notifications/generate
+- N2 웹 알림 페이지 영구알림 섹션 + 배지 unread 연동 + i18n
+- N3 ARQ 잡 자동화(generate_tasks_job 05:30 / generate_notifications_job 06:00)
+- N4 PRRS 유전자 성과 추적(analytics_service + /analytics/prrs-by-genetics)
+- N5 프론트 스모크 테스트 3종 + CSV 유틸 추출
+- N6 이용약관/개인정보보호 각 10개 조항 확장 + 5개 언어 + 검토노트
+- N7 종합 QA/QC
+- 커밋: STEP0→N1→…→N7 (모두 git push 안 함, 사람이 직접 push).
+
+### 막힌 것 / 환경 제약 (사람 확인 필요)
+- **DB 미연결**: Cowork 리눅스 샌드박스에 Docker/Postgres 없음 → integration·Alembic 미실행. **사용자 머신에서 `cd api && uv run alembic upgrade head && uv run pytest tests/` 재검증 필요.** (Python 3.10 + UTC shim로 unit/import는 샌드박스에서 실측 통과)
+- **vitest 미실행**: node_modules가 윈도우용 + vitest4 rolldown 네이티브가 Bus error → **사용자 머신에서 `cd src && npm run test` 재검증 필요.** (tsc로 타입은 통과 확인)
+- **N6는 법무 검토용 초안**: 변호사 확정 필요(docs/legal-review-notes.md 참고).
+- BLOCKED 항목 없음.
+
+### 작업 트리 메모
+- 윈도우 마운트 CRLF 노이즈 ~96개 파일 + 사용자 WIP 4개(settings/users·login·onboarding·members.ts)는 **건드리지 않음**. 본 스프린트가 만진 파일만 LF 정규화 후 커밋됨.
+
+### 다음 추천
+1. 사용자 머신에서 DB 기동 후 `uv run pytest tests/`(integration 포함) + `npm run test`(vitest) 풀 그린 확인.
+2. N2 알림 생성 트리거(N1 endpoint 또는 N3 잡)를 운영 스케줄(ARQ worker)에 배포.
+3. N6 법무 초안 외부 변호사 검토 → 준거법/데이터배당/국외이전 확정.
+4. N4 PRRS 분석을 프론트 화면(분석 탭)으로 노출 검토.
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
