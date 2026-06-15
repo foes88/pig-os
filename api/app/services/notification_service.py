@@ -186,6 +186,7 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
             Notification.related_entity_id,
         ).where(
             Notification.user_id.in_(recipients),
+            Notification.farm_id == farm_id,  # farm 스코프 — 다농장 소유자의 KPI 알림(관련 엔티티 없음) 충돌 방지
             Notification.type.in_(_INAPP_TYPES),
             Notification.read_at.is_(None),
         )

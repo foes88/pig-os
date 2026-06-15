@@ -95,6 +95,15 @@
 - [x] `tests/pages/notifications.test.tsx` — 제목/실시간·영구 섹션 렌더 + 빈상태(savedEmpty) 스모크. next-intl·navigation·auth·kpiApi·notificationsApi 모킹.
 - 검증: tsc EXIT 0. [exec-blocked: sandbox vitest → 사용자 머신 npm run test]
 
+## 2026-06-15 야간스프린트(품질 순환) — Q4 코드 리뷰/리팩터
+- [x] **버그 수정(N1)**: create_from_alerts 멱등성 검사를 farm 스코프로 한정(Notification.farm_id == farm_id 추가). 다농장 소유자에게 KPI 알림(related_entity_id=None)이 농장 간 충돌로 누락되던 문제 해결.
+- [x] 전체 변경 리뷰 — analytics/jobs/csv 유틸/프론트 일관성 점검, 추가 결함 없음.
+- 최종 게이트 GREEN: ruff clean / import OK / unit 219/219 / integration 53 수집 / tsc EXIT 0 / i18n 942키 5개 언어 일치.
+
+### 품질 순환(Q1~Q4) 종료
+- 정의된 백로그(N1~N7) + 품질 순환(Q1~Q4) 모두 완료. BLOCKED 없음.
+- 재확인 필요(사용자 머신): `cd api && uv run alembic upgrade head && uv run pytest tests/` / `cd src && npm run test` / `git push`.
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
