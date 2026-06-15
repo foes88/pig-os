@@ -171,10 +171,26 @@
     "currentTarget": "현재 {cur} / 목표 {tgt}"
   },
   "chat": {
-    "placeholder": "농장 KPI에 대해 질문하세요... (예: PSY가 낮은 이유는?)",
+    "placeholder": "농장 KPI나 문제 상황을 질문하세요...",
     "send": "전송",
     "thinking": "AI가 분석 중입니다...",
-    "disclaimer": "AI 인사이트는 농장 데이터를 기반으로 합니다. 중요한 결정은 수의사와 상담하세요."
+    "disclaimer": "AI 인사이트는 농장 데이터를 기반으로 합니다. 중요한 결정은 수의사와 상담하세요.",
+    "selectFarm": "농장을 선택해주세요.",
+    "headerSubtitle": "Rule Engine 기반 농장 데이터 분석",
+    "emptyTitle": "농장 데이터에 대해 질문하세요",
+    "emptyDesc": "Rule Engine이 PSY·NPD·분만율 등을 분석해드립니다",
+    "analyzing": "Rule Engine 분석 중...",
+    "errorAnswer": "응답을 가져오지 못했습니다. API 서버 연결을 확인해주세요.",
+    "asOf": "기준일 {date} · {by}",
+    "aiAnalysis": "AI 분석",
+    "ruleEngine": "Rule Engine",
+    "currentTarget": "현재 {cur} / 목표 {tgt}",
+    "causes": "원인: {x}",
+    "actions": "조치: {x}",
+    "q1": "PSY가 왜 낮아요?",
+    "q2": "비생산일수 현황 알려줘",
+    "q3": "분만율이 목표 미달인 이유는?",
+    "q4": "지금 가장 시급한 문제가 뭐야?"
   },
   "auth": {
     "login": {
@@ -527,5 +543,20 @@
     "diffNormal": "정상",
     "diffAssisted": "도움",
     "diffDifficult": "난산"
+  },
+  "notifications": {
+    "selectFarm": "농장을 선택해주세요.",
+    "title": "알림",
+    "subtitle": "KPI 기반 자동 알림",
+    "empty": "알림이 없습니다",
+    "emptyDesc": "KPI가 정상 범위이면 알림이 발생하지 않습니다.",
+    "filterAll": "전체",
+    "sevCritical": "위험",
+    "sevWarning": "주의",
+    "sevInfo": "정보",
+    "sevOk": "정상",
+    "needAttention": "주의 필요 ({n})",
+    "normal": "정상 ({n})",
+    "currentTarget": "현재 {cur} → 목표 {tgt}"
   }
 }

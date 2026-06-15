@@ -2,20 +2,23 @@
 
 import { useState } from "react";
 
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { Alert } from "@/types/api.types";
 
-const SEVERITY_STYLES: Record<Alert["severity"], { bg: string; dot: string; label: string }> = {
-  CRITICAL: { bg: "bg-red-50 border-red-200",   dot: "bg-danger",   label: "위험" },
-  WARNING:  { bg: "bg-amber-50 border-amber-200", dot: "bg-warning",  label: "주의" },
-  INFO:     { bg: "bg-blue-50 border-blue-200",   dot: "bg-primary",  label: "정보" },
-  OK:       { bg: "bg-surface border-border",     dot: "bg-success",  label: "정상" },
+// 색상만 보관, 라벨은 notifications.sevXxx 키
+const SEVERITY_STYLES: Record<Alert["severity"], { bg: string; dot: string; key: string }> = {
+  CRITICAL: { bg: "bg-red-50 border-red-200",   dot: "bg-danger",   key: "sevCritical" },
+  WARNING:  { bg: "bg-amber-50 border-amber-200", dot: "bg-warning",  key: "sevWarning" },
+  INFO:     { bg: "bg-blue-50 border-blue-200",   dot: "bg-primary",  key: "sevInfo" },
+  OK:       { bg: "bg-surface border-border",     dot: "bg-success",  key: "sevOk" },
 };
 
 export default function NotificationsPage() {
+  const t = useTranslations("notifications");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [filter, setFilter] = useState<"ALL" | "CRITICAL" | "WARNING" | "INFO">("ALL");
 
@@ -33,7 +36,7 @@ export default function NotificationsPage() {
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text3">농장을 선택해주세요.</p>
+        <p className="text-text3">{t("selectFarm")}</p>
       </div>
     );
   }
@@ -42,8 +45,8 @@ export default function NotificationsPage() {
     <div className="p-7 max-w-2xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[22px] font-extrabold tracking-tight">알림</h1>
-        <p className="text-xs text-text3 mt-0.5">KPI 기반 자동 알림</p>
+        <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
+        <p className="text-xs text-text3 mt-0.5">{t("subtitle")}</p>
       </div>
 
       {isLoading && (
@@ -57,26 +60,28 @@ export default function NotificationsPage() {
       {!isLoading && alerts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-text3">
           <span className="text-5xl mb-4">🔔</span>
-          <p className="font-semibold">알림이 없습니다</p>
-          <p className="text-xs mt-1">KPI가 정상 범위이면 알림이 발생하지 않습니다.</p>
+          <p className="font-semibold">{t("empty")}</p>
+          <p className="text-xs mt-1">{t("emptyDesc")}</p>
         </div>
       )}
 
       {/* Severity filter tabs */}
       {alerts.length > 0 && (
         <div className="flex gap-1.5 mb-4">
-          {(["ALL", "CRITICAL", "WARNING", "INFO"] as const).map((t) => {
-            const count = t === "ALL" ? active.length : active.filter((a) => a.severity === t).length;
-            const labels: Record<string, string> = { ALL: "전체", CRITICAL: "위험", WARNING: "주의", INFO: "정보" };
+          {(["ALL", "CRITICAL", "WARNING", "INFO"] as const).map((sev) => {
+            const count = sev === "ALL" ? active.length : active.filter((a) => a.severity === sev).length;
+            const labels: Record<string, string> = {
+              ALL: t("filterAll"), CRITICAL: t("sevCritical"), WARNING: t("sevWarning"), INFO: t("sevInfo"),
+            };
             return (
               <button
-                key={t}
-                onClick={() => setFilter(t)}
+                key={sev}
+                onClick={() => setFilter(sev)}
                 className={`text-xs font-semibold rounded-full px-3 py-1.5 border transition ${
-                  filter === t ? "bg-primary text-white border-primary" : "border-border text-text3 hover:border-primary"
+                  filter === sev ? "bg-primary text-white border-primary" : "border-border text-text3 hover:border-primary"
                 }`}
               >
-                {labels[t]} {count}
+                {labels[sev]} {count}
               </button>
             );
           })}
@@ -87,7 +92,7 @@ export default function NotificationsPage() {
       {filtered.length > 0 && (
         <section className="mb-6">
           <div className="text-[11px] font-bold text-faint uppercase tracking-widest mb-2">
-            주의 필요 ({filtered.length})
+            {t("needAttention", { n: filtered.length })}
           </div>
           <div className="space-y-2">
             {filtered.map((alert) => {
@@ -102,13 +107,13 @@ export default function NotificationsPage() {
                           {alert.kpi}
                         </span>
                         <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-white/70 text-text3">
-                          {s.label}
+                          {t(s.key)}
                         </span>
                       </div>
                       <p className="text-sm font-semibold text-text leading-snug">{alert.message}</p>
                       {alert.current_value != null && alert.target_value != null && (
                         <p className="text-xs text-text3 mt-0.5 font-mono">
-                          현재 {alert.current_value.toFixed(2)} → 목표 {alert.target_value.toFixed(2)}
+                          {t("currentTarget", { cur: alert.current_value.toFixed(2), tgt: alert.target_value.toFixed(2) })}
                         </p>
                       )}
                     </div>
@@ -124,7 +129,7 @@ export default function NotificationsPage() {
       {ok.length > 0 && (
         <section>
           <div className="text-[11px] font-bold text-faint uppercase tracking-widest mb-2">
-            정상 ({ok.length})
+            {t("normal", { n: ok.length })}
           </div>
           <div className="space-y-1.5">
             {ok.map((alert) => (

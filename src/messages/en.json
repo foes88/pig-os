@@ -171,10 +171,26 @@
     "currentTarget": "Now {cur} / target {tgt}"
   },
   "chat": {
-    "placeholder": "Ask about your farm KPIs... (e.g. Why is PSY low?)",
+    "placeholder": "Ask about farm KPIs or issues...",
     "send": "Send",
     "thinking": "AI is analyzing...",
-    "disclaimer": "AI insights are based on your farm data. Always verify with your veterinarian."
+    "disclaimer": "AI insights are based on your farm data. Always verify with your veterinarian.",
+    "selectFarm": "Please select a farm.",
+    "headerSubtitle": "Rule Engine farm data analysis",
+    "emptyTitle": "Ask about your farm data",
+    "emptyDesc": "The Rule Engine analyzes PSY, NPD, farrowing rate and more",
+    "analyzing": "Rule Engine analyzing...",
+    "errorAnswer": "Failed to get a response. Check API server connection.",
+    "asOf": "As of {date} · {by}",
+    "aiAnalysis": "AI analysis",
+    "ruleEngine": "Rule Engine",
+    "currentTarget": "Now {cur} / target {tgt}",
+    "causes": "Causes: {x}",
+    "actions": "Actions: {x}",
+    "q1": "Why is PSY low?",
+    "q2": "Show non-productive days",
+    "q3": "Why is farrowing rate below target?",
+    "q4": "What's the most urgent issue now?"
   },
   "auth": {
     "login": {
@@ -527,5 +543,20 @@
     "diffNormal": "Normal",
     "diffAssisted": "Assisted",
     "diffDifficult": "Difficult"
+  },
+  "notifications": {
+    "selectFarm": "Please select a farm.",
+    "title": "Notifications",
+    "subtitle": "Automatic KPI-based alerts",
+    "empty": "No notifications",
+    "emptyDesc": "No alerts are raised while KPIs are within range.",
+    "filterAll": "All",
+    "sevCritical": "Critical",
+    "sevWarning": "Warning",
+    "sevInfo": "Info",
+    "sevOk": "Normal",
+    "needAttention": "Needs attention ({n})",
+    "normal": "Normal ({n})",
+    "currentTarget": "Now {cur} → target {tgt}"
   }
 }

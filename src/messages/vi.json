@@ -171,10 +171,26 @@
     "currentTarget": "Hiện {cur} / mục tiêu {tgt}"
   },
   "chat": {
-    "placeholder": "Hỏi về KPI trang trại... (vd: PSY thấp vì sao?)",
+    "placeholder": "Hỏi về KPI hoặc vấn đề của trại...",
     "send": "Gửi",
     "thinking": "AI đang phân tích...",
-    "disclaimer": "Phân tích AI dựa trên dữ liệu trang trại. Hãy tham khảo bác sĩ thú y cho các quyết định quan trọng."
+    "disclaimer": "Phân tích AI dựa trên dữ liệu trang trại. Hãy tham khảo bác sĩ thú y cho các quyết định quan trọng.",
+    "selectFarm": "Vui lòng chọn trại.",
+    "headerSubtitle": "Phân tích dữ liệu trại bằng Rule Engine",
+    "emptyTitle": "Hỏi về dữ liệu trại của bạn",
+    "emptyDesc": "Rule Engine phân tích PSY, NPD, tỷ lệ đẻ và hơn thế",
+    "analyzing": "Rule Engine đang phân tích...",
+    "errorAnswer": "Không nhận được phản hồi. Kiểm tra kết nối máy chủ API.",
+    "asOf": "Tính đến {date} · {by}",
+    "aiAnalysis": "Phân tích AI",
+    "ruleEngine": "Rule Engine",
+    "currentTarget": "Hiện {cur} / mục tiêu {tgt}",
+    "causes": "Nguyên nhân: {x}",
+    "actions": "Biện pháp: {x}",
+    "q1": "Tại sao PSY thấp?",
+    "q2": "Cho xem ngày không sản xuất",
+    "q3": "Vì sao tỷ lệ đẻ dưới mục tiêu?",
+    "q4": "Vấn đề cấp bách nhất hiện nay là gì?"
   },
   "auth": {
     "login": {
@@ -527,5 +543,20 @@
     "diffNormal": "Bình thường",
     "diffAssisted": "Hỗ trợ",
     "diffDifficult": "Khó đẻ"
+  },
+  "notifications": {
+    "selectFarm": "Vui lòng chọn trại.",
+    "title": "Thông báo",
+    "subtitle": "Cảnh báo tự động theo KPI",
+    "empty": "Không có thông báo",
+    "emptyDesc": "Không có cảnh báo khi KPI trong ngưỡng.",
+    "filterAll": "Tất cả",
+    "sevCritical": "Nghiêm trọng",
+    "sevWarning": "Cảnh báo",
+    "sevInfo": "Thông tin",
+    "sevOk": "Bình thường",
+    "needAttention": "Cần chú ý ({n})",
+    "normal": "Bình thường ({n})",
+    "currentTarget": "Hiện {cur} → mục tiêu {tgt}"
   }
 }

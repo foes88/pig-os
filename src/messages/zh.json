@@ -171,10 +171,26 @@
     "currentTarget": "当前 {cur} / 目标 {tgt}"
   },
   "chat": {
-    "placeholder": "询问您的农场KPI... (例：PSY为何偏低？)",
+    "placeholder": "询问猪场KPI或问题...",
     "send": "发送",
     "thinking": "AI正在分析...",
-    "disclaimer": "AI分析基于您的农场数据。重要决策请咨询兽医。"
+    "disclaimer": "AI分析基于您的农场数据。重要决策请咨询兽医。",
+    "selectFarm": "请选择猪场。",
+    "headerSubtitle": "基于 Rule Engine 的猪场数据分析",
+    "emptyTitle": "询问您的猪场数据",
+    "emptyDesc": "Rule Engine 分析 PSY·NPD·分娩率等指标",
+    "analyzing": "Rule Engine 分析中...",
+    "errorAnswer": "未能获取响应。请检查 API 服务器连接。",
+    "asOf": "基准日 {date} · {by}",
+    "aiAnalysis": "AI 分析",
+    "ruleEngine": "Rule Engine",
+    "currentTarget": "当前 {cur} / 目标 {tgt}",
+    "causes": "原因: {x}",
+    "actions": "措施: {x}",
+    "q1": "PSY 为什么偏低？",
+    "q2": "显示非生产天数情况",
+    "q3": "分娩率为何未达标？",
+    "q4": "现在最紧急的问题是什么？"
   },
   "auth": {
     "login": {
@@ -527,5 +543,20 @@
     "diffNormal": "正常",
     "diffAssisted": "助产",
     "diffDifficult": "难产"
+  },
+  "notifications": {
+    "selectFarm": "请选择猪场。",
+    "title": "通知",
+    "subtitle": "基于KPI的自动提醒",
+    "empty": "暂无通知",
+    "emptyDesc": "KPI在正常范围内时不会产生提醒。",
+    "filterAll": "全部",
+    "sevCritical": "危险",
+    "sevWarning": "警告",
+    "sevInfo": "信息",
+    "sevOk": "正常",
+    "needAttention": "需要关注 ({n})",
+    "normal": "正常 ({n})",
+    "currentTarget": "当前 {cur} → 目标 {tgt}"
   }
 }
