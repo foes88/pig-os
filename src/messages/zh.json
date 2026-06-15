@@ -346,7 +346,9 @@
     "viewTable": "表格",
     "noTrend": "暂无趋势数据",
     "legendRecent": "深色柱 = 最近月份",
-    "colPeriod": "期间"
+    "colPeriod": "期间",
+    "monthsPreset": "{n}个月",
+    "exportCsv": "导出CSV"
   },
   "users": {
     "title": "用户",

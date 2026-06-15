@@ -113,10 +113,13 @@ function BarChart({ data, kpiKey, color }: { data: KpiTrend[]; kpiKey: KpiKey; c
 
 type KpiItem = (typeof KPI_LIST)[number];
 
+const PERIOD_PRESETS = [3, 6, 12] as const;
+
 export default function ReportsPage() {
   const t = useTranslations("reports");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [trendKpi, setTrendKpi] = useState<KpiKey>("psy");
+  const [months, setMonths] = useState<number>(6);
   const [view, setView] = useState<"chart" | "table">("chart");
 
   // psy/npd는 약어 그대로, farrowing_rate만 번역 키 사용
@@ -130,12 +133,31 @@ export default function ReportsPage() {
   });
 
   const { data: trend = [] } = useQuery({
-    queryKey: ["kpi", "trend", farmId, trendKpi],
-    queryFn: () => kpiApi.trend(farmId!, trendKpi, 6),
+    queryKey: ["kpi", "trend", farmId, trendKpi, months],
+    queryFn: () => kpiApi.trend(farmId!, trendKpi, months),
     enabled: !!farmId,
   });
 
   const activeKpi = KPI_LIST.find((k) => k.key === trendKpi)!;
+
+  // 현재 추세 데이터를 CSV로 내려받기 (의존성 없이 직접 생성)
+  const exportCsv = () => {
+    if (trend.length === 0) return;
+    const header = ["period", trendKpi];
+    const rows = trend.map((r) => [r.period, String(r[trendKpi] ?? "")]);
+    const csv = [header, ...rows]
+      .map((cols) => cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const start = trend[0]?.period ?? "";
+    const end = trend[trend.length - 1]?.period ?? "";
+    a.href = url;
+    a.download = `pigos_report_${farmId}_${trendKpi}_${start}_${end}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (!farmId) {
     return (
@@ -155,9 +177,29 @@ export default function ReportsPage() {
             {dashboard ? t("asOf", { date: dashboard.as_of.slice(0, 10) }) : t("summary")}
           </p>
         </div>
-        <button className="text-xs font-semibold text-text3 border border-border rounded-lg px-3 py-1.5 hover:bg-border transition">
-          {t("exportExcel")}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* 기간 프리셋 */}
+          <div className="flex border border-border rounded-lg overflow-hidden">
+            {PERIOD_PRESETS.map((m) => (
+              <button
+                key={m}
+                onClick={() => setMonths(m)}
+                className={`px-3 py-1.5 text-xs font-semibold transition ${
+                  months === m ? "bg-primary text-white" : "bg-background text-text3 hover:bg-border"
+                }`}
+              >
+                {t("monthsPreset", { n: m })}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={exportCsv}
+            disabled={trend.length === 0}
+            className="text-xs font-semibold text-text3 border border-border rounded-lg px-3 py-1.5 hover:bg-border transition disabled:opacity-50"
+          >
+            {t("exportCsv")}
+          </button>
+        </div>
       </div>
 
       {/* KPI 요약 카드 */}

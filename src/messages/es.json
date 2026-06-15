@@ -346,7 +346,9 @@
     "viewTable": "Tabla",
     "noTrend": "Sin datos de tendencia",
     "legendRecent": "Barra oscura = mes más reciente",
-    "colPeriod": "Periodo"
+    "colPeriod": "Periodo",
+    "monthsPreset": "{n} m",
+    "exportCsv": "Exportar CSV"
   },
   "users": {
     "title": "Usuarios",

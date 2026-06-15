@@ -346,7 +346,9 @@
     "viewTable": "Table",
     "noTrend": "No trend data",
     "legendRecent": "Dark bar = latest month",
-    "colPeriod": "Period"
+    "colPeriod": "Period",
+    "monthsPreset": "{n}mo",
+    "exportCsv": "Export CSV"
   },
   "users": {
     "title": "Users",

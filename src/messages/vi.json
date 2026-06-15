@@ -346,7 +346,9 @@
     "viewTable": "Bảng",
     "noTrend": "Không có dữ liệu xu hướng",
     "legendRecent": "Cột đậm = tháng gần nhất",
-    "colPeriod": "Kỳ"
+    "colPeriod": "Kỳ",
+    "monthsPreset": "{n} tháng",
+    "exportCsv": "Xuất CSV"
   },
   "users": {
     "title": "Người dùng",
