@@ -1,25 +1,29 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { farmsApi } from "@/lib/api/endpoints/farms";
 import { useAuthStore } from "@/store/auth.store";
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  GILT:      { label: "후보돈", cls: "bg-cyan-50 text-cyan-600" },
-  OPEN:      { label: "공태",   cls: "bg-slate-100 text-slate-600" },
-  PREGNANT:  { label: "임신",   cls: "bg-blue-50 text-blue-600" },
-  LACTATING: { label: "포유",   cls: "bg-green-50 text-green-600" },
-  ACCIDENT:  { label: "사고",   cls: "bg-orange-50 text-orange-600" },
-  CULLED:    { label: "도태",   cls: "bg-red-50 text-red-500" },
-  DEAD:      { label: "폐사",   cls: "bg-gray-100 text-gray-500" },
-  SOLD:      { label: "판매",   cls: "bg-emerald-50 text-emerald-600" },
-  TRANSFER:  { label: "전출",   cls: "bg-amber-50 text-amber-600" },
+// 상태 배지 색상 (라벨은 sowStatus 키)
+const STATUS_CLS: Record<string, string> = {
+  GILT:      "bg-cyan-50 text-cyan-600",
+  OPEN:      "bg-slate-100 text-slate-600",
+  PREGNANT:  "bg-blue-50 text-blue-600",
+  LACTATING: "bg-green-50 text-green-600",
+  ACCIDENT:  "bg-orange-50 text-orange-600",
+  CULLED:    "bg-red-50 text-red-500",
+  DEAD:      "bg-gray-100 text-gray-500",
+  SOLD:      "bg-emerald-50 text-emerald-600",
+  TRANSFER:  "bg-amber-50 text-amber-600",
 };
 
 export default function SowDetailPage() {
+  const t = useTranslations("sowDetail");
+  const tStatus = useTranslations("sowStatus");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const farmId = useAuthStore((s) => s.activeFarmId);
@@ -67,11 +71,11 @@ export default function SowDetailPage() {
 
   const deleteLatest = (cycle: { mating: { id: string }; farrowing?: { id: string }; weaning?: { id: string } }) => {
     if (cycle.weaning) {
-      if (confirm("이유 기록을 삭제하면 모돈 상태가 포유로 롤백됩니다. 계속할까요?")) delWeaning.mutate(cycle.weaning.id);
+      if (confirm(t("confirmDelWean"))) delWeaning.mutate(cycle.weaning.id);
     } else if (cycle.farrowing) {
-      if (confirm("분만 기록을 삭제하면 모돈 상태가 임신으로 롤백되고 산차가 1 감소합니다. 계속할까요?")) delFarrowing.mutate(cycle.farrowing.id);
+      if (confirm(t("confirmDelFarrow"))) delFarrowing.mutate(cycle.farrowing.id);
     } else {
-      if (confirm("교배 기록을 삭제하면 모돈 상태가 공태로 롤백됩니다. 계속할까요?")) delMating.mutate(cycle.mating.id);
+      if (confirm(t("confirmDelMating"))) delMating.mutate(cycle.mating.id);
     }
   };
 
@@ -79,17 +83,17 @@ export default function SowDetailPage() {
 
   if (sowLoading) {
     return (
-      <div className="p-7 text-center py-20 text-text3 text-sm">불러오는 중...</div>
+      <div className="p-7 text-center py-20 text-text3 text-sm">{t("loading")}</div>
     );
   }
 
   if (!sow) {
     return (
-      <div className="p-7 text-center py-20 text-danger text-sm">모돈을 찾을 수 없습니다.</div>
+      <div className="p-7 text-center py-20 text-danger text-sm">{t("notFound")}</div>
     );
   }
 
-  const badge = STATUS_BADGE[sow.status] ?? { label: sow.status, cls: "bg-gray-100 text-gray-500" };
+  const badgeCls = STATUS_CLS[sow.status] ?? "bg-gray-100 text-gray-500";
 
   // 번식 이력 타임라인 합산 (교배 기준으로 산차별 묶기)
   const timeline = matings
@@ -114,7 +118,7 @@ export default function SowDetailPage() {
           onClick={() => router.back()}
           className="flex items-center gap-1.5 text-xs text-text3 hover:text-text1 mb-5 transition"
         >
-          ← 모돈 목록
+          ← {t("back")}
         </button>
 
         {/* 개체 헤더 */}
@@ -123,8 +127,8 @@ export default function SowDetailPage() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-extrabold font-mono tracking-tight">{sow.ear_tag}</h1>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badge.cls}`}>
-                  {badge.label}
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeCls}`}>
+                  {tStatus(sow.status)}
                 </span>
               </div>
               {sow.rfid_tag && (
@@ -132,15 +136,15 @@ export default function SowDetailPage() {
               )}
             </div>
             <div className="text-right">
-              <div className="text-3xl font-extrabold font-mono text-primary">{sow.parity}산</div>
-              <div className="text-xs text-text3 mt-0.5">산차</div>
+              <div className="text-3xl font-extrabold font-mono text-primary">{t("parityUnit", { n: sow.parity })}</div>
+              <div className="text-xs text-text3 mt-0.5">{t("parityLabel")}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-border">
-            <InfoCell label="품종" value={sow.breed ?? "-"} />
-            <InfoCell label="입식 구분" value={sow.entry_type} />
-            <InfoCell label="입식일" value={sow.entry_date.slice(0, 10)} mono />
+            <InfoCell label={t("breed")} value={sow.breed ?? "-"} />
+            <InfoCell label={t("entryType")} value={sow.entry_type} />
+            <InfoCell label={t("entryDate")} value={sow.entry_date.slice(0, 10)} mono />
           </div>
         </div>
 
@@ -148,8 +152,8 @@ export default function SowDetailPage() {
         {nextEvent && (
           <div className="bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 mb-5 flex items-center justify-between">
             <div>
-              <div className="text-[11px] text-primary font-bold uppercase tracking-wide">다음 예정</div>
-              <div className="text-sm font-semibold text-text mt-0.5">{nextEvent.label}</div>
+              <div className="text-[11px] text-primary font-bold uppercase tracking-wide">{t("nextEvent")}</div>
+              <div className="text-sm font-semibold text-text mt-0.5">{t(nextEvent.labelKey)}</div>
             </div>
             <div className="text-right font-mono text-sm font-bold text-primary">
               {nextEvent.date ?? "—"}
@@ -158,20 +162,20 @@ export default function SowDetailPage() {
         )}
 
         {/* 산차별 성적 */}
-        {timeline.some((t) => t.farrowing) && (
+        {timeline.some((c) => c.farrowing) && (
           <div className="mb-5">
-            <h2 className="text-sm font-bold mb-3 text-text2">산차별 성적</h2>
+            <h2 className="text-sm font-bold mb-3 text-text2">{t("parityTable")}</h2>
             <div className="border border-border rounded-xl overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-bg2 text-text3 text-[11px] uppercase tracking-wide">
-                    <th className="text-left font-semibold px-3 py-2">사이클</th>
-                    <th className="text-left font-semibold px-3 py-2">교배일</th>
-                    <th className="text-left font-semibold px-3 py-2">분만일</th>
-                    <th className="text-right font-semibold px-3 py-2">총산</th>
-                    <th className="text-right font-semibold px-3 py-2">생존</th>
-                    <th className="text-right font-semibold px-3 py-2">이유</th>
-                    <th className="text-right font-semibold px-3 py-2">이유일령</th>
+                    <th className="text-left font-semibold px-3 py-2">{t("thCycle")}</th>
+                    <th className="text-left font-semibold px-3 py-2">{t("thMating")}</th>
+                    <th className="text-left font-semibold px-3 py-2">{t("thFarrowing")}</th>
+                    <th className="text-right font-semibold px-3 py-2">{t("thTotalBorn")}</th>
+                    <th className="text-right font-semibold px-3 py-2">{t("thBornAlive")}</th>
+                    <th className="text-right font-semibold px-3 py-2">{t("thWeaned")}</th>
+                    <th className="text-right font-semibold px-3 py-2">{t("thWeanAge")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -194,11 +198,11 @@ export default function SowDetailPage() {
 
         {/* 번식 이력 타임라인 */}
         <div>
-          <h2 className="text-sm font-bold mb-3 text-text2">번식 이력</h2>
+          <h2 className="text-sm font-bold mb-3 text-text2">{t("timeline")}</h2>
 
           {timeline.length === 0 ? (
             <div className="bg-surface border border-border rounded-xl p-8 text-center text-text3 text-sm">
-              기록된 번식 이력이 없습니다.
+              {t("noTimeline")}
             </div>
           ) : (
             <div className="space-y-3">
@@ -211,7 +215,7 @@ export default function SowDetailPage() {
                         {timeline.length - i}
                       </span>
                       <span className="text-xs font-semibold text-text2">
-                        {mating.mating_date.slice(0, 7)} 교배 사이클
+                        {t("cycleHeader", { month: mating.mating_date.slice(0, 7) })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -220,13 +224,13 @@ export default function SowDetailPage() {
                         farrowing ? "bg-amber-50 text-amber-600" :
                         "bg-blue-50 text-blue-600"
                       }`}>
-                        {weaning ? "이유 완료" : farrowing ? "포유 중" : "임신 중"}
+                        {weaning ? t("cycleWeaned") : farrowing ? t("cycleNursing") : t("cyclePregnant")}
                       </span>
                       <button
                         onClick={() => deleteLatest({ mating, farrowing, weaning })}
                         className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-50"
                       >
-                        최근 삭제
+                        {t("deleteLatest")}
                       </button>
                     </div>
                   </div>
@@ -236,9 +240,9 @@ export default function SowDetailPage() {
                     {/* 교배 */}
                     <Step
                       icon="💉"
-                      label="교배"
+                      label={t("stepMating")}
                       date={mating.mating_date}
-                      detail={mating.mating_type === "AI" ? "인공수정" : "자연교배"}
+                      detail={mating.mating_type === "AI" ? t("mAI") : t("mNatural")}
                       done
                     />
                     <StepConnector done={!!farrowing} />
@@ -246,9 +250,9 @@ export default function SowDetailPage() {
                     {/* 분만 */}
                     <Step
                       icon="🐖"
-                      label="분만"
+                      label={t("stepFarrowing")}
                       date={farrowing?.farrowing_date}
-                      detail={farrowing ? `생존 ${farrowing.born_alive}두 / 사산 ${farrowing.stillborn}두` : undefined}
+                      detail={farrowing ? t("farrowDetail", { a: farrowing.born_alive, s: farrowing.stillborn }) : undefined}
                       done={!!farrowing}
                     />
                     <StepConnector done={!!weaning} />
@@ -256,9 +260,9 @@ export default function SowDetailPage() {
                     {/* 이유 */}
                     <Step
                       icon="🌱"
-                      label="이유"
+                      label={t("stepWeaning")}
                       date={weaning?.weaning_date}
-                      detail={weaning ? `${weaning.weaned_count}두 이유` : undefined}
+                      detail={weaning ? t("weanDetail", { n: weaning.weaned_count }) : undefined}
                       done={!!weaning}
                     />
                   </div>
@@ -277,8 +281,8 @@ function computeNextEvent(
   lastFarrowing: string | undefined,
   lastWeaning: string | undefined,
   cfg: { gestation_days: number; lactation_days: number; wei_target_days: number } | undefined,
-): { label: string; date: string | null } | null {
-  if (status === "GILT") return { label: "초교배 권장", date: null };
+): { labelKey: string; date: string | null } | null {
+  if (status === "GILT") return { labelKey: "neFirstMating", date: null };
   if (!cfg) return null;
   const addDays = (iso: string, d: number): string => {
     const x = new Date(iso);
@@ -286,12 +290,12 @@ function computeNextEvent(
     return x.toISOString().slice(0, 10);
   };
   if (status === "PREGNANT" && lastMating)
-    return { label: "분만 예정", date: addDays(lastMating, cfg.gestation_days) };
+    return { labelKey: "neFarrowingDue", date: addDays(lastMating, cfg.gestation_days) };
   if (status === "LACTATING" && lastFarrowing)
-    return { label: "이유 예정", date: addDays(lastFarrowing, cfg.lactation_days) };
+    return { labelKey: "neWeaningDue", date: addDays(lastFarrowing, cfg.lactation_days) };
   if (status === "OPEN" && lastWeaning)
-    return { label: "재교배 예정", date: addDays(lastWeaning, cfg.wei_target_days) };
-  if (status === "ACCIDENT") return { label: "재교배 필요", date: null };
+    return { labelKey: "neRemateDue", date: addDays(lastWeaning, cfg.wei_target_days) };
+  if (status === "ACCIDENT") return { labelKey: "neRemateNeeded", date: null };
   return null;
 }
 
