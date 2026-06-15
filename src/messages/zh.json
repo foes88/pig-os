@@ -168,7 +168,9 @@
     "noAlerts": "✓ 暂无 Rule Engine 提醒 — 所有KPI正常",
     "headUnit": "头",
     "daysUnit": "天",
-    "currentTarget": "当前 {cur} / 目标 {tgt}"
+    "currentTarget": "当前 {cur} / 目标 {tgt}",
+    "vsAvg": "全国均值 {v}",
+    "vsTop25": "前25% {v}"
   },
   "chat": {
     "placeholder": "询问猪场KPI或问题...",

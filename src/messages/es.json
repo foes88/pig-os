@@ -168,7 +168,9 @@
     "noAlerts": "✓ Sin alertas Rule Engine — todos los KPI en rango",
     "headUnit": "cab.",
     "daysUnit": "d",
-    "currentTarget": "Actual {cur} / meta {tgt}"
+    "currentTarget": "Actual {cur} / meta {tgt}",
+    "vsAvg": "Prom. nac. {v}",
+    "vsTop25": "Top 25% {v}"
   },
   "chat": {
     "placeholder": "Pregunte sobre KPI o problemas...",

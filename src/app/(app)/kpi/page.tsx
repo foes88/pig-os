@@ -79,6 +79,8 @@ export default function KpiPage() {
                       value={data.psy != null ? data.psy.toFixed(1) : "-"}
                       benchmark={`≥ ${psyT}`}
                       good={data.psy != null && data.psy >= psyT}
+                      avg={data.benchmarks?.PSY?.avg ?? null}
+                      top25={data.benchmarks?.PSY?.top25 ?? null}
                     />
                     <KpiCard
                       label="NPD"
@@ -87,6 +89,8 @@ export default function KpiPage() {
                       benchmark={`≤ ${npdT}${t("daysUnit")}`}
                       good={data.npd != null && data.npd <= npdT}
                       invert
+                      avg={data.benchmarks?.NPD?.avg ?? null}
+                      top25={data.benchmarks?.NPD?.top25 ?? null}
                     />
                     <KpiCard
                       label={t("frLabel")}
@@ -94,6 +98,8 @@ export default function KpiPage() {
                       value={data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(1) + "%" : "-"}
                       benchmark={`≥ ${frT}%`}
                       good={data.farrowing_rate != null && data.farrowing_rate * 100 >= frT}
+                      avg={data.benchmarks?.FARROWING_RATE?.avg ?? null}
+                      top25={data.benchmarks?.FARROWING_RATE?.top25 ?? null}
                     />
                   </>
                 );
@@ -132,10 +138,11 @@ export default function KpiPage() {
 }
 
 function KpiCard({
-  label, desc, value, benchmark, good, invert = false,
+  label, desc, value, benchmark, good, invert = false, avg = null, top25 = null,
 }: {
   label: string; desc: string; value: string;
   benchmark: string; good: boolean; invert?: boolean;
+  avg?: number | null; top25?: number | null;
 }) {
   const t = useTranslations("kpi");
   const color = value === "-" ? "text-text3" : good ? "text-success" : "text-danger";
@@ -145,6 +152,12 @@ function KpiCard({
       <div className="text-[11px] font-bold text-text2 mb-2 uppercase tracking-wide">{label}</div>
       <div className={`font-mono text-3xl font-extrabold ${color}`}>{value}</div>
       <div className="text-[10px] text-text3 mt-2">{t("target", { v: benchmark })}</div>
+      {(avg != null || top25 != null) && (
+        <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-border text-[10px] text-text3 font-mono">
+          {avg != null && <span>{t("vsAvg", { v: avg })}</span>}
+          {top25 != null && <span>{t("vsTop25", { v: top25 })}</span>}
+        </div>
+      )}
     </div>
   );
 }

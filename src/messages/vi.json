@@ -168,7 +168,9 @@
     "noAlerts": "✓ Không có cảnh báo Rule Engine — mọi KPI trong ngưỡng",
     "headUnit": "con",
     "daysUnit": "ngày",
-    "currentTarget": "Hiện {cur} / mục tiêu {tgt}"
+    "currentTarget": "Hiện {cur} / mục tiêu {tgt}",
+    "vsAvg": "TB quốc gia {v}",
+    "vsTop25": "Top 25% {v}"
   },
   "chat": {
     "placeholder": "Hỏi về KPI hoặc vấn đề của trại...",

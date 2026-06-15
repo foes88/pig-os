@@ -168,7 +168,9 @@
     "noAlerts": "✓ 현재 Rule Engine 알림 없음 — 모든 KPI 정상 범위",
     "headUnit": "두",
     "daysUnit": "일",
-    "currentTarget": "현재 {cur} / 목표 {tgt}"
+    "currentTarget": "현재 {cur} / 목표 {tgt}",
+    "vsAvg": "국가평균 {v}",
+    "vsTop25": "상위25% {v}"
   },
   "chat": {
     "placeholder": "농장 KPI나 문제 상황을 질문하세요...",

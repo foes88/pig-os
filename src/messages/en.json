@@ -168,7 +168,9 @@
     "noAlerts": "✓ No Rule Engine alerts — all KPIs within range",
     "headUnit": "hd",
     "daysUnit": "d",
-    "currentTarget": "Now {cur} / target {tgt}"
+    "currentTarget": "Now {cur} / target {tgt}",
+    "vsAvg": "Nat. avg {v}",
+    "vsTop25": "Top 25% {v}"
   },
   "chat": {
     "placeholder": "Ask about farm KPIs or issues...",
