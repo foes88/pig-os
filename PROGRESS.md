@@ -91,6 +91,10 @@
 - [x] Sidebar 분석 그룹에 "PRRS 유전자" 링크(Dna 아이콘) 추가. i18n 5개 언어 prrsReport(15키).
 - 검증: tsc EXIT 0 / i18n 942키 5개 언어 일치.
 
+## 2026-06-15 야간스프린트(품질 순환) — Q3 알림 페이지 스모크 테스트
+- [x] `tests/pages/notifications.test.tsx` — 제목/실시간·영구 섹션 렌더 + 빈상태(savedEmpty) 스모크. next-intl·navigation·auth·kpiApi·notificationsApi 모킹.
+- 검증: tsc EXIT 0. [exec-blocked: sandbox vitest → 사용자 머신 npm run test]
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
