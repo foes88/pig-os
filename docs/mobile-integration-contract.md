@@ -140,3 +140,35 @@
 **공통**
 - [ ] 계약 변경 = 이 문서 먼저 수정 → 커밋 → 양측 공지
 - [ ] 릴리스 전 §6 갭 전부 closed 또는 "다음 버전" 명시 합의
+
+---
+
+## 8. 검증 분리 — "계약 1벌 + 플랫폼별 통합 2벌"
+
+API/계약은 플랫폼 무관 → **공유 검증 1벌**. 단말 글루는 **iOS/Android 각각** 검증.
+
+### 8a. 공유 계약 검증 (플랫폼 무관, 한 번만 — 라이브 API 대상)
+1. auth: login → `Authorization: Bearer` → 401 시 refresh → 재시도
+2. 농장/설정: `GET /farms/{id}/config` 단위·통화 수신, country별 KPI 분기
+3. 모돈/이벤트: 모돈 목록·검색, 교배/분만/이유 POST→PATCH→DELETE(상태 롤백)
+4. 할 일/알림: `GET /tasks`, `GET /notifications`(+unread_count), read/read-all
+5. sync: `POST /sync` push/pull 왕복, 6개 엔티티 필드 매핑
+6. devices: `POST /devices` 등록 → `DELETE /devices/{token}` 해제
+
+> 이 시나리오는 응답 JSON·상태코드 기준이라 iOS/Android 결과가 같아야 한다. 다르면 클라 글루 버그.
+
+### 8b. 플랫폼별 글루 검증 (iOS / Android 각각)
+| 검증 항목 | Android | iOS |
+|---|---|---|
+| dev 연결 | 에뮬 `10.0.2.2:8000` 도달 | 시뮬 `localhost:8000` 도달 |
+| 평문 허용(디버그) | `usesCleartextTraffic` 적용 | ATS `NSAllowsLocalNetworking` |
+| 토큰 갱신 인터셉터 | OkHttp Authenticator | URLSession retry / Alamofire |
+| 푸시 등록 | FCM 토큰 → `POST /devices {platform:"ANDROID"}` | APNS→FCM → `{platform:"IOS"}` |
+| 오프라인 저장 | Room ↔ sync 엔티티 1:1 | CoreData ↔ sync 엔티티 1:1 |
+| 백그라운드 sync | WorkManager 주기/재시도 | BGTaskScheduler |
+| G4 E2E | 비행기모드 입력→복귀→sync 왕복 | 동일 시나리오 |
+
+### 결론
+- **계약(8a)**: 변경 시 이 문서 기준으로 양 플랫폼이 동일 결과 확인 → 공유.
+- **글루(8b)**: 네트워크 설정·푸시·로컬DB·백그라운드는 OS API가 달라 **반드시 별개 검증**.
+- 릴리스 게이트: 8a 공통 통과 + 8b를 iOS·Android **각각** 통과.
