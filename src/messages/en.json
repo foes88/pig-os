@@ -924,42 +924,91 @@
     "title": "Terms & policy",
     "tabTerms": "Terms of service",
     "tabPrivacy": "Privacy policy",
-    "revised": "Last revised 2026-05-01 · v2.3",
+    "revised": "Last revised 2026-06-15 · v2.4 · Draft for legal review",
+    "disclaimer": "This page is a draft prepared for legal review and does not constitute legal advice or a final binding agreement.",
     "footer": "Full document (PDF) · Inquiries",
     "terms": [
       {
         "h": "Article 1 (Purpose)",
-        "b": "These terms govern the conditions and procedures for using the PigOS service provided by WiseLake (the 'Company') and the rights and obligations between the Company and members."
+        "b": "These Terms govern the conditions, procedures, rights, and obligations for using the PigOS service operated by WiseLake (the 'Company'). This document is a draft prepared for legal review and is not a final or legally binding agreement."
       },
       {
         "h": "Article 2 (Definitions)",
-        "b": "'Service' means the swine farm management and AI analysis platform provided by the Company. 'Member' means a person who agrees to these terms and concludes a usage contract."
+        "b": "'Service' means the swine farm management platform and optional AI analysis add-ons. 'Member' means a user who accepts these Terms. 'Farm Data' means herd, event, and operational records entered by the Member. 'Add-on' means an optional paid feature such as AI Insight."
       },
       {
-        "h": "Article 3 (Data ownership)",
-        "b": "Ownership of farm data entered by the member belongs to the member; the Company uses it only for service provision and anonymized benchmarks."
+        "h": "Article 3 (Accounts and roles)",
+        "b": "Members register an account and access one or more farms through farm membership. Access is controlled by role (Owner, Manager, Worker, Viewer), and each tenant's data is isolated by farm identifier. Members are responsible for safeguarding their credentials."
       },
       {
-        "h": "Article 4 (Service change/suspension)",
-        "b": "The Company may change or suspend the service as operationally necessary, with prior notice in such cases."
+        "h": "Article 4 (Plans, free service, add-ons, and billing)",
+        "b": "The core service is provided free of charge. Optional add-ons such as AI Insight are paid and billed on a subscription basis, exclusive of applicable taxes. The Company may change fees or plan features with prior notice, effective from the next billing cycle."
+      },
+      {
+        "h": "Article 5 (Data ownership and license)",
+        "b": "Farm Data is owned by the Member. The Member grants the Company a limited license to host and process Farm Data in order to provide the service and to generate anonymized, aggregated analytics."
+      },
+      {
+        "h": "Article 6 (Data monetization, anonymization, and farmer dividend)",
+        "b": "The Company may create anonymized, aggregated benchmarks and commercial data products derived from Farm Data. Where such data is monetized, the Company intends to share a portion of the resulting value with participating farms (a 'data dividend'). Personal and farm-identifying information is removed before any such use."
+      },
+      {
+        "h": "Article 7 (Prohibited conduct)",
+        "b": "Members must not use the service for unlawful purposes, enter knowingly false data, infringe the rights of others, attempt to reverse engineer or disrupt the service, or seek unauthorized access to other tenants' data."
+      },
+      {
+        "h": "Article 8 (Disclaimers and limitation of liability)",
+        "b": "The service is provided 'as is'. AI Insight outputs are advisory and do not replace professional veterinary or business advice. To the extent permitted by law, the Company's liability is limited and implied warranties are disclaimed; mandatory consumer protections remain unaffected."
+      },
+      {
+        "h": "Article 9 (Governing law and dispute resolution)",
+        "b": "These Terms are governed by the laws of the Company's principal place of business, and disputes are subject to the competent courts there, except where mandatory local law grants the Member rights in their country of residence."
+      },
+      {
+        "h": "Article 10 (Termination, data export, and changes)",
+        "b": "A Member may terminate at any time and may export Farm Data before deletion. Upon termination, data is deleted except where retention is legally required. The Company will give notice of material changes to these Terms before they take effect."
       }
     ],
     "privacy": [
       {
-        "h": "1. Personal data collected",
-        "b": "At signup we collect name, email, and farm information. Farm operation data is stored during service use."
+        "h": "1. Data we collect",
+        "b": "Account data (name, email, phone), farm data (farm profile, herd and event records), device and log data, and optional location data when you enable it."
       },
       {
-        "h": "2. Purpose of use",
-        "b": "Used for service provision, AI analysis, anonymized benchmark generation, and customer support."
+        "h": "2. How we collect",
+        "b": "Directly from your input, automatically through service logs and cookies, and through the mobile app including offline entries synchronized when connectivity is restored."
       },
       {
-        "h": "3. Retention & disposal",
-        "b": "Disposed immediately upon withdrawal; where legally required to retain, kept for that period then disposed."
+        "h": "3. Purposes of use",
+        "b": "To provide the service, compute KPIs and AI analysis, generate anonymized benchmarks, deliver customer support, ensure security and prevent fraud, and comply with legal obligations."
       },
       {
-        "h": "4. k-anonymity protection",
-        "b": "Benchmark data is anonymized with k≥10 so individual farms cannot be identified."
+        "h": "4. Third-party sharing and international transfer",
+        "b": "We use service providers (for example cloud hosting) as processors under contract and may transfer data across borders with appropriate safeguards. We do not sell personal data."
+      },
+      {
+        "h": "5. Retention and deletion",
+        "b": "Personal data is retained while your account is active and deleted upon withdrawal, except where a longer retention period is legally required, after which it is disposed of."
+      },
+      {
+        "h": "6. Your rights",
+        "b": "You may request access, correction, deletion, and portability, and may object to or withdraw consent for certain processing, subject to applicable law."
+      },
+      {
+        "h": "7. Cookies and analytics",
+        "b": "We use essential cookies for operation and analytics cookies to improve the service. You can control non-essential cookies through your browser or in-app settings."
+      },
+      {
+        "h": "8. Security measures",
+        "b": "We apply encryption in transit, role-based access control, audit logging, and k-anonymity (k≥10) for benchmark data so that individual farms cannot be identified."
+      },
+      {
+        "h": "9. Children",
+        "b": "The service is intended for agricultural businesses and is not directed to children below the age defined by applicable law; we do not knowingly collect their personal data."
+      },
+      {
+        "h": "10. Data protection contact and regional notices",
+        "b": "For privacy requests contact privacy@pigos.io. This section summarizes rights under GDPR (EU/EEA), CCPA/CPRA (California), and PIPA (Korea) for reference only; it is not a definitive statement of compliance, and specific regional terms prevail where required."
       }
     ]
   },

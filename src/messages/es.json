@@ -924,42 +924,91 @@
     "title": "Términos y políticas",
     "tabTerms": "Términos del servicio",
     "tabPrivacy": "Política de privacidad",
-    "revised": "Última revisión 2026-05-01 · v2.3",
+    "revised": "Última revisión 2026-06-15 · v2.4 · Borrador para revisión legal",
+    "disclaimer": "Esta página es un borrador preparado para revisión legal y no constituye asesoramiento legal ni un acuerdo vinculante definitivo.",
     "footer": "Documento completo (PDF) · Consultas",
     "terms": [
       {
         "h": "Artículo 1 (Objeto)",
-        "b": "Estos términos rigen las condiciones y procedimientos de uso del servicio PigOS provisto por WiseLake (la 'Empresa') y los derechos y obligaciones entre la Empresa y los miembros."
+        "b": "Estos Términos regulan las condiciones, procedimientos, derechos y obligaciones para usar el servicio PigOS operado por WiseLake (la 'Empresa'). Este documento es un borrador preparado para revisión legal y no es un acuerdo final ni jurídicamente vinculante."
       },
       {
         "h": "Artículo 2 (Definiciones)",
-        "b": "'Servicio' es la plataforma de gestión porcina y análisis IA de la Empresa. 'Miembro' es quien acepta estos términos y celebra un contrato de uso."
+        "b": "'Servicio' es la plataforma de gestión de granjas porcinas y los complementos opcionales de análisis con IA. 'Miembro' es el usuario que acepta estos Términos. 'Datos de la granja' son los registros de piara, eventos y operación introducidos por el Miembro. 'Complemento' es una función opcional de pago como AI Insight."
       },
       {
-        "h": "Artículo 3 (Propiedad de datos)",
-        "b": "La propiedad de los datos de granja ingresados pertenece al miembro; la Empresa los usa solo para prestar el servicio y para referencias anonimizadas."
+        "h": "Artículo 3 (Cuentas y roles)",
+        "b": "El Miembro registra una cuenta y accede a una o varias granjas mediante la membresía de granja. El acceso se controla por rol (Propietario, Gerente, Operario, Lector) y los datos de cada inquilino se aíslan por identificador de granja. El Miembro es responsable de proteger sus credenciales."
       },
       {
-        "h": "Artículo 4 (Cambio/suspensión)",
-        "b": "La Empresa puede cambiar o suspender el servicio según necesidad operativa, con aviso previo en tales casos."
+        "h": "Artículo 4 (Planes, servicio gratuito, complementos y facturación)",
+        "b": "El servicio principal se ofrece de forma gratuita. Los complementos opcionales como AI Insight son de pago y se facturan por suscripción, sin incluir impuestos aplicables. La Empresa puede cambiar tarifas o funciones con aviso previo, con efecto desde el siguiente ciclo de facturación."
+      },
+      {
+        "h": "Artículo 5 (Propiedad de datos y licencia)",
+        "b": "Los Datos de la granja son propiedad del Miembro. El Miembro otorga a la Empresa una licencia limitada para alojar y procesar dichos datos con el fin de prestar el servicio y generar análisis agregados y anonimizados."
+      },
+      {
+        "h": "Artículo 6 (Monetización de datos, anonimización y dividendo del agricultor)",
+        "b": "La Empresa puede crear referencias agregadas y anonimizadas y productos de datos comerciales derivados de los Datos de la granja. Cuando dichos datos se moneticen, la Empresa pretende compartir parte del valor resultante con las granjas participantes (un 'dividendo de datos'). La información personal e identificable de la granja se elimina antes de cualquier uso."
+      },
+      {
+        "h": "Artículo 7 (Conductas prohibidas)",
+        "b": "El Miembro no debe usar el servicio con fines ilícitos, introducir datos falsos a sabiendas, infringir derechos de terceros, intentar realizar ingeniería inversa o interrumpir el servicio, ni acceder sin autorización a datos de otros inquilinos."
+      },
+      {
+        "h": "Artículo 8 (Exenciones y limitación de responsabilidad)",
+        "b": "El servicio se presta 'tal cual'. Los resultados de AI Insight son orientativos y no sustituyen el asesoramiento veterinario o empresarial profesional. En la medida permitida por la ley, la responsabilidad de la Empresa es limitada y se excluyen las garantías implícitas; las protecciones obligatorias al consumidor no se ven afectadas."
+      },
+      {
+        "h": "Artículo 9 (Ley aplicable y resolución de disputas)",
+        "b": "Estos Términos se rigen por las leyes del domicilio principal de la Empresa, y las disputas se someten a los tribunales competentes de ese lugar, salvo cuando la ley local imperativa otorgue al Miembro derechos en su país de residencia."
+      },
+      {
+        "h": "Artículo 10 (Terminación, exportación de datos y cambios)",
+        "b": "El Miembro puede darse de baja en cualquier momento y exportar los Datos de la granja antes de su eliminación. Tras la baja, los datos se eliminan salvo cuando la ley exija conservarlos. La Empresa avisará de cambios importantes en estos Términos antes de su entrada en vigor."
       }
     ],
     "privacy": [
       {
-        "h": "1. Datos personales recopilados",
-        "b": "Al registrarse recopilamos nombre, correo e información de la granja. Se almacenan datos de operación durante el uso."
+        "h": "1. Datos que recopilamos",
+        "b": "Datos de la cuenta (nombre, correo, teléfono), datos de la granja (perfil de la granja, registros de piara y eventos), datos de dispositivo y registros, y datos de ubicación opcionales cuando los activa."
       },
       {
-        "h": "2. Finalidad",
-        "b": "Para prestación del servicio, análisis IA, referencias anonimizadas y soporte al cliente."
+        "h": "2. Cómo recopilamos",
+        "b": "Directamente de su introducción, de forma automática mediante registros del servicio y cookies, y a través de la app móvil, incluidas las entradas sin conexión sincronizadas al restablecerse la conectividad."
       },
       {
-        "h": "3. Conservación y eliminación",
-        "b": "Se eliminan al darse de baja; si la ley exige conservarlos, se guardan ese periodo y luego se eliminan."
+        "h": "3. Finalidades del uso",
+        "b": "Para prestar el servicio, calcular KPI y análisis con IA, generar referencias anonimizadas, ofrecer soporte, garantizar la seguridad y prevenir el fraude, y cumplir obligaciones legales."
       },
       {
-        "h": "4. Protección k-anonimato",
-        "b": "Los datos de referencia se anonimizan con k≥10 para que no se identifiquen granjas individuales."
+        "h": "4. Cesión a terceros y transferencia internacional",
+        "b": "Usamos proveedores (por ejemplo, alojamiento en la nube) como encargados bajo contrato y podemos transferir datos a otros países con garantías adecuadas. No vendemos datos personales."
+      },
+      {
+        "h": "5. Conservación y eliminación",
+        "b": "Los datos personales se conservan mientras la cuenta esté activa y se eliminan al darse de baja, salvo cuando la ley exija un plazo mayor, tras el cual se eliminan."
+      },
+      {
+        "h": "6. Sus derechos",
+        "b": "Puede solicitar acceso, rectificación, supresión y portabilidad, y oponerse o retirar el consentimiento para ciertos tratamientos, conforme a la ley aplicable."
+      },
+      {
+        "h": "7. Cookies y analítica",
+        "b": "Usamos cookies esenciales para el funcionamiento y cookies analíticas para mejorar el servicio. Puede controlar las cookies no esenciales desde el navegador o los ajustes de la app."
+      },
+      {
+        "h": "8. Medidas de seguridad",
+        "b": "Aplicamos cifrado en tránsito, control de acceso por roles, registro de auditoría y k-anonimato (k≥10) en los datos de referencia para que no se pueda identificar a granjas individuales."
+      },
+      {
+        "h": "9. Menores",
+        "b": "El servicio está dirigido a empresas agrícolas y no a menores por debajo de la edad definida por la ley aplicable; no recopilamos a sabiendas sus datos personales."
+      },
+      {
+        "h": "10. Contacto de protección de datos y avisos regionales",
+        "b": "Para solicitudes de privacidad escriba a privacy@pigos.io. Esta sección resume, solo a título informativo, los derechos del RGPD (UE/EEE), CCPA/CPRA (California) y PIPA (Corea); no es una declaración definitiva de cumplimiento y prevalecen los términos regionales específicos cuando corresponda."
       }
     ]
   },

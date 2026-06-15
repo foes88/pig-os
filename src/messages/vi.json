@@ -924,42 +924,91 @@
     "title": "Điều khoản & chính sách",
     "tabTerms": "Điều khoản dịch vụ",
     "tabPrivacy": "Chính sách bảo mật",
-    "revised": "Sửa đổi lần cuối 2026-05-01 · v2.3",
+    "revised": "Sửa đổi lần cuối 2026-06-15 · v2.4 · Bản thảo rà soát pháp lý",
+    "disclaimer": "Trang này là bản thảo phục vụ rà soát pháp lý, không cấu thành tư vấn pháp luật hay thỏa thuận ràng buộc cuối cùng.",
     "footer": "Tài liệu đầy đủ (PDF) · Liên hệ",
     "terms": [
       {
         "h": "Điều 1 (Mục đích)",
-        "b": "Điều khoản này quy định điều kiện và quy trình sử dụng dịch vụ PigOS do WiseLake ('Công ty') cung cấp, cùng quyền và nghĩa vụ giữa Công ty và thành viên."
+        "b": "Các Điều khoản này quy định điều kiện, quy trình, quyền và nghĩa vụ khi sử dụng dịch vụ PigOS do WiseLake ('Công ty') vận hành. Tài liệu này là bản thảo phục vụ rà soát pháp lý và không phải là thỏa thuận cuối cùng hay có hiệu lực ràng buộc pháp lý."
       },
       {
         "h": "Điều 2 (Định nghĩa)",
-        "b": "'Dịch vụ' là nền tảng quản lý trại heo và phân tích AI do Công ty cung cấp. 'Thành viên' là người đồng ý điều khoản này và ký hợp đồng sử dụng."
+        "b": "'Dịch vụ' là nền tảng quản lý trang trại heo và các tiện ích phân tích AI tùy chọn. 'Thành viên' là người dùng chấp nhận các Điều khoản này. 'Dữ liệu trang trại' là hồ sơ đàn, sự kiện và vận hành do Thành viên nhập. 'Tiện ích bổ sung' là tính năng trả phí tùy chọn như AI Insight."
       },
       {
-        "h": "Điều 3 (Quyền sở hữu dữ liệu)",
-        "b": "Quyền sở hữu dữ liệu trại do thành viên nhập thuộc về thành viên; Công ty chỉ dùng cho cung cấp dịch vụ và chuẩn so sánh ẩn danh."
+        "h": "Điều 3 (Tài khoản và vai trò)",
+        "b": "Thành viên đăng ký tài khoản và truy cập một hoặc nhiều trang trại thông qua tư cách thành viên trang trại. Quyền truy cập được kiểm soát theo vai trò (Chủ, Quản lý, Nhân công, Người xem) và dữ liệu của mỗi bên thuê được cô lập theo định danh trang trại. Thành viên chịu trách nhiệm bảo vệ thông tin đăng nhập của mình."
       },
       {
-        "h": "Điều 4 (Thay đổi/ngừng dịch vụ)",
-        "b": "Công ty có thể thay đổi hoặc ngừng dịch vụ theo nhu cầu vận hành, có thông báo trước trong các trường hợp đó."
+        "h": "Điều 4 (Gói dịch vụ, dịch vụ miễn phí, tiện ích và thanh toán)",
+        "b": "Dịch vụ cốt lõi được cung cấp miễn phí. Các tiện ích tùy chọn như AI Insight là trả phí và tính theo hình thức thuê bao, chưa bao gồm thuế áp dụng. Công ty có thể thay đổi phí hoặc tính năng gói sau khi thông báo trước, có hiệu lực từ chu kỳ thanh toán kế tiếp."
+      },
+      {
+        "h": "Điều 5 (Quyền sở hữu dữ liệu và giấy phép)",
+        "b": "Dữ liệu trang trại thuộc sở hữu của Thành viên. Thành viên cấp cho Công ty giấy phép giới hạn để lưu trữ và xử lý Dữ liệu trang trại nhằm cung cấp dịch vụ và tạo các phân tích tổng hợp, ẩn danh."
+      },
+      {
+        "h": "Điều 6 (Khai thác dữ liệu, ẩn danh hóa và cổ tức cho nông hộ)",
+        "b": "Công ty có thể tạo các chỉ số tham chiếu tổng hợp, ẩn danh và các sản phẩm dữ liệu thương mại từ Dữ liệu trang trại. Khi khai thác thương mại dữ liệu đó, Công ty dự định chia sẻ một phần giá trị thu được cho các trang trại tham gia ('cổ tức dữ liệu'). Thông tin cá nhân và thông tin nhận dạng trang trại được loại bỏ trước mọi mục đích sử dụng."
+      },
+      {
+        "h": "Điều 7 (Hành vi bị cấm)",
+        "b": "Thành viên không được sử dụng dịch vụ cho mục đích bất hợp pháp, cố ý nhập dữ liệu sai, xâm phạm quyền của người khác, cố gắng dịch ngược hoặc gây gián đoạn dịch vụ, hay truy cập trái phép dữ liệu của bên thuê khác."
+      },
+      {
+        "h": "Điều 8 (Tuyên bố miễn trừ và giới hạn trách nhiệm)",
+        "b": "Dịch vụ được cung cấp 'nguyên trạng'. Kết quả AI Insight chỉ mang tính tham khảo và không thay thế tư vấn thú y hoặc kinh doanh chuyên nghiệp. Trong phạm vi luật cho phép, trách nhiệm của Công ty được giới hạn và các bảo đảm ngầm định bị loại trừ; các quy định bảo vệ người tiêu dùng bắt buộc không bị ảnh hưởng."
+      },
+      {
+        "h": "Điều 9 (Luật áp dụng và giải quyết tranh chấp)",
+        "b": "Các Điều khoản này được điều chỉnh bởi luật nơi đặt trụ sở chính của Công ty, và tranh chấp thuộc thẩm quyền tòa án có thẩm quyền tại đó, trừ khi luật địa phương bắt buộc trao cho Thành viên quyền tại quốc gia cư trú của họ."
+      },
+      {
+        "h": "Điều 10 (Chấm dứt, xuất dữ liệu và thay đổi)",
+        "b": "Thành viên có thể chấm dứt bất cứ lúc nào và có thể xuất Dữ liệu trang trại trước khi xóa. Khi chấm dứt, dữ liệu sẽ bị xóa trừ khi pháp luật yêu cầu lưu giữ. Công ty sẽ thông báo về các thay đổi quan trọng của Điều khoản trước khi chúng có hiệu lực."
       }
     ],
     "privacy": [
       {
-        "h": "1. Dữ liệu cá nhân thu thập",
-        "b": "Khi đăng ký thu thập tên, email, thông tin trại. Dữ liệu vận hành trại được lưu trong quá trình sử dụng."
+        "h": "1. Dữ liệu chúng tôi thu thập",
+        "b": "Dữ liệu tài khoản (tên, email, điện thoại), dữ liệu trang trại (hồ sơ trang trại, hồ sơ đàn và sự kiện), dữ liệu thiết bị và nhật ký, và dữ liệu vị trí tùy chọn khi bạn bật."
       },
       {
-        "h": "2. Mục đích sử dụng",
-        "b": "Dùng để cung cấp dịch vụ, phân tích AI, tạo chuẩn so sánh ẩn danh và hỗ trợ khách hàng."
+        "h": "2. Cách chúng tôi thu thập",
+        "b": "Trực tiếp từ dữ liệu bạn nhập, tự động qua nhật ký dịch vụ và cookie, và qua ứng dụng di động bao gồm các mục nhập ngoại tuyến được đồng bộ khi có kết nối trở lại."
       },
       {
-        "h": "3. Lưu giữ & hủy",
-        "b": "Hủy ngay khi rút tài khoản; nếu luật yêu cầu lưu, giữ trong thời hạn đó rồi hủy."
+        "h": "3. Mục đích sử dụng",
+        "b": "Để cung cấp dịch vụ, tính KPI và phân tích AI, tạo chỉ số tham chiếu ẩn danh, hỗ trợ khách hàng, bảo đảm an ninh và ngăn gian lận, và tuân thủ nghĩa vụ pháp lý."
       },
       {
-        "h": "4. Bảo vệ k-ẩn danh",
-        "b": "Dữ liệu chuẩn được ẩn danh với k≥10 để không nhận dạng được trại riêng lẻ."
+        "h": "4. Chia sẻ với bên thứ ba và chuyển dữ liệu quốc tế",
+        "b": "Chúng tôi sử dụng nhà cung cấp dịch vụ (ví dụ lưu trữ đám mây) làm bên xử lý theo hợp đồng và có thể chuyển dữ liệu xuyên biên giới với biện pháp bảo vệ phù hợp. Chúng tôi không bán dữ liệu cá nhân."
+      },
+      {
+        "h": "5. Lưu giữ và xóa",
+        "b": "Dữ liệu cá nhân được lưu giữ khi tài khoản còn hoạt động và bị xóa khi hủy tài khoản, trừ khi pháp luật yêu cầu thời hạn lưu giữ dài hơn, sau đó sẽ được tiêu hủy."
+      },
+      {
+        "h": "6. Quyền của bạn",
+        "b": "Bạn có thể yêu cầu truy cập, chỉnh sửa, xóa và di chuyển dữ liệu, và có thể phản đối hoặc rút lại sự đồng ý đối với một số hoạt động xử lý, theo luật áp dụng."
+      },
+      {
+        "h": "7. Cookie và phân tích",
+        "b": "Chúng tôi dùng cookie thiết yếu để vận hành và cookie phân tích để cải thiện dịch vụ. Bạn có thể kiểm soát cookie không thiết yếu qua trình duyệt hoặc cài đặt trong ứng dụng."
+      },
+      {
+        "h": "8. Biện pháp bảo mật",
+        "b": "Chúng tôi áp dụng mã hóa khi truyền, kiểm soát truy cập theo vai trò, ghi nhật ký kiểm toán và k-ẩn danh (k≥10) cho dữ liệu tham chiếu để không thể nhận dạng từng trang trại."
+      },
+      {
+        "h": "9. Trẻ em",
+        "b": "Dịch vụ hướng đến các doanh nghiệp nông nghiệp và không nhắm đến trẻ em dưới độ tuổi theo luật áp dụng; chúng tôi không cố ý thu thập dữ liệu cá nhân của các em."
+      },
+      {
+        "h": "10. Liên hệ bảo vệ dữ liệu và thông báo theo khu vực",
+        "b": "Đối với yêu cầu về quyền riêng tư, liên hệ privacy@pigos.io. Mục này chỉ tóm tắt để tham khảo các quyền theo GDPR (EU/EEA), CCPA/CPRA (California) và PIPA (Hàn Quốc); đây không phải tuyên bố tuân thủ cuối cùng và các điều khoản khu vực cụ thể sẽ được ưu tiên khi cần."
       }
     ]
   },

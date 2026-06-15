@@ -41,6 +41,14 @@
 - 검증: tsc --noEmit EXIT 0 (리팩터 페이지+신규 테스트 타입 통과). 
 - ⚠ **vitest 실행 불가(샌드박스)**: node_modules가 윈도우용 + vitest4 rolldown 네이티브 바이너리가 Bus error(core dumped). 리눅스 바이너리 추가해도 크래시. → **사용자 머신에서 `npm run test` 실행 필요.** [exec-blocked: sandbox]
 
+## 2026-06-15 야간스프린트 — N6 법무 문서 검토·보강 (/legal)
+- [x] 이용약관 4→10개 조항 (정의/계정·권한/요금·애드온/소유권vs사용권/데이터수익화·농가배분/금지행위/면책·책임제한/준거법/해지·반출).
+- [x] 개인정보보호 4→10개 섹션 (수집항목·방법/목적/제3자·국외이전/보관·파기/이용자권리/쿠키/보안 k≥10/아동/책임자·privacy@pigos.io/GDPR·CCPA·PIPA 요약).
+- [x] disclaimer 키 신설 + 페이지 상단 "법무 검토용 초안" 배너. revised→2026-06-15 v2.4. 법적효력 주장 없음.
+- [x] 5개 언어(en/ko/zh/es/vi) 동일 키구조·조항수(terms10/privacy10) 동시 작성. 전수 키 정합성 OK.
+- [x] docs/legal-review-notes.md (보강 조항/변호사 확정 필요/지역별 추가 검토 5개 시장).
+- 검증: tsc EXIT 0 / 5개 로케일 legal.terms·privacy 길이 동일(10/10) / 전체 i18n 키 정합성.
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
