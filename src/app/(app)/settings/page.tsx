@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   User,
   CreditCard,
@@ -30,6 +31,7 @@ interface SettingItem {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -42,43 +44,43 @@ export default function SettingsPage() {
 
   const sections: { title: string; items: SettingItem[] }[] = [
     {
-      title: "계정",
+      title: t("secAccount"),
       items: [
-        { icon: User,       label: "프로필",      desc: "이름, 연락처 편집",          href: "/settings/profile" },
-        { icon: Globe,      label: "언어",        desc: "한국어",                      href: "/settings/profile" },
-        { icon: Bell,       label: "알림 설정",   desc: "알림 수신 채널 관리",         href: "/notifications" },
+        { icon: User,       label: t("profile"),       desc: t("profileDesc"),       href: "/settings/profile" },
+        { icon: Globe,      label: t("language"),      desc: t("currentLanguage"),   href: "/settings/profile" },
+        { icon: Bell,       label: t("notifications"), desc: t("notificationsDesc"), href: "/notifications" },
       ],
     },
     {
-      title: "농장",
+      title: t("secFarm"),
       items: [
-        { icon: Building2,  label: "농장 정보",   desc: "농장명, 국가, 모돈 규모",     href: "/settings/profile" },
-        { icon: Sliders,    label: "번식 설정",   desc: "임신/포유/WSI/출하 기준일",   href: "/settings/farm" },
-        { icon: Target,     label: "벤치마크",    desc: "국가별 KPI 목표값",           href: "/settings/benchmarks" },
-        { icon: CreditCard, label: "구독 및 결제", desc: "현재 플랜: Free",            href: "/settings/billing" },
+        { icon: Building2,  label: t("farmInfo"),    desc: t("farmInfoDesc"),    href: "/settings/profile" },
+        { icon: Sliders,    label: t("reproConfig"), desc: t("reproConfigDesc"), href: "/settings/farm" },
+        { icon: Target,     label: t("benchmarks"),  desc: t("benchmarksDesc"),  href: "/settings/benchmarks" },
+        { icon: CreditCard, label: t("billing"),     desc: t("billingDesc"),     href: "/settings/billing" },
       ],
     },
     {
-      title: "지원",
+      title: t("secSupport"),
       items: [
-        { icon: Megaphone,  label: "공지사항",    href: "/announcements" },
-        { icon: LifeBuoy,   label: "고객 지원",   href: "/support" },
-        { icon: FileText,   label: "약관 및 정책", href: "/legal" },
+        { icon: Megaphone,  label: t("announcements"), href: "/announcements" },
+        { icon: LifeBuoy,   label: t("support"),       href: "/support" },
+        { icon: FileText,   label: t("legal"),         href: "/legal" },
       ],
     },
     {
-      title: "기타",
+      title: t("secEtc"),
       items: [
-        { icon: LogOut, label: "로그아웃", onClick: handleLogout },
-        { icon: Trash2, label: "계정 삭제", desc: "모든 데이터가 영구 삭제됩니다", href: "/settings/delete-account", danger: true },
+        { icon: LogOut, label: t("logout"), onClick: handleLogout },
+        { icon: Trash2, label: t("deleteAccount"), desc: t("deleteAccountDesc"), href: "/settings/delete-account", danger: true },
       ],
     },
   ];
 
   return (
     <div className="max-w-2xl mx-auto px-7 py-6">
-      <h1 className="text-xl font-extrabold tracking-tight text-text mb-1">설정</h1>
-      <p className="text-[13px] text-text3 mb-6">계정과 농장 환경을 관리합니다</p>
+      <h1 className="text-xl font-extrabold tracking-tight text-text mb-1">{t("pageTitle")}</h1>
+      <p className="text-[13px] text-text3 mb-6">{t("pageSubtitle")}</p>
 
       {/* User card */}
       {user && (

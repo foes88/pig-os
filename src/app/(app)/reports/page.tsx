@@ -1,16 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { KpiTrend } from "@/types/api.types";
 
+// label/unit은 렌더 시 t()로 해석 (모듈 레벨이라 키만 보관)
 const KPI_LIST = [
-  { key: "psy",            label: "PSY",    unit: "두/모돈/년", good: "high", color: "#2563EB" },
-  { key: "npd",            label: "NPD",    unit: "일",         good: "low",  color: "#7C3AED" },
-  { key: "farrowing_rate", label: "분만율", unit: "%",          good: "high", color: "#059669" },
+  { key: "psy",            label: "PSY",  unitKey: "unitPsy",     good: "high", color: "#2563EB" },
+  { key: "npd",            label: "NPD",  unitKey: "unitDays",    good: "low",  color: "#7C3AED" },
+  { key: "farrowing_rate", labelKey: "kpiFarrowingRate", unitKey: "unitPercent", good: "high", color: "#059669" },
 ] as const;
 
 type KpiKey = (typeof KPI_LIST)[number]["key"];
@@ -109,10 +111,17 @@ function BarChart({ data, kpiKey, color }: { data: KpiTrend[]; kpiKey: KpiKey; c
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+type KpiItem = (typeof KPI_LIST)[number];
+
 export default function ReportsPage() {
+  const t = useTranslations("reports");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [trendKpi, setTrendKpi] = useState<KpiKey>("psy");
   const [view, setView] = useState<"chart" | "table">("chart");
+
+  // psy/npd는 약어 그대로, farrowing_rate만 번역 키 사용
+  const kpiLabel = (k: KpiItem) => ("labelKey" in k ? t(k.labelKey) : k.label);
+  const kpiUnit = (k: KpiItem) => t(k.unitKey);
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: queryKeys.kpi.dashboard(farmId ?? ""),
@@ -131,7 +140,7 @@ export default function ReportsPage() {
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text3">농장을 선택해주세요.</p>
+        <p className="text-text3">{t("selectFarm")}</p>
       </div>
     );
   }
@@ -141,19 +150,20 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight">보고서</h1>
+          <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
           <p className="text-xs text-text3 mt-0.5">
-            {dashboard ? `기준일: ${dashboard.as_of.slice(0, 10)}` : "KPI 성과 요약"}
+            {dashboard ? t("asOf", { date: dashboard.as_of.slice(0, 10) }) : t("summary")}
           </p>
         </div>
         <button className="text-xs font-semibold text-text3 border border-border rounded-lg px-3 py-1.5 hover:bg-border transition">
-          Excel 내보내기
+          {t("exportExcel")}
         </button>
       </div>
 
       {/* KPI 요약 카드 */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        {KPI_LIST.map(({ key, label, unit, color }) => {
+        {KPI_LIST.map((k) => {
+          const { key, color } = k;
           const raw = dashboard?.[key as keyof typeof dashboard];
           const value = typeof raw === "number" ? raw : null;
           return (
@@ -163,13 +173,13 @@ export default function ReportsPage() {
               onClick={() => setTrendKpi(key)}
               style={trendKpi === key ? { borderColor: color, boxShadow: `0 0 0 1px ${color}20` } : {}}
             >
-              <div className="text-xs font-semibold text-text3 mb-1">{label}</div>
+              <div className="text-xs font-semibold text-text3 mb-1">{kpiLabel(k)}</div>
               {isLoading ? (
                 <div className="h-8 bg-border rounded animate-pulse w-16" />
               ) : (
                 <div className="text-3xl font-extrabold font-mono tracking-tight" style={trendKpi === key ? { color } : { color: "var(--color-text)" }}>
                   {value != null ? value.toFixed(1) : "-"}
-                  <span className="text-sm font-normal text-text3 ml-1">{unit}</span>
+                  <span className="text-sm font-normal text-text3 ml-1">{kpiUnit(k)}</span>
                 </div>
               )}
             </div>
@@ -180,17 +190,17 @@ export default function ReportsPage() {
       {/* 모돈 현황 */}
       {dashboard && (
         <div className="bg-surface border border-border rounded-2xl p-5 mb-6">
-          <h2 className="text-sm font-bold text-text mb-4">모돈 현황</h2>
+          <h2 className="text-sm font-bold text-text mb-4">{t("sowStatusTitle")}</h2>
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: "활성 모돈", value: dashboard.active_sows, unit: "두" },
-              { label: "임신",      value: dashboard.gestating,   unit: "두" },
-              { label: "포유",      value: dashboard.lactating,   unit: "두" },
-              { label: "이유",      value: dashboard.weaned,      unit: "두" },
-            ].map(({ label, value, unit }) => (
+              { label: t("activeSows"), value: dashboard.active_sows },
+              { label: t("pregnant"),   value: dashboard.gestating },
+              { label: t("lactating"),  value: dashboard.lactating },
+              { label: t("weaned"),     value: dashboard.weaned },
+            ].map(({ label, value }) => (
               <div key={label} className="text-center">
                 <div className="text-2xl font-extrabold font-mono text-text">{value}</div>
-                <div className="text-xs text-text3 mt-0.5">{label} ({unit})</div>
+                <div className="text-xs text-text3 mt-0.5">{label} ({t("unitHead")})</div>
               </div>
             ))}
           </div>
@@ -202,24 +212,24 @@ export default function ReportsPage() {
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-text">6개월 추세</h2>
+            <h2 className="text-sm font-bold text-text">{t("trendTitle")}</h2>
             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-border text-text3">
-              {activeKpi.label}
+              {kpiLabel(activeKpi)}
             </span>
           </div>
           <div className="flex gap-1">
             {/* KPI 탭 */}
-            {KPI_LIST.map(({ key, label }) => (
+            {KPI_LIST.map((k) => (
               <button
-                key={key}
-                onClick={() => setTrendKpi(key)}
+                key={k.key}
+                onClick={() => setTrendKpi(k.key)}
                 className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                  trendKpi === key
+                  trendKpi === k.key
                     ? "bg-primary text-white"
                     : "bg-background border border-border text-text3 hover:bg-border"
                 }`}
               >
-                {label}
+                {kpiLabel(k)}
               </button>
             ))}
             {/* View 전환 */}
@@ -232,7 +242,7 @@ export default function ReportsPage() {
                     view === v ? "bg-primary text-white" : "bg-background text-text3 hover:bg-border"
                   }`}
                 >
-                  {v === "chart" ? "차트" : "표"}
+                  {v === "chart" ? t("viewChart") : t("viewTable")}
                 </button>
               ))}
             </div>
@@ -240,7 +250,7 @@ export default function ReportsPage() {
         </div>
 
         {trend.length === 0 ? (
-          <div className="py-8 text-center text-sm text-text3">추세 데이터가 없습니다</div>
+          <div className="py-8 text-center text-sm text-text3">{t("noTrend")}</div>
         ) : view === "chart" ? (
           <div className="px-2">
             <BarChart data={trend} kpiKey={trendKpi} color={activeKpi.color} />
@@ -249,18 +259,18 @@ export default function ReportsPage() {
                 className="inline-block w-3 h-3 rounded-sm"
                 style={{ background: activeKpi.color }}
               />
-              {activeKpi.label} ({activeKpi.unit})
-              <span className="ml-2 opacity-60">어두운 막대 = 최근 월</span>
+              {kpiLabel(activeKpi)} ({kpiUnit(activeKpi)})
+              <span className="ml-2 opacity-60">{t("legendRecent")}</span>
             </div>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-2 text-xs font-semibold text-text3">기간</th>
+                <th className="text-left py-2 text-xs font-semibold text-text3">{t("colPeriod")}</th>
                 <th className="text-right py-2 text-xs font-semibold text-text3">PSY</th>
                 <th className="text-right py-2 text-xs font-semibold text-text3">NPD</th>
-                <th className="text-right py-2 text-xs font-semibold text-text3">분만율</th>
+                <th className="text-right py-2 text-xs font-semibold text-text3">{t("kpiFarrowingRate")}</th>
               </tr>
             </thead>
             <tbody>
