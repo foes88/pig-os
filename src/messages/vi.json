@@ -1,4 +1,23 @@
 {
+
+  "prrsReport": {
+    "title": "PRRS theo di truyền",
+    "subtitle": "Tỷ lệ PRRS theo giống / dòng di truyền",
+    "selectFarm": "Vui lòng chọn trang trại.",
+    "noData": "Không có dữ liệu.",
+    "cBreed": "Giống",
+    "cGenetics": "Dòng di truyền",
+    "cCompany": "Nhà cung cấp",
+    "cTotal": "Số nái",
+    "cAffected": "Nái nhiễm",
+    "cEvents": "Sự kiện PRRS",
+    "cRate": "Tỷ lệ",
+    "sumSows": "Tổng số nái",
+    "sumAffected": "Nái nhiễm",
+    "sumEvents": "Sự kiện PRRS",
+    "note": "Tỷ lệ = nái nhiễm / tổng số nái. Sự kiện PRRS khớp mã bệnh bắt đầu bằng 'PRRS'."
+  },
+
   "nav": {
     "dashboard": "Tổng quan",
     "sows": "Quản lý nái",

@@ -1,4 +1,23 @@
 {
+
+  "prrsReport": {
+    "title": "按基因的PRRS",
+    "subtitle": "按品种/基因系的PRRS发生率",
+    "selectFarm": "请选择农场。",
+    "noData": "暂无数据。",
+    "cBreed": "品种",
+    "cGenetics": "基因系",
+    "cCompany": "供应商",
+    "cTotal": "母猪数",
+    "cAffected": "感染母猪",
+    "cEvents": "PRRS事件",
+    "cRate": "发生率",
+    "sumSows": "母猪总数",
+    "sumAffected": "感染母猪",
+    "sumEvents": "PRRS事件",
+    "note": "发生率 = 感染母猪 / 母猪总数。PRRS事件统计以'PRRS'开头的疾病代码。"
+  },
+
   "nav": {
     "dashboard": "仪表板",
     "sows": "母猪管理",

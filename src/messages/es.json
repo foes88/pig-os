@@ -1,4 +1,23 @@
 {
+
+  "prrsReport": {
+    "title": "PRRS por genética",
+    "subtitle": "Incidencia de PRRS por raza / línea genética",
+    "selectFarm": "Seleccione una granja.",
+    "noData": "Sin datos.",
+    "cBreed": "Raza",
+    "cGenetics": "Línea genética",
+    "cCompany": "Proveedor",
+    "cTotal": "Cerdas",
+    "cAffected": "Afectadas",
+    "cEvents": "Eventos PRRS",
+    "cRate": "Incidencia",
+    "sumSows": "Cerdas totales",
+    "sumAffected": "Cerdas afectadas",
+    "sumEvents": "Eventos PRRS",
+    "note": "Incidencia = cerdas afectadas / cerdas totales. Los eventos PRRS coinciden con códigos de enfermedad que empiezan por 'PRRS'."
+  },
+
   "nav": {
     "dashboard": "Panel",
     "sows": "Cerdas",

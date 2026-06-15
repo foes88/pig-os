@@ -805,3 +805,22 @@ export interface MarkReadResult {
 export interface GenerateNotificationsResult {
   created: number;
 }
+
+// ── Analytics: PRRS 유전자 성과 추적 (Phase 2) ────────────────────────────────
+export interface PrrsGeneticsRow {
+  breed: string | null;
+  breed_company: string | null;
+  genetics_id: string | null;
+  total_sows: number;
+  affected_sows: number;
+  prrs_events: number;
+  incidence_rate: number;
+}
+
+export interface PrrsByGeneticsResponse {
+  farm_id: string;
+  rows: PrrsGeneticsRow[];
+  total_sows: number;
+  total_affected: number;
+  total_events: number;
+}

@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Beef,
   ListTodo,
+  Dna,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -71,6 +72,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
       { href: "/reports", icon: FileText,    label: { en: "Reports", ko: "보고서", zh: "报告",  es: "Informes", vi: "Báo cáo" } },
       { href: "/reports/reproduction", icon: FileText, label: { en: "Repro Report", ko: "번식 성적", zh: "繁殖报告", es: "Repro.", vi: "BC sinh sản" } },
       { href: "/reports/grow-finish",  icon: Beef,     label: { en: "Grow-Finish",  ko: "비육 성적", zh: "育肥报告", es: "Engorde", vi: "BC vỗ béo" } },
+      { href: "/reports/prrs",         icon: Dna,      label: { en: "PRRS Genetics", ko: "PRRS 유전자", zh: "PRRS基因", es: "PRRS genética", vi: "PRRS di truyền" } },
     ],
   },
   {

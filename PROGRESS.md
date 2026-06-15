@@ -85,6 +85,12 @@
 - [x] N4: test_prrs_genetics_grouping(동일 breed·다른 genetics_id 분리 집계).
 - 검증: ruff clean / 통합 7개 수집 OK. [degraded: no-db — 실행은 사용자 머신]
 
+## 2026-06-15 야간스프린트(품질 순환) — Q2 PRRS 분석 프론트 노출
+- [x] `lib/api/endpoints/analytics.ts` + api.types.ts(PrrsGeneticsRow/PrrsByGeneticsResponse) + queryKeys.analytics.
+- [x] `/reports/prrs` 페이지: 요약카드(전체/감염/PRRS건수) + 품종·유전자별 발생률 표 + CSV 내보내기.
+- [x] Sidebar 분석 그룹에 "PRRS 유전자" 링크(Dna 아이콘) 추가. i18n 5개 언어 prrsReport(15키).
+- 검증: tsc EXIT 0 / i18n 942키 5개 언어 일치.
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 

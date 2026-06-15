@@ -1,4 +1,23 @@
 {
+
+  "prrsReport": {
+    "title": "PRRS by genetics",
+    "subtitle": "PRRS incidence by breed / genetic line",
+    "selectFarm": "Please select a farm.",
+    "noData": "No data.",
+    "cBreed": "Breed",
+    "cGenetics": "Genetic line",
+    "cCompany": "Supplier",
+    "cTotal": "Sows",
+    "cAffected": "Affected",
+    "cEvents": "PRRS events",
+    "cRate": "Incidence",
+    "sumSows": "Total sows",
+    "sumAffected": "Affected sows",
+    "sumEvents": "PRRS events",
+    "note": "Incidence = affected sows / total sows. PRRS events match disease codes starting with 'PRRS'."
+  },
+
   "nav": {
     "dashboard": "Dashboard",
     "sows": "Sows",

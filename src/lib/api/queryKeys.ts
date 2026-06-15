@@ -63,4 +63,8 @@ export const queryKeys = {
     list: (farmId: string, unreadOnly: boolean) => ["notifications", farmId, unreadOnly] as const,
     unread: (farmId: string) => ["notifications", "unread", farmId] as const,
   },
+
+  analytics: {
+    prrsByGenetics: (farmId: string) => ["analytics", "prrs", farmId] as const,
+  },
 } as const;
