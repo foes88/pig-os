@@ -65,30 +65,39 @@ export default function KpiPage() {
 
         {data && (
           <>
-            {/* Core KPI cards */}
+            {/* Core KPI cards — 목표값은 국가별 벤치마크(API)에서, 없으면 폴백 */}
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <KpiCard
-                label="PSY"
-                desc={t("psyDesc")}
-                value={data.psy != null ? data.psy.toFixed(1) : "-"}
-                benchmark="≥ 28.0"
-                good={data.psy != null && data.psy >= 28}
-              />
-              <KpiCard
-                label="NPD"
-                desc={t("npdDesc")}
-                value={data.npd != null ? data.npd.toFixed(1) + t("daysUnit") : "-"}
-                benchmark={`≤ 35${t("daysUnit")}`}
-                good={data.npd != null && data.npd <= 35}
-                invert
-              />
-              <KpiCard
-                label={t("frLabel")}
-                desc={t("frDesc")}
-                value={data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(1) + "%" : "-"}
-                benchmark="≥ 90%"
-                good={data.farrowing_rate != null && data.farrowing_rate >= 0.9}
-              />
+              {(() => {
+                const psyT = data.benchmarks?.PSY?.target ?? 28;
+                const npdT = data.benchmarks?.NPD?.target ?? 35;
+                const frT = data.benchmarks?.FARROWING_RATE?.target ?? 90;
+                return (
+                  <>
+                    <KpiCard
+                      label="PSY"
+                      desc={t("psyDesc")}
+                      value={data.psy != null ? data.psy.toFixed(1) : "-"}
+                      benchmark={`≥ ${psyT}`}
+                      good={data.psy != null && data.psy >= psyT}
+                    />
+                    <KpiCard
+                      label="NPD"
+                      desc={t("npdDesc")}
+                      value={data.npd != null ? data.npd.toFixed(1) + t("daysUnit") : "-"}
+                      benchmark={`≤ ${npdT}${t("daysUnit")}`}
+                      good={data.npd != null && data.npd <= npdT}
+                      invert
+                    />
+                    <KpiCard
+                      label={t("frLabel")}
+                      desc={t("frDesc")}
+                      value={data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(1) + "%" : "-"}
+                      benchmark={`≥ ${frT}%`}
+                      good={data.farrowing_rate != null && data.farrowing_rate * 100 >= frT}
+                    />
+                  </>
+                );
+              })()}
             </div>
 
             {/* Herd status */}

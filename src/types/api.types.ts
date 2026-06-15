@@ -28,6 +28,11 @@ export interface LoginRequest {
   password: string;
 }
 
+export type FarmRole = "FARM_OWNER" | "FARM_MANAGER" | "FARM_WORKER" | "VET" | "VIEWER";
+export type OrgRole = "SUPER_ADMIN" | "VENDOR_ADMIN" | "DISTRIBUTOR_ADMIN" | "DEALER_ADMIN";
+export type LegacyFarmRole = "OWNER" | "MANAGER" | "WORKER";
+export type UserRole = FarmRole | OrgRole | LegacyFarmRole | "API_CLIENT";
+
 export interface LoginResponse {
   access_token: string;
   refresh_token: string;
@@ -35,7 +40,7 @@ export interface LoginResponse {
   user_id: string;
   name: string;
   email: string;
-  role: "OWNER" | "MANAGER" | "WORKER" | "VET";
+  role: UserRole;
   farm_ids: string[];
 }
 
@@ -48,7 +53,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: "OWNER" | "MANAGER" | "WORKER" | "VET";
+  role: UserRole;
   farm_ids: string[];
 }
 
@@ -436,7 +441,15 @@ export interface KpiDashboard {
   week_matings: number;
   week_farrowings: number;
   week_weanings: number;
+  country: string | null;
+  benchmarks: Record<string, KpiBenchmark>;  // "PSY" | "NPD" | "FARROWING_RATE"
   alerts: Alert[];
+}
+
+export interface KpiBenchmark {
+  avg: number | null;
+  top25: number | null;
+  target: number | null;
 }
 
 export interface KpiTrend {
