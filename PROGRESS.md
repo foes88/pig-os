@@ -28,6 +28,13 @@
 - [x] worker.py cron 등록: tasks 05:30 UTC, notifications 06:00 UTC (cron 5개, functions 6개).
 - 검증: ruff clean / import-smoke(WorkerSettings 로드·잡 등록 확인) / unit 219/219. [degraded: no-db — 실제 잡 실행은 DB+Redis 필요]
 
+## 2026-06-15 야간스프린트 — N4 PRRS 유전자 성과 추적 (Phase 2)
+- [x] 선행 스키마 확인: health_events(disease_code) + sow.breed/breed_company/genetics_id 모두 존재 → 구현 진행.
+- [x] `analytics_service.prrs_by_genetics(db, farm_id)` — 품종/유전자 그룹별 전체모돈 × PRRS(disease_code ILIKE 'PRRS%') 집계, 발생률(affected/total*100) 계산, 발생률 내림차순.
+- [x] `GET /api/v1/farms/{farm_id}/analytics/prrs-by-genetics` + schemas/analytics.py + main.py 등록.
+- [x] 통합 테스트 `tests/integration/test_prrs_analytics.py` (PRRS 집계/비-PRRS 제외/발생률).
+- 검증: ruff clean / import-smoke / 라우트 OpenAPI 등록 / unit 219/219. [degraded: no-db — integration은 사용자 머신 재검증]
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
