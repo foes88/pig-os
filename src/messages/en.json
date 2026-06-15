@@ -808,5 +808,137 @@
     "current": "Current farm settings",
     "curLine1": "Gestation {g}d · Lactation {l}d · WSI {w}d",
     "curLine2": "Gilt first mating {gm}d · Slaughter {s}d"
+  },
+  "profile": {
+    "title": "Edit profile",
+    "saved": "✓ Changes saved",
+    "changePhoto": "Change photo",
+    "name": "Name",
+    "namePh": "Enter your name",
+    "email": "Email",
+    "phone": "Phone",
+    "save": "Save changes"
+  },
+  "billing": {
+    "title": "Subscription & billing",
+    "currentPlan": "Current plan",
+    "planName": "AI Bundle",
+    "nextBilling": "Next billing 2026-06-15",
+    "perMonth": "/mo",
+    "changePlan": "Change plan",
+    "cancel": "Cancel subscription",
+    "paymentMethod": "Payment method",
+    "expires": "Exp 09/27",
+    "change": "Change",
+    "history": "Billing history",
+    "paid": "Paid",
+    "receipt": "Receipt"
+  },
+  "deleteAccount": {
+    "confirmWord": "DELETE",
+    "title": "Delete account",
+    "sure": "Are you sure you want to delete your account?",
+    "irreversible": "This action cannot be undone",
+    "lostTitle": "Data lost on deletion",
+    "l1": "All sow records",
+    "l2": "Farm operation data",
+    "l3": "AI analysis & reports",
+    "l4": "Subscription & billing info",
+    "exportPre": "To export your data before deleting, ",
+    "exportLink": "export all data (Excel)",
+    "exportPost": " first.",
+    "recovery": "Recovery requests are possible for 30 days after deletion, then permanently erased.",
+    "typeToConfirm": "Type {word} to confirm",
+    "cancel": "Cancel",
+    "deleteForever": "Delete account permanently"
+  },
+  "announcements": {
+    "title": "Announcements",
+    "items": [
+      {
+        "tag": "Update",
+        "title": "Improved AI signal accuracy + voice input",
+        "body": "You can now record farrowing by voice. AI loss-detection accuracy improved by 12%."
+      },
+      {
+        "tag": "Maintenance",
+        "title": "Scheduled maintenance notice",
+        "body": "Regular server maintenance will be performed. Entries during that time are saved offline and synced automatically."
+      },
+      {
+        "tag": "Event",
+        "title": "AI Bundle 30-day free trial extended",
+        "body": "The AI Bundle free trial period is extended to 30 days."
+      }
+    ]
+  },
+  "support": {
+    "title": "Support",
+    "chat": "Live chat",
+    "chatHours": "Weekdays 9–18",
+    "email": "Email",
+    "phone": "Phone",
+    "faqTitle": "Frequently asked questions",
+    "faqs": [
+      {
+        "q": "Can I export data to Excel?",
+        "a": "Yes, in Settings > Export you can get all sow records and reports as Excel/PDF."
+      },
+      {
+        "q": "What happens to records entered offline?",
+        "a": "They are saved locally and synced automatically when online. Sync status is shown at the top of the screen."
+      },
+      {
+        "q": "How is AI loss estimation calculated?",
+        "a": "NPD delays, farrowing-rate drops, mortality etc. are compared to 27-year benchmarks and converted to a monetary amount."
+      },
+      {
+        "q": "Can I manage multiple farms in one account?",
+        "a": "Yes, an organization account can register and switch between multiple farms."
+      }
+    ]
+  },
+  "legal": {
+    "title": "Terms & policy",
+    "tabTerms": "Terms of service",
+    "tabPrivacy": "Privacy policy",
+    "revised": "Last revised 2026-05-01 · v2.3",
+    "footer": "Full document (PDF) · Inquiries",
+    "terms": [
+      {
+        "h": "Article 1 (Purpose)",
+        "b": "These terms govern the conditions and procedures for using the PigOS service provided by WiseLake (the 'Company') and the rights and obligations between the Company and members."
+      },
+      {
+        "h": "Article 2 (Definitions)",
+        "b": "'Service' means the swine farm management and AI analysis platform provided by the Company. 'Member' means a person who agrees to these terms and concludes a usage contract."
+      },
+      {
+        "h": "Article 3 (Data ownership)",
+        "b": "Ownership of farm data entered by the member belongs to the member; the Company uses it only for service provision and anonymized benchmarks."
+      },
+      {
+        "h": "Article 4 (Service change/suspension)",
+        "b": "The Company may change or suspend the service as operationally necessary, with prior notice in such cases."
+      }
+    ],
+    "privacy": [
+      {
+        "h": "1. Personal data collected",
+        "b": "At signup we collect name, email, and farm information. Farm operation data is stored during service use."
+      },
+      {
+        "h": "2. Purpose of use",
+        "b": "Used for service provision, AI analysis, anonymized benchmark generation, and customer support."
+      },
+      {
+        "h": "3. Retention & disposal",
+        "b": "Disposed immediately upon withdrawal; where legally required to retain, kept for that period then disposed."
+      },
+      {
+        "h": "4. k-anonymity protection",
+        "b": "Benchmark data is anonymized with k≥10 so individual farms cannot be identified."
+      }
+    ]
   }
 }

@@ -808,5 +808,137 @@
     "current": "Cài đặt trại hiện tại",
     "curLine1": "Mang thai {g} ngày · Nuôi con {l} ngày · WSI {w} ngày",
     "curLine2": "Phối đầu hậu bị {gm} ngày · Xuất {s} ngày"
+  },
+  "profile": {
+    "title": "Sửa hồ sơ",
+    "saved": "✓ Đã lưu thay đổi",
+    "changePhoto": "Đổi ảnh",
+    "name": "Tên",
+    "namePh": "Nhập tên của bạn",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "save": "Lưu thay đổi"
+  },
+  "billing": {
+    "title": "Gói & thanh toán",
+    "currentPlan": "Gói hiện tại",
+    "planName": "Gói AI",
+    "nextBilling": "Thanh toán kế tiếp 2026-06-15",
+    "perMonth": "/tháng",
+    "changePlan": "Đổi gói",
+    "cancel": "Hủy đăng ký",
+    "paymentMethod": "Phương thức thanh toán",
+    "expires": "HH 09/27",
+    "change": "Đổi",
+    "history": "Lịch sử thanh toán",
+    "paid": "Đã thanh toán",
+    "receipt": "Biên lai"
+  },
+  "deleteAccount": {
+    "confirmWord": "XÓA",
+    "title": "Xóa tài khoản",
+    "sure": "Bạn có chắc muốn xóa tài khoản?",
+    "irreversible": "Hành động này không thể hoàn tác",
+    "lostTitle": "Dữ liệu sẽ mất khi xóa",
+    "l1": "Toàn bộ hồ sơ nái",
+    "l2": "Dữ liệu vận hành trại",
+    "l3": "Phân tích AI & báo cáo",
+    "l4": "Thông tin gói & thanh toán",
+    "exportPre": "Để xuất dữ liệu trước khi xóa, hãy ",
+    "exportLink": "xuất toàn bộ dữ liệu (Excel)",
+    "exportPost": " trước.",
+    "recovery": "Có thể yêu cầu khôi phục trong 30 ngày sau khi xóa, sau đó xóa vĩnh viễn.",
+    "typeToConfirm": "Nhập {word} để xác nhận",
+    "cancel": "Hủy",
+    "deleteForever": "Xóa tài khoản vĩnh viễn"
+  },
+  "announcements": {
+    "title": "Thông báo",
+    "items": [
+      {
+        "tag": "Cập nhật",
+        "title": "Cải thiện độ chính xác tín hiệu AI + nhập bằng giọng nói",
+        "body": "Bạn có thể ghi ca đẻ bằng giọng nói. Độ chính xác phát hiện tổn thất AI tăng 12%."
+      },
+      {
+        "tag": "Bảo trì",
+        "title": "Thông báo bảo trì định kỳ",
+        "body": "Sẽ tiến hành bảo trì máy chủ định kỳ. Dữ liệu nhập trong thời gian đó được lưu offline và đồng bộ tự động."
+      },
+      {
+        "tag": "Sự kiện",
+        "title": "Gia hạn dùng thử miễn phí 30 ngày Gói AI",
+        "body": "Thời gian dùng thử miễn phí Gói AI được gia hạn lên 30 ngày."
+      }
+    ]
+  },
+  "support": {
+    "title": "Hỗ trợ",
+    "chat": "Trò chuyện trực tiếp",
+    "chatHours": "T2–T6 9–18",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "faqTitle": "Câu hỏi thường gặp",
+    "faqs": [
+      {
+        "q": "Tôi có thể xuất dữ liệu ra Excel không?",
+        "a": "Có, trong Cài đặt > Xuất dữ liệu bạn có thể lấy toàn bộ hồ sơ nái và báo cáo dạng Excel/PDF."
+      },
+      {
+        "q": "Bản ghi nhập offline sẽ ra sao?",
+        "a": "Được lưu cục bộ và tự đồng bộ khi có mạng. Trạng thái đồng bộ hiển thị ở đầu màn hình."
+      },
+      {
+        "q": "Ước tính tổn thất AI được tính thế nào?",
+        "a": "Trễ NPD, giảm tỷ lệ đẻ, chết... được so với chuẩn 27 năm và quy ra số tiền."
+      },
+      {
+        "q": "Tôi quản lý nhiều trại trong một tài khoản được không?",
+        "a": "Có, tài khoản tổ chức có thể đăng ký và chuyển đổi giữa nhiều trại."
+      }
+    ]
+  },
+  "legal": {
+    "title": "Điều khoản & chính sách",
+    "tabTerms": "Điều khoản dịch vụ",
+    "tabPrivacy": "Chính sách bảo mật",
+    "revised": "Sửa đổi lần cuối 2026-05-01 · v2.3",
+    "footer": "Tài liệu đầy đủ (PDF) · Liên hệ",
+    "terms": [
+      {
+        "h": "Điều 1 (Mục đích)",
+        "b": "Điều khoản này quy định điều kiện và quy trình sử dụng dịch vụ PigOS do WiseLake ('Công ty') cung cấp, cùng quyền và nghĩa vụ giữa Công ty và thành viên."
+      },
+      {
+        "h": "Điều 2 (Định nghĩa)",
+        "b": "'Dịch vụ' là nền tảng quản lý trại heo và phân tích AI do Công ty cung cấp. 'Thành viên' là người đồng ý điều khoản này và ký hợp đồng sử dụng."
+      },
+      {
+        "h": "Điều 3 (Quyền sở hữu dữ liệu)",
+        "b": "Quyền sở hữu dữ liệu trại do thành viên nhập thuộc về thành viên; Công ty chỉ dùng cho cung cấp dịch vụ và chuẩn so sánh ẩn danh."
+      },
+      {
+        "h": "Điều 4 (Thay đổi/ngừng dịch vụ)",
+        "b": "Công ty có thể thay đổi hoặc ngừng dịch vụ theo nhu cầu vận hành, có thông báo trước trong các trường hợp đó."
+      }
+    ],
+    "privacy": [
+      {
+        "h": "1. Dữ liệu cá nhân thu thập",
+        "b": "Khi đăng ký thu thập tên, email, thông tin trại. Dữ liệu vận hành trại được lưu trong quá trình sử dụng."
+      },
+      {
+        "h": "2. Mục đích sử dụng",
+        "b": "Dùng để cung cấp dịch vụ, phân tích AI, tạo chuẩn so sánh ẩn danh và hỗ trợ khách hàng."
+      },
+      {
+        "h": "3. Lưu giữ & hủy",
+        "b": "Hủy ngay khi rút tài khoản; nếu luật yêu cầu lưu, giữ trong thời hạn đó rồi hủy."
+      },
+      {
+        "h": "4. Bảo vệ k-ẩn danh",
+        "b": "Dữ liệu chuẩn được ẩn danh với k≥10 để không nhận dạng được trại riêng lẻ."
+      }
+    ]
   }
 }

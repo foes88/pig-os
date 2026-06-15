@@ -808,5 +808,137 @@
     "current": "Ajustes actuales de la granja",
     "curLine1": "Gestación {g}d · Lactancia {l}d · WSI {w}d",
     "curLine2": "Primera monta {gm}d · Sacrificio {s}d"
+  },
+  "profile": {
+    "title": "Editar perfil",
+    "saved": "✓ Cambios guardados",
+    "changePhoto": "Cambiar foto",
+    "name": "Nombre",
+    "namePh": "Ingrese su nombre",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "save": "Guardar cambios"
+  },
+  "billing": {
+    "title": "Suscripción y pago",
+    "currentPlan": "Plan actual",
+    "planName": "Paquete IA",
+    "nextBilling": "Próximo cobro 2026-06-15",
+    "perMonth": "/mes",
+    "changePlan": "Cambiar plan",
+    "cancel": "Cancelar suscripción",
+    "paymentMethod": "Método de pago",
+    "expires": "Vence 09/27",
+    "change": "Cambiar",
+    "history": "Historial de pagos",
+    "paid": "Pagado",
+    "receipt": "Recibo"
+  },
+  "deleteAccount": {
+    "confirmWord": "ELIMINAR",
+    "title": "Eliminar cuenta",
+    "sure": "¿Seguro que desea eliminar su cuenta?",
+    "irreversible": "Esta acción no se puede deshacer",
+    "lostTitle": "Datos que se perderán",
+    "l1": "Todos los registros de cerdas",
+    "l2": "Datos de operación",
+    "l3": "Análisis IA e informes",
+    "l4": "Suscripción y facturación",
+    "exportPre": "Para exportar sus datos antes de eliminar, ",
+    "exportLink": "exportar todos los datos (Excel)",
+    "exportPost": " primero.",
+    "recovery": "Se puede solicitar recuperación durante 30 días tras la eliminación; luego se borra permanentemente.",
+    "typeToConfirm": "Escriba {word} para confirmar",
+    "cancel": "Cancelar",
+    "deleteForever": "Eliminar cuenta permanentemente"
+  },
+  "announcements": {
+    "title": "Anuncios",
+    "items": [
+      {
+        "tag": "Actualización",
+        "title": "Mayor precisión de señal IA + entrada por voz",
+        "body": "Ahora puede registrar partos por voz. La precisión de detección de pérdidas mejoró 12%."
+      },
+      {
+        "tag": "Mantenimiento",
+        "title": "Aviso de mantenimiento programado",
+        "body": "Se realizará mantenimiento del servidor. Las entradas durante ese tiempo se guardan offline y se sincronizan automáticamente."
+      },
+      {
+        "tag": "Evento",
+        "title": "Prueba gratis de 30 días del Paquete IA",
+        "body": "El periodo de prueba gratis del Paquete IA se extiende a 30 días."
+      }
+    ]
+  },
+  "support": {
+    "title": "Soporte",
+    "chat": "Chat en vivo",
+    "chatHours": "Días hábiles 9–18",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "faqTitle": "Preguntas frecuentes",
+    "faqs": [
+      {
+        "q": "¿Puedo exportar datos a Excel?",
+        "a": "Sí, en Configuración > Exportar puede obtener todos los registros de cerdas e informes en Excel/PDF."
+      },
+      {
+        "q": "¿Qué pasa con los registros ingresados sin conexión?",
+        "a": "Se guardan localmente y se sincronizan automáticamente al reconectar. El estado se muestra arriba en pantalla."
+      },
+      {
+        "q": "¿Cómo se calcula la estimación de pérdidas IA?",
+        "a": "Retrasos de NPD, caídas de tasa de parto, mortalidad, etc. se comparan con referencias de 27 años y se convierten a un monto."
+      },
+      {
+        "q": "¿Puedo gestionar varias granjas en una cuenta?",
+        "a": "Sí, una cuenta de organización puede registrar y alternar entre varias granjas."
+      }
+    ]
+  },
+  "legal": {
+    "title": "Términos y políticas",
+    "tabTerms": "Términos del servicio",
+    "tabPrivacy": "Política de privacidad",
+    "revised": "Última revisión 2026-05-01 · v2.3",
+    "footer": "Documento completo (PDF) · Consultas",
+    "terms": [
+      {
+        "h": "Artículo 1 (Objeto)",
+        "b": "Estos términos rigen las condiciones y procedimientos de uso del servicio PigOS provisto por WiseLake (la 'Empresa') y los derechos y obligaciones entre la Empresa y los miembros."
+      },
+      {
+        "h": "Artículo 2 (Definiciones)",
+        "b": "'Servicio' es la plataforma de gestión porcina y análisis IA de la Empresa. 'Miembro' es quien acepta estos términos y celebra un contrato de uso."
+      },
+      {
+        "h": "Artículo 3 (Propiedad de datos)",
+        "b": "La propiedad de los datos de granja ingresados pertenece al miembro; la Empresa los usa solo para prestar el servicio y para referencias anonimizadas."
+      },
+      {
+        "h": "Artículo 4 (Cambio/suspensión)",
+        "b": "La Empresa puede cambiar o suspender el servicio según necesidad operativa, con aviso previo en tales casos."
+      }
+    ],
+    "privacy": [
+      {
+        "h": "1. Datos personales recopilados",
+        "b": "Al registrarse recopilamos nombre, correo e información de la granja. Se almacenan datos de operación durante el uso."
+      },
+      {
+        "h": "2. Finalidad",
+        "b": "Para prestación del servicio, análisis IA, referencias anonimizadas y soporte al cliente."
+      },
+      {
+        "h": "3. Conservación y eliminación",
+        "b": "Se eliminan al darse de baja; si la ley exige conservarlos, se guardan ese periodo y luego se eliminan."
+      },
+      {
+        "h": "4. Protección k-anonimato",
+        "b": "Los datos de referencia se anonimizan con k≥10 para que no se identifiquen granjas individuales."
+      }
+    ]
   }
 }
