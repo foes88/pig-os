@@ -239,3 +239,38 @@ class LlmUsageLog(Base):
     intent: Mapped[str | None] = mapped_column(String(50))
     tokens: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Task(Base):
+    """
+    Phase 2: 자동배정 작업. Rule/Alert(지연모돈·도태권고)에서 생성되어
+    담당자에게 배정되고 모바일 "오늘 할 일"에 노출된다.
+    멱등 생성: 같은 (farm_id, sow_id, task_type)의 OPEN task는 1개만 유지.
+    """
+    __tablename__ = "tasks"
+    __table_args__ = (
+        Index("idx_tasks_farm_status", "farm_id", "status"),
+        Index("idx_tasks_assigned", "assigned_to", "status",
+              postgresql_where="status = 'OPEN'"),
+        UniqueConstraint("farm_id", "sow_id", "task_type", "status",
+                         name="uq_task_open_per_sow_type"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
+    sow_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("sows.id"))
+    # task_type = overdue 6유형 + cull_candidate (alert_service와 동일 코드 체계)
+    task_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    # 권장 액션 라우트 (예: "/record?tab=mating&sowId=..")
+    action: Mapped[str | None] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(12), nullable=False, default="OPEN")
+    # OPEN / DONE / DISMISSED
+    priority: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=2)  # 1 high · 2 med · 3 low
+    overdue_days: Mapped[int | None] = mapped_column(Integer)
+    due_date: Mapped[date | None] = mapped_column(Date)
+    assigned_to: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

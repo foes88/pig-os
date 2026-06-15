@@ -11,6 +11,7 @@ export const queryKeys = {
     localConfig: (farmId: string) => ["farms", farmId, "config"] as const,
     eventDefinitions: (farmId: string) => ["farms", farmId, "event-definitions"] as const,
     reproConfig: (farmId: string) => ["farms", farmId, "repro-config"] as const,
+    members: (farmId: string) => ["farms", farmId, "members"] as const,
   },
 
   reports: {
@@ -52,5 +53,9 @@ export const queryKeys = {
   alerts: {
     overdue: (farmId: string) => ["alerts", "overdue", farmId] as const,
     cullCandidates: (farmId: string) => ["alerts", "cull", farmId] as const,
+  },
+
+  tasks: {
+    list: (farmId: string, status: string) => ["tasks", farmId, status] as const,
   },
 } as const;

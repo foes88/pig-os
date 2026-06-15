@@ -35,6 +35,7 @@ from app.routers.base import (
     reports,
     sows,
     sync,
+    tasks,
 )
 
 # ── Import Addon packages here to trigger AddonRegistry.register() ──────────
@@ -96,6 +97,7 @@ app.include_router(finishers.router,   prefix=V1)
 app.include_router(piglets.router,     prefix=V1)
 app.include_router(boars.router,       prefix=V1)
 app.include_router(alerts.router,      prefix=V1)
+app.include_router(tasks.router,       prefix=V1)
 app.include_router(reports.router,     prefix=V1)
 app.include_router(members.router,     prefix=V1)
 

@@ -963,5 +963,18 @@
     "upN2": "Improved AI loss-detection accuracy",
     "upN3": "Stabilized offline sync",
     "upNow": "Update now"
+  },
+  "tasks": {
+    "pageTitle": "Today's Tasks",
+    "subtitle": "{n} task(s) to handle",
+    "refreshTasks": "Refresh",
+    "selectFarm": "Select a farm first.",
+    "loading": "Loading tasks…",
+    "loadError": "Failed to load tasks.",
+    "allClear": "All clear — no pending tasks 🎉",
+    "overdueDays": "{n} days overdue",
+    "go": "Go",
+    "done": "Done",
+    "dismiss": "Dismiss"
   }
 }

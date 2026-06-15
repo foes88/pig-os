@@ -963,5 +963,18 @@
     "upN2": "提升AI损失检测精度",
     "upN3": "稳定离线同步",
     "upNow": "立即更新"
+  },
+  "tasks": {
+    "pageTitle": "今日任务",
+    "subtitle": "待处理 {n} 项",
+    "refreshTasks": "刷新",
+    "selectFarm": "请先选择猪场。",
+    "loading": "正在加载任务…",
+    "loadError": "加载任务失败。",
+    "allClear": "全部处理完毕 — 无待办任务 🎉",
+    "overdueDays": "已逾期 {n} 天",
+    "go": "前往",
+    "done": "完成",
+    "dismiss": "忽略"
   }
 }

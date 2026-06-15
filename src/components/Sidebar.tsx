@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Beef,
+  ListTodo,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -57,6 +58,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
   {
     label: { en: "Records", ko: "기록", zh: "记录", es: "Registros", vi: "Ghi chép" },
     items: [
+      { href: "/tasks",     icon: ListTodo,      label: { en: "Today's Tasks", ko: "오늘 할 일", zh: "今日任务", es: "Tareas de hoy", vi: "Việc hôm nay" } },
       { href: "/record",    icon: ClipboardList, label: { en: "Data Entry", ko: "기록 입력", zh: "数据录入", es: "Captura de datos", vi: "Nhập dữ liệu" } },
       { href: "/farrowing", icon: Baby,          label: { en: "Farrowing",  ko: "분만사",    zh: "产房",     es: "Maternidad",       vi: "Chuồng đẻ" } },
     ],

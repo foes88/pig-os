@@ -963,5 +963,18 @@
     "upN2": "Mejor precisión de detección de pérdidas IA",
     "upN3": "Sincronización offline estabilizada",
     "upNow": "Actualizar ahora"
+  },
+  "tasks": {
+    "pageTitle": "Tareas de hoy",
+    "subtitle": "{n} tarea(s) por atender",
+    "refreshTasks": "Actualizar",
+    "selectFarm": "Seleccione una granja primero.",
+    "loading": "Cargando tareas…",
+    "loadError": "No se pudieron cargar las tareas.",
+    "allClear": "Todo en orden — sin tareas pendientes 🎉",
+    "overdueDays": "{n} días de retraso",
+    "go": "Ir",
+    "done": "Hecho",
+    "dismiss": "Descartar"
   }
 }

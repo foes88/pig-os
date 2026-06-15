@@ -34,6 +34,7 @@ from app.db.models.ops import (  # noqa: F401
     PeriodLock,
     SyncConflictQueue,
     SyncLog,
+    Task,
 )
 from app.db.models.pilot_signup import PilotSignup  # noqa: F401
 from app.db.models.platform import (  # noqa: F401

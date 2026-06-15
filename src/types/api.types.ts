@@ -654,6 +654,38 @@ export interface CullCandidate {
   last_weaned: number | null;
 }
 
+// ── Tasks (자동배정 작업 / 오늘 할 일) ─────────────────────────────────────
+export type TaskType = OverdueType | "cull_candidate";
+export type TaskStatus = "OPEN" | "DONE" | "DISMISSED";
+
+export interface Task {
+  id: string;
+  farm_id: string;
+  sow_id: string | null;
+  ear_tag: string | null;
+  task_type: TaskType;
+  title: string;
+  action: string | null;
+  status: TaskStatus;
+  priority: number;        // 1=high, 2=normal, 3=low
+  overdue_days: number | null;
+  due_date: string | null;
+  assigned_to: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface TaskGenerateResult {
+  created: number;
+  closed: number;
+  open_total: number;
+}
+
+export interface TaskUpdateRequest {
+  status?: TaskStatus;
+  assigned_to?: string | null;
+}
+
 export interface FarmReproConfig {
   gestation_days: number;
   lactation_days: number;

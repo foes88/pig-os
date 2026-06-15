@@ -963,5 +963,18 @@
     "upN2": "Cải thiện độ chính xác phát hiện tổn thất AI",
     "upN3": "Ổn định đồng bộ offline",
     "upNow": "Cập nhật ngay"
+  },
+  "tasks": {
+    "pageTitle": "Việc hôm nay",
+    "subtitle": "{n} việc cần xử lý",
+    "refreshTasks": "Làm mới",
+    "selectFarm": "Vui lòng chọn trại trước.",
+    "loading": "Đang tải công việc…",
+    "loadError": "Không tải được công việc.",
+    "allClear": "Đã xong hết — không có việc tồn đọng 🎉",
+    "overdueDays": "Quá hạn {n} ngày",
+    "go": "Đi",
+    "done": "Xong",
+    "dismiss": "Bỏ qua"
   }
 }
