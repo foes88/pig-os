@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, LogOut, X } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
@@ -17,29 +18,25 @@ import type {
 } from "@/types/api.types";
 
 // SCREEN_MENU_SPEC: All / Gilt / Open / Pregnant / Lactating / Accident / Culled
-const STATUS_TABS: { label: string; value: SowStatus | "ALL" }[] = [
-  { label: "전체",   value: "ALL" },
-  { label: "후보돈", value: "GILT" },
-  { label: "공태",   value: "OPEN" },
-  { label: "임신",   value: "PREGNANT" },
-  { label: "포유",   value: "LACTATING" },
-  { label: "사고",   value: "ACCIDENT" },
-  { label: "도태",   value: "CULLED" },
-];
+// 라벨은 sowStatus i18n 키로 해석, tabAll은 sows.tabAll
+const STATUS_TABS: (SowStatus | "ALL")[] = ["ALL", "GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT", "CULLED"];
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  GILT:      { label: "후보돈", cls: "bg-cyan-50 text-cyan-600" },
-  OPEN:      { label: "공태",   cls: "bg-slate-100 text-slate-600" },
-  PREGNANT:  { label: "임신",   cls: "bg-blue-50 text-blue-600" },
-  LACTATING: { label: "포유",   cls: "bg-green-50 text-green-600" },
-  ACCIDENT:  { label: "사고",   cls: "bg-orange-50 text-orange-600" },
-  CULLED:    { label: "도태",   cls: "bg-red-50 text-red-500" },
-  DEAD:      { label: "폐사",   cls: "bg-gray-100 text-gray-500" },
-  SOLD:      { label: "판매",   cls: "bg-emerald-50 text-emerald-600" },
-  TRANSFER:  { label: "전출",   cls: "bg-amber-50 text-amber-600" },
+// 상태 → 배지 색상 (라벨은 sowStatus 키)
+const STATUS_CLS: Record<string, string> = {
+  GILT:      "bg-cyan-50 text-cyan-600",
+  OPEN:      "bg-slate-100 text-slate-600",
+  PREGNANT:  "bg-blue-50 text-blue-600",
+  LACTATING: "bg-green-50 text-green-600",
+  ACCIDENT:  "bg-orange-50 text-orange-600",
+  CULLED:    "bg-red-50 text-red-500",
+  DEAD:      "bg-gray-100 text-gray-500",
+  SOLD:      "bg-emerald-50 text-emerald-600",
+  TRANSFER:  "bg-amber-50 text-amber-600",
 };
 
 export default function SowsPage() {
+  const t = useTranslations("sows");
+  const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -72,7 +69,7 @@ export default function SowsPage() {
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text3">농장을 선택해주세요.</p>
+        <p className="text-text3">{t("selectFarm")}</p>
       </div>
     );
   }
@@ -82,16 +79,16 @@ export default function SowsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-[22px] font-extrabold tracking-tight">모돈 관리</h1>
+            <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
             <p className="text-xs text-text3 mt-0.5">
-              {meta ? `총 ${meta.total}두` : "불러오는 중..."}
+              {meta ? t("totalCount", { n: meta.total }) : t("loading")}
             </p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
             className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
           >
-            + 모돈 등록
+            {t("addSow")}
           </button>
         </div>
 
@@ -100,21 +97,21 @@ export default function SowsPage() {
           <div className="flex gap-1">
             {STATUS_TABS.map((tab) => (
               <button
-                key={tab.value}
-                onClick={() => { setStatusFilter(tab.value); setPage(1); }}
+                key={tab}
+                onClick={() => { setStatusFilter(tab); setPage(1); }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  statusFilter === tab.value
+                  statusFilter === tab
                     ? "bg-primary text-white"
                     : "bg-surface border border-border text-text2 hover:bg-border"
                 }`}
               >
-                {tab.label}
+                {tab === "ALL" ? t("tabAll") : tStatus(tab)}
               </button>
             ))}
           </div>
           <input
             type="text"
-            placeholder="귀표 번호 검색..."
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-border bg-surface text-sm text-text1 w-48 outline-none focus:border-primary"
@@ -124,29 +121,29 @@ export default function SowsPage() {
         {/* Table */}
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           {isLoading ? (
-            <div className="p-12 text-center text-text3 text-sm">불러오는 중...</div>
+            <div className="p-12 text-center text-text3 text-sm">{t("loading")}</div>
           ) : isError ? (
-            <div className="p-12 text-center text-danger text-sm">데이터를 불러오지 못했습니다.</div>
+            <div className="p-12 text-center text-danger text-sm">{t("loadError")}</div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center text-text3 text-sm">
-              {search ? `"${search}" 검색 결과 없음` : "등록된 모돈이 없습니다."}
+              {search ? t("emptyNoResult", { q: search }) : t("emptyNoSows")}
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-background text-text3 text-xs">
-                  <th className="text-left px-4 py-3 font-medium">귀표</th>
-                  <th className="text-left px-4 py-3 font-medium">상태</th>
-                  <th className="text-right px-4 py-3 font-medium">산차</th>
-                  <th className="text-left px-4 py-3 font-medium">품종</th>
-                  <th className="text-left px-4 py-3 font-medium">입식일</th>
-                  <th className="text-left px-4 py-3 font-medium">비고</th>
-                  <th className="text-right px-4 py-3 font-medium">관리</th>
+                  <th className="text-left px-4 py-3 font-medium">{t("thEarTag")}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t("thStatus")}</th>
+                  <th className="text-right px-4 py-3 font-medium">{t("thParity")}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t("thBreed")}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t("thEntryDate")}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t("thNote")}</th>
+                  <th className="text-right px-4 py-3 font-medium">{t("thActions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((sow, i) => {
-                  const badge = STATUS_BADGE[sow.status] ?? { label: sow.status, cls: "bg-gray-100 text-gray-500" };
+                  const cls = STATUS_CLS[sow.status] ?? "bg-gray-100 text-gray-500";
                   return (
                     <tr
                       key={sow.id}
@@ -157,11 +154,11 @@ export default function SowsPage() {
                     >
                       <td className="px-4 py-3 font-mono font-bold text-text1">{sow.ear_tag}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${badge.cls}`}>
-                          {badge.label}
+                        <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${cls}`}>
+                          {tStatus(sow.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-mono">{sow.parity}산</td>
+                      <td className="px-4 py-3 text-right font-mono">{t("parityUnit", { n: sow.parity })}</td>
                       <td className="px-4 py-3 text-text2">{sow.breed ?? "-"}</td>
                       <td className="px-4 py-3 text-text3 font-mono text-xs">
                         {sow.entry_date.slice(0, 10)}
@@ -173,7 +170,7 @@ export default function SowsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setEditTarget(sow)}
-                            title="수정"
+                            title={t("editTooltip")}
                             className="p-1.5 rounded-md text-text3 hover:text-text hover:bg-bg2 transition"
                           >
                             <Pencil size={13} />
@@ -181,7 +178,7 @@ export default function SowsPage() {
                           {sow.status !== "CULLED" && sow.status !== "DEAD" && (
                             <button
                               onClick={() => setCullTarget(sow)}
-                              title="도폐사/판매 처리"
+                              title={t("removalTooltip")}
                               className="p-1.5 rounded-md text-text3 hover:text-red-500 hover:bg-red-50 transition"
                             >
                               <LogOut size={13} />
@@ -205,7 +202,7 @@ export default function SowsPage() {
               disabled={page === 1}
               className="px-3 py-1.5 rounded-lg border border-border text-xs disabled:opacity-40"
             >
-              이전
+              {t("prev")}
             </button>
             <span className="text-xs text-text3">{page} / {meta.pages}</span>
             <button
@@ -213,7 +210,7 @@ export default function SowsPage() {
               disabled={page === meta.pages}
               className="px-3 py-1.5 rounded-lg border border-border text-xs disabled:opacity-40"
             >
-              다음
+              {t("next")}
             </button>
           </div>
         )}
@@ -276,6 +273,7 @@ function EditSowModal({
     rfid_tag: sow.rfid_tag ?? "",
   });
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("sows");
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -287,7 +285,7 @@ function EditSowModal({
     onSuccess,
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof msg === "string" ? msg : "수정 실패");
+      setError(typeof msg === "string" ? msg : t("editFailed"));
     },
   });
 
@@ -295,33 +293,33 @@ function EditSowModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold">모돈 수정 — {sow.ear_tag}</h2>
+          <h2 className="text-base font-bold">{t("editTitle", { tag: sow.ear_tag })}</h2>
           <button onClick={onClose} className="p-1 rounded-md text-text3 hover:text-text hover:bg-bg2 transition">
             <X size={16} />
           </button>
         </div>
 
         <div className="space-y-3">
-          <Field label="귀표 번호 *">
+          <Field label={t("fEarTag")}>
             <input
               value={form.ear_tag}
               onChange={(e) => setForm((f) => ({ ...f, ear_tag: e.target.value }))}
               className="input"
             />
           </Field>
-          <Field label="품종">
+          <Field label={t("fBreed")}>
             <input
               value={form.breed ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, breed: e.target.value }))}
-              placeholder="예: Yorkshire, Landrace"
+              placeholder={t("phBreed")}
               className="input"
             />
           </Field>
-          <Field label="RFID 태그">
+          <Field label={t("fRfid")}>
             <input
               value={form.rfid_tag ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, rfid_tag: e.target.value }))}
-              placeholder="RFID 번호"
+              placeholder={t("phRfid")}
               className="input"
             />
           </Field>
@@ -331,14 +329,14 @@ function EditSowModal({
 
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">
-            취소
+            {t("cancel")}
           </button>
           <button
             onClick={() => mutation.mutate()}
             disabled={!form.ear_tag?.trim() || mutation.isPending}
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
           >
-            {mutation.isPending ? "저장 중..." : "저장"}
+            {mutation.isPending ? t("saving") : t("save")}
           </button>
         </div>
       </div>
@@ -346,23 +344,17 @@ function EditSowModal({
   );
 }
 
-const REMOVAL_TYPES: { value: SowCullRequest["removal_type"]; label: string }[] = [
-  { value: "CULLED",   label: "도태" },
-  { value: "DEAD",     label: "폐사" },
-  { value: "SOLD",     label: "판매" },
-  { value: "TRANSFER", label: "전출" },
-];
-
-const REASON_CATEGORIES: { value: NonNullable<SowCullRequest["reason_category"]>; label: string }[] = [
-  { value: "REPRODUCTIVE", label: "번식 장애" },
-  { value: "LAMENESS",     label: "지제 불량" },
-  { value: "DISEASE",      label: "질병" },
-  { value: "AGE",          label: "노령" },
-  { value: "PERFORMANCE",  label: "성적 불량" },
-  { value: "INJURY",       label: "부상" },
-  { value: "BEHAVIOR",     label: "행동 문제" },
-  { value: "UNKNOWN",      label: "원인 불명" },
-  { value: "OTHER",        label: "기타" },
+const REMOVAL_TYPE_VALUES: SowCullRequest["removal_type"][] = ["CULLED", "DEAD", "SOLD", "TRANSFER"];
+const REASON_CATEGORY_KEYS: { value: NonNullable<SowCullRequest["reason_category"]>; key: string }[] = [
+  { value: "REPRODUCTIVE", key: "rcReproductive" },
+  { value: "LAMENESS",     key: "rcLameness" },
+  { value: "DISEASE",      key: "rcDisease" },
+  { value: "AGE",          key: "rcAge" },
+  { value: "PERFORMANCE",  key: "rcPerformance" },
+  { value: "INJURY",       key: "rcInjury" },
+  { value: "BEHAVIOR",     key: "rcBehavior" },
+  { value: "UNKNOWN",      key: "rcUnknown" },
+  { value: "OTHER",        key: "rcOther" },
 ];
 
 function CullSowModal({
@@ -376,6 +368,8 @@ function CullSowModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const t = useTranslations("sows");
+  const tStatus = useTranslations("sowStatus");
   const [form, setForm] = useState<SowCullRequest>({
     removal_type: "CULLED",
     removal_date: new Date().toISOString().slice(0, 10),
@@ -387,7 +381,7 @@ function CullSowModal({
     onSuccess,
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof msg === "string" ? msg : "처리 실패");
+      setError(typeof msg === "string" ? msg : t("cullFailed"));
     },
   });
 
@@ -397,33 +391,33 @@ function CullSowModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-base font-bold">도폐사·판매 처리 — {sow.ear_tag}</h2>
+          <h2 className="text-base font-bold">{t("cullTitle", { tag: sow.ear_tag })}</h2>
           <button onClick={onClose} className="p-1 rounded-md text-text3 hover:text-text hover:bg-bg2 transition">
             <X size={16} />
           </button>
         </div>
-        <p className="text-xs text-text3 mb-4">처리 후 모돈 목록에서 제외되며 removals 이력에 기록됩니다</p>
+        <p className="text-xs text-text3 mb-4">{t("cullNote")}</p>
 
         <div className="space-y-3">
-          <Field label="처리 구분 *">
+          <Field label={t("fRemovalType")}>
             <div className="grid grid-cols-4 gap-1.5">
-              {REMOVAL_TYPES.map((t) => (
+              {REMOVAL_TYPE_VALUES.map((rt) => (
                 <button
-                  key={t.value}
+                  key={rt}
                   type="button"
-                  onClick={() => setForm((f) => ({ ...f, removal_type: t.value }))}
+                  onClick={() => setForm((f) => ({ ...f, removal_type: rt }))}
                   className={`py-2 rounded-lg text-xs font-semibold border transition ${
-                    form.removal_type === t.value
+                    form.removal_type === rt
                       ? "bg-primary text-white border-primary"
                       : "bg-white text-text2 border-border hover:border-text3/50"
                   }`}
                 >
-                  {t.label}
+                  {tStatus(rt)}
                 </button>
               ))}
             </div>
           </Field>
-          <Field label="처리일 *">
+          <Field label={t("fRemovalDate")}>
             <input
               type="date"
               value={form.removal_date}
@@ -431,7 +425,7 @@ function CullSowModal({
               className="input"
             />
           </Field>
-          <Field label="사유">
+          <Field label={t("fReason")}>
             <select
               value={form.reason_category ?? ""}
               onChange={(e) =>
@@ -442,15 +436,15 @@ function CullSowModal({
               }
               className="input"
             >
-              <option value="">선택</option>
-              {REASON_CATEGORIES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
+              <option value="">{t("select")}</option>
+              {REASON_CATEGORY_KEYS.map((r) => (
+                <option key={r.value} value={r.value}>{t(r.key)}</option>
               ))}
             </select>
           </Field>
           {isSold && (
             <div className="grid grid-cols-2 gap-3">
-              <Field label="체중 (kg)">
+              <Field label={t("fWeight")}>
                 <input
                   type="number"
                   min={0}
@@ -461,7 +455,7 @@ function CullSowModal({
                   className="input"
                 />
               </Field>
-              <Field label="판매가">
+              <Field label={t("fSalePrice")}>
                 <input
                   type="number"
                   min={0}
@@ -478,11 +472,11 @@ function CullSowModal({
               </Field>
             </div>
           )}
-          <Field label="비고">
+          <Field label={t("fNote")}>
             <input
               value={form.notes ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value || undefined }))}
-              placeholder="상세 사유 등"
+              placeholder={t("phNote")}
               className="input"
             />
           </Field>
@@ -492,14 +486,14 @@ function CullSowModal({
 
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">
-            취소
+            {t("cancel")}
           </button>
           <button
             onClick={() => mutation.mutate()}
             disabled={!form.removal_date || mutation.isPending}
             className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50 transition"
           >
-            {mutation.isPending ? "처리 중..." : "처리 확정"}
+            {mutation.isPending ? t("culling") : t("cullConfirm")}
           </button>
         </div>
       </div>
@@ -516,6 +510,7 @@ function AddSowModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const t = useTranslations("sows");
   const [form, setForm] = useState<CreateSowRequest>({
     ear_tag: "",
     entry_date: new Date().toISOString().slice(0, 10),
@@ -530,7 +525,7 @@ function AddSowModal({
     onSuccess,
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(msg ?? "등록 실패");
+      setError(typeof msg === "string" ? msg : t("regFailed"));
     },
   });
 
@@ -540,18 +535,18 @@ function AddSowModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-        <h2 className="text-base font-bold mb-4">모돈 등록</h2>
+        <h2 className="text-base font-bold mb-4">{t("regTitle")}</h2>
 
         <div className="space-y-3">
-          <Field label="귀표 번호 *">
+          <Field label={t("fEarTag")}>
             <input
               value={form.ear_tag}
               onChange={(e) => set("ear_tag", e.target.value)}
-              placeholder="예: A-042"
+              placeholder={t("phEarTag")}
               className="input"
             />
           </Field>
-          <Field label="입식일 *">
+          <Field label={t("fEntryDate")}>
             <input
               type="date"
               value={form.entry_date}
@@ -559,19 +554,19 @@ function AddSowModal({
               className="input"
             />
           </Field>
-          <Field label="입식 구분 *">
+          <Field label={t("fEntryType")}>
             <select
               value={form.entry_type}
               onChange={(e) => set("entry_type", e.target.value as SowEntryType)}
               className="input"
             >
-              <option value="GILT">육성돈 (Gilt)</option>
-              <option value="PURCHASE">구매</option>
-              <option value="TRANSFER">전입</option>
-              <option value="BORN">자가생산</option>
+              <option value="GILT">{t("entryGilt")}</option>
+              <option value="PURCHASE">{t("entryPurchase")}</option>
+              <option value="TRANSFER">{t("entryTransfer")}</option>
+              <option value="BORN">{t("entryBorn")}</option>
             </select>
           </Field>
-          <Field label="산차 (초산 전=0)">
+          <Field label={t("fParity")}>
             <input
               type="number"
               value={form.parity}
@@ -580,11 +575,11 @@ function AddSowModal({
               className="input"
             />
           </Field>
-          <Field label="품종">
+          <Field label={t("fBreed")}>
             <input
               value={form.breed ?? ""}
               onChange={(e) => set("breed", e.target.value)}
-              placeholder="예: Yorkshire, Landrace"
+              placeholder={t("phBreed")}
               className="input"
             />
           </Field>
@@ -597,14 +592,14 @@ function AddSowModal({
             onClick={onClose}
             className="flex-1 border border-gray-200 rounded-lg py-2 text-sm"
           >
-            취소
+            {t("cancel")}
           </button>
           <button
             onClick={() => mutation.mutate()}
             disabled={!form.ear_tag || mutation.isPending}
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
           >
-            {mutation.isPending ? "등록 중..." : "등록"}
+            {mutation.isPending ? t("regging") : t("reg")}
           </button>
         </div>
       </div>
