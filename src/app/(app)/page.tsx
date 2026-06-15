@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { Stat, AIBubble, AIAction, Card, PipeItem } from "@/components/ui";
 import Link from "next/link";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
@@ -17,6 +18,7 @@ const SEVERITY_STYLE: Record<string, { cls: string; icon: string }> = {
 };
 
 export default function Dashboard() {
+  const t = useTranslations("dashboard");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const user   = useAuthStore((s) => s.user);
 
@@ -47,26 +49,26 @@ export default function Dashboard() {
         <div>
           <h1 className="text-[22px] font-extrabold tracking-tight flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--color-primary)]" />
-            AI Dashboard
+            {t("title")}
           </h1>
           <p className="text-xs text-text3">
             {farmName}
-            {data && ` · ${data.active_sows}두 · AI 실시간 분석 중`}
+            {data && ` · ${data.active_sows}${t("unitHead")} · ${t("subtitleRealtime")}`}
           </p>
         </div>
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary border border-primary/20 rounded-full text-xs font-semibold">
-          🧠 AI Active
+          🧠 {t("aiActive")}
         </span>
       </div>
 
       {/* Loading */}
       {isLoading && (
-        <div className="text-center py-20 text-text3 text-sm">대시보드 로딩 중...</div>
+        <div className="text-center py-20 text-text3 text-sm">{t("loading")}</div>
       )}
 
       {/* No farm */}
       {!farmId && (
-        <div className="text-center py-20 text-text3 text-sm">농장을 선택해주세요.</div>
+        <div className="text-center py-20 text-text3 text-sm">{t("selectFarm")}</div>
       )}
 
       {data && (
@@ -81,25 +83,28 @@ export default function Dashboard() {
             <Stat
               label="PSY"
               value={data.psy != null ? data.psy.toFixed(1) : "-"}
-              sub={data.psy != null ? (data.psy >= 28 ? "✓ 목표 달성" : "▼ 목표 미달 28.0") : "데이터 없음"}
+              sub={data.psy != null ? (data.psy >= 28 ? t("met") : t("belowTarget")) : t("noData")}
               subType={data.psy != null && data.psy >= 28 ? "up" : "down"}
             />
             <Stat
-              label="NPD (비생산일수)"
-              value={data.npd != null ? `${data.npd.toFixed(1)}일` : "-"}
-              sub={data.npd != null ? (data.npd <= 35 ? "✓ 목표 이하" : "▲ 목표 초과 35일") : "데이터 없음"}
+              label={t("statNpd")}
+              value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : "-"}
+              sub={data.npd != null ? (data.npd <= 35 ? t("belowOk") : t("aboveTarget")) : t("noData")}
               subType={data.npd != null && data.npd <= 35 ? "up" : "down"}
             />
             <Stat
-              label="분만율"
+              label={t("statFarrowingRate")}
               value={data.farrowing_rate != null ? `${(data.farrowing_rate * 100).toFixed(1)}%` : "-"}
-              sub={data.farrowing_rate != null ? (data.farrowing_rate >= 0.9 ? "✓ 목표 달성" : "▼ 목표 미달 90%") : "데이터 없음"}
+              sub={data.farrowing_rate != null ? (data.farrowing_rate >= 0.9 ? t("met") : t("belowTarget")) : t("noData")}
               subType={data.farrowing_rate != null && data.farrowing_rate >= 0.9 ? "up" : "down"}
             />
             <Stat
-              label="AI 알림"
+              label={t("statAiAlerts")}
               value={String(data.alerts.length)}
-              sub={`위급 ${data.alerts.filter((a) => a.severity === "CRITICAL").length} · 경고 ${data.alerts.filter((a) => a.severity === "WARNING").length}`}
+              sub={t("severeWarn", {
+                crit: data.alerts.filter((a) => a.severity === "CRITICAL").length,
+                warn: data.alerts.filter((a) => a.severity === "WARNING").length,
+              })}
               subType="ai"
               valueColor="var(--color-purple)"
             />
@@ -113,34 +118,34 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
               <span className="text-warning text-lg">⚠</span>
               <div>
-                <div className="text-sm font-bold text-text">관리대상 모돈 {overdueData?.total ?? 0}두</div>
-                <div className="text-[11px] text-text3">번식 주기 과기한 + 도태권고 {cullData?.length ?? 0}건</div>
+                <div className="text-sm font-bold text-text">{t("overdueSows", { n: overdueData?.total ?? 0 })}</div>
+                <div className="text-[11px] text-text3">{t("overdueSub", { n: cullData?.length ?? 0 })}</div>
               </div>
             </div>
-            <span className="text-xs text-primary font-semibold">관리 알림 보기 →</span>
+            <span className="text-xs text-primary font-semibold">{t("viewAlerts")}</span>
           </Link>
 
           {/* Pipeline */}
           <div className="flex gap-1 mb-6">
-            <PipeItem icon="💉" count={data.week_matings} name="교배" />
+            <PipeItem icon="💉" count={data.week_matings} name={t("pMating")} />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🤰" count={data.gestating} name="임신" active />
+            <PipeItem icon="🤰" count={data.gestating} name={t("pPregnant")} active />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🐖" count={data.week_farrowings} name="분만" />
+            <PipeItem icon="🐖" count={data.week_farrowings} name={t("pFarrowing")} />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🍼" count={data.lactating} name="포유" />
+            <PipeItem icon="🍼" count={data.lactating} name={t("pLactating")} />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🌱" count={data.week_weanings} name="이유" />
+            <PipeItem icon="🌱" count={data.week_weanings} name={t("pWeaning")} />
           </div>
 
           {/* Two column */}
           <div className="grid grid-cols-2 gap-4">
             {/* Left: Alerts */}
             <div>
-              <Card title="🧠 Rule Engine 알림" badge={`${data.alerts.length}건`} badgeColor="purple" className="mb-4" children={<></>} />
+              <Card title={`🧠 ${t("ruleAlerts")}`} badge={t("alertCount", { n: data.alerts.length })} badgeColor="purple" className="mb-4" children={<></>} />
               {data.alerts.length === 0 ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-success">
-                  ✓ 현재 알림 없음 — 모든 KPI 정상 범위
+                  {t("noAlertsAll")}
                 </div>
               ) : (
                 data.alerts.map((alert, i) => (
@@ -151,29 +156,29 @@ export default function Dashboard() {
 
             {/* Right: Herd status */}
             <div>
-              <AIBubble label="AI 브리핑">
+              <AIBubble label={t("aiBriefing")}>
                 <p>
-                  현재 활성 모돈 <strong className="text-primary">{data.active_sows}두</strong>.
+                  {t("briefPrefix")} <strong className="text-primary">{data.active_sows}{t("unitHead")}</strong>.
                   PSY <strong className="text-primary">{data.psy?.toFixed(1) ?? "-"}</strong>,
-                  비생산일수 <strong className="text-primary">{data.npd?.toFixed(1) ?? "-"}일</strong>.
+                  {" "}{t("briefMid")} <strong className="text-primary">{data.npd?.toFixed(1) ?? "-"}{t("unitDays")}</strong>.
                   {data.alerts.length > 0
-                    ? ` Rule Engine 알림 ${data.alerts.length}건 — 확인이 필요합니다.`
-                    : " 현재 모든 KPI 정상 범위입니다."}
+                    ? ` ${t("briefAlertsSuffix", { n: data.alerts.length })}`
+                    : ` ${t("briefOk")}`}
                 </p>
               </AIBubble>
 
-              <Card title="군집 현황">
+              <Card title={t("herdStatus")}>
                 <table className="w-full text-xs">
                   <tbody>
                     {[
-                      { label: "임신", value: data.gestating },
-                      { label: "포유", value: data.lactating },
-                      { label: "이유/공태", value: data.weaned },
-                      { label: "활성 전체", value: data.active_sows },
+                      { label: t("herdPregnant"), value: data.gestating },
+                      { label: t("herdLactating"), value: data.lactating },
+                      { label: t("herdWeanedOpen"), value: data.weaned },
+                      { label: t("herdActiveTotal"), value: data.active_sows },
                     ].map((row, i) => (
                       <tr key={i} className="border-b border-border">
                         <td className="py-2.5">{row.label}</td>
-                        <td className="py-2.5 text-right font-mono font-bold">{row.value}두</td>
+                        <td className="py-2.5 text-right font-mono font-bold">{row.value}{t("unitHead")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -188,6 +193,7 @@ export default function Dashboard() {
 }
 
 function AlertBanner({ alert }: { alert: Alert }) {
+  const t = useTranslations("dashboard");
   return (
     <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 flex items-start gap-3.5">
       <span className="text-xl flex-shrink-0">🚨</span>
@@ -197,7 +203,10 @@ function AlertBanner({ alert }: { alert: Alert }) {
         </div>
         {alert.current_value != null && (
           <div className="text-xs text-text2">
-            현재 {alert.current_value.toFixed(1)} / 목표 {alert.target_value?.toFixed(1) ?? "-"}
+            {t("currentTarget", {
+              cur: alert.current_value.toFixed(1),
+              tgt: alert.target_value?.toFixed(1) ?? "-",
+            })}
           </div>
         )}
       </div>
@@ -206,6 +215,7 @@ function AlertBanner({ alert }: { alert: Alert }) {
 }
 
 function AlertCard({ alert }: { alert: Alert }) {
+  const t = useTranslations("dashboard");
   const style = SEVERITY_STYLE[alert.severity] ?? SEVERITY_STYLE.INFO;
   return (
     <div className={`border rounded-xl px-4 py-3 mb-2 flex items-start gap-3 ${style.cls}`}>
@@ -214,7 +224,10 @@ function AlertCard({ alert }: { alert: Alert }) {
         <div className="text-xs font-semibold">{alert.kpi} — {alert.message}</div>
         {alert.current_value != null && (
           <div className="text-[10px] mt-0.5 opacity-75">
-            현재 {alert.current_value.toFixed(1)} / 목표 {alert.target_value?.toFixed(1) ?? "-"}
+            {t("currentTarget", {
+              cur: alert.current_value.toFixed(1),
+              tgt: alert.target_value?.toFixed(1) ?? "-",
+            })}
           </div>
         )}
       </div>
