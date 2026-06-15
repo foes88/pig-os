@@ -122,15 +122,15 @@ export default function Dashboard() {
 
           {/* Pipeline */}
           <div className="flex gap-1 mb-6">
-            <PipeItem icon="💉" count={0} name="교배" />
+            <PipeItem icon="💉" count={data.week_matings} name="교배" />
             <span className="flex items-center text-text3 text-xs">→</span>
             <PipeItem icon="🤰" count={data.gestating} name="임신" active />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🐖" count={0} name="분만" />
+            <PipeItem icon="🐖" count={data.week_farrowings} name="분만" />
             <span className="flex items-center text-text3 text-xs">→</span>
             <PipeItem icon="🍼" count={data.lactating} name="포유" />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🌱" count={data.weaned} name="이유" />
+            <PipeItem icon="🌱" count={data.week_weanings} name="이유" />
           </div>
 
           {/* Two column */}

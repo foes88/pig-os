@@ -27,6 +27,11 @@ class DashboardKpi(BaseModel):
     lactating: int
     weaned: int
 
+    # 이번주(월요일~오늘) 이벤트 건수 — 대시보드 파이프라인 카드용
+    week_matings: int = 0
+    week_farrowings: int = 0
+    week_weanings: int = 0
+
     alerts: list[Alert]
 
 

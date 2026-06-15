@@ -326,7 +326,9 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     counts = await _sow_counts(db, farm.id)
 
     # Farrowing rate (year-to-date): farrowings / matings
-    from app.db.models.events import Farrowing, Mating
+    from datetime import timedelta
+
+    from app.db.models.events import Farrowing, Mating, Weaning
     mating_count = await db.scalar(
         select(func.count()).select_from(Mating).where(
             Mating.farm_id == farm.id,
@@ -340,6 +342,30 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         )
     )
     farrowing_rate = (farrowing_count / mating_count * 100) if mating_count else None
+
+    # 이번주(월요일~오늘) 이벤트 건수 — soft-delete 제외
+    week_start = today - timedelta(days=today.weekday())
+    week_matings = await db.scalar(
+        select(func.count()).select_from(Mating).where(
+            Mating.farm_id == farm.id,
+            Mating.mating_date >= week_start,
+            Mating.deleted_at.is_(None),
+        )
+    ) or 0
+    week_farrowings = await db.scalar(
+        select(func.count()).select_from(Farrowing).where(
+            Farrowing.farm_id == farm.id,
+            Farrowing.farrowing_date >= week_start,
+            Farrowing.deleted_at.is_(None),
+        )
+    ) or 0
+    week_weanings = await db.scalar(
+        select(func.count()).select_from(Weaning).where(
+            Weaning.farm_id == farm.id,
+            Weaning.weaning_date >= week_start,
+            Weaning.deleted_at.is_(None),
+        )
+    ) or 0
 
     # Rule Engine — base tier only (no addon subscriptions needed)
     ctx = RuleContext(
@@ -380,5 +406,8 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         gestating=counts.get("PREGNANT", 0),
         lactating=counts.get("LACTATING", 0),
         weaned=counts.get("OPEN", 0) + counts.get("ACCIDENT", 0),
+        week_matings=week_matings,
+        week_farrowings=week_farrowings,
+        week_weanings=week_weanings,
         alerts=alerts,
     )

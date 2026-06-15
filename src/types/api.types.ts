@@ -433,6 +433,9 @@ export interface KpiDashboard {
   gestating: number;
   lactating: number;
   weaned: number;
+  week_matings: number;
+  week_farrowings: number;
+  week_weanings: number;
   alerts: Alert[];
 }
 
