@@ -29,6 +29,7 @@ async def list_sows(
     building_id: UUID | None = Query(None),
     parity_min: int | None = Query(None, ge=0),
     parity_max: int | None = Query(None, le=20),
+    search: str | None = Query(None, description="ear_tag 부분일치 검색"),
     page: int = Query(1, ge=1),
     per_page: int = Query(50, ge=1, le=200, alias="per_page"),
 ):
@@ -41,6 +42,8 @@ async def list_sows(
         q = q.where(Sow.parity >= parity_min)
     if parity_max is not None:
         q = q.where(Sow.parity <= parity_max)
+    if search and search.strip():
+        q = q.where(Sow.ear_tag.ilike(f"%{search.strip()}%"))
 
     from sqlalchemy import func
     count_row = await db.scalar(select(func.count()).select_from(q.subquery()))

@@ -702,7 +702,8 @@
     "saving": "Saving...",
     "save": "Save",
     "saveNext": "Save & next sow →",
-    "errGeneric": "An error occurred while processing the request."
+    "errGeneric": "An error occurred while processing the request.",
+    "loadMore": "Load more ({n})"
   },
   "addons": {
     "storeTitle": "Addon Store",

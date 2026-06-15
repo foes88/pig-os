@@ -702,7 +702,8 @@
     "saving": "保存中...",
     "save": "保存",
     "saveNext": "保存并下一头 →",
-    "errGeneric": "处理请求时发生错误。"
+    "errGeneric": "处理请求时发生错误。",
+    "loadMore": "加载更多 ({n})"
   },
   "addons": {
     "storeTitle": "插件商店",

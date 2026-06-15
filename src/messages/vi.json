@@ -702,7 +702,8 @@
     "saving": "Đang lưu...",
     "save": "Lưu",
     "saveNext": "Lưu & nái kế tiếp →",
-    "errGeneric": "Đã xảy ra lỗi khi xử lý yêu cầu."
+    "errGeneric": "Đã xảy ra lỗi khi xử lý yêu cầu.",
+    "loadMore": "Xem thêm ({n})"
   },
   "addons": {
     "storeTitle": "Cửa hàng Addon",

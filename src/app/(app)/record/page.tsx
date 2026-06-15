@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventsApi } from "@/lib/api/endpoints/events";
@@ -82,6 +82,8 @@ function Stepper({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 50;
+
 export default function RecordPage() {
   const t = useTranslations("record");
   const tStatus = useTranslations("sowStatus");
@@ -89,22 +91,26 @@ export default function RecordPage() {
   const [selectedSow, setSelectedSow] = useState<Sow | null>(null);
   const [eventType, setEventType] = useState<EventType>("farrowing");
   const [search, setSearch] = useState("");
+  const [debounced, setDebounced] = useState("");
+  const [visible, setVisible] = useState(PAGE_SIZE);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
+  // 검색어 디바운스 → 서버사이드 검색 (500개 캡 너머 모돈도 검색됨)
+  useEffect(() => {
+    const id = setTimeout(() => { setDebounced(search.trim()); setVisible(PAGE_SIZE); }, 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
   const { data: sowData } = useQuery({
-    queryKey: queryKeys.sows.list(farmId ?? "", {}),
-    queryFn: () => sowsApi.list(farmId!, { per_page: 500 }),
+    queryKey: queryKeys.sows.list(farmId ?? "", { search: debounced }),
+    queryFn: () => sowsApi.list(farmId!, { per_page: 200, search: debounced || undefined }),
     enabled: !!farmId,
   });
 
-  const sows = useMemo(() => {
-    const all = sowData?.items ?? [];
-    if (!search.trim()) return all;
-    return all.filter((s) =>
-      s.ear_tag.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [sowData, search]);
+  const allSows = useMemo(() => sowData?.items ?? [], [sowData]);
+  const sows = useMemo(() => allSows.slice(0, visible), [allSows, visible]);
+  const hasMore = allSows.length > visible;
 
   const handleSaved = (msg: string, sowId: string, goNext: boolean) => {
     setDoneIds((prev) => new Set([...prev, sowId]));
@@ -174,9 +180,17 @@ export default function RecordPage() {
               );
             })
           )}
+          {hasMore && (
+            <button
+              onClick={() => setVisible((v) => v + PAGE_SIZE)}
+              className="w-full py-2.5 text-xs font-semibold text-primary hover:bg-primary/5 transition border-b border-border"
+            >
+              {t("loadMore", { n: allSows.length - visible })}
+            </button>
+          )}
         </div>
         <div className="px-4 py-2 border-t border-border">
-          <p className="text-[11px] text-text3 font-mono">{t("doneCount", { done: doneIds.size, total: sows.length })}</p>
+          <p className="text-[11px] text-text3 font-mono">{t("doneCount", { done: doneIds.size, total: allSows.length })}</p>
         </div>
       </div>
 
