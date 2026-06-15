@@ -5,14 +5,14 @@ Revises: a1273623b95d
 Create Date: 2026-06-05 13:45:00.000000
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 revision: str = "b6f6e3a9c2d1"
-down_revision: Union[str, None] = "a1273623b95d"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "a1273623b95d"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

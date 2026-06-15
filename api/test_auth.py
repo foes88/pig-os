@@ -1,4 +1,6 @@
-import json, urllib.request, urllib.error
+import json
+import urllib.error
+import urllib.request
 
 BASE = "http://localhost:8000/api/v1/auth"
 

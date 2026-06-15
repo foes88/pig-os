@@ -9,14 +9,14 @@ Revises: b6f6e3a9c2d1
 Create Date: 2026-06-05 15:00:00.000000
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 revision: str = "e3f9a2b4c8d1"
-down_revision: Union[str, None] = "c7d4e2a1f9b0"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "c7d4e2a1f9b0"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
