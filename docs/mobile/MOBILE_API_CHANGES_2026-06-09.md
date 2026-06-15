@@ -1,3 +1,9 @@
+> ⚠️ **DEPRECATED (2026-06-16)** — 이 문서는 stale입니다(기준 커밋 0adfa23 이후 다수 변경 반영됨).
+> 당시 "P1 신규 구현 필요"였던 boars/sync 등은 이미 백엔드에 구현 완료.
+> **단일 기준(SSOT)**: [../mobile-integration-contract.md](../mobile-integration-contract.md)
+
+---
+
 # PigOS 모바일 API 변경 명세서
 > 작성일: 2026-06-09 | 적용 대상: iOS (pigos-ios) + Android (pigos-android)
 > 백엔드 기준 커밋: `0adfa23` (main)

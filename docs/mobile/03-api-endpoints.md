@@ -1,3 +1,10 @@
+> ⚠️ **DEPRECATED (2026-06-16)** — 이 문서는 stale입니다. 더 이상 신뢰하지 마세요.
+> 모돈 상태값(ACTIVE/GESTATING/DRY 등)·일부 엔드포인트가 현재 백엔드와 불일치.
+> **단일 기준(SSOT)**: [../mobile-integration-contract.md](../mobile-integration-contract.md)
+> (라이브 라우트 기반 — 모돈상태 v2 / boars / 알림 / sync 전부 정확)
+
+---
+
 # API 엔드포인트 레퍼런스
 
 Base URL: `https://api.pigos.io/api/v1` (개발: `http://10.0.2.2:8000/api/v1`)
