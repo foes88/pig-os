@@ -35,6 +35,12 @@
 - [x] 통합 테스트 `tests/integration/test_prrs_analytics.py` (PRRS 집계/비-PRRS 제외/발생률).
 - 검증: ruff clean / import-smoke / 라우트 OpenAPI 등록 / unit 219/219. [degraded: no-db — integration은 사용자 머신 재검증]
 
+## 2026-06-15 야간스프린트 — N5 프론트 스모크 테스트 (Phase 13 연장)
+- [x] `lib/utils/csv.ts` 공용 CSV 유틸(toCsv/downloadCsv) 추출 + reports reproduction·grow-finish 페이지 연결(동작 동일, 무회귀).
+- [x] `tests/utils/csv.test.ts` (toCsv 3케이스), `tests/components/RecentEventsSection.test.tsx` (제목/빈상태), `tests/pages/tasks.test.tsx` (제목/allClear). next-intl 모킹으로 견고화.
+- 검증: tsc --noEmit EXIT 0 (리팩터 페이지+신규 테스트 타입 통과). 
+- ⚠ **vitest 실행 불가(샌드박스)**: node_modules가 윈도우용 + vitest4 rolldown 네이티브 바이너리가 Bus error(core dumped). 리눅스 바이너리 추가해도 크래시. → **사용자 머신에서 `npm run test` 실행 필요.** [exec-blocked: sandbox]
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 

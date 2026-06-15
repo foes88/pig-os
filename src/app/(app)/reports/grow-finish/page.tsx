@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+
+import { downloadCsv } from "@/lib/utils/csv";
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { reportsApi } from "@/lib/api/endpoints/reports";
@@ -26,17 +28,6 @@ function fmt(v: number | null, suffix = ""): string {
   return v == null ? "-" : `${v}${suffix}`;
 }
 
-function downloadCsv(filename: string, headers: string[], rows: (string | number | null)[][]) {
-  const esc = (v: string | number | null) => (v == null ? "" : `${v}`);
-  const csv = [headers.join(","), ...rows.map((r) => r.map(esc).join(","))].join("\n");
-  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export default function GrowFinishReportPage() {
   const t = useTranslations("growFinish");
