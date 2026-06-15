@@ -63,3 +63,35 @@ async def test_no_recipients_no_notifications(db, test_farm, test_sow):
 
     created = await notification_service.create_from_alerts(db, test_farm.id, today=today)
     assert created == 0
+
+
+async def test_worker_role_not_recipient(db, test_farm, test_user, test_sow):
+    """FARM_WORKER 역할은 OWNER/MANAGER가 아니므로 알림 수신 대상에서 제외."""
+    today = await _setup_overdue(db, test_farm, test_user, test_sow)
+    # 위 헬퍼는 role_override=FARM_OWNER로 추가하므로, WORKER로 덮어쓴다
+    from sqlalchemy import update as _update
+
+    from app.db.models.platform import UserFarm as _UF
+    await db.execute(
+        _update(_UF).where(_UF.user_id == test_user.id, _UF.farm_id == test_farm.id)
+        .values(role_override="FARM_WORKER")
+    )
+    await db.flush()
+
+    created = await notification_service.create_from_alerts(db, test_farm.id, today=today)
+    assert created == 0
+
+
+async def test_regenerate_after_read(db, test_farm, test_user, test_sow):
+    """읽음 처리 후에는 동일 alert가 다시 생성된다(멱등은 '미읽음' 중복만 차단)."""
+    today = await _setup_overdue(db, test_farm, test_user, test_sow)
+
+    first = await notification_service.create_from_alerts(db, test_farm.id, today=today)
+    assert first >= 1
+
+    # 전체 읽음 처리
+    await notification_service.mark_all_read(db, test_user.id, farm_id=test_farm.id)
+
+    # 읽음 후 재생성 — 미읽음 중복이 없으므로 다시 생성됨
+    again = await notification_service.create_from_alerts(db, test_farm.id, today=today)
+    assert again >= 1

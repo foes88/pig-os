@@ -41,3 +41,24 @@ async def test_prrs_by_genetics(db, test_farm):
     assert by_breed["Yorkshire"]["incidence_rate"] == 100.0
     assert by_breed["Landrace"]["affected_sows"] == 0
     assert by_breed["Landrace"]["incidence_rate"] == 0.0
+
+
+async def test_prrs_genetics_grouping(db, test_farm):
+    """같은 품종(breed)이라도 genetics_id가 다르면 별도 행으로 집계된다."""
+    s1 = Sow(farm_id=test_farm.id, ear_tag="PRRS-G1", parity=1, status="OPEN",
+             entry_date=datetime(2024, 1, 1, tzinfo=UTC), entry_type="GILT",
+             breed="Yorkshire", genetics_id="Y-100")
+    s2 = Sow(farm_id=test_farm.id, ear_tag="PRRS-G2", parity=1, status="OPEN",
+             entry_date=datetime(2024, 1, 1, tzinfo=UTC), entry_type="GILT",
+             breed="Yorkshire", genetics_id="Y-200")
+    db.add_all([s1, s2])
+    await db.flush()
+    db.add(HealthEvent(farm_id=test_farm.id, sow_id=s1.id, event_date=date(2026, 5, 1),
+                       event_type="DISEASE", disease_code="PRRS_1"))
+    await db.flush()
+
+    res = await analytics_service.prrs_by_genetics(db, test_farm.id)
+    genetics = {r["genetics_id"]: r for r in res["rows"]}
+    assert genetics["Y-100"]["affected_sows"] == 1
+    assert genetics["Y-200"]["affected_sows"] == 0
+    assert genetics["Y-100"]["incidence_rate"] == 100.0

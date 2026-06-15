@@ -80,6 +80,11 @@
 3. N6 법무 초안 외부 변호사 검토 → 준거법/데이터배당/국외이전 확정.
 4. N4 PRRS 분석을 프론트 화면(분석 탭)으로 노출 검토.
 
+## 2026-06-15 야간스프린트(품질 순환) — Q1 테스트 엣지케이스
+- [x] N1: test_worker_role_not_recipient(WORKER 수신 제외), test_regenerate_after_read(읽음 후 재생성).
+- [x] N4: test_prrs_genetics_grouping(동일 breed·다른 genetics_id 분리 집계).
+- 검증: ruff clean / 통합 7개 수집 OK. [degraded: no-db — 실행은 사용자 머신]
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 
