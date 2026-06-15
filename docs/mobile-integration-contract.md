@@ -134,8 +134,8 @@
 - [x] G1 FCM HTTP v1 전송 구현 (env-gated, graceful skip)
 - [x] G2 `POST /devices` 토큰 등록 엔드포인트
 - [ ] 배포 시 G1 활성화(google-auth + FCM env) + G3 worker 컨테이너 기동
-- [ ] OpenAPI 스펙(`docs/api/openapi-v1.yaml`)을 실제 라우트와 동기화 유지
-- [ ] 신규/변경 엔드포인트는 이 문서 §3 갱신 + 모바일 공지
+- [x] OpenAPI 스펙 자동생성기(`api/scripts/gen_openapi.py`) — 라우트 변경 후 재생성하면 항상 일치
+- [ ] 신규/변경 엔드포인트는 이 문서 §3 갱신 + `gen_openapi.py` 재생성 + 모바일 공지
 
 **모바일(iOS/Android 세션)**
 - [ ] §1 Base URL 환경분리 + dev 평문 예외(디버그만)
