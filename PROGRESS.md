@@ -7,6 +7,14 @@
 - 검증 게이트(이번 스프린트): ruff + tsc + import-smoke + unit pytest. **통합(integration)·Alembic은 DB 필요 → 사용자 머신에서 `uv run pytest tests/` 재검증 필요.**
 - 작업 트리 노트: 윈도우 마운트로 ~101개 파일이 CRLF 노이즈로 표시됨. 실제 WIP는 settings/users·login·onboarding·members.ts 4개(사용자 작업, 미변경 유지). 커밋 시 건드린 파일만 LF 정규화 후 add.
 
+## 2026-06-15 야간스프린트 — N1 알림 영구화 Producer (P12-6 백엔드)
+- [x] `notification_service.create_from_alerts(db, farm_id, today=None)` — 과기한 모돈(6유형)+도태권고+KPI(WARNING/CRITICAL) → OWNER/MANAGER 멤버에게 IN_APP Notification 적재. KPI 집계 실패는 격리(try/except)하여 과기한/도태 알림은 계속 생성.
+- [x] 멱등성: 같은 (user_id, alert_type, related_entity_id) 미읽음 알림 존재 시 재생성 안 함. related_entity_type/id 채워 클릭 이동 가능.
+- [x] 수신자: user_farms 조인, 유효역할=COALESCE(role_override, system_role)∈{FARM_OWNER,FARM_MANAGER}, 활성 유저.
+- [x] `POST /api/v1/farms/{farm_id}/notifications/generate` (farm_router 분리, require_role OWNER/MANAGER/SUPER_ADMIN) — OpenAPI 등록 확인.
+- [x] 통합 테스트 `tests/integration/test_notification_producer.py` (생성/멱등/수신자없음 3케이스) 작성.
+- 검증: ruff clean / import-smoke OK / unit 219/219 / 라우트 OpenAPI 등록 확인. **integration은 DB 필요 → 사용자 머신 재검증.** [degraded: no-db]
+
 ## 현재 작업
 **MVP 스프린트 진행 중** — 디자인 구현 + Rule Engine DB화 완료
 

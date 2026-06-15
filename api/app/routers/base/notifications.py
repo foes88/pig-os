@@ -7,8 +7,13 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import CurrentUser, DbDep
-from app.schemas.notification import MarkReadResult, NotificationList, NotificationResponse
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_role
+from app.schemas.notification import (
+    GenerateResult,
+    MarkReadResult,
+    NotificationList,
+    NotificationResponse,
+)
 from app.services import notification_service
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -41,3 +46,18 @@ async def mark_all_read(user: CurrentUser, db: DbDep, farm_id: UUID | None = Non
     updated = await notification_service.mark_all_read(db, user.id, farm_id=farm_id)
     _, unread, _ = await notification_service.list_notifications(db, user.id, farm_id=farm_id, limit=0)
     return MarkReadResult(updated=updated, unread_count=unread)
+
+
+# 농장 스코프 라우터 — 생성/배치용 (URL: /api/v1/farms/{farm_id}/notifications/...)
+farm_router = APIRouter(prefix="/farms/{farm_id}/notifications", tags=["Notifications"])
+
+
+@farm_router.post(
+    "/generate",
+    response_model=GenerateResult,
+    dependencies=[require_role("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")],
+)
+async def generate_notifications(farm: FarmDep, db: DbDep) -> GenerateResult:
+    """Alert(과기한/도태/KPI) → OWNER/MANAGER 영구 IN_APP 알림 생성 (멱등)."""
+    created = await notification_service.create_from_alerts(db, farm.id)
+    return GenerateResult(created=created)

@@ -28,3 +28,7 @@ class NotificationList(BaseModel):
 class MarkReadResult(BaseModel):
     updated: int
     unread_count: int
+
+
+class GenerateResult(BaseModel):
+    created: int

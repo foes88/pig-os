@@ -83,3 +83,137 @@ async def mark_all_read(db: AsyncSession, user_id: UUID, farm_id: UUID | None = 
     )
     await db.commit()
     return result.rowcount or 0
+
+
+# ── Producer: alert → 영구 IN_APP Notification (P12-6) ──────────────────
+# OWNER/MANAGER 농장 멤버에게 alert를 영구 알림으로 적재. 멱등(미읽음 중복 방지).
+_OWNER_MANAGER_ROLES = ("FARM_OWNER", "FARM_MANAGER")
+
+# overdue 유형 → 표시용 제목 (프론트는 alert_type 기준 현지화 가능, 본 문자열은 폴백)
+OVERDUE_TITLES = {
+    "gilt_no_estrus": "Gilt heat check overdue",
+    "gilt_overdue_mating": "Gilt mating overdue",
+    "pregnant_overdue_farrowing": "Farrowing overdue",
+    "lactating_overdue_weaning": "Weaning overdue",
+    "open_overdue_mating": "Mating overdue",
+    "accident_overdue_mating": "Re-mating overdue (RTS)",
+}
+
+
+async def _farm_recipients(db: AsyncSession, farm_id: UUID) -> list[UUID]:
+    """농장 멤버 중 유효 역할이 OWNER/MANAGER인 활성 유저 id 목록.
+
+    유효 역할 = user_farms.role_override 우선, 없으면 users.system_role.
+    """
+    from app.db.models.platform import User, UserFarm
+
+    q = (
+        select(User.id)
+        .join(UserFarm, UserFarm.user_id == User.id)
+        .where(
+            UserFarm.farm_id == farm_id,
+            User.active.is_(True),
+            func.coalesce(UserFarm.role_override, User.system_role).in_(_OWNER_MANAGER_ROLES),
+        )
+    )
+    return list(await db.scalars(q))
+
+
+async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int:
+    """alert_service 과기한/도태 + KPI 알림을 OWNER/MANAGER에게 IN_APP 영구화.
+
+    멱등: 같은 (user_id, alert_type, related_entity_id)의 미읽음 알림이 있으면 재생성하지 않음.
+    반환: 신규 생성 건수.
+    """
+    from app.db.models.platform import Farm
+    from app.services import alert_service, kpi_service
+
+    recipients = await _farm_recipients(db, farm_id)
+    if not recipients:
+        return 0
+
+    items: list[dict] = []
+
+    # 1) 과기한 모돈 (6유형)
+    for o in await alert_service.get_overdue_sows(db, farm_id, today=today):
+        otype = o["type"]
+        items.append({
+            "alert_type": f"OVERDUE_{otype.upper()}",
+            "severity": "WARNING",
+            "title": OVERDUE_TITLES.get(otype, "Sow attention required"),
+            "body": f"Sow {o['ear_tag']} is {o['overdue_days']} day(s) overdue ({otype}).",
+            "related_entity_type": "sow",
+            "related_entity_id": o["sow_id"],
+        })
+
+    # 2) 도태 권고
+    for c in await alert_service.get_cull_candidates(db, farm_id, today=today):
+        reasons = ", ".join(c.get("reasons", []))
+        items.append({
+            "alert_type": "CULL_CANDIDATE",
+            "severity": "WARNING",
+            "title": "Culling candidate",
+            "body": f"Sow {c['ear_tag']} (parity {c.get('parity')}): {reasons}",
+            "related_entity_type": "sow",
+            "related_entity_id": c["sow_id"],
+        })
+
+    # 3) KPI 알림 (Rule Engine WARNING/CRITICAL) — 한 농장 KPI 오류가 전체를 막지 않도록 격리
+    farm = await db.get(Farm, farm_id)
+    if farm is not None:
+        try:
+            dash = await kpi_service.get_dashboard(db, farm)
+            for a in dash.alerts:
+                items.append({
+                    "alert_type": f"KPI_{a.kpi}",
+                    "severity": a.severity,
+                    "title": f"{a.kpi} alert",
+                    "body": a.message,
+                    "related_entity_type": "kpi",
+                    "related_entity_id": None,
+                })
+        except Exception:  # noqa: BLE001 — KPI 집계 실패 시 과기한/도태 알림은 계속 생성
+            pass
+
+    if not items:
+        return 0
+
+    # 멱등: 수신자들의 기존 미읽음 IN_APP 알림 키 집합 선적재
+    existing_rows = await db.execute(
+        select(
+            Notification.user_id,
+            Notification.alert_type,
+            Notification.related_entity_id,
+        ).where(
+            Notification.user_id.in_(recipients),
+            Notification.type.in_(_INAPP_TYPES),
+            Notification.read_at.is_(None),
+        )
+    )
+    existing = {(r[0], r[1], r[2]) for r in existing_rows.all()}
+
+    now = datetime.now(UTC)
+    created = 0
+    for uid in recipients:
+        for it in items:
+            key = (uid, it["alert_type"], it["related_entity_id"])
+            if key in existing:
+                continue
+            db.add(Notification(
+                farm_id=farm_id,
+                user_id=uid,
+                type="IN_APP",
+                title=it["title"],
+                body=it["body"],
+                alert_type=it["alert_type"],
+                severity=it["severity"],
+                related_entity_type=it["related_entity_type"],
+                related_entity_id=it["related_entity_id"],
+                sent_at=now,
+            ))
+            existing.add(key)
+            created += 1
+
+    if created:
+        await db.commit()
+    return created
