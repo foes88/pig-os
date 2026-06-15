@@ -1,6 +1,7 @@
 """
-알림 발송 잡 — Rule Engine 알림 + 시스템 알림.
-현재: 스켈레톤 (Phase 2에서 FCM/APNs/이메일 구현)
+알림 발송 잡 — alert→IN_APP 영구화 + FCM 푸시 요약 전송 (G1).
+
+푸시는 push_service가 미설정/미설치 시 graceful skip하므로 잡은 항상 안전.
 """
 from __future__ import annotations
 
@@ -10,7 +11,7 @@ from sqlalchemy import select
 
 from app.db.models.platform import Farm
 from app.db.session import AsyncSessionLocal
-from app.services import notification_service
+from app.services import device_service, notification_service, push_service
 
 log = logging.getLogger(__name__)
 
@@ -61,15 +62,31 @@ async def generate_notifications_job(ctx: dict) -> str:
     processed = 0
     errors = 0
     total_created = 0
+    total_pushed = 0
     for farm_id in farm_ids:
         try:
             async with AsyncSessionLocal() as db:
-                total_created += await notification_service.create_from_alerts(db, farm_id)
+                created = await notification_service.create_from_alerts(db, farm_id)
+                total_created += created
+                # 신규 알림 있을 때만 수신자 단말에 요약 푸시 (미설정 시 graceful skip)
+                if created > 0:
+                    recipients = await notification_service.farm_recipients(db, farm_id)
+                    tokens = await device_service.active_tokens_for_users(db, recipients)
+                    res = await push_service.send_push(
+                        tokens,
+                        title="PigOS",
+                        body=f"새 알림 {created}건이 있습니다.",
+                        data={"farm_id": str(farm_id), "type": "alert_digest"},
+                    )
+                    total_pushed += res.sent
             processed += 1
         except Exception as e:  # noqa: BLE001 — 한 농장 실패 격리
             log.error("generate_notifications farm=%s error=%s", farm_id, e)
             errors += 1
 
-    result = f"notification generation done: {processed} farms, {total_created} created, {errors} errors"
+    result = (
+        f"notification generation done: {processed} farms, "
+        f"{total_created} created, {total_pushed} pushed, {errors} errors"
+    )
     log.info(result)
     return result

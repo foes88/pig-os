@@ -24,6 +24,7 @@ from app.routers.base import (
     auth,
     boars,
     chat,
+    devices,
     events,
     farms,
     finishers,
@@ -102,6 +103,7 @@ app.include_router(alerts.router,      prefix=V1)
 app.include_router(tasks.router,       prefix=V1)
 app.include_router(notifications.router, prefix=V1)
 app.include_router(notifications.farm_router, prefix=V1)
+app.include_router(devices.router,     prefix=V1)
 app.include_router(reports.router,     prefix=V1)
 app.include_router(analytics.router,   prefix=V1)
 app.include_router(members.router,     prefix=V1)

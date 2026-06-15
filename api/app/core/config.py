@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
 
+    # FCM 푸시 (G1) — 둘 다 설정돼야 푸시 전송, 아니면 graceful skip
+    fcm_project_id: str = ""
+    # 서비스 계정 JSON 경로 (google-auth가 읽음). 미설정 시 푸시 비활성.
+    fcm_credentials_path: str = ""
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"

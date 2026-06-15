@@ -27,6 +27,7 @@ from app.db.models.master import (  # noqa: F401
 )
 from app.db.models.ops import (  # noqa: F401
     ApiKey,
+    Device,
     FinisherGroup,
     KpiSnapshot,
     LlmUsageLog,

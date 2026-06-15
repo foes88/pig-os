@@ -274,3 +274,24 @@ class Task(Base):
     completed_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Device(Base):
+    """
+    모바일 푸시 대상 디바이스 등록 (FCM/APNS 토큰). (G2)
+    한 유저가 여러 단말 보유 가능. token 고유(재등록 시 upsert).
+    """
+    __tablename__ = "devices"
+    __table_args__ = (
+        UniqueConstraint("token", name="uq_device_token"),
+        Index("idx_device_user_active", "user_id", postgresql_where="deleted_at IS NULL"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    platform: Mapped[str] = mapped_column(String(10), nullable=False)  # ANDROID / IOS / WEB
+    token: Mapped[str] = mapped_column(String(255), nullable=False)    # FCM/APNS registration token
+    app_version: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

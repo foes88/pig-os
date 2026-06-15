@@ -119,6 +119,11 @@ async def _farm_recipients(db: AsyncSession, farm_id: UUID) -> list[UUID]:
     return list(await db.scalars(q))
 
 
+async def farm_recipients(db: AsyncSession, farm_id: UUID) -> list[UUID]:
+    """푸시/알림 수신 대상(OWNER/MANAGER) 유저 id — 잡/푸시 연동용 공개 래퍼."""
+    return await _farm_recipients(db, farm_id)
+
+
 async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int:
     """alert_service 과기한/도태 + KPI 알림을 OWNER/MANAGER에게 IN_APP 영구화.
 
