@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { finishersApi } from "@/lib/api/endpoints/finishers";
 import { useAuthStore } from "@/store/auth.store";
@@ -12,6 +13,7 @@ import type {
 } from "@/types/api.types";
 
 export default function FinishersPage() {
+  const t = useTranslations("finishers");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -33,7 +35,7 @@ export default function FinishersPage() {
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-text3">농장을 선택해주세요.</p>
+        <p className="text-text3">{t("selectFarm")}</p>
       </div>
     );
   }
@@ -42,8 +44,8 @@ export default function FinishersPage() {
     <div className="p-7">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-[22px] font-extrabold tracking-tight">비육돈 관리</h1>
-            <p className="text-xs text-text3 mt-0.5">그룹 단위 입식·출하 관리</p>
+            <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
+            <p className="text-xs text-text3 mt-0.5">{t("subtitle")}</p>
           </div>
           <div className="flex gap-2">
             <button
@@ -52,22 +54,22 @@ export default function FinishersPage() {
                 activeOnly ? "bg-primary text-white" : "bg-surface border-border text-text2"
               }`}
             >
-              {activeOnly ? "사육중만" : "전체"}
+              {activeOnly ? t("activeOnly") : t("all")}
             </button>
             <button
               onClick={() => setShowForm(true)}
               className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
             >
-              + 그룹 입식
+              {t("addGroup")}
             </button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-20 text-text3 text-sm">불러오는 중...</div>
+          <div className="text-center py-20 text-text3 text-sm">{t("loading")}</div>
         ) : groups.length === 0 ? (
           <div className="text-center py-20 text-text3 text-sm">
-            {activeOnly ? "사육 중인 비육돈 그룹이 없습니다." : "등록된 그룹이 없습니다."}
+            {activeOnly ? t("emptyActive") : t("emptyAll")}
           </div>
         ) : (
           <div className="grid gap-3">
@@ -86,36 +88,36 @@ export default function FinishersPage() {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           isActive ? "bg-green-50 text-green-600" : "bg-slate-100 text-slate-500"
                         }`}>
-                          {isActive ? "사육중" : "출하완료"}
+                          {isActive ? t("statusActive") : t("statusDone")}
                         </span>
                       </div>
                       <div className="text-xs text-text3 mt-0.5">
-                        입식 {g.start_date} · {g.head_count_in}두
-                        {g.avg_entry_weight_kg && ` · 평균 ${g.avg_entry_weight_kg}kg`}
+                        {t("entryInfo", { date: g.start_date, n: g.head_count_in })}
+                        {g.avg_entry_weight_kg && ` · ${t("avgEntryWeight", { w: g.avg_entry_weight_kg })}`}
                       </div>
                     </div>
                     <div className="flex gap-6 text-sm">
                       {g.end_date && (
                         <>
                           <div>
-                            <div className="text-[10px] text-text3">출하일</div>
+                            <div className="text-[10px] text-text3">{t("shipDate")}</div>
                             <div className="font-medium">{g.end_date}</div>
                           </div>
                           <div>
-                            <div className="text-[10px] text-text3">출하두수</div>
-                            <div className="font-medium">{g.head_count_out}두</div>
+                            <div className="text-[10px] text-text3">{t("shipHead")}</div>
+                            <div className="font-medium">{g.head_count_out}{t("headUnit")}</div>
                           </div>
                           {g.avg_exit_weight_kg && (
                             <div>
-                              <div className="text-[10px] text-text3">출하체중</div>
+                              <div className="text-[10px] text-text3">{t("shipWeight")}</div>
                               <div className="font-medium">{g.avg_exit_weight_kg}kg</div>
                             </div>
                           )}
                           {mortality != null && (
                             <div>
-                              <div className="text-[10px] text-text3">폐사</div>
+                              <div className="text-[10px] text-text3">{t("mortality")}</div>
                               <div className={`font-medium ${mortality > 0 ? "text-danger" : "text-success"}`}>
-                                {mortality}두
+                                {mortality}{t("headUnit")}
                               </div>
                             </div>
                           )}
@@ -128,14 +130,14 @@ export default function FinishersPage() {
                       onClick={() => setEditingId(g.id)}
                       className="border border-border text-text2 px-3 py-2 rounded-lg text-xs font-semibold hover:border-primary transition"
                     >
-                      수정
+                      {t("edit")}
                     </button>
                     {isActive && (
                       <button
                         onClick={() => setShippingId(g.id)}
                         className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber-500/90 transition"
                       >
-                        출하 처리
+                        {t("ship")}
                       </button>
                     )}
                   </div>
@@ -147,12 +149,12 @@ export default function FinishersPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-3 text-xs text-text3">
-            <span>전체 {groups.length}그룹 · {page}/{totalPages}</span>
+            <span>{t("pageInfo", { n: groups.length, p: page, tp: totalPages })}</span>
             <div className="flex gap-1.5">
               <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
-                className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">이전</button>
+                className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">{t("prev")}</button>
               <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-                className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">다음</button>
+                className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">{t("next")}</button>
             </div>
           </div>
         )}
@@ -196,6 +198,7 @@ export default function FinishersPage() {
 }
 
 function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onClose: () => void; onSuccess: () => void }) {
+  const t = useTranslations("finishers");
   const [form, setForm] = useState<CreateFinisherGroupRequest>({
     group_code: "",
     start_date: new Date().toISOString().slice(0, 10),
@@ -208,39 +211,39 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
     onSuccess,
     onError: (err: unknown) => {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "등록 실패");
+      setError(typeof detail === "string" ? detail : t("regFailed"));
     },
   });
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-        <h2 className="text-base font-bold mb-4">비육돈 그룹 입식</h2>
+        <h2 className="text-base font-bold mb-4">{t("modalAddTitle")}</h2>
         <div className="space-y-3">
-          <Field label="그룹 코드 *">
+          <Field label={t("fGroupCode")}>
             <input value={form.group_code} onChange={(e) => setForm((f) => ({ ...f, group_code: e.target.value }))}
-              placeholder="예: FG-2026-001" className="input" />
+              placeholder={t("phGroupCode")} className="input" />
           </Field>
-          <Field label="배치명">
+          <Field label={t("fBatchName")}>
             <input value={form.batch_name ?? ""} onChange={(e) => setForm((f) => ({ ...f, batch_name: e.target.value }))}
-              placeholder="예: 6월 1차" className="input" />
+              placeholder={t("phBatchName")} className="input" />
           </Field>
-          <Field label="입식일 *">
+          <Field label={t("fEntryDate")}>
             <input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} className="input" />
           </Field>
-          <Field label="입식 두수 *">
+          <Field label={t("fHeadIn")}>
             <input type="number" min={1} value={form.head_count_in || ""} onChange={(e) => setForm((f) => ({ ...f, head_count_in: Number(e.target.value) }))} className="input" />
           </Field>
-          <Field label="평균 입식 체중 (kg)">
-            <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} placeholder="예: 28.5" className="input" />
+          <Field label={t("fAvgEntryWeight")}>
+            <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} placeholder={t("phAvgEntryWeight")} className="input" />
           </Field>
         </div>
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">취소</button>
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.group_code || !form.head_count_in || mutation.isPending}
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
-            {mutation.isPending ? "등록 중..." : "등록"}
+            {mutation.isPending ? t("regging") : t("reg")}
           </button>
         </div>
       </div>
@@ -249,6 +252,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
 }
 
 function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; groupId: string; onClose: () => void; onSuccess: () => void }) {
+  const t = useTranslations("finishers");
   const [form, setForm] = useState<FinisherGroupShipRequest>({
     end_date: new Date().toISOString().slice(0, 10),
     head_count_out: 0,
@@ -260,31 +264,31 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
     onSuccess,
     onError: (err: unknown) => {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "출하 처리 실패");
+      setError(typeof detail === "string" ? detail : t("shipFailed"));
     },
   });
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-        <h2 className="text-base font-bold mb-4">출하 처리</h2>
+        <h2 className="text-base font-bold mb-4">{t("modalShipTitle")}</h2>
         <div className="space-y-3">
-          <Field label="출하일 *">
+          <Field label={t("fShipDate")}>
             <input type="date" value={form.end_date} onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} className="input" />
           </Field>
-          <Field label="출하 두수 *">
+          <Field label={t("fHeadOut")}>
             <input type="number" min={1} value={form.head_count_out || ""} onChange={(e) => setForm((f) => ({ ...f, head_count_out: Number(e.target.value) }))} className="input" />
           </Field>
-          <Field label="평균 출하 체중 (kg)">
-            <input type="number" step="0.1" min={0} value={form.avg_exit_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_exit_weight_kg: Number(e.target.value) || undefined }))} placeholder="예: 115.0" className="input" />
+          <Field label={t("fAvgExitWeight")}>
+            <input type="number" step="0.1" min={0} value={form.avg_exit_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_exit_weight_kg: Number(e.target.value) || undefined }))} placeholder={t("phAvgExitWeight")} className="input" />
           </Field>
         </div>
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">취소</button>
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.head_count_out || mutation.isPending}
             className="flex-1 bg-amber-500 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
-            {mutation.isPending ? "처리 중..." : "출하 완료"}
+            {mutation.isPending ? t("shipping") : t("shipDone")}
           </button>
         </div>
       </div>
@@ -293,6 +297,7 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
 }
 
 function EditGroupModal({ farmId, group, onClose, onSuccess }: { farmId: string; group: FinisherGroup; onClose: () => void; onSuccess: () => void }) {
+  const t = useTranslations("finishers");
   const [form, setForm] = useState<UpdateFinisherGroupRequest>({
     batch_name: group.batch_name ?? "",
     head_count_in: group.head_count_in,
@@ -305,32 +310,32 @@ function EditGroupModal({ farmId, group, onClose, onSuccess }: { farmId: string;
     onSuccess,
     onError: (err: unknown) => {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "수정 실패");
+      setError(typeof detail === "string" ? detail : t("editFailed"));
     },
   });
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
-        <h2 className="text-base font-bold mb-1">그룹 수정</h2>
+        <h2 className="text-base font-bold mb-1">{t("modalEditTitle")}</h2>
         <p className="text-xs text-gray-400 mb-4 font-mono">{group.group_code}</p>
         <div className="space-y-3">
-          <Field label="배치명">
+          <Field label={t("fBatchName")}>
             <input value={form.batch_name ?? ""} onChange={(e) => setForm((f) => ({ ...f, batch_name: e.target.value }))} className="input" />
           </Field>
-          <Field label="입식 두수 *">
+          <Field label={t("fHeadIn")}>
             <input type="number" min={1} value={form.head_count_in || ""} onChange={(e) => setForm((f) => ({ ...f, head_count_in: Number(e.target.value) }))} className="input" />
           </Field>
-          <Field label="평균 입식 체중 (kg)">
+          <Field label={t("fAvgEntryWeight")}>
             <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} className="input" />
           </Field>
         </div>
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
-          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">취소</button>
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.head_count_in || mutation.isPending}
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
-            {mutation.isPending ? "저장 중..." : "저장"}
+            {mutation.isPending ? t("saving") : t("save")}
           </button>
         </div>
       </div>
