@@ -56,7 +56,7 @@ export default function OnboardingPage() {
     mutationFn: () => authApi.onboard(form),
     onSuccess: (data) => {
       setAuth(
-        { id: data.user_id, email: form.email, name: form.name, role: "OWNER", farm_ids: [data.farm_id] },
+        { id: data.user_id, email: form.email, name: form.name, role: "FARM_OWNER", farm_ids: [data.farm_id] },
         data.access_token,
         data.refresh_token,
         data.farm_id,

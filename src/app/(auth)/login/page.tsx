@@ -237,7 +237,7 @@ export default function LoginPage() {
           id: data.user_id,
           email: data.email,
           name: data.name,
-          role: data.role as "OWNER" | "MANAGER" | "WORKER" | "VET",
+          role: data.role,
           farm_ids: data.farm_ids,
         },
         data.access_token,

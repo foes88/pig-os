@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/client";
+import type { FarmRole } from "@/types/api.types";
 
-export type FarmRole = "FARM_OWNER" | "FARM_MANAGER" | "FARM_WORKER" | "VET" | "VIEWER";
+export type { FarmRole };
 
 export interface Member {
   user_id: string;
