@@ -13,6 +13,13 @@ class Alert(BaseModel):
     target_value: float | None = None
 
 
+class KpiBenchmark(BaseModel):
+    """국가별 벤치마크 (농장 country 기준 effective_metric_values에서 해석)."""
+    avg: float | None = None      # 국가 평균
+    top25: float | None = None    # 국가 상위 25%
+    target: float | None = None   # 목표값
+
+
 class DashboardKpi(BaseModel):
     """Main KPI dashboard — Base tier (free). Flat structure for frontend."""
     farm_id: UUID
@@ -31,6 +38,10 @@ class DashboardKpi(BaseModel):
     week_matings: int = 0
     week_farrowings: int = 0
     week_weanings: int = 0
+
+    # 국가별 벤치마크 — "내 KPI vs 국가평균/상위25%" 비교용 (웹/모바일 공용)
+    country: str | None = None
+    benchmarks: dict[str, KpiBenchmark] = {}  # "PSY" | "NPD" | "FARROWING_RATE"
 
     alerts: list[Alert]
 

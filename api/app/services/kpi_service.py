@@ -22,7 +22,7 @@ from app.engine.rules import (
 from app.engine.rules import (
     disease as _disease_rules,  # noqa: F401
 )
-from app.schemas.kpi import Alert, DashboardKpi, KpiTrend, NpdBreakdown, PsyDetail
+from app.schemas.kpi import Alert, DashboardKpi, KpiBenchmark, KpiTrend, NpdBreakdown, PsyDetail
 
 
 async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict:
@@ -342,6 +342,7 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         )
     )
     farrowing_rate = (farrowing_count / mating_count * 100) if mating_count else None
+    fr_bench = await _get_benchmark(db, "FARROWING_RATE", farm)
 
     # 이번주(월요일~오늘) 이벤트 건수 — soft-delete 제외
     week_start = today - timedelta(days=today.weekday())
@@ -409,5 +410,11 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         week_matings=week_matings,
         week_farrowings=week_farrowings,
         week_weanings=week_weanings,
+        country=farm.country,
+        benchmarks={
+            "PSY": KpiBenchmark(avg=psy_bench.get("avg"), top25=psy_bench.get("top25"), target=psy_bench.get("target")),
+            "NPD": KpiBenchmark(avg=npd_bench.get("avg"), top25=npd_bench.get("top25"), target=npd_bench.get("target")),
+            "FARROWING_RATE": KpiBenchmark(avg=fr_bench.get("avg"), top25=fr_bench.get("top25"), target=fr_bench.get("target")),
+        },
         alerts=alerts,
     )
