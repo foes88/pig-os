@@ -338,3 +338,30 @@
 
 ### 다음 추천 (순환 2회차)
 - Q1~Q8 더 깊게: 적대적 입력(거대값/음수/유니코드 ear_tag)·동시성(같은 이벤트 동시 POST 멱등)·라우터 레벨 권한 회귀. 신규 기능은 계속 추가 금지, 테스트·문서 정합만.
+
+---
+
+## 🌙 야간QA 2회차 요약 (2026-06-16, 적대적 입력·동시성·권한)
+
+**판정: 신규 버그 0. 회귀잠금 테스트 4종 추가. 사람 결정 필요 finding 1건(동기화 검증 경로).**
+
+### 최종 게이트
+- `ruff` clean · `tsc --noEmit` rc0 · **pytest tests/ = 304 passed** (1회차 300 + 신규 4)
+
+### 수행/추가 테스트
+- **C2-Q1 적대적 입력**: REST 생성경로는 견고 — `FarrowingCreate` born_alive/stillborn/mummified `ge=0`, `WeaningCreate` weaned_count `ge=0,le=30`, total_born=합계 후 validator가 >35 차단. sow `ear_tag` max_length=30·parity 0~20·status/entry_type 패턴 가드. → 추가 버그 없음.
+- **C2-Q2 멱등**: `persist_insights` 2회 호출 시 미읽음 중복 알림 0 검증(test_event_insight.py::TestPersistIdempotency).
+- **C2-Q3 라우터 권한**: `/thresholds` RBAC 회귀 신규(test_thresholds_perm.py) — 워커 override 403·읽기 200·비멤버 403. `require_role`은 user.system_role 기준, `FarmDep`는 멤버십(can_access_farm) 기준으로 동작 확인. 멤버 생성 시 system_role=farm role 동기화(members.py:64-65 주석으로 의도 명시) → 권한 일관.
+
+### ⚠ 사람 결정 필요 (finding)
+1. **[중요·동기화 검증 비대칭]** REST 이벤트 생성은 validator(분만 TB≤35/SB·MUM≤25/BA≤TB, 이유 ≤30, ge=0)를 거치지만, **오프라인 동기화 경로(`sync_service._process_farrowing/_process_weaning`)는 카운트 validator를 호출하지 않음**. 또 `schemas/sync.py`의 `SyncFarrowing.total_born/born_alive`, `SyncWeaning.weaned_count`는 `ge=0` 등 범위제약 없는 순수 int. → 비정상 클라이언트가 `/sync`로 음수·과대 카운트를 적재 가능(데이터 무결성 갭).
+   - **권고**: sync 경로에서도 동일 validator 적용 + sync 스키마에 범위 제약 추가. 단, 이는 동기화 **계약 변경**(SyncRejected에 신규 사유 추가 + offline-sync-spec 갱신)이라 사람 승인 후 진행 권장. (야간 무단 변경 안 함 — 계약 안정성)
+2. **[경미·멀티팜 역할]** 권한 판정 기준인 `user.system_role`은 사용자당 전역값. 한 사용자가 농장A=OWNER, 농장B=WORKER로 서로 다른 역할을 가지면 system_role이 마지막 설정으로 덮여 농장별 차등이 안 됨(MVP는 1유저-주로 1농장 가정이라 현재 영향 적음). 멀티팜 본격화 시 per-farm 역할 기반 require_role 재설계 검토.
+
+### 신규 커밋 (3개, push는 사람이)
+- `c445aa2` test(insight): C2-Q2 persist_insights 멱등
+- `(직전)` test(thresholds): C2-Q3 RBAC 회귀
+- `(이 커밋)` docs(qa): 2회차 요약
+
+### 다음 추천
+- finding #1(동기화 검증) 사람 승인 시 1순위 수정. 그 외 적대적 동시성(동일 sync batch 내 중복 id)·report 기간경계(>2년 400) 회귀 추가 여지.
