@@ -365,3 +365,16 @@
 
 ### 다음 추천
 - finding #1(동기화 검증) 사람 승인 시 1순위 수정. 그 외 적대적 동시성(동일 sync batch 내 중복 id)·report 기간경계(>2년 400) 회귀 추가 여지.
+
+---
+
+## ✅ finding #1 해소 (2026-06-16, 사람 승인 후)
+
+**동기화 검증 비대칭 수정 완료.** 오프라인 `/sync` 경로가 REST 생성경로와 동일한 카운트 검증을 거치도록 보강.
+- `sync_service._process_farrowing`: 음수 금지 + `validate_farrowing`(TB≤35/SB·MUM≤25/BA≤TB) → 위반 시 `SyncRejected(reason="VALIDATION_FAILED")`.
+- `sync_service._process_weaning`: `0 ≤ weaned_count ≤ 30` → 위반 시 동일.
+- **설계 판단**: sync 스키마(`schemas/sync.py`)에 하드 `ge=0`를 넣으면 잘못된 1건이 배치 전체를 422로 떨굼 → 기존 '항목별 graceful reject' 계약 유지를 위해 **프로세서 내부 항목별 검증**으로 처리(새 임계 도입 아님, REST 규칙 미러).
+- 계약 문서화: `docs/specs/2026-05-19_offline-sync-spec.md`에 2-8절 + 충돌/에러 표에 `VALIDATION_FAILED` 추가.
+- 테스트: `test_sync_validation.py` xfail 제거 → 정상 7케이스(분만 거부3/정상1, 이유 거부2/정상1) 전환.
+- 검증: **pytest tests/ = 311 passed**, ruff clean, tsc rc0.
+- 잔여(경미): finding #2(멀티팜 전역 system_role)는 미해결 — 멀티팜 본격화 시 재설계 대상.
