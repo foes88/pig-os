@@ -293,3 +293,8 @@
 - [x] **[P13-1/2/3/4]** Vitest config+setup+test-utils + 컴포넌트(QuickInputDrawer/Sidebar) + 페이지(alerts) 스모크 테스트
   - ⚠ 샌드박스 npm install 차단(마운트 ENOTEMPTY) → 사용자 머신에서 `npm i -D vitest jsdom @vitejs/plugin-react @testing-library/{react,jest-dom,user-event}` 후 `npm test`
 - **자율 플랜 54/54 항목 처리 완료.** backend unit 219/219, tsc clean, 통합테스트 수집 통과.
+
+## 2026-06-16 — 야간 QA/검증 (cowork, 무중단 모드)
+- **[야간QA 시작 / DB_OK=true]** — cowork 샌드박스에 Docker 없음 → 루트 권한 없이 `pgserver`(PyPI)로 임시 Postgres 기동, `pigos_test` 생성. psycopg2-binary 번들 libpq 누락은 pgserver의 libpq로 심볼릭링크 해결. Python 3.10뿐(3.14 인터프리터 github 차단)이라 `datetime.UTC` 1개 심으로 백필. 이 조건에서 **전체 테스트 실제 실행 가능**(이전 세션들은 '수집까지'였음).
+- 베이스라인 게이트 전부 green: `ruff check` clean / `tsc --noEmit` rc0 / import-smoke(`import app.main`) OK / **pytest tests/ = 289 passed (unit 219 + integration 70)**.
+- 주의: 이 실행환경은 py3.10+shim이라 3.11/3.12 런타임 전용 기능이 테스트 경로에 있으면 드러날 수 있음(현재까진 289 green이라 해당 없음). 사용자 머신의 정식 py3.12+docker 검증을 대체하지 않음(보완).
