@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import NotFoundError
 from app.db.models.health import Removal
 from app.db.models.platform import AuditLog
@@ -19,6 +19,9 @@ from app.schemas.sow import (
 )
 
 router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
+
+# 파괴적 작업(도태·삭제)은 농장 OWNER/MANAGER만 (Section D RBAC)
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")
 
 
 @router.get("", response_model=PagedResponse[SowResponse])
@@ -116,7 +119,8 @@ async def update_sow(sow_id: UUID, body: SowUpdate, farm: FarmDep, db: DbDep):
     return SowResponse.model_validate(sow)
 
 
-@router.post("/{sow_id}/cull", response_model=RemovalResponse, status_code=201)
+@router.post("/{sow_id}/cull", response_model=RemovalResponse, status_code=201,
+             dependencies=[require_farm_role(*_MANAGE_ROLES)])
 async def cull_sow(
     sow_id: UUID,
     body: SowCullRequest,
@@ -189,7 +193,8 @@ async def list_removals(
     return [RemovalResponse.model_validate(r) for r in rows]
 
 
-@router.delete("/{sow_id}", status_code=204)
+@router.delete("/{sow_id}", status_code=204,
+               dependencies=[require_farm_role(*_MANAGE_ROLES)])
 async def delete_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
     sow = await db.scalar(
         select(Sow).where(Sow.id == sow_id, Sow.farm_id == farm.id, Sow.deleted_at.is_(None))  # noqa: E501

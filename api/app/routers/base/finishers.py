@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.ops import FinisherGroup
 from app.schemas.finisher import (
@@ -19,6 +19,8 @@ from app.schemas.finisher import (
 )
 
 router = APIRouter(prefix="/farms/{farm_id}/finishers", tags=["Finishers"])
+
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")  # 파괴적 작업 한정 (Section D)
 
 
 @router.get("", response_model=list[FinisherGroupResponse])
@@ -99,7 +101,8 @@ async def ship_finisher_group(
     return FinisherGroupResponse.model_validate(group)
 
 
-@router.delete("/{group_id}", status_code=204)
+@router.delete("/{group_id}", status_code=204,
+               dependencies=[require_farm_role(*_MANAGE_ROLES)])
 async def delete_finisher_group(group_id: UUID, farm: FarmDep, db: DbDep):
     group = await db.scalar(
         select(FinisherGroup).where(

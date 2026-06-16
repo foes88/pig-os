@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.db.models.events import Farrowing, Mating, PigletEvent, Weaning
 from app.db.models.master import EventDefinition
 from app.schemas.events import (
@@ -32,6 +32,9 @@ from app.schemas.events import (
 from app.services import event_service, insight_service
 
 router = APIRouter(prefix="/farms/{farm_id}/events", tags=["Events"])
+
+# 이벤트 삭제(상태 롤백 동반)는 OWNER/MANAGER만. 일상 입력(POST)·수정(PATCH)은 WORKER 허용. (Section D)
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")
 
 
 async def _attach_insights(db, farm, event_type: str, event) -> list:
@@ -226,7 +229,8 @@ async def update_mating(mating_id: UUID, body: MatingUpdate, farm: FarmDep, db: 
     return MatingResponse.model_validate(ev)
 
 
-@router.delete("/matings/{mating_id}", status_code=204)
+@router.delete("/matings/{mating_id}", status_code=204,
+               dependencies=[require_farm_role(*_MANAGE_ROLES)])
 async def delete_mating(mating_id: UUID, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     await event_service.delete_mating(db, farm.id, current_user.id, mating_id)
     return Response(status_code=204)
@@ -238,7 +242,8 @@ async def update_farrowing(farrowing_id: UUID, body: FarrowingUpdate, farm: Farm
     return FarrowingResponse.model_validate(ev)
 
 
-@router.delete("/farrowings/{farrowing_id}", status_code=204)
+@router.delete("/farrowings/{farrowing_id}", status_code=204,
+               dependencies=[require_farm_role(*_MANAGE_ROLES)])
 async def delete_farrowing(farrowing_id: UUID, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     await event_service.delete_farrowing(db, farm.id, current_user.id, farrowing_id)
     return Response(status_code=204)
@@ -250,7 +255,8 @@ async def update_weaning(weaning_id: UUID, body: WeaningUpdate, farm: FarmDep, d
     return WeaningResponse.model_validate(ev)
 
 
-@router.delete("/weanings/{weaning_id}", status_code=204)
+@router.delete("/weanings/{weaning_id}", status_code=204,
+               dependencies=[require_farm_role(*_MANAGE_ROLES)])
 async def delete_weaning(weaning_id: UUID, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     await event_service.delete_weaning(db, farm.id, current_user.id, weaning_id)
     return Response(status_code=204)
