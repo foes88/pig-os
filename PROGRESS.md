@@ -378,3 +378,19 @@
 - 테스트: `test_sync_validation.py` xfail 제거 → 정상 7케이스(분만 거부3/정상1, 이유 거부2/정상1) 전환.
 - 검증: **pytest tests/ = 311 passed**, ruff clean, tsc rc0.
 - 잔여(경미): finding #2(멀티팜 전역 system_role)는 미해결 — 멀티팜 본격화 시 재설계 대상.
+
+---
+
+## ✅ finding #2 해소 (2026-06-16, 멀티팜 농장별 역할)
+
+**전역 system_role 기반 권한 판정의 멀티팜 혼선 수정.**
+- `permissions.effective_farm_role(user, farm_id, db)` 신규: 농장별 `user_farms.role_override`로 판정. SUPER_ADMIN/조직레벨 롤은 시스템 롤 그대로, 멤버십 없으면 None(거부), role_override NULL이면 시스템 롤 폴백(하위호환).
+- `dependencies.require_farm_role(*roles)` 신규(path farm_id 기준). 농장 스코프 라우터 3종 이관: members(create/update), thresholds(patch/delete), notifications(generate). 기존 `require_role`(전역)은 잔존(플랫폼/시스템 스코프용).
+- 효과: 한 사용자가 농장A=OWNER·농장B=WORKER일 때 A에선 override 200, B에선 403. 구버전은 전역 system_role(기본 FARM_OWNER)만 봐서 둘 다 통과하던 버그.
+- 테스트: `test_thresholds_perm.py::test_per_farm_role_isolation` 추가. 기존 권한 테스트 13종 무회귀.
+- 검증: **pytest tests/ = 312 passed**, ruff clean, tsc rc0.
+
+### 야간QA 총괄 (2사이클 + finding #1·#2 해소)
+- 누적 커밋: 야간 16개(시작 프롬프트 제외 15). push 미실시(사람).
+- 최종: **312 passed**, ruff/tsc green. 발견·수정: 실제 버그성 갭 2건(동기화 검증 비대칭, 멀티팜 RBAC) 해소 + 회귀잠금 테스트 다수 + 문서 정합.
+- 남은 권고: 정식 py3.12+Docker 재검증 1회, `.gitattributes` 라인엔딩 정규화 정책.
