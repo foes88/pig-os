@@ -95,3 +95,27 @@ async def test_regenerate_after_read(db, test_farm, test_user, test_sow):
     # 읽음 후 재생성 — 미읽음 중복이 없으므로 다시 생성됨
     again = await notification_service.create_from_alerts(db, test_farm.id, today=today)
     assert again >= 1
+
+
+async def test_kpi_failure_does_not_block_overdue(db, test_farm, test_user, test_sow, monkeypatch):
+    """QA 야간검증(Q5): savepoint(begin_nested) 격리 — KPI 집계가 실패해도
+    과기한/도태 알림 생성은 막히지 않는다."""
+    today = await _setup_overdue(db, test_farm, test_user, test_sow)
+
+    from app.services import kpi_service
+
+    async def _boom(*a, **k):
+        raise RuntimeError("KPI aggregation failed (injected)")
+
+    monkeypatch.setattr(kpi_service, "get_dashboard", _boom)
+
+    created = await notification_service.create_from_alerts(db, test_farm.id, today=today)
+    assert created >= 1  # KPI 실패에도 과기한 알림은 정상 생성
+    n = await db.scalar(
+        select(func.count()).select_from(Notification).where(
+            Notification.user_id == test_user.id,
+            Notification.type == "IN_APP",
+            Notification.related_entity_id == test_sow.id,
+        )
+    )
+    assert n == 1
