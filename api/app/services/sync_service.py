@@ -405,13 +405,15 @@ async def _process_reproductive(
         _alias = {"CULL": "CULLED", "DEATH": "DEAD"}
         normalised = _alias.get(item.event_type, item.event_type)
 
-        # Sow status transitions (mirrors event_service.record_reproductive_event)
+        # Sow status transitions → SowStatus v2 종료/활성값만 사용.
+        # (event_type TRANSFER_OUT → 상태 TRANSFER. "TRANSFER_OUT"은 유효 SowStatus 아님 → 422 방지)
         _status_map = {
             "CULLED": "CULLED", "DEAD": "DEAD", "SOLD": "SOLD",
-            "TRANSFER_OUT": "TRANSFER_OUT",
+            "TRANSFER_OUT": "TRANSFER",
             "RETURN_TO_ESTRUS": "ACCIDENT",
             "EMPTY": "ACCIDENT",
             "INFERTILE": "ACCIDENT",
+            "ABORTION": "ACCIDENT",
         }
         if normalised in _status_map:
             sow.status = _status_map[normalised]

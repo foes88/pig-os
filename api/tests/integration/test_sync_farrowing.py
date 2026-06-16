@@ -20,6 +20,7 @@ from app.schemas.sync import (
     SyncFarrowing,
     SyncMating,
     SyncPigletEvent,
+    SyncReproductiveEvent,
     SyncRequest,
     SyncWeaning,
 )
@@ -106,3 +107,23 @@ async def test_sync_weaning_persists(db: AsyncSession, test_farm: Farm, test_sow
     assert weaning.avg_weaning_weight_kg == 6.4          # avg_weight_kg -> avg_weaning_weight_kg
     await db.refresh(test_sow)
     assert test_sow.status == "OPEN"                     # weaning advanced status
+
+
+async def test_sync_reproductive_cull_sets_valid_status(db: AsyncSession, test_farm: Farm, test_sow: Sow):
+    """/sync 도폐사(reproductive)는 SowStatus v2 유효값으로 전이해야 함 (TRANSFER_OUT->TRANSFER 등)."""
+    now = datetime.now(UTC)
+    req = SyncRequest(
+        farm_id=test_farm.id, client_id=uuid4(), last_sync_at=None, dry_run=False,
+        changes=SyncChanges(
+            reproductive_events=[SyncReproductiveEvent(
+                id=uuid4(), sow_id=test_sow.id, event_type="CULLED",
+                event_date="2026-02-01", client_created_at=now,
+            )],
+        ),
+    )
+    resp = await sync_service.process_sync(db, test_farm, req)
+    assert resp.rejected == [], f"unexpected rejects: {resp.rejected}"
+    await db.refresh(test_sow)
+    assert test_sow.status == "CULLED"
+    # v2 종료값 집합 — "TRANSFER_OUT" 같은 무효 상태가 새지 않도록 가드
+    assert test_sow.status in {"CULLED", "DEAD", "SOLD", "TRANSFER"}
