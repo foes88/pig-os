@@ -337,10 +337,25 @@ async def _process_weaning(
         )
 
     if not dry_run:
+        # farrowing_id 는 NOT NULL FK — 해당 sow 최근 분만에 연결.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
+        await db.flush()
+        farrowing_id = await db.scalar(
+            select(Farrowing.id)
+            .where(Farrowing.sow_id == item.sow_id, Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None))
+            .order_by(Farrowing.farrowing_date.desc())
+            .limit(1)
+        )
+        if not farrowing_id:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="NO_ACTIVE_FARROWING",
+                detail={"sow_id": str(item.sow_id), "message": "No farrowing to attach weaning to"},
+            ), None
+        # 모델 컬럼명: avg_weaning_weight_kg (sync 입력은 avg_weight_kg).
         weaning = Weaning(
-            id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing_id,
             weaning_date=event_date, weaned_count=item.weaned_count,
-            avg_weight_kg=item.avg_weight_kg, notes=item.notes,
+            avg_weaning_weight_kg=item.avg_weight_kg, notes=item.notes,
         )
         db.add(weaning)
         db.add(_audit(farm_id, "weaning", item.id, "CREATE", item.model_dump(mode="json")))

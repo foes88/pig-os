@@ -12,7 +12,7 @@ from uuid import uuid4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.events import Farrowing, PigletEvent
+from app.db.models.events import Farrowing, PigletEvent, Weaning
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
 from app.schemas.sync import (
@@ -21,6 +21,7 @@ from app.schemas.sync import (
     SyncMating,
     SyncPigletEvent,
     SyncRequest,
+    SyncWeaning,
 )
 from app.services import sync_service
 
@@ -71,3 +72,37 @@ async def test_sync_mating_farrowing_piglet_roundtrip(db: AsyncSession, test_far
 
     await db.refresh(test_sow)
     assert test_sow.status == "LACTATING"          # farrowing advanced status
+
+
+async def test_sync_weaning_persists(db: AsyncSession, test_farm: Farm, test_sow: Sow):
+    """/sync weaning must persist: avg_weight_kg->avg_weaning_weight_kg + farrowing_id NOT NULL FK."""
+    now = datetime.now(UTC)
+    req = SyncRequest(
+        farm_id=test_farm.id, client_id=uuid4(), last_sync_at=None, dry_run=False,
+        changes=SyncChanges(
+            matings=[SyncMating(
+                id=uuid4(), sow_id=test_sow.id, mating_date="2026-01-01",
+                mating_type="AI", mating_number=1, client_created_at=now,
+            )],
+            farrowings=[SyncFarrowing(
+                id=uuid4(), sow_id=test_sow.id, farrowing_date="2026-04-25",
+                total_born=13, born_alive=12, born_dead=1, mummies=0, client_created_at=now,
+            )],
+            weanings=[SyncWeaning(
+                id=uuid4(), sow_id=test_sow.id, weaning_date="2026-05-16",
+                weaned_count=11, avg_weight_kg=6.4, client_created_at=now,
+            )],
+        ),
+    )
+
+    resp = await sync_service.process_sync(db, test_farm, req)
+
+    assert resp.rejected == [], f"unexpected rejects: {resp.rejected}"
+    weaning = await db.scalar(
+        select(Weaning).where(Weaning.sow_id == test_sow.id, Weaning.deleted_at.is_(None))
+    )
+    assert weaning is not None
+    assert weaning.farrowing_id is not None              # NOT NULL FK auto-linked
+    assert weaning.avg_weaning_weight_kg == 6.4          # avg_weight_kg -> avg_weaning_weight_kg
+    await db.refresh(test_sow)
+    assert test_sow.status == "OPEN"                     # weaning advanced status
