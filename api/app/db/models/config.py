@@ -80,6 +80,12 @@ class DefaultMetricValue(Base):
     critical_threshold: Mapped[float | None] = mapped_column(Numeric(10, 2))
     alert_direction: Mapped[str] = mapped_column(String(10), nullable=False, server_default="below")
     unit_code: Mapped[str | None] = mapped_column(String(20))
+    # 임계값 출처/신뢰도 메타 (GPT 리서치 권고 — 출처 없는 숫자 시드 금지)
+    confidence: Mapped[str | None] = mapped_column(String(10))       # high|medium|low|unknown
+    is_proxy: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    proxy_type: Mapped[str | None] = mapped_column(String(20))       # top10|best_decile|cooperative|sample|global
+    threshold_basis: Mapped[str | None] = mapped_column(String(40))  # country_avg|poor_decile|pic_intervention
+    source_ref: Mapped[str | None] = mapped_column(String(200))      # 기관/연도
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

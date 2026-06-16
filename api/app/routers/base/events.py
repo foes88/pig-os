@@ -29,9 +29,21 @@ from app.schemas.events import (
     WeaningResponse,
     WeaningUpdate,
 )
-from app.services import event_service
+from app.services import event_service, insight_service
 
 router = APIRouter(prefix="/farms/{farm_id}/events", tags=["Events"])
+
+
+async def _attach_insights(db, farm, event_type: str, event) -> list:
+    """이벤트 분석 → WARNING↑ 알림 적재 → insight 리스트 반환.
+    분석 실패가 입력(이미 커밋됨)을 깨지 않게 격리."""
+    try:
+        insights = await insight_service.analyze_event(db, farm, event_type, event)
+        if insights:
+            await insight_service.persist_insights(db, farm, event.sow_id, insights)
+        return insights
+    except Exception:  # noqa: BLE001 — 분석 실패는 무시(입력은 성공 유지)
+        return []
 
 
 @router.get("/definitions", response_model=list[EventDefinitionResponse])
@@ -88,7 +100,9 @@ async def record_mating(
     - Sets sow.status = GESTATING
     """
     event = await event_service.record_mating(db, farm.id, current_user.id, body)
-    return MatingResponse.model_validate(event)
+    resp = MatingResponse.model_validate(event)
+    resp.insights = await _attach_insights(db, farm, "mating", event)
+    return resp
 
 
 @router.get("/farrowings", response_model=list[FarrowingResponse])
@@ -117,7 +131,9 @@ async def record_farrowing(
     Sets sow.status = LACTATING, increments parity.
     """
     event = await event_service.record_farrowing(db, farm.id, current_user.id, body)
-    return FarrowingResponse.model_validate(event)
+    resp = FarrowingResponse.model_validate(event)
+    resp.insights = await _attach_insights(db, farm, "farrowing", event)
+    return resp
 
 
 @router.get("/weanings", response_model=list[WeaningResponse])
@@ -146,7 +162,9 @@ async def record_weaning(
     Sets sow.status = WEANED, closes BreedingCycle.
     """
     event = await event_service.record_weaning(db, farm.id, current_user.id, body)
-    return WeaningResponse.model_validate(event)
+    resp = WeaningResponse.model_validate(event)
+    resp.insights = await _attach_insights(db, farm, "weaning", event)
+    return resp
 
 
 @router.post("/reproductive", response_model=ReproductiveEventResponse, status_code=201)

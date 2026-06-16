@@ -5,6 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.common import UUIDMixin
+from app.schemas.insight import EventInsight
 
 # ── Event Definitions ────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ class MatingResponse(UUIDMixin):
     mating_number: int
     breeding_cycle_id: UUID | None
     created_at: datetime
+    insights: list[EventInsight] = []  # 입력 즉시 분석 결과 (추가 필드, 기존 클라 비파괴)
 
 
 # ── Farrowing ────────────────────────────────────────────────────────────────
@@ -75,6 +77,7 @@ class FarrowingResponse(UUIDMixin):
     farrowing_ease: str | None
     breeding_cycle_id: UUID | None
     created_at: datetime
+    insights: list[EventInsight] = []
 
 
 # ── Weaning ──────────────────────────────────────────────────────────────────
@@ -97,6 +100,7 @@ class WeaningResponse(UUIDMixin):
     weaning_age_days: int | None
     avg_weaning_weight_kg: float | None
     created_at: datetime
+    insights: list[EventInsight] = []
 
 
 # ── Reproductive event ────────────────────────────────────────────────────────
