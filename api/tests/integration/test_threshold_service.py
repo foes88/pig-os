@@ -51,3 +51,41 @@ class TestOverride:
             DefaultMetricValue.metric_code == "STILLBORN_RATE",
         ))
         assert farm_row is None
+
+
+class TestRegionPriority:
+    """QA 야간검증(Q3): 농장>국가(region)>글로벌 3단 체인의 '국가' 티어 검증.
+    test_farm.country == 'KR'."""
+
+    async def test_region_beats_global(self, db, test_farm: Farm):
+        # KR 국가 임계값 추가 → 글로벌보다 우선, source/scope가 region에서 나옴.
+        db.add(DefaultMetricValue(
+            scope_type="region", scope_code="KR", metric_code="STILLBORN_RATE",
+            warning_threshold=7.0, critical_threshold=11.0, alert_direction="above",
+            unit_code="%", confidence="high", source_ref="PigPlan/한돈팜스",
+        ))
+        await db.flush()
+        rows = await threshold_service.list_effective(db, test_farm)
+        sr = next(r for r in rows if r["metric_code"] == "STILLBORN_RATE")
+        assert sr["scope"] == "country"
+        assert sr["warning"] == 7.0
+        assert sr["source"] == "PigPlan/한돈팜스"  # source는 선택된 scope(국가)에서
+        assert sr["is_override"] is False
+
+    async def test_farm_beats_region_then_clear_reverts_to_region(self, db, test_farm: Farm):
+        # 3단: 농장 override > 국가 > 글로벌. clear 시 글로벌이 아니라 '국가'로 복귀해야 함.
+        db.add(DefaultMetricValue(
+            scope_type="region", scope_code="KR", metric_code="STILLBORN_RATE",
+            warning_threshold=7.0, critical_threshold=11.0, alert_direction="above",
+            unit_code="%", confidence="high", source_ref="PigPlan/한돈팜스",
+        ))
+        await db.flush()
+        await threshold_service.set_override(db, test_farm, "STILLBORN_RATE", warning=5.0, critical=9.0)
+        rows = await threshold_service.list_effective(db, test_farm)
+        sr = next(r for r in rows if r["metric_code"] == "STILLBORN_RATE")
+        assert sr["scope"] == "farm" and sr["warning"] == 5.0
+        # clear → 국가(KR) 값으로 복귀 (글로벌 8.0 아님)
+        await threshold_service.clear_override(db, test_farm, "STILLBORN_RATE")
+        rows = await threshold_service.list_effective(db, test_farm)
+        sr = next(r for r in rows if r["metric_code"] == "STILLBORN_RATE")
+        assert sr["scope"] == "country" and sr["warning"] == 7.0
