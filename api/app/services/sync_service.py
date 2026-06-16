@@ -54,6 +54,8 @@ from app.schemas.sync import (
     SyncResponse,
     SyncWeaning,
 )
+from app.validators.base import ValidationError
+from app.validators.farrowing import validate_farrowing
 
 _FULL_SYNC_THRESHOLD_DAYS = 30
 _FUTURE_DATE_TOLERANCE_DAYS = 1
@@ -196,6 +198,45 @@ async def _process_mating(
 
 # ── Farrowing validation ──────────────────────────────────────────────────────
 
+# REST WeaningCreate(le=30)와 동일 상한 — 새 임계 도입 아님(기존 스키마 미러).
+_MAX_WEANED_COUNT = 30
+
+
+def _validate_farrowing_counts(item: SyncFarrowing) -> dict | None:
+    """동기화 분만 항목을 REST 생성경로와 동일 규칙으로 검증.
+    위반 시 detail dict 반환(→ SyncRejected), 정상이면 None.
+    배치 전체를 422로 떨구지 않도록 스키마 하드제약 대신 항목별로 처리한다."""
+    for field, val in (
+        ("total_born", item.total_born),
+        ("born_alive", item.born_alive),
+        ("born_dead", item.born_dead),
+        ("mummies", item.mummies),
+    ):
+        if val is not None and val < 0:
+            return {"field": field, "message": f"{field} cannot be negative", "value": val}
+    try:
+        validate_farrowing(
+            total_born=item.total_born, born_alive=item.born_alive,
+            stillborn=item.born_dead, mummified=item.mummies,
+        )
+    except ValidationError as e:
+        return {"message": e.detail}
+    return None
+
+
+def _validate_weaning_counts(item: SyncWeaning) -> dict | None:
+    """동기화 이유 항목 검증 — REST WeaningCreate(0 ≤ weaned_count ≤ 30)와 동일."""
+    wc = item.weaned_count
+    if wc is None:
+        return None
+    if wc < 0:
+        return {"field": "weaned_count", "message": "weaned_count cannot be negative", "value": wc}
+    if wc > _MAX_WEANED_COUNT:
+        return {"field": "weaned_count",
+                "message": f"weaned_count cannot exceed {_MAX_WEANED_COUNT}", "value": wc}
+    return None
+
+
 async def _process_farrowing(
     db: AsyncSession,
     farm_id: UUID,
@@ -249,6 +290,11 @@ async def _process_farrowing(
             server_record={"id": str(dup.id), "farrowing_date": str(dup.farrowing_date),
                            "total_born": dup.total_born, "born_alive": dup.born_alive},
         )
+
+    invalid = _validate_farrowing_counts(item)
+    if invalid:
+        return None, SyncRejected(id=item.id, entity="farrowing", reason="VALIDATION_FAILED",
+                                   detail=invalid), None
 
     if not dry_run:
         farrowing = Farrowing(
@@ -320,6 +366,11 @@ async def _process_weaning(
             server_record={"id": str(dup.id), "weaning_date": str(dup.weaning_date),
                            "weaned_count": dup.weaned_count},
         )
+
+    invalid = _validate_weaning_counts(item)
+    if invalid:
+        return None, SyncRejected(id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                                   detail=invalid), None
 
     if not dry_run:
         weaning = Weaning(

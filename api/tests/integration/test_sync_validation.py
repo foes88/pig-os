@@ -1,30 +1,84 @@
-"""동기화 경로 입력검증 회귀 (야간QA finding #1) — pigos_test.
+"""동기화 경로 입력검증 (finding #1 해소) — pigos_test.
 
-REST 생성경로는 validator(분만 TB≤35 등)를 거치지만 sync 경로(_process_farrowing/_weaning)는
-카운트 validator를 호출하지 않는다(2026-06-16 발견). 아래는 '수정되면 통과'할 기대 스펙을
-strict xfail로 고정 — 수정(검증 추가) 시 XPASS가 되어 마커 제거를 강제한다.
-계약 변경(SyncRejected 신규 사유 + offline-sync-spec 갱신)이 필요하므로 사람 승인 후 수정.
+REST 생성경로와 동일한 카운트 검증을 sync 경로(_process_farrowing/_weaning)에도 적용.
+위반 항목은 배치 전체 422가 아니라 항목별 SyncRejected(reason=VALIDATION_FAILED)로 거부.
 """
 from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 
-from app.schemas.sync import SyncFarrowing
-from app.services.sync_service import _process_farrowing
+from app.schemas.sync import SyncFarrowing, SyncWeaning
+from app.services.sync_service import _process_farrowing, _process_weaning
 
 pytestmark = pytest.mark.asyncio
 
 
-@pytest.mark.xfail(reason="sync 경로 카운트 validator 미적용(finding #1) — 수정 시 XPASS", strict=True)
-async def test_sync_farrowing_rejects_out_of_range_total_born(db, test_farm, test_sow):
-    test_sow.status = "PREGNANT"
-    await db.flush()
-    item = SyncFarrowing(
-        id=uuid4(), sow_id=test_sow.id, farrowing_date="2026-06-01",
-        total_born=999, born_alive=999, born_dead=0, mummies=0,
-        client_created_at=datetime.now(UTC),
-    )
-    accepted, rejected, conflict = await _process_farrowing(db, test_farm.id, item, dry_run=True)
-    # 기대(검증 추가 후): 범위 초과(TB>35)는 거부되어야 함
-    assert rejected is not None, "sync가 비정상 카운트를 수용함 (검증 필요)"
+def _far(sow_id, **kw):
+    base = dict(id=uuid4(), sow_id=sow_id, farrowing_date="2026-06-01",
+                total_born=12, born_alive=11, born_dead=1, mummies=0,
+                client_created_at=datetime.now(UTC))
+    base.update(kw)
+    return SyncFarrowing(**base)
+
+
+def _wea(sow_id, **kw):
+    base = dict(id=uuid4(), sow_id=sow_id, weaning_date="2026-06-10",
+                weaned_count=10, client_created_at=datetime.now(UTC))
+    base.update(kw)
+    return SyncWeaning(**base)
+
+
+class TestSyncFarrowingValidation:
+    async def test_rejects_total_born_over_35(self, db, test_farm, test_sow):
+        test_sow.status = "PREGNANT"
+        await db.flush()
+        item = _far(test_sow.id, total_born=999, born_alive=999)
+        accepted, rejected, conflict = await _process_farrowing(db, test_farm.id, item, dry_run=True)
+        assert accepted is None and rejected is not None
+        assert rejected.reason == "VALIDATION_FAILED"
+
+    async def test_rejects_negative_born_alive(self, db, test_farm, test_sow):
+        test_sow.status = "PREGNANT"
+        await db.flush()
+        item = _far(test_sow.id, total_born=10, born_alive=-5)
+        accepted, rejected, conflict = await _process_farrowing(db, test_farm.id, item, dry_run=True)
+        assert rejected is not None and rejected.reason == "VALIDATION_FAILED"
+
+    async def test_rejects_born_alive_over_total(self, db, test_farm, test_sow):
+        test_sow.status = "PREGNANT"
+        await db.flush()
+        item = _far(test_sow.id, total_born=10, born_alive=20)
+        accepted, rejected, conflict = await _process_farrowing(db, test_farm.id, item, dry_run=True)
+        assert rejected is not None and rejected.reason == "VALIDATION_FAILED"
+
+    async def test_valid_farrowing_accepted(self, db, test_farm, test_sow):
+        test_sow.status = "PREGNANT"
+        await db.flush()
+        item = _far(test_sow.id, total_born=12, born_alive=11, born_dead=1)
+        accepted, rejected, conflict = await _process_farrowing(db, test_farm.id, item, dry_run=True)
+        assert rejected is None and conflict is None
+        assert accepted is not None and accepted.action == "created"
+
+
+class TestSyncWeaningValidation:
+    async def test_rejects_weaned_over_30(self, db, test_farm, test_sow):
+        test_sow.status = "LACTATING"
+        await db.flush()
+        item = _wea(test_sow.id, weaned_count=99)
+        accepted, rejected, conflict = await _process_weaning(db, test_farm.id, item, dry_run=True)
+        assert rejected is not None and rejected.reason == "VALIDATION_FAILED"
+
+    async def test_rejects_negative_weaned(self, db, test_farm, test_sow):
+        test_sow.status = "LACTATING"
+        await db.flush()
+        item = _wea(test_sow.id, weaned_count=-1)
+        accepted, rejected, conflict = await _process_weaning(db, test_farm.id, item, dry_run=True)
+        assert rejected is not None and rejected.reason == "VALIDATION_FAILED"
+
+    async def test_valid_weaning_accepted(self, db, test_farm, test_sow):
+        test_sow.status = "LACTATING"
+        await db.flush()
+        item = _wea(test_sow.id, weaned_count=10)
+        accepted, rejected, conflict = await _process_weaning(db, test_farm.id, item, dry_run=True)
+        assert rejected is None and accepted is not None and accepted.action == "created"

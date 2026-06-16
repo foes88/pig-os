@@ -67,6 +67,13 @@
 
 → 전체 풀 싱크 강제. 클라이언트에 `require_full_sync: true` 반환.
 
+### 2-8. 카운트 범위 위반 (VALIDATION_FAILED)
+**상황**: 비정상/버그 클라이언트가 범위를 벗어난 카운트를 전송 (예: 총산자수 999, 음수, 이유두수 99).
+
+→ REST 생성경로(`FarrowingCreate`/`WeaningCreate` + `validate_farrowing`)와 **동일 규칙**을 sync에도 적용:
+  분만 `total_born≤35, stillborn≤25, mummified≤25, born_alive≤total_born`, 모든 카운트 `≥0`; 이유 `0≤weaned_count≤30`.
+  위반 시 **해당 항목만** REJECT(`reason=VALIDATION_FAILED`). 배치 전체를 422로 떨구지 않음(항목별 graceful reject).
+
 ---
 
 ## 3. 동기화 프로토콜
@@ -88,7 +95,8 @@ POST /api/v1/sync
     │    ├─ 기간 잠금 체크
     │    ├─ 모돈 존재 & 상태 체크
     │    ├─ 중복 체크
-    │    └─ 미래 날짜 체크
+    │    ├─ 미래 날짜 체크
+    │    └─ 카운트 범위 체크 (REST 생성과 동일)
     │
     │ 3. 결과 반환
     ▼
@@ -123,6 +131,7 @@ Response:
 | CYCLE_CONFLICT (동일 배치) | LWW 자동 merge | 불필요 |
 | CYCLE_CONFLICT (다른 배치) | - | 필요 |
 | FUTURE_DATE | 자동 REJECT | 날짜 수정 후 재시도 |
+| VALIDATION_FAILED | 자동 REJECT | 값 수정 후 재시도 |
 | STALE_CLIENT | 풀싱크 강제 | 불필요 |
 
 ---
@@ -177,6 +186,7 @@ last_sync_at = 마지막 성공한 sync의 서버 시각 (UTC)
 | DUPLICATE_EVENT | 409 (item-level) | 중복 이벤트 |
 | CYCLE_CONFLICT | 409 (item-level) | 번식 사이클 충돌 |
 | FUTURE_DATE | 422 (item-level) | 미래 날짜 |
+| VALIDATION_FAILED | 422 (item-level) | 카운트 범위 위반(REST와 동일 규칙) |
 | REQUIRE_FULL_SYNC | 200 (response flag) | 풀싱크 필요 |
 | FARM_ACCESS_DENIED | 403 | 농장 접근 권한 없음 |
 
