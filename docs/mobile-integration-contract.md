@@ -88,6 +88,12 @@
 - ⚠ **오프라인**: 로컬 저장 시점엔 인사이트 없음(서버 판정). 온라인 `POST`는 즉시 insights, 오프라인 입력은
   `POST /sync` 시점에 서버가 분석 → 동기화 후 알림(notifications)으로 확인. 단말 인라인 즉시판정은 안 함(원칙: 판정은 서버).
 
+### 임계값 관리 (#4 — 농장별 KPI 임계값)
+- `GET /api/v1/farms/{farm_id}/thresholds` → 유효 임계값 목록 `ThresholdRow[]`. 각 metric: `metric_code, warning|null, critical|null, avg|null, top25|null, target|null, direction, unit, confidence, is_proxy, source, scope(farm|country|global), is_override`.
+- `PATCH /api/v1/farms/{farm_id}/thresholds/{metric_code}` `{warning?, critical?}` → 농장 스코프 override upsert(우선순위 **농장>국가>글로벌**). direction/unit은 상위 scope에서 상속.
+- `DELETE /api/v1/farms/{farm_id}/thresholds/{metric_code}` → override 삭제 → 국가/글로벌 값으로 복귀.
+- 판정·해석은 백엔드. 모바일/웹은 목록 표시·override 입력만(렌더+편집), 임계 계산 재구현 금지.
+
 ### 푸시 디바이스 (G2 — 신설)
 - `POST /api/v1/devices` `{platform: ANDROID|IOS|WEB, token, app_version?}` → 등록(토큰 기준 upsert)
 - `GET /api/v1/devices` → 내 단말 목록
