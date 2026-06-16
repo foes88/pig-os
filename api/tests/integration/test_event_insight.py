@@ -62,8 +62,12 @@ class TestFarrowingInsight:
         insights = await insight_service.analyze_farrowing(db, test_farm, f)
         codes = {i.metric_code: i for i in insights}
         assert "STILLBORN_RATE" in codes
-        assert codes["STILLBORN_RATE"].severity == "CRITICAL"
-        assert codes["STILLBORN_RATE"].direction == "above"
+        sr = codes["STILLBORN_RATE"]
+        assert sr.severity == "CRITICAL"
+        assert sr.direction == "above"
+        # 메인 선정용 필드(백엔드 계산): normalized_gap = (42.9-12)/12 ≈ 2.57, priority 존재
+        assert sr.normalized_gap is not None and sr.normalized_gap > 2.0
+        assert sr.priority == 20  # STILLBORN_RATE 우선순위
 
     async def test_normal_farrowing_no_stillborn_alert(self, db, test_farm: Farm, test_sow):
         # 사산율 = 1/15 = 6.7% → 정상(<8), born_alive 14 정상(>13)

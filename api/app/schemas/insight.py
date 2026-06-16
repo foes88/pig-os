@@ -7,6 +7,9 @@ class EventInsight(BaseModel):
     metric_code: str          # STILLBORN_RATE, BORN_ALIVE, PRE_WEANING_MORTALITY, ...
     severity: str             # INFO | WARNING | CRITICAL  (← 판정은 백엔드가 함)
     judgment_type: str = "absolute"  # absolute | relative (v1=absolute, relative는 slot)
+    # 메인 인사이트 선정용(프론트는 정렬만, 계산은 백엔드): severity → normalized_gap → priority
+    normalized_gap: float | None = None  # 임계 대비 초과 정도(클수록 심각). 백엔드 계산
+    priority: int = 50        # metric 중요도(작을수록 우선). 동률 tiebreaker
     value: float | None       # 측정값 (예: 사산율 18.0)
     threshold: float | None   # 위반한 임계값 (warning 또는 critical)
     unit: str = ""            # %, 두/복, 일 ...

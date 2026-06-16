@@ -26,6 +26,18 @@ from app.schemas.insight import EventInsight
 # scope 우선순위: 농장 > 지역(국가) > 시스템(글로벌). effective_metric_values()와 동일 체인.
 _SCOPE_RANK = {"farm": 0, "region": 1, "market": 2, "system": 3}
 
+# metric 중요도(작을수록 우선) — 동일 severity·gap일 때 메인 선정 tiebreaker
+_METRIC_PRIORITY = {
+    "PRE_WEANING_MORTALITY": 10,
+    "STILLBORN_RATE": 20,
+    "BORN_ALIVE": 30,
+    "WEANED_COUNT": 40,
+    "WSI": 50,
+    "RTS_RATE": 55,
+    "WEANING_AGE_LOW": 70,
+    "WEANING_AGE_HIGH": 70,
+}
+
 
 async def _load_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict | None:
     """default_metric_values를 우선순위 체인으로 직접 조회 (DB 함수 비의존, 테스트 가능).
@@ -70,8 +82,14 @@ async def _evaluate(db: AsyncSession, farm: Farm, metric_code: str, value: float
     if sev is None or sev == Severity.OK:
         return None
     threshold = bench["critical"] if sev == Severity.CRITICAL else bench["warning"]
+    # normalized_gap = 임계 대비 초과 정도(클수록 심각). 메인 선정 정렬용(백엔드 계산).
+    gap = None
+    if threshold not in (None, 0):
+        gap = round((value - threshold) / threshold if direction == "above"
+                    else (threshold - value) / threshold, 4)
     return EventInsight(
         metric_code=metric_code, severity=sev.value, judgment_type="absolute",
+        normalized_gap=gap, priority=_METRIC_PRIORITY.get(metric_code, 50),
         value=round(value, 2), threshold=threshold, unit=bench["unit"], direction=direction,
         confidence=bench["confidence"], is_proxy=bench["is_proxy"], source=bench["source"],
         is_global_fallback=bench["is_global_fallback"],

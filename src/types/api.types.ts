@@ -178,6 +178,8 @@ export interface EventInsight {
   metric_code: string;
   severity: "INFO" | "WARNING" | "CRITICAL";
   judgment_type: "absolute" | "relative";
+  normalized_gap: number | null;
+  priority: number;
   value: number | null;
   threshold: number | null;
   unit: string;

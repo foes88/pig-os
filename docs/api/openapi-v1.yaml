@@ -3796,6 +3796,15 @@ components:
           type: string
           title: Judgment Type
           default: absolute
+        normalized_gap:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Normalized Gap
+        priority:
+          type: integer
+          title: Priority
+          default: 50
         value:
           anyOf:
           - type: number

@@ -1133,6 +1133,7 @@
     "slot": {
       "relative": "So với top 25% toàn quốc",
       "loss": "Ước tính thiệt hại"
-    }
+    },
+    "allNormal": "Phân tích: không vấn đề"
   }
 }

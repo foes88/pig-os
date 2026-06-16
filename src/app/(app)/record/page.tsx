@@ -205,9 +205,16 @@ export default function RecordPage() {
             ✓ {lastSaved}
           </div>
         )}
+        {/* 경고/위험 인사이트는 다음 저장/모돈전환 전까지 유지(놓치지 않게) */}
         {lastInsights.length > 0 && (
           <div className="mx-6 mt-2">
             <InsightBanner insights={lastInsights} />
+          </div>
+        )}
+        {/* 이상 없으면 작은 정상요약만 (저장 직후 3초) */}
+        {lastSaved && lastInsights.length === 0 && (
+          <div className="mx-6 mt-2">
+            <InsightBanner insights={[]} savedNoIssue />
           </div>
         )}
 

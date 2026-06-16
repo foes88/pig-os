@@ -11,18 +11,34 @@ import type { EventInsight } from "@/types/api.types";
  * - 출처/신뢰도/proxy 배지 표시.
  * - loss/relative 슬롯은 데이터 있을 때만 조건부 표시(지금은 항상 없음).
  */
-export function InsightBanner({ insights }: { insights?: EventInsight[] }) {
+export function InsightBanner({ insights, savedNoIssue }: { insights?: EventInsight[]; savedNoIssue?: boolean }) {
   const t = useTranslations("insights");
-  if (!insights || insights.length === 0) return null;
 
-  // 백엔드가 준 severity로만 정렬(프론트 판정 아님): CRITICAL > WARNING > INFO
+  // 경고/위험 없이 저장 완료 → 작은 정상 요약만 (#4)
+  if (!insights || insights.length === 0) {
+    return savedNoIssue ? (
+      <div className="flex items-center gap-1.5 text-[11px] text-green-600 px-2 py-1">
+        <Info className="w-3 h-3" /> {t("allNormal")}
+      </div>
+    ) : null;
+  }
+
+  // 정렬은 백엔드가 준 필드로만(프론트 판정 아님): severity → normalized_gap → priority
   const rank: Record<string, number> = { CRITICAL: 0, WARNING: 1, INFO: 2 };
-  const sorted = [...insights].sort((a, b) => (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9));
+  const sorted = [...insights].sort((a, b) => {
+    const s = (rank[a.severity] ?? 9) - (rank[b.severity] ?? 9);
+    if (s !== 0) return s;
+    const g = (b.normalized_gap ?? -1) - (a.normalized_gap ?? -1);
+    if (g !== 0) return g;
+    return (a.priority ?? 99) - (b.priority ?? 99);
+  });
+  const strong = sorted.filter((i) => i.severity !== "INFO");
+  const mainKey = strong.length > 0 ? `${strong[0].metric_code}` : null;  // 메인 1개 = 정렬 최상단
 
   return (
     <div className="mt-3 space-y-2">
       {sorted.map((ins, i) => (
-        <InsightRow key={`${ins.metric_code}-${i}`} ins={ins} t={t} />
+        <InsightRow key={`${ins.metric_code}-${i}`} ins={ins} t={t} isMain={`${ins.metric_code}` === mainKey && i === 0} />
       ))}
     </div>
   );
@@ -34,7 +50,7 @@ const STYLE: Record<string, { box: string; icon: typeof Info; iconCls: string }>
   INFO:     { box: "bg-slate-50 border-slate-200",  icon: Info,          iconCls: "text-text3" },
 };
 
-function InsightRow({ ins, t }: { ins: EventInsight; t: ReturnType<typeof useTranslations> }) {
+function InsightRow({ ins, t, isMain }: { ins: EventInsight; t: ReturnType<typeof useTranslations>; isMain?: boolean }) {
   const isStrong = ins.severity === "WARNING" || ins.severity === "CRITICAL";
   const s = STYLE[ins.severity] ?? STYLE.INFO;
   const Icon = s.icon;
@@ -59,9 +75,9 @@ function InsightRow({ ins, t }: { ins: EventInsight; t: ReturnType<typeof useTra
     );
   }
 
-  // warning/critical 강하게
+  // warning/critical 강하게 (메인은 살짝 더 강조: ring)
   return (
-    <div className={`border rounded-xl px-3.5 py-3 ${s.box}`}>
+    <div className={`border rounded-xl px-3.5 py-3 ${s.box} ${isMain ? "ring-1 ring-offset-1 ring-current/30" : ""}`}>
       <div className="flex items-start gap-2.5">
         <Icon className={`w-4.5 h-4.5 mt-0.5 flex-shrink-0 ${s.iconCls}`} />
         <div className="flex-1 min-w-0">
