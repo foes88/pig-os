@@ -5,7 +5,7 @@
 from datetime import date
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.db.models.config import DefaultMetricValue
 from app.db.models.events import Farrowing, Mating, Weaning
@@ -135,3 +135,64 @@ class TestNullSkip:
         insights = await insight_service.analyze_farrowing(db, test_farm, f)
         # 정상 분만 → insight 없음 (예외 없이 빈 리스트)
         assert isinstance(insights, list)
+
+
+class TestEdgeCases:
+    """QA 야간검증(Q2): 분모 0 / 음수 폐사 / 가격·top25 없음 / 글로벌 폴백 / 진입점 격리."""
+
+    async def test_total_born_zero_no_crash(self, db, test_farm: Farm, test_sow):
+        # total_born=0 → 사산율 분모 0. 가드(tb>0)로 STILLBORN_RATE skip, 예외 없음.
+        f = _farrowing(test_farm.id, test_sow.id, tb=0, ba=0, sb=0, mum=0)
+        insights = await insight_service.analyze_farrowing(db, test_farm, f)
+        assert isinstance(insights, list)
+        assert all(i.metric_code != "STILLBORN_RATE" for i in insights)
+
+    async def test_born_alive_zero_pwm_skipped(self, db, test_farm: Farm, test_sow):
+        # born_alive=0 → 포유폐사율 분모 0. 가드(born_alive>0)로 PWM skip, 예외 없음.
+        f = await _persist_farrowing(db, test_farm, test_sow, ba=0)
+        w = Weaning(farm_id=test_farm.id, sow_id=test_sow.id, farrowing_id=f.id,
+                    weaning_date=date(2026, 6, 22), weaned_count=0, weaning_age_days=21)
+        insights = await insight_service.analyze_weaning(db, test_farm, w)
+        assert isinstance(insights, list)
+        assert all(i.metric_code != "PRE_WEANING_MORTALITY" for i in insights)
+
+    async def test_weaned_exceeds_born_alive_no_false_mortality(self, db, test_farm: Farm, test_sow):
+        # 이유두수 > 생존산자(포유자 입양 등) → dead 음수 → 거짓 폐사경보·손실 없음.
+        f = await _persist_farrowing(db, test_farm, test_sow, ba=10)
+        w = Weaning(farm_id=test_farm.id, sow_id=test_sow.id, farrowing_id=f.id,
+                    weaning_date=date(2026, 6, 22), weaned_count=12, weaning_age_days=21)
+        insights = await insight_service.analyze_weaning(db, test_farm, w)
+        pwm = next((i for i in insights if i.metric_code == "PRE_WEANING_MORTALITY"), None)
+        assert pwm is None  # 음수 폐사는 경보 아님
+
+    async def test_no_price_hides_loss(self, db, test_farm: Farm, test_sow):
+        # MARKET_PRICE_HEAD 없으면 손실 슬롯 None(금액 표시 금지).
+        await db.execute(delete(DefaultMetricValue).where(
+            DefaultMetricValue.metric_code == "MARKET_PRICE_HEAD"))
+        await db.flush()
+        f = _farrowing(test_farm.id, test_sow.id, tb=14, ba=8, sb=4, mum=2)  # 사산율 42.9% critical
+        insights = await insight_service.analyze_farrowing(db, test_farm, f)
+        sr = next((i for i in insights if i.metric_code == "STILLBORN_RATE"), None)
+        assert sr is not None and sr.severity == "CRITICAL"
+        assert sr.loss is None  # 가격 없음 → 손실 숨김
+
+    async def test_no_top25_hides_relative(self, db, test_farm: Farm, test_sow):
+        # top25 baseline 없는 메트릭(STILLBORN_RATE)은 상대판정 슬롯 None.
+        f = _farrowing(test_farm.id, test_sow.id, tb=14, ba=8, sb=4, mum=2)
+        insights = await insight_service.analyze_farrowing(db, test_farm, f)
+        sr = next((i for i in insights if i.metric_code == "STILLBORN_RATE"), None)
+        assert sr is not None
+        assert sr.relative is None  # baseline 없음 → 상대 숨김
+
+    async def test_global_fallback_flag_when_system_scope(self, db, test_farm: Farm, test_sow):
+        # 국가/농장 행 없이 system(글로벌)만 시드 → is_global_fallback=True.
+        f = _farrowing(test_farm.id, test_sow.id, tb=14, ba=8, sb=4, mum=2)
+        insights = await insight_service.analyze_farrowing(db, test_farm, f)
+        sr = next((i for i in insights if i.metric_code == "STILLBORN_RATE"), None)
+        assert sr is not None
+        assert sr.is_global_fallback is True
+
+    async def test_analyze_event_unknown_type_returns_empty(self, db, test_farm: Farm, test_sow):
+        # 알 수 없는 이벤트 타입 → 빈 리스트(진입점 안전).
+        result = await insight_service.analyze_event(db, test_farm, "unknown_type", object())
+        assert result == []
