@@ -8,10 +8,17 @@ from uuid import uuid4
 
 import pytest
 
-from app.schemas.sync import SyncFarrowing, SyncWeaning
-from app.services.sync_service import _process_farrowing, _process_weaning
+from app.schemas.sync import SyncFarrowing, SyncMating, SyncWeaning
+from app.services.sync_service import _process_farrowing, _process_mating, _process_weaning
 
 pytestmark = pytest.mark.asyncio
+
+
+def _mat(sow_id, **kw):
+    base = dict(id=uuid4(), sow_id=sow_id, mating_date="2026-05-01",
+                mating_type="AI", mating_number=1, client_created_at=datetime.now(UTC))
+    base.update(kw)
+    return SyncMating(**base)
 
 
 def _far(sow_id, **kw):
@@ -27,6 +34,33 @@ def _wea(sow_id, **kw):
                 weaned_count=10, client_created_at=datetime.now(UTC))
     base.update(kw)
     return SyncWeaning(**base)
+
+
+class TestSyncMatingValidation:
+    """finding #1 확장(Section C): SyncMating이 REST MatingCreate 규칙을 우회하던 갭."""
+
+    async def test_rejects_bad_mating_type(self, db, test_farm, test_sow):
+        test_sow.status = "OPEN"
+        await db.flush()
+        item = _mat(test_sow.id, mating_type="GARBAGE")
+        accepted, rejected, conflict = await _process_mating(db, test_farm.id, item, dry_run=True)
+        assert accepted is None and rejected is not None
+        assert rejected.reason == "VALIDATION_FAILED"
+
+    async def test_rejects_mating_number_out_of_range(self, db, test_farm, test_sow):
+        test_sow.status = "OPEN"
+        await db.flush()
+        item = _mat(test_sow.id, mating_number=9)
+        accepted, rejected, conflict = await _process_mating(db, test_farm.id, item, dry_run=True)
+        assert accepted is None and rejected is not None
+        assert rejected.reason == "VALIDATION_FAILED"
+
+    async def test_valid_mating_accepted(self, db, test_farm, test_sow):
+        test_sow.status = "OPEN"
+        await db.flush()
+        item = _mat(test_sow.id, mating_type="NATURAL", mating_number=2)
+        accepted, rejected, conflict = await _process_mating(db, test_farm.id, item, dry_run=True)
+        assert rejected is None and accepted is not None
 
 
 class TestSyncFarrowingValidation:

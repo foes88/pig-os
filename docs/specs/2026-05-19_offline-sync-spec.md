@@ -70,8 +70,10 @@
 ### 2-8. 카운트 범위 위반 (VALIDATION_FAILED)
 **상황**: 비정상/버그 클라이언트가 범위를 벗어난 카운트를 전송 (예: 총산자수 999, 음수, 이유두수 99).
 
-→ REST 생성경로(`FarrowingCreate`/`WeaningCreate` + `validate_farrowing`)와 **동일 규칙**을 sync에도 적용:
-  분만 `total_born≤35, stillborn≤25, mummified≤25, born_alive≤total_born`, 모든 카운트 `≥0`; 이유 `0≤weaned_count≤30`.
+→ REST 생성경로(`FarrowingCreate`/`WeaningCreate`/`MatingCreate` + `validate_farrowing`)와 **동일 규칙**을 sync에도 적용:
+  - 분만 `total_born≤35, stillborn≤25, mummified≤25, born_alive≤total_born`, 모든 카운트 `≥0`; 이유 `0≤weaned_count≤30`.
+  - 교배(Section C 확장): `mating_type ∈ (AI|NATURAL)`, `mating_number 1..5`.
+  - 임신사고/포유자돈(reproductive/piglet)은 Sync 스키마 pattern으로 검증(event_type/사유/count).
   위반 시 **해당 항목만** REJECT(`reason=VALIDATION_FAILED`). 배치 전체를 422로 떨구지 않음(항목별 graceful reject).
 
 ---

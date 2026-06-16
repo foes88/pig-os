@@ -143,6 +143,13 @@ async def _process_mating(
     if existing_by_id:
         return SyncAccepted(id=item.id, entity="mating", action="merged"), None, None
 
+    # 4b. Field validation — REST MatingCreate 규칙 미러 (finding #1 확장)
+    invalid = _validate_mating_fields(item)
+    if invalid:
+        return None, SyncRejected(
+            id=item.id, entity="mating", reason="VALIDATION_FAILED", detail=invalid,
+        ), None
+
     # 5. Sow status check — valid states for mating (SCREEN_MENU_SPEC 상태 정의)
     valid_for_mating = ("GILT", "OPEN", "ACCIDENT")
     if sow.status not in valid_for_mating:
@@ -200,6 +207,19 @@ async def _process_mating(
 
 # REST WeaningCreate(le=30)와 동일 상한 — 새 임계 도입 아님(기존 스키마 미러).
 _MAX_WEANED_COUNT = 30
+
+
+def _validate_mating_fields(item: SyncMating) -> dict | None:
+    """동기화 교배 항목을 REST MatingCreate와 동일 규칙으로 검증 (finding #1 확장).
+    REST: mating_type ∈ (AI|NATURAL), mating_number 1..5. 위반 시 detail(→ SyncRejected).
+    스키마 하드제약 대신 항목별 처리(배치 전체 422 방지)."""
+    if item.mating_type not in ("AI", "NATURAL"):
+        return {"field": "mating_type",
+                "message": "mating_type must be AI or NATURAL", "value": item.mating_type}
+    if item.mating_number is not None and not (1 <= item.mating_number <= 5):
+        return {"field": "mating_number",
+                "message": "mating_number must be between 1 and 5", "value": item.mating_number}
+    return None
 
 
 def _validate_farrowing_counts(item: SyncFarrowing) -> dict | None:
