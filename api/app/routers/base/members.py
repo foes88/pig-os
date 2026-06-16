@@ -61,7 +61,8 @@ async def create_member(
         name=body.name,
         password_hash=hash_password(body.password),
         role=body.role,
-        # system_role 기본값이 FARM_OWNER라 명시 설정 필수 — 안 하면 worker가 owner 권한 보유
+        # 농장권한은 role_override(require_farm_role)로 판정하지만, system_role도 일관 유지
+        # (조직레벨 접근/레거시 폴백용). 미설정 시 기본 FARM_OWNER가 되어 과권한 위험.
         system_role=body.role,
     )
     db.add(user)
@@ -103,7 +104,7 @@ async def update_member(
     if body.role is not None:
         link.role_override = body.role
         user.role = body.role
-        user.system_role = body.role  # 권한 판정은 system_role 기준
+        user.system_role = body.role  # 농장권한은 role_override 기준; system_role은 조직/레거시 일관 유지
         changed["role"] = body.role
     if body.active is not None:
         user.active = body.active
