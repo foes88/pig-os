@@ -122,6 +122,7 @@
 | **G3** | 알림 producer 자동 실행 | ✅ **cron 등록됨** | `worker.py`: tasks 05:30 / notifications 06:00 (UTC). **배포 시 ARQ worker 컨테이너 상시기동 확인 필요**(인프라). |
 | **G4** | sync 실단말 E2E 검증 | 🟡 **모바일 대기** | 서버측 구현·테스트 완료. 닫는조건: 실기기에서 오프라인 입력→온라인 복귀→`POST /sync` 왕복 + 충돌 1건 시나리오 통과(모바일+백엔드 합동). |
 | **G5** | 이미지 업로드(사진 첨부) | ⚪ **보류(요구 확정 전)** | 닫는조건: ① 제품 요구 확정 ② S3 버킷+IAM 준비 → `POST /api/v1/uploads/presign` 신설. AWS 리소스는 사람이 생성. |
+| **G6** | `/sync` 분만·자돈 영속(#8) | ✅ **수정+가드(2026-06-16)** | `_process_farrowing` kwarg(born_dead→stillborn 등)+mating_id+flush 교정(`9fc008a`). **2회 회귀 이력** — `_process_*` 직접 path만 테스트돼 `/sync` path가 무방비였음. **회귀테스트 `tests/integration/test_sync_farrowing.py`(`5511236`) 추가** → ⚠️ **`sync_service.py` 수정 시 반드시 `uv run pytest tests/integration/test_sync_farrowing.py` 확인**. 라이브 §8a 그린(farrowings/piglet_events 영속 확인). |
 
 > **G1 활성화 메모(배포 담당)**: google-auth 설치 + 서비스계정 JSON 마운트 + env 2개. 그 전까지 푸시는 자동 skip이며
 > 인앱 알림(GET /notifications)은 polling으로 정상 동작 → 기능 차단 없음.
