@@ -1,5 +1,4 @@
 {
-
   "prrsReport": {
     "title": "PRRS by genetics",
     "subtitle": "PRRS incidence by breed / genetic line",
@@ -17,7 +16,6 @@
     "sumEvents": "PRRS events",
     "note": "Incidence = affected sows / total sows. PRRS events match disease codes starting with 'PRRS'."
   },
-
   "nav": {
     "dashboard": "Dashboard",
     "sows": "Sows",
@@ -1090,5 +1088,51 @@
     "deleteError": "Failed to delete.",
     "deleteConfirmTitle": "Delete this record?",
     "deleteConfirmBody": "Deleting this record will roll back the sow's status. This cannot be undone."
+  },
+  "insights": {
+    "sev": {
+      "WARNING": "Warning",
+      "CRITICAL": "Critical",
+      "INFO": "Info"
+    },
+    "metric": {
+      "STILLBORN_RATE": "Stillborn rate",
+      "BORN_ALIVE": "Born alive",
+      "PRE_WEANING_MORTALITY": "Pre-weaning mortality",
+      "WEANED_COUNT": "Weaned/litter",
+      "WSI": "Wean-to-service",
+      "WEANING_AGE_LOW": "Weaning age",
+      "WEANING_AGE_HIGH": "Weaning age",
+      "RTS_RATE": "Repeat rate"
+    },
+    "msgGeneric": {
+      "WARNING": "{metric} {value}{unit} — over {threshold}{unit}",
+      "CRITICAL": "{metric} {value}{unit} — critical (over {threshold}{unit})",
+      "INFO": "{metric} {value}{unit}"
+    },
+    "action": {
+      "STILLBORN_RATE": "Check farrowing supervision & sow body condition.",
+      "BORN_ALIVE": "Review breeding/genetics & gestation feeding.",
+      "PRE_WEANING_MORTALITY": "Check crushing, colostrum & cross-fostering.",
+      "WEANED_COUNT": "Review litter management & nurse sows.",
+      "WSI": "Strengthen heat detection & boar exposure.",
+      "WEANING_AGE_LOW": "Early weaning raises WSI risk — review schedule.",
+      "WEANING_AGE_HIGH": "Late weaning lowers sow turnover.",
+      "RTS_RATE": "Check semen quality & mating timing."
+    },
+    "badge": {
+      "global": "Global",
+      "proxy": "Proxy",
+      "demo": "Demo",
+      "conf": {
+        "high": "High conf.",
+        "medium": "Med conf.",
+        "low": "Low conf."
+      }
+    },
+    "slot": {
+      "relative": "Vs national top 25%",
+      "loss": "Est. economic loss"
+    }
   }
 }

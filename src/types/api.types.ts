@@ -173,6 +173,23 @@ export interface UpdateSowRequest {
 
 // ─── Events ───────────────────────────────────────────────────────────────────
 
+// ── Event Insight (입력 즉시 분석 — 백엔드 판정, 프론트는 렌더만) ────────────
+export interface EventInsight {
+  metric_code: string;
+  severity: "INFO" | "WARNING" | "CRITICAL";
+  judgment_type: "absolute" | "relative";
+  value: number | null;
+  threshold: number | null;
+  unit: string;
+  direction: "above" | "below";
+  confidence: "high" | "medium" | "low" | null;
+  is_proxy: boolean;
+  source: string | null;
+  is_global_fallback: boolean;
+  loss: Record<string, unknown> | null;      // 슬롯: 경제손실 (있을 때만)
+  relative: Record<string, unknown> | null;   // 슬롯: 상대판정 (있을 때만)
+}
+
 export interface Mating {
   id: string;
   sow_id: string;
@@ -184,6 +201,7 @@ export interface Mating {
   notes?: string;
   farm_id: string;
   created_at: string;
+  insights?: EventInsight[];
 }
 
 export interface CreateMatingRequest {
@@ -209,6 +227,7 @@ export interface Farrowing {
   farrowing_ease: "EASY" | "ASSISTED" | "DIFFICULT" | null;
   breeding_cycle_id: string | null;
   created_at: string;
+  insights?: EventInsight[];
 }
 
 export interface CreateFarrowingRequest {
@@ -232,6 +251,7 @@ export interface Weaning {
   weaning_age_days: number | null;
   avg_weaning_weight_kg: number | null;
   created_at: string;
+  insights?: EventInsight[];
 }
 
 export interface CreateWeaningRequest {

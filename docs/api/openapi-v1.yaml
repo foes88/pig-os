@@ -3784,6 +3784,74 @@ components:
       - required_fields
       - regional_applicability
       title: EventDefinitionResponse
+    EventInsight:
+      properties:
+        metric_code:
+          type: string
+          title: Metric Code
+        severity:
+          type: string
+          title: Severity
+        judgment_type:
+          type: string
+          title: Judgment Type
+          default: absolute
+        value:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Value
+        threshold:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Threshold
+        unit:
+          type: string
+          title: Unit
+          default: ''
+        direction:
+          type: string
+          title: Direction
+          default: below
+        confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confidence
+        is_proxy:
+          type: boolean
+          title: Is Proxy
+          default: false
+        source:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source
+        is_global_fallback:
+          type: boolean
+          title: Is Global Fallback
+          default: false
+        loss:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Loss
+        relative:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Relative
+      type: object
+      required:
+      - metric_code
+      - severity
+      - value
+      - threshold
+      title: EventInsight
+      description: 백엔드 판정 결과. 프론트는 이걸 '렌더링만' 한다(판정 로직 금지).
     FarmConfigSet:
       properties:
         gestation_days:
@@ -4199,6 +4267,12 @@ components:
           type: string
           format: date-time
           title: Created At
+        insights:
+          items:
+            $ref: '#/components/schemas/EventInsight'
+          type: array
+          title: Insights
+          default: []
       type: object
       required:
       - id
@@ -4742,6 +4816,12 @@ components:
           type: string
           format: date-time
           title: Created At
+        insights:
+          items:
+            $ref: '#/components/schemas/EventInsight'
+          type: array
+          title: Insights
+          default: []
       type: object
       required:
       - id
@@ -7211,6 +7291,12 @@ components:
           type: string
           format: date-time
           title: Created At
+        insights:
+          items:
+            $ref: '#/components/schemas/EventInsight'
+          type: array
+          title: Insights
+          default: []
       type: object
       required:
       - id

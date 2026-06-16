@@ -50,6 +50,9 @@ async def _load_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dic
         "critical": float(best.critical_threshold) if best.critical_threshold is not None else None,
         "direction": best.alert_direction or "below",
         "unit": best.unit_code or "",
+        "confidence": best.confidence,
+        "is_proxy": bool(best.is_proxy),
+        "source": best.source_ref,
         "is_global_fallback": best.scope_type == "system",
     }
 
@@ -68,8 +71,9 @@ async def _evaluate(db: AsyncSession, farm: Farm, metric_code: str, value: float
         return None
     threshold = bench["critical"] if sev == Severity.CRITICAL else bench["warning"]
     return EventInsight(
-        metric_code=metric_code, severity=sev.value, value=round(value, 2),
-        threshold=threshold, unit=bench["unit"], direction=direction,
+        metric_code=metric_code, severity=sev.value, judgment_type="absolute",
+        value=round(value, 2), threshold=threshold, unit=bench["unit"], direction=direction,
+        confidence=bench["confidence"], is_proxy=bench["is_proxy"], source=bench["source"],
         is_global_fallback=bench["is_global_fallback"],
     )
 

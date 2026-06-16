@@ -1,5 +1,4 @@
 {
-
   "prrsReport": {
     "title": "유전자별 PRRS",
     "subtitle": "품종/유전자 라인별 PRRS 발생률",
@@ -17,7 +16,6 @@
     "sumEvents": "PRRS 건수",
     "note": "발생률 = 감염 모돈 / 전체 모돈. PRRS 건수는 'PRRS'로 시작하는 질병코드를 집계합니다."
   },
-
   "nav": {
     "dashboard": "대시보드",
     "sows": "모돈 관리",
@@ -1090,5 +1088,51 @@
     "deleteError": "삭제에 실패했습니다.",
     "deleteConfirmTitle": "이 기록을 삭제할까요?",
     "deleteConfirmBody": "이 기록을 삭제하면 모돈 상태가 롤백됩니다. 되돌릴 수 없습니다."
+  },
+  "insights": {
+    "sev": {
+      "WARNING": "주의",
+      "CRITICAL": "위험",
+      "INFO": "참고"
+    },
+    "metric": {
+      "STILLBORN_RATE": "사산율",
+      "BORN_ALIVE": "생존산자수",
+      "PRE_WEANING_MORTALITY": "포유폐사율",
+      "WEANED_COUNT": "복당 이유두수",
+      "WSI": "이유-교배 간격",
+      "WEANING_AGE_LOW": "이유일령",
+      "WEANING_AGE_HIGH": "이유일령",
+      "RTS_RATE": "재발율"
+    },
+    "msgGeneric": {
+      "WARNING": "{metric} {value}{unit} — 기준 {threshold}{unit} 초과",
+      "CRITICAL": "{metric} {value}{unit} — 위험 (기준 {threshold}{unit} 초과)",
+      "INFO": "{metric} {value}{unit}"
+    },
+    "action": {
+      "STILLBORN_RATE": "분만 입회·모돈 체형(BCS)을 점검하세요.",
+      "BORN_ALIVE": "교배/유전·임신 후기 사료를 점검하세요.",
+      "PRE_WEANING_MORTALITY": "압사·초유·양자를 점검하세요.",
+      "WEANED_COUNT": "포유 관리·대리모를 점검하세요.",
+      "WSI": "발정 탐지·웅돈 자극을 강화하세요.",
+      "WEANING_AGE_LOW": "조기 이유는 재귀 지연 위험 — 일정 점검.",
+      "WEANING_AGE_HIGH": "이유 지연은 모돈 회전율 저하.",
+      "RTS_RATE": "정액 품질·교배 적기를 점검하세요."
+    },
+    "badge": {
+      "global": "글로벌",
+      "proxy": "프록시",
+      "demo": "예시",
+      "conf": {
+        "high": "고신뢰",
+        "medium": "중신뢰",
+        "low": "저신뢰"
+      }
+    },
+    "slot": {
+      "relative": "전국 상위25% 대비",
+      "loss": "예상 경제손실"
+    }
   }
 }

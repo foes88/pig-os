@@ -1,5 +1,4 @@
 {
-
   "prrsReport": {
     "title": "按基因的PRRS",
     "subtitle": "按品种/基因系的PRRS发生率",
@@ -17,7 +16,6 @@
     "sumEvents": "PRRS事件",
     "note": "发生率 = 感染母猪 / 母猪总数。PRRS事件统计以'PRRS'开头的疾病代码。"
   },
-
   "nav": {
     "dashboard": "仪表板",
     "sows": "母猪管理",
@@ -1090,5 +1088,51 @@
     "deleteError": "删除失败。",
     "deleteConfirmTitle": "删除此记录？",
     "deleteConfirmBody": "删除此记录将回滚母猪状态，且无法撤销。"
+  },
+  "insights": {
+    "sev": {
+      "WARNING": "警告",
+      "CRITICAL": "危险",
+      "INFO": "参考"
+    },
+    "metric": {
+      "STILLBORN_RATE": "死产率",
+      "BORN_ALIVE": "活产数",
+      "PRE_WEANING_MORTALITY": "哺乳死亡率",
+      "WEANED_COUNT": "窝断奶数",
+      "WSI": "断奶至配种",
+      "WEANING_AGE_LOW": "断奶日龄",
+      "WEANING_AGE_HIGH": "断奶日龄",
+      "RTS_RATE": "返情率"
+    },
+    "msgGeneric": {
+      "WARNING": "{metric} {value}{unit} — 超过 {threshold}{unit}",
+      "CRITICAL": "{metric} {value}{unit} — 危险（超过 {threshold}{unit}）",
+      "INFO": "{metric} {value}{unit}"
+    },
+    "action": {
+      "STILLBORN_RATE": "检查接产监护与母猪体况。",
+      "BORN_ALIVE": "检查配种/遗传与妊娠后期饲喂。",
+      "PRE_WEANING_MORTALITY": "检查压死、初乳与寄养。",
+      "WEANED_COUNT": "检查哺乳管理与代乳母猪。",
+      "WSI": "加强发情鉴定与公猪刺激。",
+      "WEANING_AGE_LOW": "早期断奶增加返情风险 — 检查计划。",
+      "WEANING_AGE_HIGH": "断奶过晚降低母猪周转。",
+      "RTS_RATE": "检查精液质量与配种时机。"
+    },
+    "badge": {
+      "global": "全球",
+      "proxy": "代理",
+      "demo": "示例",
+      "conf": {
+        "high": "高可信",
+        "medium": "中可信",
+        "low": "低可信"
+      }
+    },
+    "slot": {
+      "relative": "对比全国前25%",
+      "loss": "预计经济损失"
+    }
   }
 }

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
+import { InsightBanner } from "@/components/InsightBanner";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type {
@@ -17,6 +18,7 @@ import type {
   CreateReproductiveEventRequest,
   SowCullRequest,
   CreatePigletEventRequest,
+  EventInsight,
 } from "@/types/api.types";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -95,6 +97,7 @@ export default function RecordPage() {
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [lastInsights, setLastInsights] = useState<EventInsight[]>([]);
 
   // 검색어 디바운스 → 서버사이드 검색 (500개 캡 너머 모돈도 검색됨)
   useEffect(() => {
@@ -112,9 +115,10 @@ export default function RecordPage() {
   const sows = useMemo(() => allSows.slice(0, visible), [allSows, visible]);
   const hasMore = allSows.length > visible;
 
-  const handleSaved = (msg: string, sowId: string, goNext: boolean) => {
+  const handleSaved = (msg: string, sowId: string, goNext: boolean, insights?: EventInsight[]) => {
     setDoneIds((prev) => new Set([...prev, sowId]));
     setLastSaved(msg);
+    setLastInsights(insights ?? []);   // 인사이트는 다음 저장 전까지 유지(경고 놓치지 않게)
     if (goNext) {
       const currentIndex = sows.findIndex((s) => s.id === sowId);
       const next = sows[currentIndex + 1];
@@ -157,7 +161,7 @@ export default function RecordPage() {
               return (
                 <button
                   key={sow.id}
-                  onClick={() => setSelectedSow(sow)}
+                  onClick={() => { setSelectedSow(sow); setLastInsights([]); }}
                   className={`w-full flex items-center gap-3 px-4 py-3 border-b border-border text-left transition ${
                     isSelected
                       ? "bg-primary/5 border-l-2 border-l-primary"
@@ -199,6 +203,11 @@ export default function RecordPage() {
         {lastSaved && (
           <div className="mx-6 mt-4 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium">
             ✓ {lastSaved}
+          </div>
+        )}
+        {lastInsights.length > 0 && (
+          <div className="mx-6 mt-2">
+            <InsightBanner insights={lastInsights} />
           </div>
         )}
 
@@ -307,9 +316,9 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
         stillborn: still,
         mummified: mummy,
         notes: difficulty !== "NORMAL" ? t("noteDifficulty", { d: difficulty }) : undefined,
-      } as CreateFarrowingRequest).then(() => goNext),
-    onSuccess: (goNext) => {
-      onSaved(t("savedFarrowing", { tag: sow.ear_tag, n: alive }), sow.id, goNext);
+      } as CreateFarrowingRequest).then((resp) => ({ goNext, insights: resp.insights })),
+    onSuccess: ({ goNext, insights }) => {
+      onSaved(t("savedFarrowing", { tag: sow.ear_tag, n: alive }), sow.id, goNext, insights);
       setTotal(0); setStill(0); setMummy(0); setWeight(1.4);
       setDifficulty("NORMAL"); setDate(today()); setError(null);
     },
@@ -418,9 +427,9 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
 
   const mutation = useMutation({
     mutationFn: (goNext: boolean) =>
-      eventsApi.matings.create(farmId, { ...form, sow_id: sow.id }).then(() => goNext),
-    onSuccess: (goNext) => {
-      onSaved(t("savedMating", { tag: sow.ear_tag }), sow.id, goNext);
+      eventsApi.matings.create(farmId, { ...form, sow_id: sow.id }).then((resp) => ({ goNext, insights: resp.insights })),
+    onSuccess: ({ goNext, insights }) => {
+      onSaved(t("savedMating", { tag: sow.ear_tag }), sow.id, goNext, insights);
       setForm({ sow_id: sow.id, mating_date: today(), mating_type: "AI", semen_batch: "", notes: "" });
       setError(null);
     },
@@ -473,9 +482,9 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
       eventsApi.weanings.create(farmId, {
         sow_id: sow.id, weaning_date: date, weaned_count: count,
         avg_weaning_weight_kg: weight ? Number(weight) : undefined,
-      } as CreateWeaningRequest).then(() => goNext),
-    onSuccess: (goNext) => {
-      onSaved(t("savedWeaning", { tag: sow.ear_tag, n: count }), sow.id, goNext);
+      } as CreateWeaningRequest).then((resp) => ({ goNext, insights: resp.insights })),
+    onSuccess: ({ goNext, insights }) => {
+      onSaved(t("savedWeaning", { tag: sow.ear_tag, n: count }), sow.id, goNext, insights);
       setCount(0); setWeight(""); setDate(today()); setError(null);
     },
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
@@ -710,7 +719,7 @@ function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
 type PanelProps = {
   farmId: string;
   sow: Sow;
-  onSaved: (msg: string, sowId: string, goNext: boolean) => void;
+  onSaved: (msg: string, sowId: string, goNext: boolean, insights?: EventInsight[]) => void;
 };
 
 function SaveFooter({

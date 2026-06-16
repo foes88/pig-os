@@ -1,5 +1,4 @@
 {
-
   "prrsReport": {
     "title": "PRRS theo di truyền",
     "subtitle": "Tỷ lệ PRRS theo giống / dòng di truyền",
@@ -17,7 +16,6 @@
     "sumEvents": "Sự kiện PRRS",
     "note": "Tỷ lệ = nái nhiễm / tổng số nái. Sự kiện PRRS khớp mã bệnh bắt đầu bằng 'PRRS'."
   },
-
   "nav": {
     "dashboard": "Tổng quan",
     "sows": "Quản lý nái",
@@ -1090,5 +1088,51 @@
     "deleteError": "Xóa thất bại.",
     "deleteConfirmTitle": "Xóa bản ghi này?",
     "deleteConfirmBody": "Xóa bản ghi này sẽ hoàn tác trạng thái nái. Không thể khôi phục."
+  },
+  "insights": {
+    "sev": {
+      "WARNING": "Cảnh báo",
+      "CRITICAL": "Nguy hiểm",
+      "INFO": "Thông tin"
+    },
+    "metric": {
+      "STILLBORN_RATE": "Tỷ lệ thai chết",
+      "BORN_ALIVE": "Số con sống",
+      "PRE_WEANING_MORTALITY": "Tỷ lệ chết bú",
+      "WEANED_COUNT": "Cai sữa/ổ",
+      "WSI": "Cai sữa-phối",
+      "WEANING_AGE_LOW": "Tuổi cai sữa",
+      "WEANING_AGE_HIGH": "Tuổi cai sữa",
+      "RTS_RATE": "Tỷ lệ lặp lại"
+    },
+    "msgGeneric": {
+      "WARNING": "{metric} {value}{unit} — vượt {threshold}{unit}",
+      "CRITICAL": "{metric} {value}{unit} — nguy hiểm (vượt {threshold}{unit})",
+      "INFO": "{metric} {value}{unit}"
+    },
+    "action": {
+      "STILLBORN_RATE": "Kiểm tra giám sát đẻ và thể trạng nái.",
+      "BORN_ALIVE": "Xem lại phối/di truyền và cho ăn cuối thai kỳ.",
+      "PRE_WEANING_MORTALITY": "Kiểm tra đè, sữa đầu và ghép bầy.",
+      "WEANED_COUNT": "Xem lại quản lý bú và nái nuôi hộ.",
+      "WSI": "Tăng cường phát hiện động dục và kích thích đực.",
+      "WEANING_AGE_LOW": "Cai sữa sớm tăng rủi ro chậm động dục.",
+      "WEANING_AGE_HIGH": "Cai sữa muộn giảm vòng quay nái.",
+      "RTS_RATE": "Kiểm tra chất lượng tinh và thời điểm phối."
+    },
+    "badge": {
+      "global": "Toàn cầu",
+      "proxy": "Ước tính",
+      "demo": "Demo",
+      "conf": {
+        "high": "Tin cậy cao",
+        "medium": "Tin cậy TB",
+        "low": "Tin cậy thấp"
+      }
+    },
+    "slot": {
+      "relative": "So với top 25% toàn quốc",
+      "loss": "Ước tính thiệt hại"
+    }
   }
 }

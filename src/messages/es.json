@@ -1,5 +1,4 @@
 {
-
   "prrsReport": {
     "title": "PRRS por genética",
     "subtitle": "Incidencia de PRRS por raza / línea genética",
@@ -17,7 +16,6 @@
     "sumEvents": "Eventos PRRS",
     "note": "Incidencia = cerdas afectadas / cerdas totales. Los eventos PRRS coinciden con códigos de enfermedad que empiezan por 'PRRS'."
   },
-
   "nav": {
     "dashboard": "Panel",
     "sows": "Cerdas",
@@ -1090,5 +1088,51 @@
     "deleteError": "Error al eliminar.",
     "deleteConfirmTitle": "¿Eliminar este registro?",
     "deleteConfirmBody": "Eliminar este registro revertirá el estado de la cerda. No se puede deshacer."
+  },
+  "insights": {
+    "sev": {
+      "WARNING": "Aviso",
+      "CRITICAL": "Crítico",
+      "INFO": "Info"
+    },
+    "metric": {
+      "STILLBORN_RATE": "Tasa mortinatos",
+      "BORN_ALIVE": "Nacidos vivos",
+      "PRE_WEANING_MORTALITY": "Mortalidad lactación",
+      "WEANED_COUNT": "Destetados/camada",
+      "WSI": "Destete-cubrición",
+      "WEANING_AGE_LOW": "Edad destete",
+      "WEANING_AGE_HIGH": "Edad destete",
+      "RTS_RATE": "Tasa repetición"
+    },
+    "msgGeneric": {
+      "WARNING": "{metric} {value}{unit} — supera {threshold}{unit}",
+      "CRITICAL": "{metric} {value}{unit} — crítico (supera {threshold}{unit})",
+      "INFO": "{metric} {value}{unit}"
+    },
+    "action": {
+      "STILLBORN_RATE": "Revise la supervisión del parto y la condición corporal.",
+      "BORN_ALIVE": "Revise monta/genética y alimentación de gestación.",
+      "PRE_WEANING_MORTALITY": "Revise aplastamiento, calostro y adopciones.",
+      "WEANED_COUNT": "Revise manejo de lactación y nodrizas.",
+      "WSI": "Refuerce detección de celo y estímulo del verraco.",
+      "WEANING_AGE_LOW": "El destete precoz aumenta el riesgo de IDC.",
+      "WEANING_AGE_HIGH": "El destete tardío reduce la rotación.",
+      "RTS_RATE": "Revise calidad seminal y momento de cubrición."
+    },
+    "badge": {
+      "global": "Global",
+      "proxy": "Proxy",
+      "demo": "Demo",
+      "conf": {
+        "high": "Alta conf.",
+        "medium": "Media conf.",
+        "low": "Baja conf."
+      }
+    },
+    "slot": {
+      "relative": "Vs top 25% nacional",
+      "loss": "Pérdida económica est."
+    }
   }
 }
