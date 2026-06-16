@@ -196,3 +196,24 @@ class TestEdgeCases:
         # 알 수 없는 이벤트 타입 → 빈 리스트(진입점 안전).
         result = await insight_service.analyze_event(db, test_farm, "unknown_type", object())
         assert result == []
+
+
+class TestRelativeSlotAbove:
+    """QA 야간검증(Q4): 상대판정 슬롯 'above' 방향 gap 부호 검증.
+    above(사산율 등 높을수록 나쁨)에서 top25는 낮은 값 → value-top25 부호."""
+
+    async def test_above_direction_worse_than_top25(self, db, test_farm: Farm, test_sow):
+        # STILLBORN_RATE에 top25=5.7 baseline 주입 (above 방향).
+        row = await db.scalar(select(DefaultMetricValue).where(
+            DefaultMetricValue.metric_code == "STILLBORN_RATE",
+            DefaultMetricValue.scope_type == "system"))
+        row.benchmark_top25 = 5.7
+        await db.flush()
+        # 사산율 = 6/14 = 42.9% → critical, top25(5.7)보다 훨씬 나쁨.
+        f = _farrowing(test_farm.id, test_sow.id, tb=14, ba=8, sb=4, mum=2)
+        insights = await insight_service.analyze_farrowing(db, test_farm, f)
+        sr = next(i for i in insights if i.metric_code == "STILLBORN_RATE")
+        assert sr.relative is not None
+        assert sr.relative["top25"] == 5.7
+        assert sr.relative["gap"] > 0          # above: value-top25 > 0 = top25보다 나쁨
+        assert sr.relative["better"] is False
