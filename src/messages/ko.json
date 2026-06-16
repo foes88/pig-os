@@ -1133,7 +1133,9 @@
     "slot": {
       "relative": "전국 상위25% 대비",
       "loss": "예상 경제손실",
-      "lostPigs": "손실 {n}두"
+      "lostPigs": "손실 {n}두",
+      "relBetter": "{n}{unit} 우수",
+      "relWorse": "{n}{unit} 미달"
     },
     "allNormal": "분석: 이상 없음"
   }

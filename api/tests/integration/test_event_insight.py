@@ -5,6 +5,7 @@
 from datetime import date
 
 import pytest
+from sqlalchemy import select
 
 from app.db.models.config import DefaultMetricValue
 from app.db.models.events import Farrowing, Mating, Weaning
@@ -52,6 +53,11 @@ async def _seed_thresholds(db):
         default_value=_PRICE[1], unit_code=_PRICE[2], alert_direction="below",
     ))
     await db.flush()
+    # BORN_ALIVE에 상대판정용 top25 baseline 추가
+    row = await db.scalar(select(DefaultMetricValue).where(
+        DefaultMetricValue.metric_code == "BORN_ALIVE", DefaultMetricValue.scope_type == "system"))
+    row.benchmark_top25 = 15.0
+    await db.flush()
 
 
 def _farrowing(farm_id, sow_id, tb, ba, sb, mum):
@@ -93,6 +99,11 @@ class TestFarrowingInsight:
         ba = next((i for i in insights if i.metric_code == "BORN_ALIVE"), None)
         assert ba is not None
         assert ba.severity == "WARNING"
+        # 상대판정 슬롯(#3): top25=15 baseline → 생존12는 3두 미달
+        assert ba.relative is not None
+        assert ba.relative["top25"] == 15.0
+        assert ba.relative["gap"] == 3.0  # below: 15-12=3 미달
+        assert ba.relative["better"] is False
 
 
 class TestWeaningInsight:

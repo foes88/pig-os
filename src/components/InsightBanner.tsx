@@ -131,10 +131,16 @@ const CONF_CLS: Record<string, string> = {
 
 // ── 슬롯 (추후 데이터 들어오면 채움. 가상수치면 Demo 배지) ───────────────────
 function RelativeSlot({ data, t }: { data: Record<string, unknown>; t: ReturnType<typeof useTranslations> }) {
-  const demo = (data as { demo?: boolean }).demo;
+  const d = data as { top25?: number; gap?: number; better?: boolean; unit?: string; demo?: boolean };
+  if (d.top25 == null) return null;  // baseline 없으면 표시 안 함 (QA #9)
+  const gapAbs = Math.abs(d.gap ?? 0);
   return (
-    <div className="mt-1.5 text-[11px] text-text3 border-t border-border/60 pt-1.5">
-      {t("slot.relative")} {demo && <DemoBadge t={t} />}
+    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text3 border-t border-border/60 pt-1.5">
+      <span>{t("slot.relative")}: {d.top25}{d.unit}</span>
+      <span className={d.better ? "text-success font-semibold" : "text-warning font-semibold"}>
+        {d.better ? t("slot.relBetter", { n: gapAbs, unit: d.unit ?? "" }) : t("slot.relWorse", { n: gapAbs, unit: d.unit ?? "" })}
+      </span>
+      {d.demo && <DemoBadge t={t} />}
     </div>
   );
 }

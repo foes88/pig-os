@@ -60,6 +60,8 @@ async def _load_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dic
     return {
         "warning": float(best.warning_threshold) if best.warning_threshold is not None else None,
         "critical": float(best.critical_threshold) if best.critical_threshold is not None else None,
+        "avg": float(best.benchmark_avg) if best.benchmark_avg is not None else None,
+        "top25": float(best.benchmark_top25) if best.benchmark_top25 is not None else None,
         "direction": best.alert_direction or "below",
         "unit": best.unit_code or "",
         "confidence": best.confidence,
@@ -124,12 +126,24 @@ async def _evaluate(db: AsyncSession, farm: Farm, metric_code: str, value: float
     if threshold not in (None, 0):
         gap = round((value - threshold) / threshold if direction == "above"
                     else (threshold - value) / threshold, 4)
+    # 상대판정 슬롯(#3): 전국 상위25% 벤치마크 있을 때만 보조 표시. gap_worse>0 = top25보다 나쁨.
+    relative = None
+    if bench["top25"] is not None:
+        top25 = bench["top25"]
+        gap_worse = round((value - top25) if direction == "above" else (top25 - value), 2)
+        relative = {
+            "top25": top25,
+            "gap": gap_worse,           # +면 상위25%보다 나쁨, -면 나음
+            "better": gap_worse <= 0,
+            "unit": bench["unit"],
+            "demo": bool(bench["is_proxy"]) or bench["confidence"] == "low",
+        }
     return EventInsight(
         metric_code=metric_code, severity=sev.value, judgment_type="absolute",
         normalized_gap=gap, priority=_METRIC_PRIORITY.get(metric_code, 50),
         value=round(value, 2), threshold=threshold, unit=bench["unit"], direction=direction,
         confidence=bench["confidence"], is_proxy=bench["is_proxy"], source=bench["source"],
-        is_global_fallback=bench["is_global_fallback"],
+        is_global_fallback=bench["is_global_fallback"], relative=relative,
     )
 
 

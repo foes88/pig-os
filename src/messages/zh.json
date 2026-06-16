@@ -1133,7 +1133,9 @@
     "slot": {
       "relative": "对比全国前25%",
       "loss": "预计经济损失",
-      "lostPigs": "损失 {n}头"
+      "lostPigs": "损失 {n}头",
+      "relBetter": "优 {n}{unit}",
+      "relWorse": "差 {n}{unit}"
     },
     "allNormal": "分析：无异常"
   }
