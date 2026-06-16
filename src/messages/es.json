@@ -1132,7 +1132,8 @@
     },
     "slot": {
       "relative": "Vs top 25% nacional",
-      "loss": "Pérdida económica est."
+      "loss": "Pérdida económica est.",
+      "lostPigs": "{n} cerdos perdidos"
     },
     "allNormal": "Análisis: sin problemas"
   }

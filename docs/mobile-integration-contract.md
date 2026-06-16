@@ -76,6 +76,18 @@
 - 인앱 알림: `GET /api/v1/notifications?unread_only=&limit=&offset=` (유저 스코프, `unread_count` 포함),
   `PATCH /notifications/{id}/read`, `POST /notifications/read-all`, 생성배치 `POST /farms/{farm_id}/notifications/generate`
 
+### 입력 즉시 분석 (Event Insight / Rule Engine) — 모바일 별도 구현 불필요
+- **Rule Engine·국가별 임계값·손실계산은 전부 백엔드.** 모바일은 재구현하지 않는다(웹과 동일 "렌더만").
+- 분만/교배/이유 `POST` 응답에 **`insights: EventInsight[]`** 동봉 → 모바일은 그대로 배너 렌더.
+- `EventInsight` 필드: `metric_code, severity(INFO|WARNING|CRITICAL), value, threshold, unit, direction,
+  normalized_gap, priority, confidence, is_proxy, source, is_global_fallback, loss{amount,currency,lost_pigs,demo}|null, relative|null`.
+- **판정·국가분기 0줄**: 백엔드가 farm.country로 임계값을 자동 해석(KR→PigPlan/한돈팜스, US→PigCHAMP, 없으면 글로벌 폴백).
+  모바일은 severity로 스타일만, gap/priority로 정렬만, 문구는 i18n(metric+severity 템플릿).
+- 표시 규칙(웹과 동일): WARNING/CRITICAL 강하게, INFO/정상은 작게, `loss`는 데이터 있을 때만(금액/통화 없으면 숨김),
+  `demo:true`면 Demo 배지, `is_global_fallback`/`is_proxy`면 참고 배지.
+- ⚠ **오프라인**: 로컬 저장 시점엔 인사이트 없음(서버 판정). 온라인 `POST`는 즉시 insights, 오프라인 입력은
+  `POST /sync` 시점에 서버가 분석 → 동기화 후 알림(notifications)으로 확인. 단말 인라인 즉시판정은 안 함(원칙: 판정은 서버).
+
 ### 푸시 디바이스 (G2 — 신설)
 - `POST /api/v1/devices` `{platform: ANDROID|IOS|WEB, token, app_version?}` → 등록(토큰 기준 upsert)
 - `GET /api/v1/devices` → 내 단말 목록

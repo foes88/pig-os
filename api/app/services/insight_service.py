@@ -69,6 +69,43 @@ async def _load_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dic
     }
 
 
+async def _load_price(db: AsyncSession, farm: Farm) -> dict | None:
+    """출하 두당가격(MARKET_PRICE_HEAD) — 손실 계산용. 없으면 None(금액 표시 안 함)."""
+    rows = list(await db.scalars(
+        select(DefaultMetricValue).where(
+            DefaultMetricValue.metric_code == "MARKET_PRICE_HEAD",
+            DefaultMetricValue.scope_code.in_([str(farm.id), farm.country, "SYSTEM"]),
+        )
+    ))
+    rows = [r for r in rows if (
+        (r.scope_type == "farm" and r.scope_code == str(farm.id))
+        or (r.scope_type == "region" and r.scope_code == farm.country)
+        or (r.scope_type == "system" and r.scope_code == "SYSTEM")
+    )]
+    if not rows:
+        return None
+    best = min(rows, key=lambda r: _SCOPE_RANK.get(r.scope_type, 9))
+    if best.default_value is None:
+        return None
+    return {
+        "price": float(best.default_value),
+        "currency": best.unit_code or "",
+        # 가격이 저신뢰/프록시/글로벌 폴백이면 Demo 표시
+        "demo": bool(best.is_proxy) or best.confidence == "low" or best.scope_type == "system",
+    }
+
+
+def _loss(lost_pigs: float, price: dict) -> dict:
+    """손실두수 × 출하두당가격 = 손실액(LOSS_CALC). price 없으면 호출 안 함."""
+    return {
+        "amount": round(lost_pigs * price["price"]),
+        "currency": price["currency"],
+        "lost_pigs": round(lost_pigs, 1),
+        "basis": "lost_market_pigs",  # 손실두수 × 출하두당가
+        "demo": price["demo"],
+    }
+
+
 async def _evaluate(db: AsyncSession, farm: Farm, metric_code: str, value: float | None,
                     direction_override: str | None = None) -> EventInsight | None:
     """값 + 임계값 → severity. 임계 없거나 정상이면 None."""
@@ -100,9 +137,13 @@ async def _evaluate(db: AsyncSession, farm: Farm, metric_code: str, value: float
 async def analyze_farrowing(db: AsyncSession, farm: Farm, f: Farrowing) -> list[EventInsight]:
     out: list[EventInsight] = []
     tb = (f.total_born or 0)
+    dead = (f.stillborn or 0) + (f.mummified or 0)
+    price = await _load_price(db, farm)
     if tb > 0:
-        stillborn_rate = (((f.stillborn or 0) + (f.mummified or 0)) / tb) * 100
-        out.append(await _evaluate(db, farm, "STILLBORN_RATE", stillborn_rate))
+        sr = await _evaluate(db, farm, "STILLBORN_RATE", (dead / tb) * 100)
+        if sr and price and dead > 0:
+            sr.loss = _loss(dead, price)   # 사산+미라 = 잃은 돼지
+        out.append(sr)
     out.append(await _evaluate(db, farm, "BORN_ALIVE", float(f.born_alive) if f.born_alive is not None else None))
     return [i for i in out if i]
 
@@ -116,8 +157,14 @@ async def analyze_weaning(db: AsyncSession, farm: Farm, w: Weaning) -> list[Even
     if w.farrowing_id:
         born_alive = await db.scalar(select(Farrowing.born_alive).where(Farrowing.id == w.farrowing_id))
     if born_alive and born_alive > 0 and w.weaned_count is not None:
-        pwm = ((born_alive - w.weaned_count) / born_alive) * 100
-        out.append(await _evaluate(db, farm, "PRE_WEANING_MORTALITY", pwm))
+        dead = born_alive - w.weaned_count
+        pwm = (dead / born_alive) * 100
+        pwm_ins = await _evaluate(db, farm, "PRE_WEANING_MORTALITY", pwm)
+        if pwm_ins and dead > 0:
+            price = await _load_price(db, farm)
+            if price:
+                pwm_ins.loss = _loss(dead, price)   # 포유 중 폐사 = 잃은 돼지
+        out.append(pwm_ins)
     # 이유일령 밴드: LOW(below) / HIGH(above) 동일 값
     if w.weaning_age_days is not None:
         age = float(w.weaning_age_days)

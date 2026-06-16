@@ -140,10 +140,14 @@ function RelativeSlot({ data, t }: { data: Record<string, unknown>; t: ReturnTyp
 }
 
 function LossSlot({ data, t }: { data: Record<string, unknown>; t: ReturnType<typeof useTranslations> }) {
-  const demo = (data as { demo?: boolean }).demo;
+  const d = data as { amount?: number; currency?: string; lost_pigs?: number; demo?: boolean };
+  if (d.amount == null || !d.currency) return null;  // 금액/통화 없으면 표시 금지 (QA #8)
+  const amt = new Intl.NumberFormat().format(d.amount);
   return (
-    <div className="mt-1 text-[11px] text-text3">
-      {t("slot.loss")} {demo && <DemoBadge t={t} />}
+    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-danger border-t border-border/60 pt-1.5">
+      <span>{t("slot.loss")}: ~{amt} {d.currency}</span>
+      {d.lost_pigs != null && <span className="text-text3 font-normal">({t("slot.lostPigs", { n: d.lost_pigs })})</span>}
+      {d.demo && <DemoBadge t={t} />}
     </div>
   );
 }

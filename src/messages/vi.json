@@ -1132,7 +1132,8 @@
     },
     "slot": {
       "relative": "So với top 25% toàn quốc",
-      "loss": "Ước tính thiệt hại"
+      "loss": "Ước tính thiệt hại",
+      "lostPigs": "mất {n} con"
     },
     "allNormal": "Phân tích: không vấn đề"
   }

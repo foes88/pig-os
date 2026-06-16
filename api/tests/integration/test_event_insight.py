@@ -26,6 +26,7 @@ async def _persist_farrowing(db, farm, sow, ba):
     return f
 
 # 시드 (system/global) — conftest는 create_all만 하므로 테스트에서 직접 삽입
+_PRICE = ("MARKET_PRICE_HEAD", 450000.0, "KRW")
 _SEED = [
     ("STILLBORN_RATE", "above", 8.0, 12.0, "%"),
     ("BORN_ALIVE", "below", 13.0, 11.5, "두/복"),
@@ -45,6 +46,11 @@ async def _seed_thresholds(db):
             warning_threshold=warn, critical_threshold=crit,
             alert_direction=direction, unit_code=unit,
         ))
+    # 출하 두당가격(손실 계산용, system scope=글로벌 → demo=True)
+    db.add(DefaultMetricValue(
+        scope_type="system", scope_code="SYSTEM", metric_code=_PRICE[0],
+        default_value=_PRICE[1], unit_code=_PRICE[2], alert_direction="below",
+    ))
     await db.flush()
 
 
@@ -68,6 +74,11 @@ class TestFarrowingInsight:
         # 메인 선정용 필드(백엔드 계산): normalized_gap = (42.9-12)/12 ≈ 2.57, priority 존재
         assert sr.normalized_gap is not None and sr.normalized_gap > 2.0
         assert sr.priority == 20  # STILLBORN_RATE 우선순위
+        # 손실액(LOSS_CALC): 사산4+미라2=6두 × 450000 = 2,700,000, system가격이라 demo=True
+        assert sr.loss is not None
+        assert sr.loss["amount"] == 6 * 450000
+        assert sr.loss["lost_pigs"] == 6
+        assert sr.loss["demo"] is True
 
     async def test_normal_farrowing_no_stillborn_alert(self, db, test_farm: Farm, test_sow):
         # 사산율 = 1/15 = 6.7% → 정상(<8), born_alive 14 정상(>13)

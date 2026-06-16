@@ -1132,7 +1132,8 @@
     },
     "slot": {
       "relative": "Vs national top 25%",
-      "loss": "Est. economic loss"
+      "loss": "Est. economic loss",
+      "lostPigs": "{n} pigs lost"
     },
     "allNormal": "Analysis: no issues"
   }
