@@ -251,11 +251,26 @@ async def _process_farrowing(
         )
 
     if not dry_run:
+        # mating_id 는 NOT NULL FK — 해당 sow 최근 교배에 연결.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 mating(pending) 조회 위해 flush.
+        await db.flush()
+        mating = await db.scalar(
+            select(Mating)
+            .where(Mating.sow_id == item.sow_id, Mating.farm_id == farm_id, Mating.deleted_at.is_(None))
+            .order_by(Mating.mating_date.desc())
+            .limit(1)
+        )
+        if not mating:
+            return None, SyncRejected(
+                id=item.id, entity="farrowing", reason="MATING_NOT_FOUND",
+                detail={"sow_id": str(item.sow_id), "message": "No mating to attach farrowing to"},
+            ), None
+        # 모델 컬럼명: stillborn / mummified / farrowing_ease (sync 입력은 born_dead / mummies / farrowing_type).
         farrowing = Farrowing(
-            id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            id=item.id, farm_id=farm_id, sow_id=item.sow_id, mating_id=mating.id,
             farrowing_date=event_date, total_born=item.total_born,
-            born_alive=item.born_alive, born_dead=item.born_dead,
-            mummies=item.mummies, farrowing_type=item.farrowing_type, notes=item.notes,
+            born_alive=item.born_alive, stillborn=item.born_dead,
+            mummified=item.mummies, farrowing_ease=item.farrowing_type, notes=item.notes,
         )
         db.add(farrowing)
         db.add(_audit(farm_id, "farrowing", item.id, "CREATE", item.model_dump(mode="json")))
@@ -475,9 +490,11 @@ async def _process_piglet_event(
         return SyncAccepted(id=item.id, entity="piglet_event", action="merged"), None, None
 
     if not dry_run:
-        # Resolve farrowing_id: explicit or auto-lookup latest for this sow
+        # Resolve farrowing_id: explicit or auto-lookup latest for this sow.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
         farrowing_id = item.farrowing_id
         if farrowing_id is None:
+            await db.flush()
             farrowing = await db.scalar(
                 select(Farrowing)
                 .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
