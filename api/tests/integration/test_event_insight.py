@@ -217,3 +217,40 @@ class TestRelativeSlotAbove:
         assert sr.relative["top25"] == 5.7
         assert sr.relative["gap"] > 0          # above: value-top25 > 0 = top25보다 나쁨
         assert sr.relative["better"] is False
+
+
+class TestPersistIdempotency:
+    """QA 야간검증 2회차(C2-Q2): persist_insights 멱등 — 동일 이벤트 재분석/재적재 시
+    미읽음 중복 알림 0."""
+
+    async def test_persist_insights_no_duplicate_on_second_call(self, db, test_farm: Farm, test_user, test_sow):
+        from sqlalchemy import func
+
+        from app.db.models.ops import Notification
+        from app.db.models.platform import UserFarm
+        from app.services import notification_service  # noqa: F401  (멱등 경로 사용)
+
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        await db.flush()
+
+        f = _farrowing(test_farm.id, test_sow.id, tb=14, ba=8, sb=4, mum=2)
+        insights = await insight_service.analyze_farrowing(db, test_farm, f)
+        serious = [i for i in insights if i.severity in ("WARNING", "CRITICAL")]
+        assert serious
+
+        async def _count():
+            return int(await db.scalar(
+                select(func.count()).select_from(Notification).where(
+                    Notification.user_id == test_user.id,
+                    Notification.related_entity_id == test_sow.id,
+                    Notification.type == "IN_APP",
+                )
+            ) or 0)
+
+        await insight_service.persist_insights(db, test_farm, test_sow.id, insights)
+        n1 = await _count()
+        assert n1 >= 1
+        # 2회차 — 미읽음 동일 알림 재생성 금지
+        await insight_service.persist_insights(db, test_farm, test_sow.id, insights)
+        n2 = await _count()
+        assert n2 == n1
