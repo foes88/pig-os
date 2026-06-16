@@ -1138,5 +1138,49 @@
       "relWorse": "{n}{unit} 미달"
     },
     "allNormal": "분석: 이상 없음"
+  },
+  "thresholds": {
+    "title": "KPI 임계값",
+    "subtitle": "국가/글로벌 기본값 + 우리 농장 설정. 입력 즉시 분석이 이 값을 사용합니다.",
+    "selectFarm": "농장을 선택하세요.",
+    "loading": "불러오는 중…",
+    "metric": "지표",
+    "warning": "주의",
+    "critical": "위험",
+    "scope": "출처",
+    "scopeVal": {
+      "farm": "우리 농장",
+      "country": "국가",
+      "global": "글로벌"
+    },
+    "sourceCol": "근거",
+    "conf": {
+      "high": "고",
+      "medium": "중",
+      "low": "저"
+    },
+    "proxy": "프록시",
+    "edit": "수정",
+    "reset": "기본값 복귀",
+    "note": "수정하면 농장 전용 값으로 저장됩니다. 복귀하면 국가/글로벌 값으로 돌아갑니다.",
+    "editHint": "{dir} 경보 · 단위 {unit}",
+    "cancel": "취소",
+    "save": "저장",
+    "saving": "저장 중…",
+    "saveError": "저장 실패.",
+    "m": {
+      "STILLBORN_RATE": "사산율",
+      "BORN_ALIVE": "생존산자수",
+      "PRE_WEANING_MORTALITY": "포유폐사율",
+      "WEANED_COUNT": "복당 이유두수",
+      "WSI": "이유-교배 간격",
+      "RTS_RATE": "재발율",
+      "WEANING_AGE_LOW": "이유일령(하한)",
+      "WEANING_AGE_HIGH": "이유일령(상한)",
+      "PSY": "PSY",
+      "NPD": "NPD",
+      "FARROWING_RATE": "분만율",
+      "SOW_MORTALITY": "모돈폐사율"
+    }
   }
 }

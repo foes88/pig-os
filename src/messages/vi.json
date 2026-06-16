@@ -1138,5 +1138,49 @@
       "relWorse": "kém {n}{unit}"
     },
     "allNormal": "Phân tích: không vấn đề"
+  },
+  "thresholds": {
+    "title": "Ngưỡng KPI",
+    "subtitle": "Giá trị quốc gia/toàn cầu + cài đặt trại. Phân tích dùng các giá trị này.",
+    "selectFarm": "Vui lòng chọn trại.",
+    "loading": "Đang tải…",
+    "metric": "Chỉ số",
+    "warning": "Cảnh báo",
+    "critical": "Nguy hiểm",
+    "scope": "Nguồn",
+    "scopeVal": {
+      "farm": "Trại tôi",
+      "country": "Quốc gia",
+      "global": "Toàn cầu"
+    },
+    "sourceCol": "Căn cứ",
+    "conf": {
+      "high": "Cao",
+      "medium": "TB",
+      "low": "Thấp"
+    },
+    "proxy": "ước tính",
+    "edit": "Sửa",
+    "reset": "Khôi phục",
+    "note": "Sửa sẽ tạo giá trị riêng cho trại. Khôi phục về giá trị quốc gia/toàn cầu.",
+    "editHint": "{dir} cảnh báo · đơn vị {unit}",
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "saveError": "Lưu thất bại.",
+    "m": {
+      "STILLBORN_RATE": "Tỷ lệ thai chết",
+      "BORN_ALIVE": "Số con sống",
+      "PRE_WEANING_MORTALITY": "Tỷ lệ chết bú",
+      "WEANED_COUNT": "Cai sữa/ổ",
+      "WSI": "Cai sữa-phối",
+      "RTS_RATE": "Tỷ lệ lặp lại",
+      "WEANING_AGE_LOW": "Tuổi cai sữa (min)",
+      "WEANING_AGE_HIGH": "Tuổi cai sữa (max)",
+      "PSY": "PSY",
+      "NPD": "NPD",
+      "FARROWING_RATE": "Tỷ lệ đẻ",
+      "SOW_MORTALITY": "Tỷ lệ chết nái"
+    }
   }
 }

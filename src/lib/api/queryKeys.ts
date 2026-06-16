@@ -67,4 +67,8 @@ export const queryKeys = {
   analytics: {
     prrsByGenetics: (farmId: string) => ["analytics", "prrs", farmId] as const,
   },
+
+  thresholds: {
+    list: (farmId: string) => ["thresholds", farmId] as const,
+  },
 } as const;

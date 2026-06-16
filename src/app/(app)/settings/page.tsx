@@ -11,6 +11,7 @@ import {
   Bell,
   Building2,
   Sliders,
+  SlidersHorizontal,
   Target,
   FileText,
   LifeBuoy,
@@ -34,6 +35,7 @@ interface SettingItem {
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tUsers = useTranslations("users");
+  const tThr = useTranslations("thresholds");
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
@@ -60,6 +62,7 @@ export default function SettingsPage() {
         { icon: Users,      label: tUsers("title"),  desc: tUsers("subtitle"),   href: "/settings/users" },
         { icon: Sliders,    label: t("reproConfig"), desc: t("reproConfigDesc"), href: "/settings/farm" },
         { icon: Target,     label: t("benchmarks"),  desc: t("benchmarksDesc"),  href: "/settings/benchmarks" },
+        { icon: SlidersHorizontal, label: tThr("title"), desc: tThr("subtitle"), href: "/settings/thresholds" },
         { icon: CreditCard, label: t("billing"),     desc: t("billingDesc"),     href: "/settings/billing" },
       ],
     },

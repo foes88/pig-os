@@ -1138,5 +1138,49 @@
       "relWorse": "{n}{unit} worse"
     },
     "allNormal": "Analysis: no issues"
+  },
+  "thresholds": {
+    "title": "KPI Thresholds",
+    "subtitle": "Country/global defaults with your farm overrides. Insights use these.",
+    "selectFarm": "Select a farm.",
+    "loading": "Loading…",
+    "metric": "Metric",
+    "warning": "Warning",
+    "critical": "Critical",
+    "scope": "Source",
+    "scopeVal": {
+      "farm": "My farm",
+      "country": "Country",
+      "global": "Global"
+    },
+    "sourceCol": "Reference",
+    "conf": {
+      "high": "High",
+      "medium": "Med",
+      "low": "Low"
+    },
+    "proxy": "proxy",
+    "edit": "Edit",
+    "reset": "Reset to default",
+    "note": "Editing sets a farm-level override. Reset reverts to country/global value.",
+    "editHint": "{dir} alert · unit {unit}",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "saveError": "Failed to save.",
+    "m": {
+      "STILLBORN_RATE": "Stillborn rate",
+      "BORN_ALIVE": "Born alive",
+      "PRE_WEANING_MORTALITY": "Pre-weaning mortality",
+      "WEANED_COUNT": "Weaned/litter",
+      "WSI": "Wean-to-service",
+      "RTS_RATE": "Repeat rate",
+      "WEANING_AGE_LOW": "Weaning age (min)",
+      "WEANING_AGE_HIGH": "Weaning age (max)",
+      "PSY": "PSY",
+      "NPD": "NPD",
+      "FARROWING_RATE": "Farrowing rate",
+      "SOW_MORTALITY": "Sow mortality"
+    }
   }
 }

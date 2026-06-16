@@ -39,6 +39,7 @@ from app.routers.base import (
     sows,
     sync,
     tasks,
+    thresholds,
 )
 
 # ── Import Addon packages here to trigger AddonRegistry.register() ──────────
@@ -101,6 +102,7 @@ app.include_router(piglets.router,     prefix=V1)
 app.include_router(boars.router,       prefix=V1)
 app.include_router(alerts.router,      prefix=V1)
 app.include_router(tasks.router,       prefix=V1)
+app.include_router(thresholds.router,  prefix=V1)
 app.include_router(notifications.router, prefix=V1)
 app.include_router(notifications.farm_router, prefix=V1)
 app.include_router(devices.router,     prefix=V1)

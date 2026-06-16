@@ -1138,5 +1138,49 @@
       "relWorse": "{n}{unit} peor"
     },
     "allNormal": "Análisis: sin problemas"
+  },
+  "thresholds": {
+    "title": "Umbrales KPI",
+    "subtitle": "Valores país/global + ajustes de su granja. Los análisis usan estos.",
+    "selectFarm": "Seleccione una granja.",
+    "loading": "Cargando…",
+    "metric": "Métrica",
+    "warning": "Aviso",
+    "critical": "Crítico",
+    "scope": "Origen",
+    "scopeVal": {
+      "farm": "Mi granja",
+      "country": "País",
+      "global": "Global"
+    },
+    "sourceCol": "Referencia",
+    "conf": {
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "proxy": "proxy",
+    "edit": "Editar",
+    "reset": "Restaurar",
+    "note": "Editar crea un ajuste de granja. Restaurar vuelve al valor país/global.",
+    "editHint": "{dir} alerta · unidad {unit}",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saveError": "Error al guardar.",
+    "m": {
+      "STILLBORN_RATE": "Tasa mortinatos",
+      "BORN_ALIVE": "Nacidos vivos",
+      "PRE_WEANING_MORTALITY": "Mortalidad lactación",
+      "WEANED_COUNT": "Destetados/camada",
+      "WSI": "Destete-cubrición",
+      "RTS_RATE": "Tasa repetición",
+      "WEANING_AGE_LOW": "Edad destete (min)",
+      "WEANING_AGE_HIGH": "Edad destete (max)",
+      "PSY": "PSY",
+      "NPD": "NPD",
+      "FARROWING_RATE": "Tasa de partos",
+      "SOW_MORTALITY": "Mortalidad cerdas"
+    }
   }
 }

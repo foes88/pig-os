@@ -1138,5 +1138,49 @@
       "relWorse": "差 {n}{unit}"
     },
     "allNormal": "分析：无异常"
+  },
+  "thresholds": {
+    "title": "KPI 阈值",
+    "subtitle": "国家/全球默认值 + 本场设置。即时分析使用这些值。",
+    "selectFarm": "请选择猪场。",
+    "loading": "加载中…",
+    "metric": "指标",
+    "warning": "警告",
+    "critical": "危险",
+    "scope": "来源",
+    "scopeVal": {
+      "farm": "本场",
+      "country": "国家",
+      "global": "全球"
+    },
+    "sourceCol": "依据",
+    "conf": {
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "proxy": "代理",
+    "edit": "编辑",
+    "reset": "恢复默认",
+    "note": "编辑将保存为本场专用值。恢复则回到国家/全球值。",
+    "editHint": "{dir} 预警 · 单位 {unit}",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中…",
+    "saveError": "保存失败。",
+    "m": {
+      "STILLBORN_RATE": "死产率",
+      "BORN_ALIVE": "活产数",
+      "PRE_WEANING_MORTALITY": "哺乳死亡率",
+      "WEANED_COUNT": "窝断奶数",
+      "WSI": "断奶至配种",
+      "RTS_RATE": "返情率",
+      "WEANING_AGE_LOW": "断奶日龄(下限)",
+      "WEANING_AGE_HIGH": "断奶日龄(上限)",
+      "PSY": "PSY",
+      "NPD": "NPD",
+      "FARROWING_RATE": "分娩率",
+      "SOW_MORTALITY": "母猪死亡率"
+    }
   }
 }

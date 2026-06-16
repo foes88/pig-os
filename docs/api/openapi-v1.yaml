@@ -2832,6 +2832,116 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/thresholds:
+    get:
+      tags:
+      - Thresholds
+      summary: List Thresholds
+      operationId: list_thresholds_api_v1_farms__farm_id__thresholds_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThresholdRow'
+                title: Response List Thresholds Api V1 Farms  Farm Id  Thresholds
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/thresholds/{metric_code}:
+    patch:
+      tags:
+      - Thresholds
+      summary: Set Threshold
+      operationId: set_threshold_api_v1_farms__farm_id__thresholds__metric_code__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: metric_code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Metric Code
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThresholdOverride'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThresholdRow'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Thresholds
+      summary: Clear Threshold
+      operationId: clear_threshold_api_v1_farms__farm_id__thresholds__metric_code__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: metric_code
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Metric Code
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/notifications:
     get:
       tags:
@@ -7176,6 +7286,91 @@ components:
           title: Assigned To
       type: object
       title: TaskUpdate
+    ThresholdOverride:
+      properties:
+        warning:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Warning
+        critical:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Critical
+      type: object
+      title: ThresholdOverride
+    ThresholdRow:
+      properties:
+        metric_code:
+          type: string
+          title: Metric Code
+        warning:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Warning
+        critical:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Critical
+        avg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg
+        top25:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Top25
+        target:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Target
+        direction:
+          type: string
+          title: Direction
+        unit:
+          type: string
+          title: Unit
+        confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confidence
+        is_proxy:
+          type: boolean
+          title: Is Proxy
+        source:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source
+        scope:
+          type: string
+          title: Scope
+        is_override:
+          type: boolean
+          title: Is Override
+      type: object
+      required:
+      - metric_code
+      - warning
+      - critical
+      - avg
+      - top25
+      - target
+      - direction
+      - unit
+      - confidence
+      - is_proxy
+      - source
+      - scope
+      - is_override
+      title: ThresholdRow
     TokenResponse:
       properties:
         access_token:

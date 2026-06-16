@@ -173,6 +173,28 @@ export interface UpdateSowRequest {
 
 // ─── Events ───────────────────────────────────────────────────────────────────
 
+// ── Threshold 관리 (#4) ──────────────────────────────────────────────────────
+export interface ThresholdRow {
+  metric_code: string;
+  warning: number | null;
+  critical: number | null;
+  avg: number | null;
+  top25: number | null;
+  target: number | null;
+  direction: "above" | "below";
+  unit: string;
+  confidence: "high" | "medium" | "low" | null;
+  is_proxy: boolean;
+  source: string | null;
+  scope: "farm" | "country" | "global";
+  is_override: boolean;
+}
+
+export interface ThresholdOverrideRequest {
+  warning?: number | null;
+  critical?: number | null;
+}
+
 // ── Event Insight (입력 즉시 분석 — 백엔드 판정, 프론트는 렌더만) ────────────
 export interface EventInsight {
   metric_code: string;
