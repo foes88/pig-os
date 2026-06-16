@@ -298,3 +298,43 @@
 - **[야간QA 시작 / DB_OK=true]** — cowork 샌드박스에 Docker 없음 → 루트 권한 없이 `pgserver`(PyPI)로 임시 Postgres 기동, `pigos_test` 생성. psycopg2-binary 번들 libpq 누락은 pgserver의 libpq로 심볼릭링크 해결. Python 3.10뿐(3.14 인터프리터 github 차단)이라 `datetime.UTC` 1개 심으로 백필. 이 조건에서 **전체 테스트 실제 실행 가능**(이전 세션들은 '수집까지'였음).
 - 베이스라인 게이트 전부 green: `ruff check` clean / `tsc --noEmit` rc0 / import-smoke(`import app.main`) OK / **pytest tests/ = 289 passed (unit 219 + integration 70)**.
 - 주의: 이 실행환경은 py3.10+shim이라 3.11/3.12 런타임 전용 기능이 테스트 경로에 있으면 드러날 수 있음(현재까진 289 green이라 해당 없음). 사용자 머신의 정식 py3.12+docker 검증을 대체하지 않음(보완).
+
+---
+
+## 🌙 야간QA 결과 요약 (2026-06-16, cowork 무중단 모드)
+
+**판정: 기존 구현 견고 — 실제 버그 0건. 회귀잠금 테스트 11종 추가 + 문서 정합 1건.**
+
+### 최종 게이트 (전부 green)
+- `ruff check` clean · `tsc --noEmit` rc0 · **pytest tests/ = 300 passed** (베이스라인 289 + 신규 11)
+- 실행환경: cowork 샌드박스에 Docker/py3.12 없음 → 루트 없이 `pgserver`로 임시 Postgres + py3.10 + `datetime.UTC` 심 1개로 **전체 통합테스트 실제 실행**(이전 세션들은 '수집까지'였던 것을 실행까지 끌어올림).
+
+### Q1~Q8 수행
+- **Q1 인사이트 렌더만 원칙**: InsightBanner.tsx·record/page.tsx 검사 → 위반 0. severity/gap/priority/confidence/loss/relative 전부 백엔드 필드 렌더만. 프론트 판정 로직 없음. (프론트 `severity:"CRITICAL"` 2곳은 AI 호출실패 에러표시용, KPI 판정 아님 — 정상)
+- **Q2 인사이트 엔진 엣지케이스**: insight_service.py 정독. 분모0(tb>0 가드)·음수폐사(severity OK→None)·null임계(skip)·글로벌폴백·가격없음·top25없음 전부 안전 가드 확인. `_attach_insights` try/except 격리 확인. → 누락 엣지 7종 테스트 추가(test_event_insight.py).
+- **Q3 국가별 임계값**: threshold_service.list_effective/set_override/clear_override + insight_service._load_benchmark 우선순위(농장>국가>글로벌) 일치 확인. 기존 테스트는 글로벌+농장만 커버 → **국가(region) 티어** 검증 2종 추가(region>global·source 귀속·clear시 국가복귀). 시드(f3a7c2e9…) source 귀속 정확(US=PigCHAMP, KR=PigPlan/한돈팜스, region scope).
+- **Q4 손실/상대 슬롯**: loss=손실두수×가격, 가격없음 null, 글로벌/저신뢰 demo=true 확인. relative gap 부호 below(기존)+ **above 방향 1종 추가**.
+- **Q5 알림/디바이스/Task**: notification_service savepoint(begin_nested) 격리·멱등 확인, push_service graceful skip(미설정 예외0) 확인, device upsert/소프트삭제 확인. 기존 18종 green. → **savepoint 격리(KPI 실패가 과기한 알림 안 막음) 1종 추가**(monkeypatch).
+- **Q6 i18n**: en/ko/zh/es/vi **959키 parity 0**, ICU 변수({value}{threshold}{unit}{n} 등) 불일치 0. 수정 불필요.
+- **Q7 계약/스펙**: gen_openapi 재생성 → 커밋본과 **diff 0**(66 paths/103 schemas, 라우트 변경 없음 → yaml 미수정). mobile-integration-contract §3는 EventInsight 정확 반영. **누락이던 /thresholds 관리 엔드포인트(GET·PATCH·DELETE) §3에 문서화 추가.**
+- **Q8 종합 회귀**: 위 최종 게이트 green.
+
+### 신규 커밋 (6개, push는 사람이)
+1. `78117e2` docs(qa): 야간QA 시작
+2. `15395f4` test(insight): Q2 엣지 7종
+3. `7f7e720` test(threshold): Q3 국가 티어 2종
+4. `2e2c825` test(insight): Q4 상대판정 above
+5. `a98ffc1` test(notification): Q5 savepoint 격리
+6. `b8026b2` docs(contract): Q7 /thresholds 문서화
+
+### 경미한 관찰(버그 아님, 참고용)
+- `relative.better=True` 분기는 슬롯이 '경보 있을 때만' 붙으므로 실무상 도달 불가(경보 임계는 항상 top25보다 나쁜 쪽). 사실상 dead path지만 무해.
+- `persist_insights`의 멱등키가 `related_entity_id == sow_id`라 sow_id=None이면 IS NULL 매칭 — 현재 모든 이벤트는 sow 보유라 영향 없음.
+
+### ⚠ 사람이 확인할 것
+- **DB 재검증 권장**: 본 실행은 py3.10+pgserver 우회환경. 정식 `cd api && uv run pytest tests/`(py3.12 + Docker pigos_test)로 300 passed 재확인 권장(현재까지 동작 차이 징후 없음).
+- **[환경 발견] 라인엔딩 churn**: `.gitattributes` 부재로 리눅스 체크아웃 시 워킹트리 ~100개 파일이 CRLF↔LF 차이로 통째 'modified' 표시됨(내 작업 아님). 커밋은 LF·해당 파일만 골라 오염 없이 진행. `* text=auto eol=lf` 등 정규화 정책 검토 권장.
+- **[BLOCKED] 없음.**
+
+### 다음 추천 (순환 2회차)
+- Q1~Q8 더 깊게: 적대적 입력(거대값/음수/유니코드 ear_tag)·동시성(같은 이벤트 동시 POST 멱등)·라우터 레벨 권한 회귀. 신규 기능은 계속 추가 금지, 테스트·문서 정합만.
