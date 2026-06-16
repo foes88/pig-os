@@ -21,7 +21,11 @@ from app.core.exceptions import (
     ForbiddenError,
     UnauthorizedError,
 )
-from app.core.permissions import can_access_farm, effective_system_role
+from app.core.permissions import (
+    can_access_farm,
+    effective_farm_role,
+    effective_system_role,
+)
 from app.core.security import decode_access_token
 from app.db.models.platform import AddonSubscription, Farm, User
 from app.db.session import AsyncSessionLocal
@@ -117,4 +121,20 @@ def require_role(*roles: str):
     async def _check(current_user: CurrentUser) -> None:
         if effective_system_role(current_user) not in roles:
             raise ForbiddenError(f"Required role: {' or '.join(roles)}")
+    return Depends(_check)
+
+
+def require_farm_role(*roles: str):
+    """농장 스코프 역할 가드 — path의 farm_id에 대한 사용자의 '농장별' 역할로 판정.
+
+    require_role(전역 system_role)과 달리 멀티팜에서 농장마다 다른 역할을 정확히 반영한다.
+    """
+    async def _check(
+        farm_id: Annotated[UUID, Path(description="Farm UUID")],
+        current_user: CurrentUser,
+        db: DbDep,
+    ) -> None:
+        role = await effective_farm_role(current_user, farm_id, db)
+        if role not in roles:
+            raise ForbiddenError(f"Required farm role: {' or '.join(roles)}")
     return Depends(_check)

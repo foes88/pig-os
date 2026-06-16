@@ -5,7 +5,7 @@ override는 OWNER/MANAGER만. 삭제 시 국가/글로벌 값으로 복귀.
 """
 from fastapi import APIRouter
 
-from app.core.dependencies import DbDep, FarmDep, require_role
+from app.core.dependencies import DbDep, FarmDep, require_farm_role
 from app.schemas.threshold import ThresholdOverride, ThresholdRow
 from app.services import threshold_service
 
@@ -22,7 +22,7 @@ async def list_thresholds(farm: FarmDep, db: DbDep) -> list[ThresholdRow]:
 
 @router.patch(
     "/{metric_code}", response_model=ThresholdRow,
-    dependencies=[require_role(*_ROLES)],
+    dependencies=[require_farm_role(*_ROLES)],
 )
 async def set_threshold(metric_code: str, body: ThresholdOverride, farm: FarmDep, db: DbDep) -> ThresholdRow:
     row = await threshold_service.set_override(db, farm, metric_code, body.warning, body.critical)
@@ -31,7 +31,7 @@ async def set_threshold(metric_code: str, body: ThresholdOverride, farm: FarmDep
 
 @router.delete(
     "/{metric_code}", status_code=204,
-    dependencies=[require_role(*_ROLES)],
+    dependencies=[require_farm_role(*_ROLES)],
 )
 async def clear_threshold(metric_code: str, farm: FarmDep, db: DbDep) -> None:
     await threshold_service.clear_override(db, farm, metric_code)

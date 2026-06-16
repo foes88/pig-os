@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter
 from sqlalchemy import select
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_role
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.db.models.platform import AuditLog, User, UserFarm
@@ -46,7 +46,7 @@ async def list_members(farm: FarmDep, db: DbDep):
     "/{farm_id}/members",
     response_model=MemberResponse,
     status_code=201,
-    dependencies=[require_role(*_MANAGER_ROLES)],
+    dependencies=[require_farm_role(*_MANAGER_ROLES)],
 )
 async def create_member(
     body: MemberCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser
@@ -85,7 +85,7 @@ async def create_member(
 @router.patch(
     "/{farm_id}/members/{user_id}",
     response_model=MemberResponse,
-    dependencies=[require_role(*_MANAGER_ROLES)],
+    dependencies=[require_farm_role(*_MANAGER_ROLES)],
 )
 async def update_member(
     user_id: UUID, body: MemberUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser

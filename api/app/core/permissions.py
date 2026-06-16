@@ -180,6 +180,31 @@ async def can_access_farm(user: User, farm_id: UUID, db: AsyncSession) -> bool:
     return bool(result.scalar())
 
 
+async def effective_farm_role(user: User, farm_id: UUID, db: AsyncSession) -> str | None:
+    """농장별 유효 역할 (멀티팜 안전).
+
+    - SUPER_ADMIN / 조직레벨 롤(VENDOR/DISTRIBUTOR/DEALER_ADMIN): 시스템 롤 그대로.
+    - 그 외(농장레벨 사용자): 해당 농장의 user_farms.role_override 사용.
+      멤버십이 없으면 None(권한 없음). role_override가 NULL이면 시스템 롤로 폴백(하위호환).
+
+    전역 user.system_role만 보던 require_role의 멀티팜 역할 혼선(finding #2)을 해소한다.
+    """
+    sys_role = effective_system_role(user)
+    if sys_role == "SUPER_ADMIN" or sys_role in ORG_LEVEL_ROLES:
+        return sys_role
+    result = await db.execute(
+        text(
+            "SELECT role_override FROM user_farms "
+            "WHERE user_id = :uid AND farm_id = :fid"
+        ),
+        {"uid": user.id, "fid": farm_id},
+    )
+    rows = result.fetchall()
+    if not rows:
+        return None  # 멤버십 없음 → 권한 없음 (FarmDep도 별도 차단)
+    return rows[0][0] or sys_role  # role_override 우선, NULL이면 시스템 롤 폴백
+
+
 def is_org_admin(user: User) -> bool:
     return effective_system_role(user) in ORG_LEVEL_ROLES
 

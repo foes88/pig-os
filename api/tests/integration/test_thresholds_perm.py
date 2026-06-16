@@ -60,3 +60,32 @@ async def test_non_member_forbidden(client: AsyncClient, db, test_org, test_farm
     headers = {"Authorization": f"Bearer {token}"}
     r = await client.get(f"/api/v1/farms/{test_farm.id}/thresholds", headers=headers)
     assert r.status_code == 403, r.text
+
+
+async def test_per_farm_role_isolation(client: AsyncClient, db, test_org, test_user, test_farm):
+    """finding #2 해소: 한 사용자가 농장마다 다른 역할일 때 농장별로 정확히 판정.
+    농장A=OWNER → override 200, 농장B=WORKER → 403.
+    (구버전은 전역 system_role만 봐서 둘 다 통과하던 버그)."""
+    import uuid as _uuid
+
+    from app.db.models.platform import Farm
+
+    farm_b = Farm(org_id=test_org.id, farm_code=f"TEST-{_uuid.uuid4().hex[:6].upper()}",
+                  name="Farm B", country="KR", timezone="Asia/Seoul")
+    db.add(farm_b)
+    await db.flush()
+
+    db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+    db.add(UserFarm(user_id=test_user.id, farm_id=farm_b.id, role_override="FARM_WORKER"))
+    await db.flush()
+
+    token = create_access_token(str(test_user.id), str(test_user.org_id), [test_user.system_role])
+    headers = {"Authorization": f"Bearer {token}"}
+
+    ra = await client.patch(f"/api/v1/farms/{test_farm.id}/thresholds/STILLBORN_RATE",
+                            headers=headers, json={"warning": 6.0, "critical": 10.0})
+    assert ra.status_code == 200, ra.text  # 농장A: OWNER
+
+    rb = await client.patch(f"/api/v1/farms/{farm_b.id}/thresholds/STILLBORN_RATE",
+                            headers=headers, json={"warning": 6.0, "critical": 10.0})
+    assert rb.status_code == 403, rb.text  # 농장B: WORKER → 거부

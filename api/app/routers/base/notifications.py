@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_role
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.schemas.notification import (
     GenerateResult,
     MarkReadResult,
@@ -55,7 +55,7 @@ farm_router = APIRouter(prefix="/farms/{farm_id}/notifications", tags=["Notifica
 @farm_router.post(
     "/generate",
     response_model=GenerateResult,
-    dependencies=[require_role("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")],
+    dependencies=[require_farm_role("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")],
 )
 async def generate_notifications(farm: FarmDep, db: DbDep) -> GenerateResult:
     """Alert(과기한/도태/KPI) → OWNER/MANAGER 영구 IN_APP 알림 생성 (멱등)."""
