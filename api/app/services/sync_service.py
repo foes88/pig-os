@@ -549,8 +549,12 @@ async def _pull_server_changes(
     if since is None:
         return ServerChanges()
 
+    # 일부 이벤트 모델(Mating/PigletEvent 등)은 updated_at 없이 created_at만 가짐 → 모델별 컬럼 선택.
+    def _sync_col(model):
+        return model.updated_at if hasattr(model, "updated_at") else model.created_at
+
     def q(model, extra=None):
-        stmt = select(model).where(model.farm_id == farm_id, model.updated_at >= since)
+        stmt = select(model).where(model.farm_id == farm_id, _sync_col(model) >= since)
         if extra is not None:
             stmt = stmt.where(extra)
         return stmt
@@ -570,8 +574,12 @@ async def _pull_server_changes(
     ))
 
     def to_dict(obj, fields: list[str]) -> dict:
-        return {f: str(getattr(obj, f)) if isinstance(getattr(obj, f), UUID) else getattr(obj, f)
-                for f in fields}
+        # getattr default None: 모델에 없는 필드(updated_at 등)도 크래시 없이 null로.
+        out: dict = {}
+        for f in fields:
+            v = getattr(obj, f, None)
+            out[f] = str(v) if isinstance(v, UUID) else v
+        return out
 
     deleted = (
         [str(s.id) for s in sows if s.deleted_at and s.deleted_at >= since] +
@@ -582,7 +590,7 @@ async def _pull_server_changes(
 
     return ServerChanges(
         sows=       [to_dict(s, ["id","ear_tag","status","parity","updated_at"]) for s in sows if not s.deleted_at],
-        matings=    [to_dict(m, ["id","sow_id","mating_date","mating_type","updated_at"]) for m in matings if not m.deleted_at],
+        matings=    [to_dict(m, ["id","sow_id","mating_date","mating_type","created_at"]) for m in matings if not m.deleted_at],
         farrowings= [to_dict(f, [
             "id","sow_id","mating_id","breeding_cycle_id",
             "farrowing_date","total_born","born_alive",
