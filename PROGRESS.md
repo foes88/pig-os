@@ -405,3 +405,13 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
   ⚠ vite8 require(ESM) → Node 22.12+ 필요(22.11은 --experimental-require-module).
 - **E. 동시성·경계 회귀**: [선택] 미실시 — 권고로 남김(중복 sync id, 동시 POST 멱등, report 기간경계).
 - 누적 미푸시 커밋 다수. push 미실시(사람 확인 후).
+
+## 2026-06-17 — 보고서 고도화 야간작업 (R1~R7, cowork)
+> 목표: 피그플랜 "전체농가 품종별 주요생산성적"(146지표) 수준으로 보고서 고도화 + 국가별 KPI 차등 + UI 이모지 정리.
+> 프롬프트: docs/cowork-reports-overnight.md. push 금지·DB직접변경 금지·수치 임의생성 금지 준수.
+
+### [R1] 146지표 매핑 (완료, docs-only)
+- 레퍼런스 `c:/dev/realtime/전체농가_품종별_주요생산성적_2025.xlsx`에서 openpyxl로 **distinct 지표명 146 전수 추출**(데이터행 159,349). 원본 `docs/specs/_pigplan_metrics_raw.txt`.
+- `docs/specs/2026-06-17_pigplan-metrics-mapping.md`: 146지표 4분류 — **① 이미계산 22 / ② 데이터있음·미집계 98 / ③ 데이터부족 26 / 국가차등 Y 41**. 각 행에 PigOS metric/source·식 또는 갭·국가차등·근거.
+- 스키마 갭 식별: 생시체중 컬럼 없음(생시체중 7지표 ③), 분만 4구분 없음(farrowing_ease 난이도만), 보정21일체중·재포유·부분이유·후보돈 사육일수 미입력.
+- 수치 임의생성 없음(매핑·분류만). 검증: docs-only(코드 무변경 → 테스트 영향 없음).
