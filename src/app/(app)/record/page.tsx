@@ -80,6 +80,7 @@ function Stepper({
           }}
           onFocus={(e) => e.target.select()}
           aria-label={label}
+          data-testid={`stepper-${label}`}
           className={`w-[56px] text-center text-[28px] font-bold font-mono tracking-tight bg-transparent outline-none focus:ring-2 focus:ring-primary/30 rounded-lg ${colorClass}`}
         />
         <button

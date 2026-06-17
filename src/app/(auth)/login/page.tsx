@@ -118,6 +118,7 @@ function LanguageSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) 
     <div ref={ref} className="relative">
       <button
         type="button"
+        data-testid="language-switcher"
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
           text-slate-500 bg-white border border-slate-200 hover:border-slate-300
@@ -139,6 +140,7 @@ function LanguageSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) 
           bg-white shadow-lg py-1 z-50">
           {LANGS.map((l) => (
             <button key={l} type="button"
+              data-testid={`language-option-${l}`}
               onClick={() => { onChange(l); setOpen(false); }}
               className={`w-full text-left px-4 py-2 text-sm transition hover:bg-slate-50
                 ${l === lang ? "text-[#2563EB] font-semibold" : "text-slate-600"}`}>
@@ -318,6 +320,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   type="email"
+                  data-testid="login-email"
                   autoComplete="email"
                   placeholder="farmer@example.com"
                   {...register("email")}
@@ -341,6 +344,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   type="password"
+                  data-testid="login-password"
                   autoComplete="current-password"
                   placeholder="••••••••"
                   {...register("password")}
@@ -358,6 +362,7 @@ export default function LoginPage() {
               <label className="flex items-center gap-2 -mt-1 select-none cursor-pointer">
                 <input
                   type="checkbox"
+                  data-testid="remember-id"
                   checked={rememberId}
                   onChange={(e) => setRememberId(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]/30"
@@ -383,6 +388,7 @@ export default function LoginPage() {
               {/* Submit */}
               <button
                 type="submit"
+                data-testid="login-submit"
                 disabled={isSubmitting}
                 className="w-full h-11 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50
                   text-white font-semibold rounded-lg text-sm transition shadow-sm

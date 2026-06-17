@@ -120,6 +120,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
 
   return (
     <aside
+      data-testid="sidebar"
       style={{ width: w }}
       className="hidden md:flex fixed top-0 left-0 h-screen bg-surface border-r border-border flex-col z-50 transition-all duration-200 overflow-hidden"
     >
@@ -184,6 +185,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-testid={`nav-${item.href === "/" ? "dashboard" : item.href.slice(1).replace(/\//g, "-")}`}
                   title={collapsed ? t(item.label) : undefined}
                   className={`flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
                     isActive
@@ -223,6 +225,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
             <Link
               key={item.href}
               href={item.href}
+              data-testid={`nav-${item.href.slice(1).replace(/\//g, "-")}`}
               title={collapsed ? t(item.label) : undefined}
               className={`flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
                 isActive ? "bg-primary/8 text-primary font-semibold" : "text-muted hover:bg-bg2 hover:text-text"

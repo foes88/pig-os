@@ -49,6 +49,7 @@ export function Topbar({
         {/* Lang select */}
         <select
           value={lang}
+          data-testid="language-switcher"
           onChange={(e) => onLangToggle?.(e.target.value as Locale)}
           className="bg-surface border border-border text-text text-[11px] font-bold px-2 py-1.5 rounded-md outline-none focus:border-primary cursor-pointer"
         >
