@@ -10,6 +10,7 @@ import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { notificationsApi } from "@/lib/api/endpoints/notifications";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { AlertsTabs } from "@/components/AlertsTabs";
 import type { Alert, NotificationItem } from "@/types/api.types";
 
 const PAGE_SIZE = 20;
@@ -92,6 +93,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="p-7 max-w-2xl">
+      <AlertsTabs />
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>

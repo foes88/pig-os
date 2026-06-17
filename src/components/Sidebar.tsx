@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   LayoutDashboard,
   PiggyBank,
-  Baby,
   Heart,
   ClipboardList,
   BarChart3,
@@ -15,7 +14,6 @@ import {
   MessageSquareText,
   Layers,
   Store,
-  Bell,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -36,20 +34,23 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   label: L;
+  badge?: "alerts"; // 통합 알림 배지(관리대상+미읽음 합산)
 }
 
+// 메뉴 재설계 2026-06 (docs/menu-redesign-2026-06.md): PigPlan식 그룹 재편 + 알림 통합 + 분만사 제거
 const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
   {
     items: [
-      {
-        href: "/",
-        icon: LayoutDashboard,
-        label: { en: "Dashboard", ko: "대시보드", zh: "总览", es: "Panel", vi: "Tổng quan" },
-      },
+      { href: "/", icon: LayoutDashboard, label: { en: "Dashboard", ko: "대시보드", zh: "总览", es: "Panel", vi: "Tổng quan" } },
     ],
   },
   {
-    label: { en: "Herd", ko: "돈군 관리", zh: "猪群管理", es: "Hato", vi: "Đàn heo" },
+    items: [
+      { href: "/record", icon: ClipboardList, label: { en: "Record Entry", ko: "기록 입력", zh: "记录录入", es: "Registro", vi: "Nhập dữ liệu" } },
+    ],
+  },
+  {
+    label: { en: "Herd", ko: "돈군", zh: "猪群", es: "Hato", vi: "Đàn heo" },
     items: [
       { href: "/sows",      icon: PiggyBank, label: { en: "Sows",      ko: "모돈",   zh: "母猪",   es: "Cerdas",   vi: "Heo nái" } },
       { href: "/boars",     icon: Heart,     label: { en: "Boars",     ko: "웅돈",   zh: "公猪",   es: "Verracos", vi: "Heo nọc" } },
@@ -58,21 +59,20 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
     ],
   },
   {
-    label: { en: "Records", ko: "기록", zh: "记录", es: "Registros", vi: "Ghi chép" },
+    label: { en: "Tasks & Alerts", ko: "할 일·알림", zh: "任务与预警", es: "Tareas y alertas", vi: "Việc & cảnh báo" },
     items: [
-      { href: "/tasks",     icon: ListTodo,      label: { en: "Today's Tasks", ko: "오늘 할 일", zh: "今日任务", es: "Tareas de hoy", vi: "Việc hôm nay" } },
-      { href: "/record",    icon: ClipboardList, label: { en: "Data Entry", ko: "기록 입력", zh: "数据录入", es: "Captura de datos", vi: "Nhập dữ liệu" } },
-      { href: "/farrowing", icon: Baby,          label: { en: "Farrowing",  ko: "분만사",    zh: "产房",     es: "Maternidad",       vi: "Chuồng đẻ" } },
+      { href: "/tasks",  icon: ListTodo,       label: { en: "Today's Tasks", ko: "오늘 할 일", zh: "今日任务", es: "Tareas de hoy", vi: "Việc hôm nay" } },
+      { href: "/alerts", icon: AlertTriangle, badge: "alerts", label: { en: "Alerts", ko: "알림", zh: "预警", es: "Alertas", vi: "Cảnh báo" } },
     ],
   },
   {
-    label: { en: "Analytics", ko: "분석", zh: "分析", es: "Análisis", vi: "Phân tích" },
+    label: { en: "Reports", ko: "보고서", zh: "报告", es: "Informes", vi: "Báo cáo" },
     items: [
-      { href: "/kpi",     icon: BarChart3,   label: { en: "KPI",     ko: "KPI",    zh: "指标",  es: "KPI",      vi: "KPI" } },
-      { href: "/reports", icon: FileText,    label: { en: "Reports", ko: "보고서", zh: "报告",  es: "Informes", vi: "Báo cáo" } },
-      { href: "/reports/reproduction", icon: FileText, label: { en: "Repro Report", ko: "번식 성적", zh: "繁殖报告", es: "Repro.", vi: "BC sinh sản" } },
-      { href: "/reports/grow-finish",  icon: Beef,     label: { en: "Grow-Finish",  ko: "비육 성적", zh: "育肥报告", es: "Engorde", vi: "BC vỗ béo" } },
-      { href: "/reports/prrs",         icon: Dna,      label: { en: "PRRS Genetics", ko: "PRRS 유전자", zh: "PRRS基因", es: "PRRS genética", vi: "PRRS di truyền" } },
+      { href: "/kpi",                  icon: BarChart3, label: { en: "KPI Summary",       ko: "KPI 현황",    zh: "指标概览", es: "Resumen KPI",       vi: "Tổng quan KPI" } },
+      { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản" } },
+      { href: "/reports/grow-finish",  icon: Beef,      label: { en: "Grow-Finish",       ko: "비육성적",    zh: "育肥成绩", es: "Engorde",           vi: "Năng suất vỗ béo" } },
+      { href: "/reports",              icon: FileText,  label: { en: "Sow Report",        ko: "모돈 보고서", zh: "母猪报告", es: "Informe de cerdas", vi: "Báo cáo nái" } },
+      { href: "/reports/prrs",         icon: Dna,       label: { en: "PRRS Genetics",     ko: "PRRS 유전",   zh: "PRRS基因", es: "PRRS genética",     vi: "PRRS di truyền" } },
     ],
   },
   {
@@ -84,9 +84,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
-  { href: "/alerts", icon: AlertTriangle, label: { en: "Alerts", ko: "관리 알림", zh: "预警", es: "Alertas", vi: "Cảnh báo" } },
-  { href: "/notifications", icon: Bell,     label: { en: "Notifications", ko: "알림", zh: "通知", es: "Notificaciones", vi: "Thông báo" } },
-  { href: "/settings",      icon: Settings, label: { en: "Settings",      ko: "설정", zh: "设置", es: "Configuración",   vi: "Cài đặt" } },
+  { href: "/settings", icon: Settings, label: { en: "Settings", ko: "설정", zh: "设置", es: "Configuración", vi: "Cài đặt" } },
 ];
 
 interface SidebarProps {
@@ -195,6 +193,11 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
                 >
                   <Icon size={15} className="flex-shrink-0" />
                   {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
+                  {!collapsed && item.badge === "alerts" && (alertCount + unreadCount) > 0 && (
+                    <span className="ml-auto text-[10px] font-bold bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
+                      {alertCount + unreadCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -233,16 +236,6 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
             >
               <Icon size={15} className="flex-shrink-0" />
               {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
-              {!collapsed && item.href === "/alerts" && alertCount > 0 && (
-                <span className="ml-auto text-[10px] font-bold bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
-                  {alertCount}
-                </span>
-              )}
-              {!collapsed && item.href === "/notifications" && unreadCount > 0 && (
-                <span className="ml-auto text-[10px] font-bold bg-primary text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
-                  {unreadCount}
-                </span>
-              )}
             </Link>
           );
         })}

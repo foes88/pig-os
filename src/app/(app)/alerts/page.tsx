@@ -7,6 +7,7 @@ import { AlertTriangle, ArrowRight } from "lucide-react";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { AlertsTabs } from "@/components/AlertsTabs";
 import type { OverdueSow, OverdueType } from "@/types/api.types";
 
 // 6 overdue types → i18n label key + recommended action route + action label key
@@ -64,6 +65,7 @@ export default function AlertsPage() {
 
   return (
     <div className="p-7 max-w-5xl">
+      <AlertsTabs />
       <div className="mb-6 flex items-center gap-2">
         <AlertTriangle className="w-5 h-5 text-warning" />
         <div>

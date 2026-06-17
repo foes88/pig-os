@@ -17,7 +17,7 @@ const TABS: { href: string | null; Icon: LucideIcon; label: L; isAI?: boolean; b
   { href: "/",              Icon: LayoutDashboard, label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ" } },
   { href: "/sows",          Icon: PiggyBank,       label: { en: "Sows",   ko: "모돈",  zh: "母猪", es: "Cerdas",    vi: "Nái" } },
   { href: null,             Icon: Sparkles,        label: { en: "AI",     ko: "AI",    zh: "AI",   es: "IA",        vi: "AI" }, isAI: true },
-  { href: "/notifications", Icon: Bell,            label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo" }, badge: 3 },
+  { href: "/alerts", Icon: Bell,            label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo" }, badge: 3 },
   { href: "/settings",      Icon: Menu,            label: { en: "More",  ko: "더보기", zh: "更多", es: "Más",       vi: "Thêm" } },
 ];
 
@@ -49,7 +49,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
         }
 
         const isActive = tab.href && (pathname === tab.href || pathname?.startsWith(tab.href + "/"));
-        const actualBadge = tab.href === "/notifications" ? alertCount : (tab.badge ?? 0);
+        const actualBadge = tab.href === "/alerts" ? alertCount : (tab.badge ?? 0);
 
         return (
           <Link
