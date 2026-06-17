@@ -25,7 +25,7 @@ from app.db.models.events import (
 )
 from app.db.models.health import FeedRecord
 from app.db.models.ops import FinisherGroup
-from app.db.models.sow import BreedingCycle
+from app.db.models.sow import BreedingCycle, Sow
 
 RTS_EVENT_TYPES = ("RETURN_TO_ESTRUS", "ABORTION", "EMPTY", "INFERTILE")
 VALID_PERIODS = ("monthly", "quarterly", "annual")
@@ -55,26 +55,74 @@ def build_reproduction_rows(
     weanings: list[tuple[date, int, int | None]],     # (date, weaned_count, lactation_days)
     rts: list[date],
     deaths: list[tuple[date, int]],                   # (date, piglet_death_count)
+    *,
+    group_by: str = "period",
+    # 확장 입력(미전달 시 기존 동작 유지 — 신규 필드만 0/None). 각 리스트는 동일 인덱스로 paired.
+    mating_breeds: list[str | None] | None = None,    # parallel to matings
+    farrowing_breeds: list[str | None] | None = None, # parallel to farrowings
+    weaning_breeds: list[str | None] | None = None,   # parallel to weanings
+    rts_breeds: list[str | None] | None = None,       # parallel to rts
+    death_breeds: list[str | None] | None = None,     # parallel to deaths
+    mating_numbers: list[int] | None = None,          # parallel to matings (1~5)
+    mating_types: list[str] | None = None,            # parallel to matings (AI/NATURAL)
+    stillborn: list[int] | None = None,               # parallel to farrowings
+    mummified: list[int] | None = None,               # parallel to farrowings
 ) -> list[dict]:
+    """기간별(period) 또는 품종별(breed) 번식성적 집계.
+
+    group_by="breed"이면 버킷 키 = 품종(breed) 라벨(None→"unknown"). 그 외는 period_key.
+    확장 인자가 주어지면 사산/미라/교배회차·방식 분해 지표를 함께 산출한다.
+    """
+    UNKNOWN = "unknown"
+
+    def gkey(d: date, breed: str | None) -> str:
+        if group_by == "breed":
+            return breed or UNKNOWN
+        return period_key(d, period)
+
     buckets: dict[str, dict] = {}
 
     def b(key: str) -> dict:
         return buckets.setdefault(
             key,
             {"matings": 0, "farrowings": 0, "weanings": 0, "rts": 0,
-             "tb": [], "ba": [], "weaned": [], "lact": [], "deaths": 0},
+             "tb": [], "ba": [], "weaned": [], "lact": [], "deaths": 0,
+             "sb": 0, "mum": 0, "m1": 0, "m2": 0, "m3plus": 0, "ai": 0, "nat": 0},
         )
 
-    for d in matings:
-        b(period_key(d, period))["matings"] += 1
-    for d, tb, ba in farrowings:
-        x = b(period_key(d, period)); x["farrowings"] += 1; x["tb"].append(tb); x["ba"].append(ba)
-    for d, wc, lact in weanings:
-        x = b(period_key(d, period)); x["weanings"] += 1; x["weaned"].append(wc); x["lact"].append(lact)
-    for d in rts:
-        b(period_key(d, period))["rts"] += 1
-    for d, n in deaths:
-        b(period_key(d, period))["deaths"] += n
+    for i, d in enumerate(matings):
+        breed = mating_breeds[i] if mating_breeds and i < len(mating_breeds) else None
+        x = b(gkey(d, breed)); x["matings"] += 1
+        if mating_numbers and i < len(mating_numbers):
+            n = mating_numbers[i]
+            if n == 1:
+                x["m1"] += 1
+            elif n == 2:
+                x["m2"] += 1
+            elif n is not None and n >= 3:
+                x["m3plus"] += 1
+        if mating_types and i < len(mating_types):
+            t = (mating_types[i] or "").upper()
+            if t == "AI":
+                x["ai"] += 1
+            elif t == "NATURAL":
+                x["nat"] += 1
+    for i, (d, tb, ba) in enumerate(farrowings):
+        breed = farrowing_breeds[i] if farrowing_breeds and i < len(farrowing_breeds) else None
+        x = b(gkey(d, breed)); x["farrowings"] += 1; x["tb"].append(tb); x["ba"].append(ba)
+        if stillborn and i < len(stillborn):
+            x["sb"] += stillborn[i] or 0
+        if mummified and i < len(mummified):
+            x["mum"] += mummified[i] or 0
+    for i, (d, wc, lact) in enumerate(weanings):
+        breed = weaning_breeds[i] if weaning_breeds and i < len(weaning_breeds) else None
+        x = b(gkey(d, breed)); x["weanings"] += 1; x["weaned"].append(wc); x["lact"].append(lact)
+    for i, d in enumerate(rts):
+        breed = rts_breeds[i] if rts_breeds and i < len(rts_breeds) else None
+        b(gkey(d, breed))["rts"] += 1
+    for i, (d, n) in enumerate(deaths):
+        breed = death_breeds[i] if death_breeds and i < len(death_breeds) else None
+        b(gkey(d, breed))["deaths"] += n
 
     rows = []
     for key in sorted(buckets):
@@ -82,6 +130,8 @@ def build_reproduction_rows(
         avg_tb = _avg(x["tb"])
         avg_weaned = _avg(x["weaned"])
         total_weaned = sum(w for w in x["weaned"] if w is not None)
+        tb_sum = sum(t for t in x["tb"] if t is not None)
+        ba_sum = sum(t for t in x["ba"] if t is not None)
         fr = round(x["farrowings"] / x["matings"] * 100, 1) if x["matings"] else None
         rts_rate = round(x["rts"] / x["matings"] * 100, 1) if x["matings"] else None
         pwmr_b = (
@@ -91,6 +141,9 @@ def build_reproduction_rows(
         )
         denom_a = total_weaned + x["deaths"]
         pwmr_a = round(x["deaths"] / denom_a * 100, 1) if denom_a > 0 else None
+        sb_rate = round(x["sb"] / tb_sum * 100, 1) if tb_sum > 0 else None
+        mum_rate = round(x["mum"] / tb_sum * 100, 1) if tb_sum > 0 else None
+        loss_rate = round((x["sb"] + x["mum"]) / tb_sum * 100, 1) if tb_sum > 0 else None
         rows.append({
             "period": key,
             "total_matings": x["matings"],
@@ -104,8 +157,60 @@ def build_reproduction_rows(
             "pwmr_a": pwmr_a,
             "pwmr_b": pwmr_b,
             "rts_rate": rts_rate,
+            # ── 확장 지표 (R3) ──
+            "total_born_sum": tb_sum,
+            "born_alive_sum": ba_sum,
+            "total_stillborn": x["sb"],
+            "total_mummified": x["mum"],
+            "stillborn_rate": sb_rate,
+            "mummified_rate": mum_rate,
+            "birth_loss_rate": loss_rate,
+            "mating_1_count": x["m1"],
+            "mating_2_count": x["m2"],
+            "mating_3plus_count": x["m3plus"],
+            "ai_count": x["ai"],
+            "natural_count": x["nat"],
         })
     return rows
+
+
+def benchmark_values_from_effective(effective: list[dict]) -> list[dict]:
+    """threshold_service.list_effective() 출력 → 보고서 동봉용 BenchmarkValue dict 리스트.
+
+    순수 변환(판정 없음). 프론트는 이 값과 행 값을 '비교'만 한다(판정 재구현 금지).
+    """
+    out = []
+    for e in effective:
+        out.append({
+            "metric_code": e["metric_code"],
+            "target": e.get("target"),
+            "benchmark_avg": e.get("avg"),
+            "benchmark_top25": e.get("top25"),
+            "warning": e.get("warning"),
+            "critical": e.get("critical"),
+            "alert_direction": e.get("direction"),
+            "unit": e.get("unit"),
+            "source_ref": e.get("source"),
+            "confidence": e.get("confidence"),
+        })
+    return out
+
+
+async def get_production_summary(
+    db: AsyncSession, farm, start: date, end: date, period: str, group_by: str = "period"
+) -> dict:
+    """피그플랜식 통합표: 번식성적 rows + 농장 country 기준값 동봉."""
+    from app.services import threshold_service  # 지연 임포트(순환 방지)
+
+    rows = await get_reproduction_report(db, farm.id, start, end, period, group_by)
+    effective = await threshold_service.list_effective(db, farm)
+    return {
+        "group_by": group_by,
+        "period": period,
+        "country_scope": getattr(farm, "country", None),
+        "benchmarks": benchmark_values_from_effective(effective),
+        "rows": rows,
+    }
 
 
 # ── Grow-finish ───────────────────────────────────────────────────────────────
@@ -197,34 +302,42 @@ def build_sow_history(
 # ── DB wrappers ───────────────────────────────────────────────────────────────
 
 async def get_reproduction_report(
-    db: AsyncSession, farm_id: UUID, start: date, end: date, period: str
+    db: AsyncSession, farm_id: UUID, start: date, end: date, period: str,
+    group_by: str = "period",
 ) -> list[dict]:
+    # Sow 조인으로 breed 동봉 (group_by="breed" 지원 + 사산/미라/교배회차·방식 분해)
     mrows = (await db.execute(
-        select(Mating.mating_date).where(
-            Mating.farm_id == farm_id, Mating.deleted_at.is_(None),
-            Mating.mating_date >= start, Mating.mating_date <= end)
+        select(Mating.mating_date, Mating.mating_number, Mating.mating_type, Sow.breed)
+        .join(Sow, Mating.sow_id == Sow.id)
+        .where(Mating.farm_id == farm_id, Mating.deleted_at.is_(None),
+               Mating.mating_date >= start, Mating.mating_date <= end)
     )).all()
     frows = (await db.execute(
-        select(Farrowing.farrowing_date, Farrowing.total_born, Farrowing.born_alive).where(
-            Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None),
-            Farrowing.farrowing_date >= start, Farrowing.farrowing_date <= end)
+        select(Farrowing.farrowing_date, Farrowing.total_born, Farrowing.born_alive,
+               Farrowing.stillborn, Farrowing.mummified, Sow.breed)
+        .join(Sow, Farrowing.sow_id == Sow.id)
+        .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None),
+               Farrowing.farrowing_date >= start, Farrowing.farrowing_date <= end)
     )).all()
     wrows = (await db.execute(
-        select(Weaning.weaning_date, Weaning.weaned_count, Weaning.weaning_age_days).where(
-            Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None),
-            Weaning.weaning_date >= start, Weaning.weaning_date <= end)
+        select(Weaning.weaning_date, Weaning.weaned_count, Weaning.weaning_age_days, Sow.breed)
+        .join(Sow, Weaning.sow_id == Sow.id)
+        .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None),
+               Weaning.weaning_date >= start, Weaning.weaning_date <= end)
     )).all()
     rrows = (await db.execute(
-        select(ReproductiveEvent.event_date).where(
-            ReproductiveEvent.farm_id == farm_id, ReproductiveEvent.deleted_at.is_(None),
-            ReproductiveEvent.event_type.in_(RTS_EVENT_TYPES),
-            ReproductiveEvent.event_date >= start, ReproductiveEvent.event_date <= end)
+        select(ReproductiveEvent.event_date, Sow.breed)
+        .join(Sow, ReproductiveEvent.sow_id == Sow.id)
+        .where(ReproductiveEvent.farm_id == farm_id, ReproductiveEvent.deleted_at.is_(None),
+               ReproductiveEvent.event_type.in_(RTS_EVENT_TYPES),
+               ReproductiveEvent.event_date >= start, ReproductiveEvent.event_date <= end)
     )).all()
     drows = (await db.execute(
-        select(PigletEvent.event_date, PigletEvent.piglet_count).where(
-            PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None),
-            PigletEvent.event_type == "DEATH",
-            PigletEvent.event_date >= start, PigletEvent.event_date <= end)
+        select(PigletEvent.event_date, PigletEvent.piglet_count, Sow.breed)
+        .join(Sow, PigletEvent.sow_id == Sow.id)
+        .where(PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None),
+               PigletEvent.event_type == "DEATH",
+               PigletEvent.event_date >= start, PigletEvent.event_date <= end)
     )).all()
 
     return build_reproduction_rows(
@@ -234,6 +347,16 @@ async def get_reproduction_report(
         [(r[0], r[1], r[2]) for r in wrows],
         [r[0] for r in rrows],
         [(r[0], r[1]) for r in drows],
+        group_by=group_by,
+        mating_numbers=[r[1] for r in mrows],
+        mating_types=[r[2] for r in mrows],
+        mating_breeds=[r[3] for r in mrows],
+        farrowing_breeds=[r[5] for r in frows],
+        stillborn=[r[3] for r in frows],
+        mummified=[r[4] for r in frows],
+        weaning_breeds=[r[3] for r in wrows],
+        rts_breeds=[r[1] for r in rrows],
+        death_breeds=[r[2] for r in drows],
     )
 
 

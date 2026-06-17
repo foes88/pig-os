@@ -421,3 +421,10 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - **검증 출처만 사용**: 기존 `f3a7c2e9` 시드(PigCHAMP/PorkCheckoff/Agriness/WEPIG/한돈팜스/PigPlan) 재활용 + KR 2025 신규 실측(xlsx n=456 median: PSY 24.73·분만율 83.19·실산 12.22·이유두수 10.85·WSI 6.30). 원자료 `_pigplan_kr_means.txt`.
 - 출처 없는 칸은 전부 "출처 미확보" 빈칸(임의생성 0). MSY 전 시장·정의값(이유일령/포유기간/초교배일령)·모돈도폐사율(KR 정의불일치 의심)은 빈칸/보류.
 - 단위: US=lb·그 외 kg(저장 kg canonical). 정정: xlsx '품종'축은 실제 보고서 섹션 → R3 breed분해는 PigOS sow.breed 기반으로 진행.
+
+### [R3] 보고서 API 확장 (완료, backend)
+- `build_reproduction_rows` 확장(하위호환 keyword-only): `group_by=period|breed`(sow.breed 버킷), 신규 지표 — total_born_sum/born_alive_sum/total_stillborn/total_mummified/stillborn_rate/mummified_rate/birth_loss_rate(=생시자돈사고율)/mating_1·2·3plus_count/ai·natural_count. 기존 6-positional 호출 무회귀.
+- `get_reproduction_report`: Sow 조인으로 breed + stillborn/mummified + mating_number/type 동봉. `/reproduction?group_by=breed` 지원.
+- 신규 `GET /reports/production-summary` (ProductionSummary envelope): rows + 농장 country 기준값(`threshold_service.list_effective`→`benchmark_values_from_effective`, 순수변환). 프론트는 비교만(판정 재구현 금지).
+- schema: ReproductionRow 확장필드 + BenchmarkValue + ProductionSummary. 공식 `docs/specs/2026-06-17_reports-extended-formulas.md`.
+- 검증: **unit pytest 226 passed**(219+7 신규: 사산/미라율·교배분해·breed그룹·benchmark매핑), ruff clean, `import app.main` OK. ⚠ integration(test_reports breed/summary)·DB 검증은 R6 + 사용자머신.

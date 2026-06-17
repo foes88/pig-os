@@ -2,6 +2,7 @@
 from datetime import date
 
 from app.services.report_service import (
+    benchmark_values_from_effective,
     build_grow_finish_rows,
     build_reproduction_rows,
     build_sow_history,
@@ -60,6 +61,83 @@ class TestReproductionRows:
         rows = build_reproduction_rows("annual", [], [(date(2026, 1, 1), 12, 11)], [], [], [])
         assert rows[0]["fr"] is None
         assert rows[0]["rts_rate"] is None
+
+
+class TestReproductionExtended:
+    def test_backward_compat_adds_zero_fields(self):
+        # 기존 positional 호출 — 신규 필드는 0/None, 기존 필드 무회귀
+        farrowings = [(date(2026, 1, 10), 14, 13)]
+        rows = build_reproduction_rows("monthly", [date(2026, 1, 5)], farrowings, [], [], [])
+        r = rows[0]
+        assert r["avg_tb"] == 14.0
+        assert r["total_stillborn"] == 0
+        assert r["total_born_sum"] == 14
+        assert r["born_alive_sum"] == 13
+        assert r["stillborn_rate"] == 0.0   # sb 0 / tb 14
+        assert r["mating_1_count"] == 0     # mating_numbers 미전달
+
+    def test_stillborn_mummified_rates(self):
+        farrowings = [(date(2026, 1, 10), 14, 12), (date(2026, 1, 20), 16, 14)]
+        rows = build_reproduction_rows(
+            "monthly", [], farrowings, [], [], [],
+            stillborn=[1, 1], mummified=[1, 1],
+        )
+        r = rows[0]
+        # tb_sum=30, sb=2 → 6.7%, mum=2 → 6.7%, loss=4/30 → 13.3%
+        assert r["total_stillborn"] == 2
+        assert r["total_mummified"] == 2
+        assert r["stillborn_rate"] == 6.7
+        assert r["birth_loss_rate"] == 13.3
+
+    def test_mating_breakdown(self):
+        matings = [date(2026, 1, 1)] * 4
+        rows = build_reproduction_rows(
+            "annual", matings, [], [], [], [],
+            mating_numbers=[1, 1, 2, 3], mating_types=["AI", "AI", "NATURAL", "AI"],
+        )
+        r = rows[0]
+        assert r["mating_1_count"] == 2
+        assert r["mating_2_count"] == 1
+        assert r["mating_3plus_count"] == 1
+        assert r["ai_count"] == 3
+        assert r["natural_count"] == 1
+
+    def test_group_by_breed(self):
+        matings = [date(2026, 1, 1), date(2026, 6, 1), date(2026, 7, 1)]
+        rows = build_reproduction_rows(
+            "monthly", matings, [], [], [], [],
+            group_by="breed", mating_breeds=["LY", "LY", "Duroc"],
+        )
+        by = {r["period"]: r for r in rows}
+        assert set(by) == {"LY", "Duroc"}
+        assert by["LY"]["total_matings"] == 2
+        assert by["Duroc"]["total_matings"] == 1
+
+    def test_group_by_breed_unknown(self):
+        rows = build_reproduction_rows(
+            "monthly", [date(2026, 1, 1)], [], [], [], [],
+            group_by="breed", mating_breeds=[None],
+        )
+        assert rows[0]["period"] == "unknown"
+
+
+class TestBenchmarkMapping:
+    def test_maps_effective_fields(self):
+        effective = [{
+            "metric_code": "PSY", "target": 24.0, "avg": 22.1, "top25": 28.0,
+            "warning": 22.0, "critical": 18.0, "direction": "below",
+            "unit": "두/모돈/년", "source": "한돈팜스2023", "confidence": "high",
+        }]
+        out = benchmark_values_from_effective(effective)
+        assert out[0]["metric_code"] == "PSY"
+        assert out[0]["target"] == 24.0
+        assert out[0]["benchmark_avg"] == 22.1
+        assert out[0]["benchmark_top25"] == 28.0
+        assert out[0]["alert_direction"] == "below"
+        assert out[0]["source_ref"] == "한돈팜스2023"
+
+    def test_empty(self):
+        assert benchmark_values_from_effective([]) == []
 
 
 class TestGrowFinishRows:
