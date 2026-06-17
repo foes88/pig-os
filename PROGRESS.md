@@ -428,3 +428,9 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - 신규 `GET /reports/production-summary` (ProductionSummary envelope): rows + 농장 country 기준값(`threshold_service.list_effective`→`benchmark_values_from_effective`, 순수변환). 프론트는 비교만(판정 재구현 금지).
 - schema: ReproductionRow 확장필드 + BenchmarkValue + ProductionSummary. 공식 `docs/specs/2026-06-17_reports-extended-formulas.md`.
 - 검증: **unit pytest 226 passed**(219+7 신규: 사산/미라율·교배분해·breed그룹·benchmark매핑), ruff clean, `import app.main` OK. ⚠ integration(test_reports breed/summary)·DB 검증은 R6 + 사용자머신.
+
+### [R4] 국가 기준값 시드 (완료, 마이그레이션 파일만)
+- `api/alembic/versions/b1c2d3e4f5a6_seed_kr_pigplan2025_benchmarks.py`: KR region scope의 PSY/FARROWING_RATE/BORN_ALIVE/WEANED_COUNT/WSI **benchmark_avg를 PigPlan2025 median(n=456)으로 갱신**(target/threshold 기존 PigPlan 확정값 보존). confidence=high, source_ref=PigPlan2025-xlsx-median-n456.
+- **검증값만**(R2 근거). 출처 미확보(MSY·CN/VN/BR 일부·정의값·모돈도폐사율)는 시드하지 않음. US/CN/BR/VN은 기존 f3a7c2e9 시드 유지(재시드 안 함).
+- ⚠ 운영 DB 직접 변경 안 함 — 파일만. 적용은 사람 `cd api && uv run alembic upgrade head`.
+- 검증: py_compile OK, `alembic heads` 단일 head(a8d2f4c6e1b9→b1c2d3e4f5a6) 체인 정상(브랜치 없음).
