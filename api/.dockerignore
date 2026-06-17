@@ -1,0 +1,19 @@
+# Python 가상환경 (Windows 심링크가 Linux 빌드 컨텍스트 체크섬 실패 유발) — 배포 블로커
+.venv
+.venv*
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# 로컬 전용
+.env
+.env.*
+!.env.example
+*.log
+*.bak
+tests/
+.git/

@@ -1,0 +1,9 @@
+# 컨테이너 내부에서 npm ci + build 하므로 로컬 산출물 제외 (빌드 깨짐/비대 방지)
+node_modules/
+.next/
+out/
+*.log
+.env.local
+.env*.local
+.git/
+coverage/
