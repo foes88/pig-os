@@ -138,7 +138,8 @@
     "etPurchase": "Mua",
     "etTransfer": "Chuyển đến",
     "etBorn": "Tự sản xuất",
-    "editTerminalNote": "Nái này đã xuất (loại/bán). Trạng thái quản lý qua quy trình loại thải."
+    "editTerminalNote": "Nái này đã xuất (loại/bán). Trạng thái quản lý qua quy trình loại thải.",
+    "selectFarm": "Vui lòng chọn trại."
   },
   "events": {
     "mating": {

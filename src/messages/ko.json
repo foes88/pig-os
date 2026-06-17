@@ -138,7 +138,8 @@
     "etPurchase": "구입",
     "etTransfer": "전입",
     "etBorn": "자가생산",
-    "editTerminalNote": "이 모돈은 이미 도폐사/판매 처리되었습니다. 상태는 도폐사 흐름에서 관리됩니다."
+    "editTerminalNote": "이 모돈은 이미 도폐사/판매 처리되었습니다. 상태는 도폐사 흐름에서 관리됩니다.",
+    "selectFarm": "농장을 선택해주세요."
   },
   "events": {
     "mating": {

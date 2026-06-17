@@ -138,7 +138,8 @@
     "etPurchase": "Compra",
     "etTransfer": "Traslado",
     "etBorn": "Nacida en granja",
-    "editTerminalNote": "Esta cerda ya salió (eliminada/vendida). El estado se gestiona en el flujo de baja."
+    "editTerminalNote": "Esta cerda ya salió (eliminada/vendida). El estado se gestiona en el flujo de baja.",
+    "selectFarm": "Seleccione una granja."
   },
   "events": {
     "mating": {

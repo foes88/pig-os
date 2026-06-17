@@ -138,7 +138,8 @@
     "etPurchase": "购入",
     "etTransfer": "转入",
     "etBorn": "自繁",
-    "editTerminalNote": "该母猪已淘汰/售出，状态由淘汰流程管理。"
+    "editTerminalNote": "该母猪已淘汰/售出，状态由淘汰流程管理。",
+    "selectFarm": "请选择猪场。"
   },
   "events": {
     "mating": {

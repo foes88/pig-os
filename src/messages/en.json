@@ -138,7 +138,8 @@
     "etPurchase": "Purchase",
     "etTransfer": "Transfer",
     "etBorn": "Born on-farm",
-    "editTerminalNote": "This sow has exited (culled/sold). Status is managed via the removal flow."
+    "editTerminalNote": "This sow has exited (culled/sold). Status is managed via the removal flow.",
+    "selectFarm": "Please select a farm."
   },
   "events": {
     "mating": {
