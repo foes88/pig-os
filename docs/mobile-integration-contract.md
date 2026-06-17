@@ -4,6 +4,10 @@
 > 변경 시 이 문서를 먼저 갱신하고 양측에 공지. 최종 갱신: 2026-06-18.
 > API 라우트는 `GET http://<host>:8000/docs` (OpenAPI)와 항상 일치해야 한다.
 >
+> 🧭 **이 문서로 완벽 개발하는 법(2벌 페어링)**: 이 MD = **무엇을/왜/화면구조·결정·Enum·비자명 규칙**(SSOT).
+> **정확한 요청/응답 필드 스키마**는 중복·드리프트 방지 위해 **OpenAPI(`/docs` = `docs/api/openapi-v1.yaml`, 67 paths)** 에 둔다.
+> 따라서 모바일은 **MD(이 문서) + OpenAPI**를 함께 보면 빠짐없이 구현 가능. 라우트 변경 시 둘 다 갱신(`scripts/gen_openapi.py` 재생성).
+>
 > 📌 **2026-06-18 변경(모바일 반영 필수)**: ① 화면/메뉴 구조 재설계(§3.0) ② 보고서 API 확장 — 품종별 `group_by=breed` + `/reports/production-summary`(국가 기준값 동봉) + 확장지표(§3 KPI/보고서) ③ 알림 통합 — '관리대상'+'시스템알림' 한 화면 탭(§3 할일/알림) ④ 국가별 KPI 차등 기준값(KR=PigPlan2025 실데이터 시드)(§3 임계값/§5) ⑤ UI 아이콘=벡터, **이모지 금지**(§5).
 >
 > ⛔ **이 문서가 유일한 기준.** 모바일 레포의 옛 문서(`03-api-endpoints.md`,
@@ -136,6 +140,14 @@
 
 ### Q&A
 - `POST /farms/{farm_id}/chat/query` (Rule-grounded, addon 활성 농장은 LLM 응답)
+
+### 팀원 / 조직 (멤버·조직 관리)
+- **팀원(농장 멤버)**: `GET /farms/{farm_id}/members` → `MemberResponse[]`(`user_id, email, name, role`) ·
+  `POST /farms/{farm_id}/members`(`MemberCreate {email, role(기본 FARM_WORKER)}`) ·
+  `PATCH /farms/{farm_id}/members/{user_id}`(`MemberUpdate {role}`). 역할은 농장 레벨 override(없으면 org role). 변경 권한=OWNER/MANAGER.
+  - 모바일 '팀/멤버' 화면이 있으면 이 API 사용(Task 담당자 배정의 `assigned_to`도 멤버 user_id).
+- **조직(엔터프라이즈 계층)**: `GET /orgs` · `GET /orgs/{org_id}` · `POST /orgs` · `PATCH /orgs/{org_id}` · `GET /orgs/{org_id}/farms` · `GET /orgs/{org_id}/tree`.
+  - 다농장/조직 관리용(주 사용=웹 관리자). 모바일 MVP는 보통 단일농장 컨텍스트라 **선택**. 다농장 계정이면 `auth/login`의 `farm_ids`로 농장 전환 + 위 트리 참고.
 
 ---
 
