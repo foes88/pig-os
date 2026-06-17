@@ -1,0 +1,12 @@
+PSY	n=456	mean=23.83	median=24.73	min=0.00	max=36.82
+MSY	n=454	mean=0.00	median=0.00	min=0.00	max=0.00
+분만율	n=456	mean=79.80	median=83.19	min=0.00	max=100.00
+평균실산(평균생존산자수)	n=456	mean=11.76	median=12.22	min=0.00	max=16.69
+평균이유두수	n=456	mean=10.40	median=10.85	min=0.00	max=14.32
+평균비생산일수	n=456	mean=50.31	median=41.70	min=0.00	max=365.00
+평균재귀발정일령	n=456	mean=6.63	median=6.30	min=0.00	max=26.57
+평균총산	n=456	mean=13.03	median=13.43	min=0.00	max=20.29
+모돈도폐사율	n=456	mean=49.24	median=39.34	min=0.00	max=579.71
+평균임신기간	n=456	mean=112.45	median=114.82	min=0.00	max=152.94
+평균복당포유기간	n=456	mean=25.10	median=24.55	min=0.00	max=640.00
+평균이유일령(대리모제외)	n=456	mean=25.15	median=24.58	min=0.00	max=640.00

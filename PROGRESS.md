@@ -415,3 +415,9 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - `docs/specs/2026-06-17_pigplan-metrics-mapping.md`: 146지표 4분류 — **① 이미계산 22 / ② 데이터있음·미집계 98 / ③ 데이터부족 26 / 국가차등 Y 41**. 각 행에 PigOS metric/source·식 또는 갭·국가차등·근거.
 - 스키마 갭 식별: 생시체중 컬럼 없음(생시체중 7지표 ③), 분만 4구분 없음(farrowing_ease 난이도만), 보정21일체중·재포유·부분이유·후보돈 사육일수 미입력.
 - 수치 임의생성 없음(매핑·분류만). 검증: docs-only(코드 무변경 → 테스트 영향 없음).
+
+### [R2] 국가별 KPI 차등 (완료, docs-only)
+- `docs/specs/2026-06-17_country-kpi-differences.md`: KR/US/CN/SEA(VN)/LatAm(BR) × 9 KPI를 4축(벤치마크/임계/단위/정의)으로 정리.
+- **검증 출처만 사용**: 기존 `f3a7c2e9` 시드(PigCHAMP/PorkCheckoff/Agriness/WEPIG/한돈팜스/PigPlan) 재활용 + KR 2025 신규 실측(xlsx n=456 median: PSY 24.73·분만율 83.19·실산 12.22·이유두수 10.85·WSI 6.30). 원자료 `_pigplan_kr_means.txt`.
+- 출처 없는 칸은 전부 "출처 미확보" 빈칸(임의생성 0). MSY 전 시장·정의값(이유일령/포유기간/초교배일령)·모돈도폐사율(KR 정의불일치 의심)은 빈칸/보류.
+- 단위: US=lb·그 외 kg(저장 kg canonical). 정정: xlsx '품종'축은 실제 보고서 섹션 → R3 breed분해는 PigOS sow.breed 기반으로 진행.
