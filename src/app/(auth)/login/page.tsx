@@ -213,13 +213,18 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("pigos_lang") as Lang | null;
+    // NEXT_LOCALE 쿠키 우선(앱과 동일 소스), 없으면 localStorage
+    const m = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
+    const cookieLang = m?.[1] as Lang | undefined;
+    const stored = (cookieLang ?? localStorage.getItem("pigos_lang")) as Lang | null;
     if (stored && LANGS.includes(stored)) setLang(stored);
   }, []);
 
   const switchLang = (l: Lang) => {
     setLang(l);
     localStorage.setItem("pigos_lang", l);
+    // next-intl(앱 페이지)이 읽는 쿠키도 같이 설정 → 로그인 후 언어 일치
+    document.cookie = `NEXT_LOCALE=${l}; path=/; max-age=31536000; SameSite=Lax`;
   };
 
   const t = T[lang];
