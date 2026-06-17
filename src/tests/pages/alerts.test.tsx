@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithClient } from "../test-utils";
 
+vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/alerts" }));
 vi.mock("next/link", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/store/auth.store", () => ({
@@ -25,7 +26,7 @@ import AlertsPage from "@/app/(app)/alerts/page";
 describe("AlertsPage", () => {
   it("renders the header", () => {
     renderWithClient(<AlertsPage />);
-    expect(screen.getByText("관리 알림")).toBeInTheDocument();
+    expect(screen.getByText("title")).toBeInTheDocument();  // next-intl mock → 키 반환
   });
 
   it("shows an overdue sow row after data loads", async () => {
