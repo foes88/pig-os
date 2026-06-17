@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { AlertOctagon, Brain, Lightbulb, Sparkles, Zap } from "lucide-react";
 
 // Stat Card
 export function Stat({
@@ -84,10 +85,10 @@ export function AIAction({
   actionHref?: string;
 }) {
   const priorityStyles = {
-    critical: { bg: "bg-red-50", text: "text-danger", icon: "🚨", label: "Critical" },
-    high: { bg: "bg-amber-50", text: "text-warning", icon: "⚡", label: "High" },
-    medium: { bg: "bg-emerald-50", text: "text-primary", icon: "💡", label: "Optimization" },
-    insight: { bg: "bg-purple-50", text: "text-purple", icon: "🔮", label: "Prediction" },
+    critical: { bg: "bg-red-50", text: "text-danger", Icon: AlertOctagon, label: "Critical" },
+    high: { bg: "bg-amber-50", text: "text-warning", Icon: Zap, label: "High" },
+    medium: { bg: "bg-emerald-50", text: "text-primary", Icon: Lightbulb, label: "Optimization" },
+    insight: { bg: "bg-purple-50", text: "text-purple", Icon: Sparkles, label: "Prediction" },
   };
 
   const p = priorityStyles[priority];
@@ -95,7 +96,7 @@ export function AIAction({
   return (
     <div className="bg-surface border border-border rounded-xl p-[18px] mb-3 cursor-pointer transition-all hover:border-primary hover:shadow-[0_2px_12px_rgba(13,124,102,.08)]">
       <span className={`inline-flex items-center gap-1 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded ${p.bg} ${p.text} mb-2`}>
-        {p.icon} {p.label}
+        <p.Icon size={11} /> {p.label}
       </span>
       <div className="text-sm font-bold mb-1">{title}</div>
       <div className="text-xs text-text2 leading-relaxed mb-2.5">{desc}</div>
@@ -176,7 +177,7 @@ export function PipeItem({
   aiIcon,
   aiDanger = false,
 }: {
-  icon: string;
+  icon: ReactNode;
   count: number;
   name: string;
   active?: boolean;
@@ -191,7 +192,7 @@ export function PipeItem({
           : "border-border hover:border-primary"
       }`}
     >
-      <div className="text-lg mb-1.5">{icon}</div>
+      <div className="mb-1.5 flex items-center justify-center text-text2">{icon}</div>
       <div className="font-mono text-[22px] font-extrabold">{count}</div>
       <div className="text-[10px] text-text3 font-semibold">{name}</div>
       {aiIcon && (
@@ -200,7 +201,7 @@ export function PipeItem({
             aiDanger ? "bg-danger" : "bg-purple"
           }`}
         >
-          {aiDanger ? "!" : "🧠"}
+          {aiDanger ? "!" : <Brain size={10} />}
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { Sparkles } from "lucide-react";
 import { chatApi } from "@/lib/api/endpoints/chat";
 import { useAuthStore } from "@/store/auth.store";
 import type { ChatResponse } from "@/types/api.types";
@@ -76,9 +77,9 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm"
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
               style={{ background: "linear-gradient(135deg,#2563EB,#7C3AED)" }}>
-              ✦
+              <Sparkles size={15} />
             </div>
             <div>
               <div className="text-sm font-bold text-text">{header}</div>

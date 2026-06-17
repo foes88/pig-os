@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Bell, LayoutDashboard, Menu, PiggyBank, Sparkles, type LucideIcon } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 
 interface BottomNavProps {
@@ -12,12 +13,12 @@ interface BottomNavProps {
 
 type L = Record<Locale, string>;
 
-const TABS: { href: string | null; icon: string; label: L; isAI?: boolean; badge?: number }[] = [
-  { href: "/",              icon: "⊞", label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ" } },
-  { href: "/sows",          icon: "⬡", label: { en: "Sows",   ko: "모돈",  zh: "母猪", es: "Cerdas",    vi: "Nái" } },
-  { href: null,             icon: "✦", label: { en: "AI",     ko: "AI",    zh: "AI",   es: "IA",        vi: "AI" }, isAI: true },
-  { href: "/notifications", icon: "🔔", label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo" }, badge: 3 },
-  { href: "/settings",      icon: "⚙",  label: { en: "More",  ko: "더보기", zh: "更多", es: "Más",       vi: "Thêm" } },
+const TABS: { href: string | null; Icon: LucideIcon; label: L; isAI?: boolean; badge?: number }[] = [
+  { href: "/",              Icon: LayoutDashboard, label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ" } },
+  { href: "/sows",          Icon: PiggyBank,       label: { en: "Sows",   ko: "모돈",  zh: "母猪", es: "Cerdas",    vi: "Nái" } },
+  { href: null,             Icon: Sparkles,        label: { en: "AI",     ko: "AI",    zh: "AI",   es: "IA",        vi: "AI" }, isAI: true },
+  { href: "/notifications", Icon: Bell,            label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo" }, badge: 3 },
+  { href: "/settings",      Icon: Menu,            label: { en: "More",  ko: "더보기", zh: "更多", es: "Más",       vi: "Thêm" } },
 ];
 
 export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavProps) {
@@ -40,7 +41,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
                   boxShadow: "0 4px 12px rgba(37,99,235,.4)",
                 }}
               >
-                {tab.icon}
+                <tab.Icon size={20} />
               </div>
               <span className="text-[10px] font-semibold text-primary">{tab.label[lang]}</span>
             </button>
@@ -56,9 +57,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
             href={tab.href ?? "#"}
             className="flex flex-col items-center justify-center py-3 gap-1 relative"
           >
-            <span className={`text-xl ${isActive ? "text-primary" : "text-faint"}`}>
-              {tab.icon}
-            </span>
+            <tab.Icon size={22} className={isActive ? "text-primary" : "text-faint"} />
             {actualBadge > 0 && (
               <span className="absolute top-2 right-1/4 min-w-[14px] h-3.5 px-1 rounded-full bg-red text-white font-mono text-[9px] font-bold flex items-center justify-center">
                 {actualBadge}

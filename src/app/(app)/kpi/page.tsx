@@ -3,15 +3,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
+import { SEVERITY_ICON } from "@/lib/icons";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { Alert } from "@/types/api.types";
 
-const SEVERITY_STYLE: Record<string, { cls: string; icon: string }> = {
-  OK:       { cls: "bg-green-50 border-green-200 text-green-700", icon: "✓" },
-  INFO:     { cls: "bg-blue-50 border-blue-200 text-blue-700",    icon: "ℹ" },
-  WARNING:  { cls: "bg-amber-50 border-amber-200 text-amber-700", icon: "⚠" },
-  CRITICAL: { cls: "bg-red-50 border-red-200 text-red-700",       icon: "🚨" },
+const SEVERITY_STYLE: Record<string, { cls: string }> = {
+  OK:       { cls: "bg-green-50 border-green-200 text-green-700" },
+  INFO:     { cls: "bg-blue-50 border-blue-200 text-blue-700" },
+  WARNING:  { cls: "bg-amber-50 border-amber-200 text-amber-700" },
+  CRITICAL: { cls: "bg-red-50 border-red-200 text-red-700" },
 };
 
 export default function KpiPage() {
@@ -180,9 +181,10 @@ function HerdCard({ label, value, color, unit }: { label: string; value: number;
 function AlertRow({ alert }: { alert: Alert }) {
   const t = useTranslations("kpi");
   const style = SEVERITY_STYLE[alert.severity] ?? SEVERITY_STYLE.INFO;
+  const Icon = SEVERITY_ICON[alert.severity] ?? SEVERITY_ICON.INFO;
   return (
     <div className={`border rounded-xl px-4 py-3 flex items-start gap-3 ${style.cls}`}>
-      <span className="font-bold text-base flex-shrink-0">{style.icon}</span>
+      <Icon size={16} className="flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="text-xs font-semibold">{alert.kpi} — {alert.message}</div>
         {alert.current_value != null && (

@@ -1,5 +1,6 @@
 "use client";
 import { useTranslations } from "next-intl";
+import { Check } from "lucide-react";
 
 export default function UpdatePage() {
   const t = useTranslations("util");
@@ -18,7 +19,7 @@ export default function UpdatePage() {
           <p className="text-xs font-bold text-text3 mb-3">{t("upWhat")}</p>
           {[t("upN1"), t("upN2"), t("upN3")].map((x, i) => (
             <div key={i} className="flex items-center gap-2 py-1.5 text-sm text-text2">
-              <span className="text-success font-bold">✓</span>{x}
+              <Check className="text-success shrink-0" size={16} />{x}
             </div>
           ))}
         </div>

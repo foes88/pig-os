@@ -4,17 +4,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Stat, AIBubble, AIAction, Card, PipeItem } from "@/components/ui";
 import Link from "next/link";
+import { AlertTriangle, Brain } from "lucide-react";
+import { SEVERITY_ICON, STAGE_ICON } from "@/lib/icons";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { Alert } from "@/types/api.types";
 
-const SEVERITY_STYLE: Record<string, { cls: string; icon: string }> = {
-  OK:       { cls: "bg-green-50 border-green-200", icon: "✓" },
-  INFO:     { cls: "bg-blue-50 border-blue-200",   icon: "ℹ" },
-  WARNING:  { cls: "bg-amber-50 border-amber-200", icon: "⚠" },
-  CRITICAL: { cls: "bg-red-50 border-red-200",     icon: "🚨" },
+const SEVERITY_STYLE: Record<string, { cls: string }> = {
+  OK:       { cls: "bg-green-50 border-green-200" },
+  INFO:     { cls: "bg-blue-50 border-blue-200" },
+  WARNING:  { cls: "bg-amber-50 border-amber-200" },
+  CRITICAL: { cls: "bg-red-50 border-red-200" },
 };
 
 export default function Dashboard() {
@@ -57,7 +59,7 @@ export default function Dashboard() {
           </p>
         </div>
         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary border border-primary/20 rounded-full text-xs font-semibold">
-          🧠 {t("aiActive")}
+          <Brain size={14} /> {t("aiActive")}
         </span>
       </div>
 
@@ -116,7 +118,7 @@ export default function Dashboard() {
             className="flex items-center justify-between gap-3 border border-border rounded-xl px-4 py-3 mb-6 hover:border-primary transition bg-surface"
           >
             <div className="flex items-center gap-3">
-              <span className="text-warning text-lg">⚠</span>
+              <AlertTriangle className="text-warning" size={20} />
               <div>
                 <div className="text-sm font-bold text-text">{t("overdueSows", { n: overdueData?.total ?? 0 })}</div>
                 <div className="text-[11px] text-text3">{t("overdueSub", { n: cullData?.length ?? 0 })}</div>
@@ -127,22 +129,22 @@ export default function Dashboard() {
 
           {/* Pipeline */}
           <div className="flex gap-1 mb-6">
-            <PipeItem icon="💉" count={data.week_matings} name={t("pMating")} />
+            <PipeItem icon={<StageIcon stage="MATING" />} count={data.week_matings} name={t("pMating")} />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🤰" count={data.gestating} name={t("pPregnant")} active />
+            <PipeItem icon={<StageIcon stage="PREGNANT" />} count={data.gestating} name={t("pPregnant")} active />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🐖" count={data.week_farrowings} name={t("pFarrowing")} />
+            <PipeItem icon={<StageIcon stage="FARROWING" />} count={data.week_farrowings} name={t("pFarrowing")} />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🍼" count={data.lactating} name={t("pLactating")} />
+            <PipeItem icon={<StageIcon stage="LACTATING" />} count={data.lactating} name={t("pLactating")} />
             <span className="flex items-center text-text3 text-xs">→</span>
-            <PipeItem icon="🌱" count={data.week_weanings} name={t("pWeaning")} />
+            <PipeItem icon={<StageIcon stage="WEANING" />} count={data.week_weanings} name={t("pWeaning")} />
           </div>
 
           {/* Two column */}
           <div className="grid grid-cols-2 gap-4">
             {/* Left: Alerts */}
             <div>
-              <Card title={`🧠 ${t("ruleAlerts")}`} badge={t("alertCount", { n: data.alerts.length })} badgeColor="purple" className="mb-4" children={<></>} />
+              <Card title={t("ruleAlerts")} badge={t("alertCount", { n: data.alerts.length })} badgeColor="purple" className="mb-4" children={<></>} />
               {data.alerts.length === 0 ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-success">
                   {t("noAlertsAll")}
@@ -192,11 +194,17 @@ export default function Dashboard() {
   );
 }
 
+function StageIcon({ stage }: { stage: keyof typeof STAGE_ICON }) {
+  const Icon = STAGE_ICON[stage];
+  return <Icon size={18} />;
+}
+
 function AlertBanner({ alert }: { alert: Alert }) {
   const t = useTranslations("dashboard");
+  const Icon = SEVERITY_ICON.CRITICAL;
   return (
     <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 flex items-start gap-3.5">
-      <span className="text-xl flex-shrink-0">🚨</span>
+      <Icon className="text-danger flex-shrink-0" size={20} />
       <div className="flex-1">
         <div className="text-[13px] font-bold text-danger mb-1">
           {alert.kpi} — {alert.message}
@@ -217,9 +225,10 @@ function AlertBanner({ alert }: { alert: Alert }) {
 function AlertCard({ alert }: { alert: Alert }) {
   const t = useTranslations("dashboard");
   const style = SEVERITY_STYLE[alert.severity] ?? SEVERITY_STYLE.INFO;
+  const Icon = SEVERITY_ICON[alert.severity] ?? SEVERITY_ICON.INFO;
   return (
     <div className={`border rounded-xl px-4 py-3 mb-2 flex items-start gap-3 ${style.cls}`}>
-      <span className="font-bold flex-shrink-0">{style.icon}</span>
+      <Icon size={16} className="flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="text-xs font-semibold">{alert.kpi} — {alert.message}</div>
         {alert.current_value != null && (

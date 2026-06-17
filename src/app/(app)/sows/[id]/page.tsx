@@ -1,8 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Baby, Sprout, Syringe } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { farmsApi } from "@/lib/api/endpoints/farms";
@@ -240,7 +242,7 @@ export default function SowDetailPage() {
                   <div className="flex items-start gap-0">
                     {/* 교배 */}
                     <Step
-                      icon="💉"
+                      icon={<Syringe size={16} />}
                       label={t("stepMating")}
                       date={mating.mating_date}
                       detail={mating.mating_type === "AI" ? t("mAI") : t("mNatural")}
@@ -250,7 +252,7 @@ export default function SowDetailPage() {
 
                     {/* 분만 */}
                     <Step
-                      icon="🐖"
+                      icon={<Baby size={16} />}
                       label={t("stepFarrowing")}
                       date={farrowing?.farrowing_date}
                       detail={farrowing ? t("farrowDetail", { a: farrowing.born_alive, s: farrowing.stillborn }) : undefined}
@@ -260,7 +262,7 @@ export default function SowDetailPage() {
 
                     {/* 이유 */}
                     <Step
-                      icon="🌱"
+                      icon={<Sprout size={16} />}
                       label={t("stepWeaning")}
                       date={weaning?.weaning_date}
                       detail={weaning ? t("weanDetail", { n: weaning.weaned_count }) : undefined}
@@ -315,7 +317,7 @@ function InfoCell({ label, value, mono }: { label: string; value: string; mono?:
 function Step({
   icon, label, date, detail, done,
 }: {
-  icon: string;
+  icon: ReactNode;
   label: string;
   date?: string;
   detail?: string;

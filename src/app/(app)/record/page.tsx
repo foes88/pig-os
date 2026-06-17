@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, PiggyBank } from "lucide-react";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
@@ -162,7 +163,7 @@ export default function RecordPage() {
         <div className="flex-1 overflow-y-auto">
           {sows.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-text3 text-xs gap-2">
-              <span className="text-2xl">🐷</span>
+              <PiggyBank size={28} className="text-text3" />
               <span>{t("emptyNoSows")}</span>
             </div>
           ) : (
@@ -182,7 +183,7 @@ export default function RecordPage() {
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold font-mono shrink-0 ${
                     isDone ? "bg-green-100 text-green-600" : "bg-navy/10 text-navy"
                   }`}>
-                    {isDone ? "✓" : sow.ear_tag.slice(0, 2)}
+                    {isDone ? <Check size={14} /> : sow.ear_tag.slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold font-mono text-text truncate">{sow.ear_tag}</div>
@@ -212,8 +213,8 @@ export default function RecordPage() {
       {/* ── RIGHT: Event drawer ──────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {lastSaved && (
-          <div className="mx-6 mt-4 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium">
-            ✓ {lastSaved}
+          <div className="mx-6 mt-4 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium flex items-center gap-1.5">
+            <Check size={15} /> {lastSaved}
           </div>
         )}
         {/* 경고/위험 인사이트는 다음 저장/모돈전환 전까지 유지(놓치지 않게) */}
@@ -231,7 +232,7 @@ export default function RecordPage() {
 
         {!selectedSow ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center text-2xl">🐷</div>
+            <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center text-text3"><PiggyBank size={28} /></div>
             <div>
               <p className="text-base font-bold text-text1">{t("selectSowTitle")}</p>
               <p className="text-xs text-text3 mt-1">{t("selectSowDesc")}</p>

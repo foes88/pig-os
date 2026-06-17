@@ -446,3 +446,10 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - `tests/integration/test_reports.py` +3: group_by=breed(LY/Duroc 버킷+ai/natural/회차 분해), 사산/미라율(stillborn_rate 6.2·birth_loss 12.5), production-summary 봉투(rows+benchmarks list, 비교만).
 - **전체 게이트 GREEN (정식 로컬 DB, Python 3.14)**: `pytest tests/ -q` = **344 passed**(베이스라인 320 + R3/R6 신규), ruff clean, `import app.main` OK, `tsc --noEmit` EXIT 0, i18n 1022키×5 parity.
 - ⚠ **vitest 미실행**: 로컬 Node v22.11.0 < 22.12 → `ERR_REQUIRE_ESM`(vite8 require ESM) **startup 에러**(코드 실패 아님). Node 22.12+에서 `cd src && npm run test` 재검증 필요(PROGRESS 2026-06-17 F항과 동일 제약).
+
+### [R7] 이모지 → lucide 아이콘 전면 교체 (완료, frontend)
+- 신규 `src/lib/icons.tsx`: SEVERITY_ICON(OK→CheckCircle2, INFO→Info, WARNING→AlertTriangle, CRITICAL→AlertOctagon) + STAGE_ICON(교배→Syringe, 임신→HeartPulse, 분만→Baby, 포유→Milk, 이유→Sprout) **단일 소스로 일원화**(대시보드/kpi 중복 SEVERITY_STYLE 통합).
+- 교체 매핑: 🔍→Search, 🔔→Bell, 🚨→AlertOctagon, ⚠→AlertTriangle, ℹ→Info, ✓→Check/CheckCircle2, 🧠→Brain, 💉→Syringe, 🤰→HeartPulse, 🐖→Baby, 🍼→Milk, 🌱→Sprout, 🐷→PiggyBank, 💡→Lightbulb, ⚡→Zap, 🔮/✦→Sparkles, BottomNav 글리프(⊞⬡✦⚙)→LayoutDashboard/PiggyBank/Sparkles/Menu.
+- 교체 파일(9): `(app)/page.tsx`, `(app)/kpi/page.tsx`, `(app)/record/page.tsx`, `(app)/sows/[id]/page.tsx`, `components/{Topbar,BottomNav,ui,AskAiDrawer}.tsx`, `app/update/page.tsx`. PipeItem/Step icon prop을 string→ReactNode로.
+- 회귀 가드: `src/tests/no-emoji-guard.test.ts` — 핵심 9화면 picto charset 잔존 0 정적 스캔(vitest; e2e/playwright 미구성이라 소스스캔으로 대체).
+- 검증: `grep` picto 잔존 **0**(전 .tsx), `tsc --noEmit` EXIT 0. ⚠ 가드 테스트 실행은 Node 22.12+ 필요(vitest 제약 동일).

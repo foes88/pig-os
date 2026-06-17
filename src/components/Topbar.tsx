@@ -1,5 +1,7 @@
 "use client";
 
+import { Bell, Search } from "lucide-react";
+
 import type { Locale } from "@/i18n/config";
 
 const LABELS: Record<Locale, { search: string; qi: string }> = {
@@ -35,7 +37,7 @@ export function Topbar({
     <header className="h-14 flex-shrink-0 bg-bg border-b border-border flex items-center px-5 gap-3">
       {/* Search */}
       <div className="flex-1 max-w-[360px] relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-faint text-xs">🔍</span>
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
         <input
           placeholder={t.search}
           className="w-full bg-surface border border-border text-text text-xs pl-8 pr-10 py-2 rounded-lg outline-none focus:border-primary transition"
@@ -63,7 +65,7 @@ export function Topbar({
           onClick={onBell}
           className="relative p-2 rounded-lg text-muted hover:bg-bg2 hover:text-text transition"
         >
-          <span className="text-base">🔔</span>
+          <Bell size={18} />
           {alertCount > 0 && (
             <span className="absolute top-1 right-1 min-w-[14px] h-3.5 px-1 rounded-full bg-red text-white font-mono text-[9px] font-bold flex items-center justify-center">
               {alertCount}
