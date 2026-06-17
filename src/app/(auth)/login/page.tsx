@@ -23,6 +23,7 @@ const T: Record<Lang, {
   email: string; password: string;
   submit: string; submitting: string;
   forgotPassword: string; noAccount: string; register: string;
+  rememberId: string;
   errEmail: string; errPassword: string;
   errInvalid: string; errFormat: string; errServer: string;
 }> = {
@@ -33,6 +34,7 @@ const T: Record<Lang, {
     submit: "Sign in", submitting: "Signing in…",
     forgotPassword: "Forgot password?",
     noAccount: "New to PigOS?", register: "Create a free account",
+    rememberId: "Remember my ID",
     errEmail: "Enter a valid email address", errPassword: "Enter your password",
     errInvalid: "Email or password is incorrect",
     errFormat: "Please check your input format",
@@ -45,6 +47,7 @@ const T: Record<Lang, {
     submit: "로그인", submitting: "로그인 중…",
     forgotPassword: "비밀번호 찾기",
     noAccount: "PigOS가 처음이신가요?", register: "무료로 시작하기",
+    rememberId: "아이디 저장",
     errEmail: "올바른 이메일을 입력하세요", errPassword: "비밀번호를 입력하세요",
     errInvalid: "이메일 또는 비밀번호가 올바르지 않습니다",
     errFormat: "입력 형식을 확인해 주세요",
@@ -57,6 +60,7 @@ const T: Record<Lang, {
     submit: "登录", submitting: "登录中…",
     forgotPassword: "忘记密码？",
     noAccount: "初次使用 PigOS？", register: "免费注册",
+    rememberId: "记住账号",
     errEmail: "请输入有效的邮箱地址", errPassword: "请输入密码",
     errInvalid: "邮箱或密码不正确",
     errFormat: "请检查您的输入格式",
@@ -69,6 +73,7 @@ const T: Record<Lang, {
     submit: "Iniciar sesión", submitting: "Iniciando…",
     forgotPassword: "¿Olvidaste tu contraseña?",
     noAccount: "¿Nuevo en PigOS?", register: "Crea una cuenta gratis",
+    rememberId: "Recordar mi ID",
     errEmail: "Ingresa un correo válido", errPassword: "Ingresa tu contraseña",
     errInvalid: "Correo o contraseña incorrectos",
     errFormat: "Verifica el formato de tus datos",
@@ -81,6 +86,7 @@ const T: Record<Lang, {
     submit: "Đăng nhập", submitting: "Đang đăng nhập…",
     forgotPassword: "Quên mật khẩu?",
     noAccount: "Lần đầu dùng PigOS?", register: "Tạo tài khoản miễn phí",
+    rememberId: "Ghi nhớ ID",
     errEmail: "Nhập địa chỉ email hợp lệ", errPassword: "Nhập mật khẩu của bạn",
     errInvalid: "Email hoặc mật khẩu không đúng",
     errFormat: "Vui lòng kiểm tra định dạng nhập liệu",
@@ -229,12 +235,24 @@ export default function LoginPage() {
 
   const t = T[lang];
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
+  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
+  const [rememberId, setRememberId] = useState(false);
+
+  // 저장된 아이디 프리필 (비밀번호는 보안상 저장 안 함 — 브라우저 비밀번호 관리자 사용)
+  useEffect(() => {
+    const saved = localStorage.getItem("pigos_saved_email");
+    if (saved) {
+      setValue("email", saved);
+      setRememberId(true);
+    }
+  }, [setValue]);
 
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
+    if (rememberId) localStorage.setItem("pigos_saved_email", values.email);
+    else localStorage.removeItem("pigos_saved_email");
     try {
       const data = await authApi.login(values);
       setAuth(
@@ -335,6 +353,17 @@ export default function LoginPage() {
                   <p className="text-xs text-red-500 mt-1">{t.errPassword}</p>
                 )}
               </div>
+
+              {/* 아이디 저장 */}
+              <label className="flex items-center gap-2 -mt-1 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberId}
+                  onChange={(e) => setRememberId(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]/30"
+                />
+                <span className="text-sm text-slate-600">{t.rememberId}</span>
+              </label>
 
               {/* Server error */}
               {serverError && (
