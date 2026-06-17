@@ -441,3 +441,8 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - CSV: 품종/기간 라벨 + 신규 지표 포함 파일명(`pigos_reproduction_{groupBy}_...`).
 - i18n: reproReport +7키(groupByPeriod/groupByBreed/breed/cStillbornRate/cMummifiedRate/benchTarget/benchLegend) **5개 언어 동시**. 전수 parity **1022키 × 5 일치(0 diff)**.
 - 검증: `tsc --noEmit` EXIT 0. ⚠ vitest는 환경 제약(PROGRESS N5) → 사용자머신 `npm run test` 재검증.
+
+### [R6] 테스트 + 검증 (완료)
+- `tests/integration/test_reports.py` +3: group_by=breed(LY/Duroc 버킷+ai/natural/회차 분해), 사산/미라율(stillborn_rate 6.2·birth_loss 12.5), production-summary 봉투(rows+benchmarks list, 비교만).
+- **전체 게이트 GREEN (정식 로컬 DB, Python 3.14)**: `pytest tests/ -q` = **344 passed**(베이스라인 320 + R3/R6 신규), ruff clean, `import app.main` OK, `tsc --noEmit` EXIT 0, i18n 1022키×5 parity.
+- ⚠ **vitest 미실행**: 로컬 Node v22.11.0 < 22.12 → `ERR_REQUIRE_ESM`(vite8 require ESM) **startup 에러**(코드 실패 아님). Node 22.12+에서 `cd src && npm run test` 재검증 필요(PROGRESS 2026-06-17 F항과 동일 제약).

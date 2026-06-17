@@ -48,6 +48,55 @@ class TestReproductionReport:
         assert jan["avg_tb"] == 14.0
 
 
+class TestReproductionExtended:
+    async def test_group_by_breed(self, db: AsyncSession, test_farm: Farm):
+        ly = Sow(farm_id=test_farm.id, ear_tag=f"LY-{uuid.uuid4().hex[:6]}", parity=1,
+                 status="OPEN", entry_date=date(2024, 1, 1), entry_type="GILT", breed="LY")
+        du = Sow(farm_id=test_farm.id, ear_tag=f"DU-{uuid.uuid4().hex[:6]}", parity=1,
+                 status="OPEN", entry_date=date(2024, 1, 1), entry_type="GILT", breed="Duroc")
+        db.add_all([ly, du]); await db.flush()
+        db.add(Mating(farm_id=test_farm.id, sow_id=ly.id, mating_date=date(2026, 2, 1), mating_type="AI", mating_number=1))
+        db.add(Mating(farm_id=test_farm.id, sow_id=ly.id, mating_date=date(2026, 3, 1), mating_type="NATURAL", mating_number=2))
+        db.add(Mating(farm_id=test_farm.id, sow_id=du.id, mating_date=date(2026, 2, 5), mating_type="AI", mating_number=1))
+        await db.flush()
+
+        rows = await report_service.get_reproduction_report(
+            db, test_farm.id, date(2026, 1, 1), date(2026, 6, 1), "monthly", "breed")
+        by = {r["period"]: r for r in rows}
+        assert by["LY"]["total_matings"] == 2
+        assert by["Duroc"]["total_matings"] == 1
+        # 교배 방식/회차 분해
+        assert by["LY"]["ai_count"] == 1
+        assert by["LY"]["natural_count"] == 1
+        assert by["LY"]["mating_2_count"] == 1
+
+    async def test_stillborn_mummified_rates(self, db: AsyncSession, test_farm: Farm):
+        sow = await _sow(db, test_farm)
+        m0 = Mating(farm_id=test_farm.id, sow_id=sow.id, mating_date=date(2025, 10, 1), mating_type="AI", mating_number=1)
+        db.add(m0); await db.flush()
+        db.add(Farrowing(farm_id=test_farm.id, sow_id=sow.id, mating_id=m0.id,
+                         farrowing_date=date(2026, 2, 2), total_born=16, born_alive=14, stillborn=1, mummified=1))
+        await db.flush()
+        rows = await report_service.get_reproduction_report(
+            db, test_farm.id, date(2026, 2, 1), date(2026, 2, 28), "monthly")
+        feb = next(r for r in rows if r["period"] == "2026-02")
+        assert feb["total_stillborn"] == 1
+        assert feb["total_mummified"] == 1
+        assert feb["stillborn_rate"] == 6.2   # 1/16*100 → 6.25 round1 = 6.2
+        assert feb["birth_loss_rate"] == 12.5  # 2/16*100
+
+    async def test_production_summary_envelope(self, db: AsyncSession, test_farm: Farm):
+        sow = await _sow(db, test_farm)
+        db.add(Mating(farm_id=test_farm.id, sow_id=sow.id, mating_date=date(2026, 1, 5), mating_type="AI", mating_number=1))
+        await db.flush()
+        out = await report_service.get_production_summary(
+            db, test_farm, date(2026, 1, 1), date(2026, 3, 1), "monthly", "period")
+        assert out["group_by"] == "period"
+        assert isinstance(out["rows"], list)
+        assert isinstance(out["benchmarks"], list)  # 시드 없으면 [], 비교만 — 봉투 구조 검증
+        assert any(r["period"] == "2026-01" for r in out["rows"])
+
+
 class TestGrowFinishReport:
     async def test_group_metrics(self, db: AsyncSession, test_farm: Farm):
         db.add(FinisherGroup(
