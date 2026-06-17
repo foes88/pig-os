@@ -6976,16 +6976,13 @@ components:
           title: Event Date
         event_type:
           type: string
-          pattern: ^(STILLBORN_REMOVAL|DEATH|FOSTER_IN|FOSTER_OUT)$
           title: Event Type
         piglet_count:
           type: integer
-          minimum: 1.0
           title: Piglet Count
         reason:
           anyOf:
           - type: string
-            pattern: ^(CRUSHING|SCOURS|STARVATION|CONGENITAL|HYPOTHERMIA|OTHER)$
           - type: 'null'
           title: Reason
         target_sow_id:
@@ -7046,7 +7043,6 @@ components:
           title: Sow Id
         event_type:
           type: string
-          pattern: ^(RETURN_TO_ESTRUS|ABORTION|EMPTY|INFERTILE|CULLED|DEAD|TRANSFER_OUT|SOLD|HEAT_DETECTED|CULL|DEATH)$
           title: Event Type
         event_date:
           type: string

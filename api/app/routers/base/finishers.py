@@ -22,6 +22,8 @@ router = APIRouter(prefix="/farms/{farm_id}/finishers", tags=["Finishers"])
 
 _MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")  # 파괴적 작업 한정 (Section D)
 
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
+
 
 @router.get("", response_model=list[FinisherGroupResponse])
 async def list_finisher_groups(
@@ -41,7 +43,8 @@ async def list_finisher_groups(
     return [FinisherGroupResponse.model_validate(r) for r in rows]
 
 
-@router.post("", response_model=FinisherGroupResponse, status_code=201)
+@router.post("", response_model=FinisherGroupResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_finisher_group(
     body: FinisherGroupCreate,
     farm: FarmDep,
@@ -70,7 +73,8 @@ async def create_finisher_group(
     return FinisherGroupResponse.model_validate(group)
 
 
-@router.post("/{group_id}/ship", response_model=FinisherGroupResponse)
+@router.post("/{group_id}/ship", response_model=FinisherGroupResponse,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def ship_finisher_group(
     group_id: UUID,
     body: FinisherGroupShip,
@@ -117,7 +121,8 @@ async def delete_finisher_group(group_id: UUID, farm: FarmDep, db: DbDep):
     await db.commit()
 
 
-@router.patch("/{group_id}", response_model=FinisherGroupResponse)
+@router.patch("/{group_id}", response_model=FinisherGroupResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm: FarmDep, db: DbDep):
     group = await db.scalar(
         select(FinisherGroup).where(

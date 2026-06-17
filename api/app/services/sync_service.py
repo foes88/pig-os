@@ -54,6 +54,7 @@ from app.schemas.sync import (
     SyncResponse,
     SyncWeaning,
 )
+from app.services.event_service import apply_terminal_reproductive
 from app.validators.base import ValidationError
 from app.validators.farrowing import validate_farrowing
 
@@ -407,6 +408,16 @@ async def _process_weaning(
 
 # ── Reproductive event validation ─────────────────────────────────────────────
 
+# REST ReproductiveEventCreate 패턴 미러 + sync 하위호환 별칭(CULL/DEATH)
+_REPRODUCTIVE_EVENT_TYPES = frozenset({
+    "RETURN_TO_ESTRUS", "ABORTION", "EMPTY", "INFERTILE",
+    "CULLED", "DEAD", "TRANSFER_OUT", "SOLD", "HEAT_DETECTED", "CULL", "DEATH",
+})
+# REST PigletEventCreate 패턴 미러
+_PIGLET_EVENT_TYPES = frozenset({"STILLBORN_REMOVAL", "DEATH", "FOSTER_IN", "FOSTER_OUT"})
+_PIGLET_REASONS = frozenset({"CRUSHING", "SCOURS", "STARVATION", "CONGENITAL", "HYPOTHERMIA", "OTHER"})
+
+
 async def _process_reproductive(
     db: AsyncSession,
     farm_id: UUID,
@@ -434,6 +445,13 @@ async def _process_reproductive(
     if existing_by_id:
         return SyncAccepted(id=item.id, entity="reproductive_event", action="merged"), None, None
 
+    # 항목별 검증 — REST 규칙 미러(배치 전체 422 방지) — Codex P1
+    if item.event_type not in _REPRODUCTIVE_EVENT_TYPES:
+        return None, SyncRejected(
+            id=item.id, entity="reproductive_event", reason="VALIDATION_FAILED",
+            detail={"field": "event_type", "message": "invalid event_type", "value": item.event_type},
+        ), None
+
     if not dry_run:
         event = ReproductiveEvent(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
@@ -441,33 +459,8 @@ async def _process_reproductive(
         )
         db.add(event)
         db.add(_audit(farm_id, "reproductive_event", item.id, "CREATE", item.model_dump(mode="json")))
-
-        # Normalise legacy aliases (CULL→CULLED, DEATH→DEAD)
-        _alias = {"CULL": "CULLED", "DEATH": "DEAD"}
-        normalised = _alias.get(item.event_type, item.event_type)
-
-        # Sow status transitions (mirrors event_service.record_reproductive_event)
-        _status_map = {
-            "CULLED": "CULLED", "DEAD": "DEAD", "SOLD": "SOLD",
-            "TRANSFER_OUT": "TRANSFER_OUT",
-            "RETURN_TO_ESTRUS": "ACCIDENT",
-            "EMPTY": "ACCIDENT",
-            "INFERTILE": "ACCIDENT",
-        }
-        if normalised in _status_map:
-            sow.status = _status_map[normalised]
-
-        # Soft-delete + Removal record for terminal exits
-        if normalised in ("CULLED", "DEAD", "SOLD", "TRANSFER_OUT"):
-            now_utc = datetime.now(UTC)
-            sow.exit_date = now_utc
-            sow.deleted_at = now_utc
-            db.add(Removal(
-                farm_id=farm_id,
-                sow_id=sow.id,
-                removal_date=event_date,
-                removal_type=normalised,
-            ))
+        # 상태 전이 — REST와 동일 공유 헬퍼(드리프트 방지, Codex P1)
+        await apply_terminal_reproductive(db, sow, item.event_type, event_date, farm_id)
 
     return SyncAccepted(id=item.id, entity="reproductive_event", action="created"), None, None
 
@@ -544,6 +537,23 @@ async def _process_piglet_event(
     existing_by_id = await db.get(PigletEvent, item.id)
     if existing_by_id:
         return SyncAccepted(id=item.id, entity="piglet_event", action="merged"), None, None
+
+    # 항목별 검증 — REST PigletEventCreate 규칙 미러(배치 전체 422 방지) — Codex P1
+    if item.event_type not in _PIGLET_EVENT_TYPES:
+        return None, SyncRejected(
+            id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+            detail={"field": "event_type", "message": "invalid event_type", "value": item.event_type},
+        ), None
+    if item.piglet_count is None or item.piglet_count < 1:
+        return None, SyncRejected(
+            id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+            detail={"field": "piglet_count", "message": "piglet_count must be >= 1", "value": item.piglet_count},
+        ), None
+    if item.reason is not None and item.reason not in _PIGLET_REASONS:
+        return None, SyncRejected(
+            id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+            detail={"field": "reason", "message": "invalid reason", "value": item.reason},
+        ), None
 
     if not dry_run:
         # Resolve farrowing_id: explicit or auto-lookup latest for this sow

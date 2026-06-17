@@ -22,6 +22,8 @@ router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 
 # 파괴적 작업(도태·삭제)은 농장 OWNER/MANAGER만 (Section D RBAC)
 _MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")
+# 일상 입력/수정 = WORKER 이상 (VIEWER/VET/API_CLIENT 읽기전용 차단) — Section D2
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")
 
 
 @router.get("", response_model=PagedResponse[SowResponse])
@@ -72,7 +74,8 @@ async def list_sows(
     )
 
 
-@router.post("", response_model=SowResponse, status_code=201)
+@router.post("", response_model=SowResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser):  # noqa: E501
     from datetime import UTC, datetime
     sow = Sow(
@@ -105,7 +108,8 @@ async def get_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
     return SowResponse.model_validate(sow)
 
 
-@router.patch("/{sow_id}", response_model=SowResponse)
+@router.patch("/{sow_id}", response_model=SowResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_sow(sow_id: UUID, body: SowUpdate, farm: FarmDep, db: DbDep):
     sow = await db.scalar(
         select(Sow).where(Sow.id == sow_id, Sow.farm_id == farm.id, Sow.deleted_at.is_(None))  # noqa: E501

@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.sow import PigletGroup, PigletTransfer
 from app.schemas.piglet import (
@@ -21,6 +21,8 @@ from app.schemas.piglet import (
 )
 
 router = APIRouter(prefix="/farms/{farm_id}/piglets", tags=["Piglets"])
+
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 # ── Piglet Groups ─────────────────────────────────────────────────────────────
@@ -43,7 +45,8 @@ async def list_piglet_groups(
     return [PigletGroupResponse.model_validate(r) for r in rows]
 
 
-@router.post("", response_model=PigletGroupResponse, status_code=201)
+@router.post("", response_model=PigletGroupResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_piglet_group(
     body: PigletGroupCreate,
     farm: FarmDep,
@@ -72,7 +75,8 @@ async def create_piglet_group(
     return PigletGroupResponse.model_validate(group)
 
 
-@router.post("/{group_id}/deaths", response_model=PigletGroupResponse)
+@router.post("/{group_id}/deaths", response_model=PigletGroupResponse,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def record_deaths(
     group_id: UUID,
     body: PigletGroupDeathRecord,
@@ -98,7 +102,8 @@ async def record_deaths(
     return PigletGroupResponse.model_validate(group)
 
 
-@router.post("/{group_id}/transfer", response_model=PigletGroupResponse)
+@router.post("/{group_id}/transfer", response_model=PigletGroupResponse,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def transfer_out_piglet_group(
     group_id: UUID,
     body: PigletGroupTransferOut,
@@ -131,7 +136,8 @@ async def transfer_out_piglet_group(
 
 # ── Piglet Transfers (양자/대리모) ─────────────────────────────────────────────
 
-@router.post("/transfers", response_model=PigletTransferResponse, status_code=201)
+@router.post("/transfers", response_model=PigletTransferResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_piglet_transfer(
     body: PigletTransferCreate,
     farm: FarmDep,

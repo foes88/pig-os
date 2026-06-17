@@ -8,11 +8,13 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.schemas.task import TaskGenerateResult, TaskResponse, TaskUpdate
 from app.services import task_service
 
 router = APIRouter(prefix="/farms/{farm_id}/tasks", tags=["Tasks"])
+
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 def _to_response(task, ear_tag: str | None) -> TaskResponse:
@@ -33,13 +35,15 @@ async def list_tasks(
     return [_to_response(t, tag) for t, tag in rows]
 
 
-@router.post("/generate", response_model=TaskGenerateResult)
+@router.post("/generate", response_model=TaskGenerateResult,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def generate_tasks(farm: FarmDep, db: DbDep) -> TaskGenerateResult:
     created, closed, open_total = await task_service.generate_tasks(db, farm.id)
     return TaskGenerateResult(created=created, closed=closed, open_total=open_total)
 
 
-@router.patch("/{task_id}", response_model=TaskResponse)
+@router.patch("/{task_id}", response_model=TaskResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_task(
     task_id: UUID, payload: TaskUpdate, farm: FarmDep, db: DbDep, user: CurrentUser,
 ) -> TaskResponse:

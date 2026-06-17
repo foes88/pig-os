@@ -53,14 +53,8 @@ class SyncWeaning(BaseModel):
 class SyncReproductiveEvent(BaseModel):
     id: UUID
     sow_id: UUID
-    event_type: str = Field(
-        ...,
-        pattern=(
-            "^(RETURN_TO_ESTRUS|ABORTION|EMPTY|INFERTILE|"
-            "CULLED|DEAD|TRANSFER_OUT|SOLD|HEAT_DETECTED|"
-            "CULL|DEATH)$"  # CULL/DEATH: backward-compat aliases
-        ),
-    )
+    # 스키마 하드제약 대신 _process_reproductive에서 항목별 검증(배치 전체 422 방지) — Codex P1
+    event_type: str
     event_date: str
     notes: str | None = None
     client_created_at: datetime
@@ -84,13 +78,10 @@ class SyncPigletEvent(BaseModel):
     sow_id: UUID
     farrowing_id: UUID | None = None   # None → server auto-looks up latest farrowing
     event_date: str
-    event_type: str = Field(
-        ..., pattern="^(STILLBORN_REMOVAL|DEATH|FOSTER_IN|FOSTER_OUT)$"
-    )
-    piglet_count: int = Field(..., ge=1)
-    reason: str | None = Field(
-        None, pattern="^(CRUSHING|SCOURS|STARVATION|CONGENITAL|HYPOTHERMIA|OTHER)$"
-    )
+    # 스키마 하드제약 대신 _process_piglet_event에서 항목별 검증(배치 전체 422 방지) — Codex P1
+    event_type: str
+    piglet_count: int
+    reason: str | None = None
     target_sow_id: UUID | None = None
     notes: str | None = None
     client_created_at: datetime

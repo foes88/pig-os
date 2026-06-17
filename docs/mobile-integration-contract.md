@@ -109,8 +109,9 @@
 
 - 엔드포인트: `POST /api/v1/farms/{farm_id}/sync`
 - 스펙 문서: `docs/specs/2026-05-19_offline-sync-spec.md` (Last-Write-Wins)
-- **Push(클라→서버)** 커버 엔티티: `matings, farrowings, weanings, sows, piglet_events`
-- **Pull(서버→클라)** 커버 엔티티: `sows, matings, farrowings, weanings, piglet_events, removals`
+- **Push(클라→서버)** 커버 엔티티(SyncChanges 기준): `matings, farrowings, weanings, reproductive_events, health_events, piglet_events`
+  (sows는 push 대상 아님 — 모돈 등록/수정은 REST. sow 상태는 이벤트 sync로 서버가 전이.)
+- **Pull(서버→클라)** 커버 엔티티(ServerChanges 기준): `sows, matings, farrowings, weanings, piglet_events, removals`
 - 충돌: 자동 LWW 병합, 해소 불가(DUPLICATE_EVENT/CYCLE_CONFLICT)만 `sync_conflict_queue` 적재.
 - ⚠️ 모바일 로컬 스키마(Room/CoreData)는 위 엔티티 + 필드와 1:1 유지. 필드 추가 시 이 문서 갱신.
 

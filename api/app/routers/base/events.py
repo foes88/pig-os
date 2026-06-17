@@ -35,6 +35,8 @@ router = APIRouter(prefix="/farms/{farm_id}/events", tags=["Events"])
 
 # 이벤트 삭제(상태 롤백 동반)는 OWNER/MANAGER만. 일상 입력(POST)·수정(PATCH)은 WORKER 허용. (Section D)
 _MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")
+# 일상 입력/수정 = WORKER 이상 (VIEWER/VET/API_CLIENT 읽기전용 차단) — Section D2
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")
 
 
 async def _attach_insights(db, farm, event_type: str, event) -> list:
@@ -90,7 +92,8 @@ async def list_matings(
     return [MatingResponse.model_validate(r) for r in rows]
 
 
-@router.post("/matings", response_model=MatingResponse, status_code=201)
+@router.post("/matings", response_model=MatingResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def record_mating(
     body: MatingCreate,
     farm: FarmDep,
@@ -122,7 +125,8 @@ async def list_farrowings(
     return [FarrowingResponse.model_validate(r) for r in rows]
 
 
-@router.post("/farrowings", response_model=FarrowingResponse, status_code=201)
+@router.post("/farrowings", response_model=FarrowingResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def record_farrowing(
     body: FarrowingCreate,
     farm: FarmDep,
@@ -153,7 +157,8 @@ async def list_weanings(
     return [WeaningResponse.model_validate(r) for r in rows]
 
 
-@router.post("/weanings", response_model=WeaningResponse, status_code=201)
+@router.post("/weanings", response_model=WeaningResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def record_weaning(
     body: WeaningCreate,
     farm: FarmDep,
@@ -170,7 +175,8 @@ async def record_weaning(
     return resp
 
 
-@router.post("/reproductive", response_model=ReproductiveEventResponse, status_code=201)
+@router.post("/reproductive", response_model=ReproductiveEventResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def record_reproductive_event(
     body: ReproductiveEventCreate,
     farm: FarmDep,
@@ -205,7 +211,8 @@ async def list_piglet_events(
     return [PigletEventResponse.model_validate(r) for r in rows]
 
 
-@router.post("/piglet_events", response_model=PigletEventResponse, status_code=201)
+@router.post("/piglet_events", response_model=PigletEventResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def record_piglet_event(
     body: PigletEventCreate,
     farm: FarmDep,
@@ -223,7 +230,8 @@ async def record_piglet_event(
 
 # ── Edit / delete (Phase 12) — status rollback + period-lock guard ────────────
 
-@router.patch("/matings/{mating_id}", response_model=MatingResponse)
+@router.patch("/matings/{mating_id}", response_model=MatingResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_mating(mating_id: UUID, body: MatingUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     ev = await event_service.update_mating(db, farm.id, current_user.id, mating_id, body)
     return MatingResponse.model_validate(ev)
@@ -236,7 +244,8 @@ async def delete_mating(mating_id: UUID, farm: FarmDep, db: DbDep, current_user:
     return Response(status_code=204)
 
 
-@router.patch("/farrowings/{farrowing_id}", response_model=FarrowingResponse)
+@router.patch("/farrowings/{farrowing_id}", response_model=FarrowingResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_farrowing(farrowing_id: UUID, body: FarrowingUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     ev = await event_service.update_farrowing(db, farm.id, current_user.id, farrowing_id, body)
     return FarrowingResponse.model_validate(ev)
@@ -249,7 +258,8 @@ async def delete_farrowing(farrowing_id: UUID, farm: FarmDep, db: DbDep, current
     return Response(status_code=204)
 
 
-@router.patch("/weanings/{weaning_id}", response_model=WeaningResponse)
+@router.patch("/weanings/{weaning_id}", response_model=WeaningResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_weaning(weaning_id: UUID, body: WeaningUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     ev = await event_service.update_weaning(db, farm.id, current_user.id, weaning_id, body)
     return WeaningResponse.model_validate(ev)

@@ -27,6 +27,7 @@ from app.db.models.events import (
     ReproductiveEvent,
     Weaning,
 )
+from app.db.models.health import Removal
 from app.db.models.master import MedicationCatalog
 from app.db.models.platform import AuditLog
 from app.db.models.sow import BreedingCycle, Sow
@@ -246,27 +247,48 @@ async def record_farrowing(
 ) -> Farrowing:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
 
-    # 교배 기록 검증
-    mating = await db.scalar(
-        select(Mating).where(
-            Mating.id == req.mating_id,
-            Mating.sow_id == sow.id,
-            Mating.farm_id == farm_id,
-            Mating.deleted_at.is_(None),
+    # 교배 기록 검증 — mating_id 미지정 시 해당 모돈의 '최근 미분만 교배' 자동 조회
+    # (UI 계약: 분만 탭에서 교배 선택 없이 저장 가능)
+    if req.mating_id is not None:
+        mating = await db.scalar(
+            select(Mating).where(
+                Mating.id == req.mating_id,
+                Mating.sow_id == sow.id,
+                Mating.farm_id == farm_id,
+                Mating.deleted_at.is_(None),
+            )
         )
-    )
-    if not mating:
-        raise NotFoundError(f"Mating {req.mating_id} not found for this sow")
+        if not mating:
+            raise NotFoundError(f"Mating {req.mating_id} not found for this sow")
+    else:
+        # 분만 기록이 아직 없는 최근 교배 1건
+        mating = await db.scalar(
+            select(Mating)
+            .outerjoin(
+                Farrowing,
+                (Farrowing.mating_id == Mating.id) & (Farrowing.deleted_at.is_(None)),
+            )
+            .where(
+                Mating.sow_id == sow.id,
+                Mating.farm_id == farm_id,
+                Mating.deleted_at.is_(None),
+                Farrowing.id.is_(None),
+            )
+            .order_by(Mating.mating_date.desc())
+            .limit(1)
+        )
+        if not mating:
+            raise NotFoundError("No open mating found for this sow to record farrowing")
 
     # 중복 분만 검증 (피그플랜: 동일 교배에 분만 1회)
     existing_farrowing = await db.scalar(
         select(Farrowing).where(
-            Farrowing.mating_id == req.mating_id,
+            Farrowing.mating_id == mating.id,
             Farrowing.deleted_at.is_(None),
         )
     )
     if existing_farrowing:
-        raise ConflictError(f"Farrowing already recorded for mating {req.mating_id}")
+        raise ConflictError(f"Farrowing already recorded for mating {mating.id}")
 
     # 임신기간 검증 (100~130일)
     gestation = (req.farrowing_date - mating.mating_date).days
@@ -302,7 +324,7 @@ async def record_farrowing(
     farrowing = Farrowing(
         farm_id=farm_id,
         sow_id=req.sow_id,
-        mating_id=req.mating_id,
+        mating_id=mating.id,
         breeding_cycle_id=mating.breeding_cycle_id,
         farrowing_date=req.farrowing_date,
         total_born=req.total_born,
@@ -443,6 +465,34 @@ async def _calc_piglet_adjustments(
     return foster_in, foster_out, deaths
 
 
+# 번식사고/종료 이벤트의 모돈 상태 전이 — REST·sync 공유(드리프트 방지, Codex P1)
+_REPRO_ALIAS = {"CULL": "CULLED", "DEATH": "DEAD"}
+_REPRO_TERMINAL = ("CULLED", "DEAD", "SOLD", "TRANSFER_OUT")
+_REPRO_ACCIDENT = ("RETURN_TO_ESTRUS", "EMPTY", "INFERTILE", "ABORTION")
+
+
+async def apply_terminal_reproductive(
+    db: AsyncSession, sow: Sow, event_type: str, event_date: date, farm_id: UUID,
+) -> None:
+    """번식사고/종료 이벤트 → 모돈 상태 전이 (REST·sync 동일 동작).
+    - 종료(CULLED/DEAD/SOLD/TRANSFER_OUT): status 전이 + exit_date + soft-delete + Removal 기록.
+    - 사고(RTS/EMPTY/INFERTILE/ABORTION): status=ACCIDENT + 진행 사이클 FAILED.
+    """
+    ev = _REPRO_ALIAS.get(event_type, event_type)
+    if ev in _REPRO_TERMINAL:
+        now = datetime.now(UTC)
+        sow.status = ev
+        sow.exit_date = datetime.combine(event_date, datetime.min.time()).replace(tzinfo=UTC)
+        sow.deleted_at = now
+        db.add(Removal(farm_id=farm_id, sow_id=sow.id, removal_date=event_date, removal_type=ev))
+    elif ev in _REPRO_ACCIDENT:
+        sow.status = "ACCIDENT"
+        cycle = await _get_open_cycle(db, sow.id)
+        if cycle:
+            cycle.cycle_status = "FAILED"
+            cycle.ended_at = datetime.now(UTC)
+
+
 async def record_reproductive_event(
     db: AsyncSession,
     farm_id: UUID,
@@ -464,26 +514,8 @@ async def record_reproductive_event(
     db.add(event)
     await db.flush()
 
-    terminal_map = {
-        "CULLED": "CULLED",
-        "DEAD": "DEAD",
-        # 번식사고 → ACCIDENT (재교배 대기). SCREEN_MENU_SPEC: RTS → Accident
-        "RETURN_TO_ESTRUS": "ACCIDENT",
-        "EMPTY": "ACCIDENT",
-        "INFERTILE": "ACCIDENT",
-        "ABORTION": "ACCIDENT",
-    }
-    if req.event_type in terminal_map:
-        sow.status = terminal_map[req.event_type]
-        if req.event_type in ("CULLED", "DEAD"):
-            sow.exit_date = datetime.combine(req.event_date, datetime.min.time()).replace(tzinfo=UTC)
-
-        # 비생산 이벤트 → 현재 사이클 FAILED 처리
-        if req.event_type in ("RETURN_TO_ESTRUS", "ABORTION", "EMPTY", "INFERTILE"):
-            cycle = await _get_open_cycle(db, sow.id)
-            if cycle:
-                cycle.cycle_status = "FAILED"
-                cycle.ended_at = datetime.now(UTC)
+    # 상태 전이 — REST·sync 공유 헬퍼(드리프트 방지). SOLD/TRANSFER_OUT 포함 종료 일관 처리.
+    await apply_terminal_reproductive(db, sow, req.event_type, req.event_date, farm_id)
 
     await _audit(db, user_id, farm_id, "CREATE", "reproductive_events", event.id, req.model_dump(mode="json"))
     await db.commit()

@@ -4,13 +4,15 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.platform import AuditLog
 from app.db.models.sow import Boar
 from app.schemas.boar import BoarCreate, BoarResponse, BoarUpdate
 
 router = APIRouter(prefix="/farms/{farm_id}/boars", tags=["Boars"])
+
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 @router.get("", response_model=list[BoarResponse])
@@ -27,7 +29,8 @@ async def list_boars(
     return [BoarResponse.model_validate(r) for r in rows]
 
 
-@router.post("", response_model=BoarResponse, status_code=201)
+@router.post("", response_model=BoarResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_boar(body: BoarCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser):
     existing = await db.scalar(
         select(Boar).where(Boar.farm_id == farm.id, Boar.ear_tag == body.ear_tag)
@@ -68,7 +71,8 @@ async def get_boar(boar_id: UUID, farm: FarmDep, db: DbDep):
     return BoarResponse.model_validate(boar)
 
 
-@router.patch("/{boar_id}", response_model=BoarResponse)
+@router.patch("/{boar_id}", response_model=BoarResponse,
+              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def update_boar(
     boar_id: UUID,
     body: BoarUpdate,
