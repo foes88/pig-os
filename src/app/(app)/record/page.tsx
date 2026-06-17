@@ -69,9 +69,19 @@ function Stepper({
           onClick={() => onChange(Math.max(min, value - 1))}
           className="w-11 h-11 rounded-xl border border-border bg-surface text-text2 text-xl font-semibold flex items-center justify-center hover:bg-border transition"
         >−</button>
-        <span className={`min-w-[42px] text-center text-[28px] font-bold font-mono tracking-tight ${colorClass}`}>
-          {value}
-        </span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/[^0-9]/g, "");
+            const n = digits === "" ? min : Math.min(max, Math.max(min, parseInt(digits, 10)));
+            onChange(n);
+          }}
+          onFocus={(e) => e.target.select()}
+          aria-label={label}
+          className={`w-[56px] text-center text-[28px] font-bold font-mono tracking-tight bg-transparent outline-none focus:ring-2 focus:ring-primary/30 rounded-lg ${colorClass}`}
+        />
         <button
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
