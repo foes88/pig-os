@@ -797,7 +797,14 @@
     "cRts": "Tasa RTS",
     "pwmrNote": "⚠ PWMR-A (muertes/(destetados+muertes)) y PWMR-B ((TN−destetados)/TN) pueden diferir 3–5%p.",
     "cPwmrA": "PWMR-A",
-    "cPwmrB": "PWMR-B"
+    "cPwmrB": "PWMR-B",
+    "groupByPeriod": "Por periodo",
+    "groupByBreed": "Por raza",
+    "breed": "Raza",
+    "cStillbornRate": "% mortinatos",
+    "cMummifiedRate": "% momificados",
+    "benchTarget": "Meta",
+    "benchLegend": "Celdas coloreadas vs meta del país (verde = cumple, rojo = no cumple)"
   },
   "growFinish": {
     "selectFarm": "Seleccione una granja.",

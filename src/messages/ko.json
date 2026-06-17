@@ -797,7 +797,14 @@
     "cRts": "RTS율",
     "pwmrNote": "⚠ PWMR-A(폐사/이유+폐사)와 PWMR-B(총산-이유/총산)는 3–5%p 차이날 수 있습니다.",
     "cPwmrA": "PWMR-A",
-    "cPwmrB": "PWMR-B"
+    "cPwmrB": "PWMR-B",
+    "groupByPeriod": "기간별",
+    "groupByBreed": "품종별",
+    "breed": "품종",
+    "cStillbornRate": "사산율",
+    "cMummifiedRate": "미라율",
+    "benchTarget": "목표",
+    "benchLegend": "국가 목표 기준 대비 색상 (녹색=달성, 빨강=미달)"
   },
   "growFinish": {
     "selectFarm": "농장을 선택해주세요.",

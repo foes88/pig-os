@@ -434,3 +434,10 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - **검증값만**(R2 근거). 출처 미확보(MSY·CN/VN/BR 일부·정의값·모돈도폐사율)는 시드하지 않음. US/CN/BR/VN은 기존 f3a7c2e9 시드 유지(재시드 안 함).
 - ⚠ 운영 DB 직접 변경 안 함 — 파일만. 적용은 사람 `cd api && uv run alembic upgrade head`.
 - 검증: py_compile OK, `alembic heads` 단일 head(a8d2f4c6e1b9→b1c2d3e4f5a6) 체인 정상(브랜치 없음).
+
+### [R5] 보고서 프론트 강화 (완료, frontend)
+- `/reports/reproduction`: **기간/품종 토글(group_by)** + production-summary 연동 → 국가 **기준값(target) 대비 셀 색상**(녹색=달성/빨강=미달, alert_direction 반영, 비교만·판정 재구현 없음) + 신규 컬럼(사산율/미라율).
+- `reportsApi`: reproduction(group_by) + **productionSummary()** 신규. queryKeys 갱신. api.types.ts: ReproductionRow 확장필드 + BenchmarkValue + ProductionSummary.
+- CSV: 품종/기간 라벨 + 신규 지표 포함 파일명(`pigos_reproduction_{groupBy}_...`).
+- i18n: reproReport +7키(groupByPeriod/groupByBreed/breed/cStillbornRate/cMummifiedRate/benchTarget/benchLegend) **5개 언어 동시**. 전수 parity **1022키 × 5 일치(0 diff)**.
+- 검증: `tsc --noEmit` EXIT 0. ⚠ vitest는 환경 제약(PROGRESS N5) → 사용자머신 `npm run test` 재검증.

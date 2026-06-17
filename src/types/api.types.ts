@@ -791,6 +791,40 @@ export interface ReproductionRow {
   pwmr_a: number | null;
   pwmr_b: number | null;
   rts_rate: number | null;
+  // R3 확장 지표 (미집계 시 0/null)
+  total_born_sum?: number | null;
+  born_alive_sum?: number | null;
+  total_stillborn?: number | null;
+  total_mummified?: number | null;
+  stillborn_rate?: number | null;
+  mummified_rate?: number | null;
+  birth_loss_rate?: number | null;
+  mating_1_count?: number | null;
+  mating_2_count?: number | null;
+  mating_3plus_count?: number | null;
+  ai_count?: number | null;
+  natural_count?: number | null;
+}
+
+export interface BenchmarkValue {
+  metric_code: string;
+  target: number | null;
+  benchmark_avg: number | null;
+  benchmark_top25: number | null;
+  warning: number | null;
+  critical: number | null;
+  alert_direction: string | null;
+  unit: string | null;
+  source_ref: string | null;
+  confidence: string | null;
+}
+
+export interface ProductionSummary {
+  group_by: string;
+  period: string;
+  country_scope: string | null;
+  benchmarks: BenchmarkValue[];
+  rows: ReproductionRow[];
 }
 
 export interface GrowFinishRow {

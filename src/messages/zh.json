@@ -797,7 +797,14 @@
     "cRts": "返情率",
     "pwmrNote": "⚠ PWMR-A(死亡/断奶+死亡)与PWMR-B(总产-断奶/总产)可能相差3–5%p。",
     "cPwmrA": "PWMR-A",
-    "cPwmrB": "PWMR-B"
+    "cPwmrB": "PWMR-B",
+    "groupByPeriod": "按期间",
+    "groupByBreed": "按品种",
+    "breed": "品种",
+    "cStillbornRate": "死产率",
+    "cMummifiedRate": "木乃伊率",
+    "benchTarget": "目标",
+    "benchLegend": "按国家目标基准着色（绿=达标，红=未达）"
   },
   "growFinish": {
     "selectFarm": "请选择猪场。",

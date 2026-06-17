@@ -15,8 +15,10 @@ export const queryKeys = {
   },
 
   reports: {
-    reproduction: (farmId: string, start: string, end: string, period: string) =>
-      ["reports", "reproduction", farmId, start, end, period] as const,
+    reproduction: (farmId: string, start: string, end: string, period: string, groupBy = "period") =>
+      ["reports", "reproduction", farmId, start, end, period, groupBy] as const,
+    productionSummary: (farmId: string, start: string, end: string, period: string, groupBy = "period") =>
+      ["reports", "production-summary", farmId, start, end, period, groupBy] as const,
     growFinish: (farmId: string, start: string, end: string) =>
       ["reports", "grow-finish", farmId, start, end] as const,
     sowHistory: (farmId: string, sowId: string) =>

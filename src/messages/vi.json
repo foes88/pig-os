@@ -797,7 +797,14 @@
     "cRts": "Tỷ lệ RTS",
     "pwmrNote": "⚠ PWMR-A (chết/(cai+chết)) và PWMR-B ((tổng−cai)/tổng) có thể chênh 3–5%p.",
     "cPwmrA": "PWMR-A",
-    "cPwmrB": "PWMR-B"
+    "cPwmrB": "PWMR-B",
+    "groupByPeriod": "Theo kỳ",
+    "groupByBreed": "Theo giống",
+    "breed": "Giống",
+    "cStillbornRate": "Tỷ lệ chết lưu",
+    "cMummifiedRate": "Tỷ lệ thai khô",
+    "benchTarget": "Mục tiêu",
+    "benchLegend": "Ô được tô màu so với mục tiêu quốc gia (xanh = đạt, đỏ = chưa đạt)"
   },
   "growFinish": {
     "selectFarm": "Vui lòng chọn trại.",

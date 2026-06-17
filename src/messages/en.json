@@ -797,7 +797,14 @@
     "cRts": "RTS rate",
     "pwmrNote": "⚠ PWMR-A (deaths/(weaned+deaths)) and PWMR-B ((TB−weaned)/TB) can differ by 3–5%p.",
     "cPwmrA": "PWMR-A",
-    "cPwmrB": "PWMR-B"
+    "cPwmrB": "PWMR-B",
+    "groupByPeriod": "By period",
+    "groupByBreed": "By breed",
+    "breed": "Breed",
+    "cStillbornRate": "Stillborn %",
+    "cMummifiedRate": "Mummified %",
+    "benchTarget": "Target",
+    "benchLegend": "Cells colored vs country target benchmark (green = meets, red = misses)"
   },
   "growFinish": {
     "selectFarm": "Please select a farm.",

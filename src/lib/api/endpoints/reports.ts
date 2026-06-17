@@ -1,13 +1,37 @@
 import { apiClient } from "@/lib/api/client";
-import type { GrowFinishRow, ReproductionRow, SowHistoryCycle } from "@/types/api.types";
+import type {
+  GrowFinishRow,
+  ProductionSummary,
+  ReproductionRow,
+  SowHistoryCycle,
+} from "@/types/api.types";
 
 const base = (farmId: string) => `/api/v1/farms/${farmId}/reports`;
 
 export const reportsApi = {
-  reproduction: (farmId: string, startDate: string, endDate: string, period = "monthly") =>
+  reproduction: (
+    farmId: string,
+    startDate: string,
+    endDate: string,
+    period = "monthly",
+    groupBy = "period",
+  ) =>
     apiClient
       .get<ReproductionRow[]>(`${base(farmId)}/reproduction`, {
-        params: { start_date: startDate, end_date: endDate, period },
+        params: { start_date: startDate, end_date: endDate, period, group_by: groupBy },
+      })
+      .then((r) => r.data),
+
+  productionSummary: (
+    farmId: string,
+    startDate: string,
+    endDate: string,
+    period = "monthly",
+    groupBy = "period",
+  ) =>
+    apiClient
+      .get<ProductionSummary>(`${base(farmId)}/production-summary`, {
+        params: { start_date: startDate, end_date: endDate, period, group_by: groupBy },
       })
       .then((r) => r.data),
 
