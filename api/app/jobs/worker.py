@@ -8,6 +8,7 @@ ARQ Worker 설정.
   command: arq app.jobs.worker.WorkerSettings
 """
 from arq import cron
+from arq.connections import RedisSettings
 
 from app.core.config import settings
 from app.jobs.kpi import (
@@ -32,7 +33,7 @@ async def shutdown(ctx: dict) -> None:
 
 
 class WorkerSettings:
-    redis_settings_from_url = settings.redis_url
+    redis_settings = RedisSettings.from_dsn(settings.redis_url)
 
     functions = [
         daily_kpi_aggregation,
