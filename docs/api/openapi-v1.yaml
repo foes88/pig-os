@@ -3194,6 +3194,14 @@ paths:
           pattern: ^(monthly|quarterly|annual)$
           default: monthly
           title: Period
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(period|breed)$
+          default: period
+          title: Group By
       responses:
         '200':
           description: Successful Response
@@ -3205,6 +3213,68 @@ paths:
                   $ref: '#/components/schemas/ReproductionRow'
                 title: Response Reproduction Report Api V1 Farms  Farm Id  Reports
                   Reproduction Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/production-summary:
+    get:
+      tags:
+      - Reports
+      summary: Production Summary
+      description: '피그플랜식 통합표: 번식성적 + 농장 country 기준값(target/avg/top25) 동봉.'
+      operationId: production_summary_api_v1_farms__farm_id__reports_production_summary_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: start_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: Start Date
+      - name: end_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: End Date
+      - name: period
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(monthly|quarterly|annual)$
+          default: monthly
+          title: Period
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(period|breed)$
+          default: period
+          title: Group By
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionSummary'
         '422':
           description: Validation Error
           content:
@@ -3501,6 +3571,61 @@ components:
       - severity
       - message
       title: Alert
+    BenchmarkValue:
+      properties:
+        metric_code:
+          type: string
+          title: Metric Code
+        target:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Target
+        benchmark_avg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Benchmark Avg
+        benchmark_top25:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Benchmark Top25
+        warning:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Warning
+        critical:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Critical
+        alert_direction:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Alert Direction
+        unit:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Unit
+        source_ref:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Ref
+        confidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Confidence
+      type: object
+      required:
+      - metric_code
+      title: BenchmarkValue
+      description: 농장 country 기준값 — 프론트는 비교만(판정 재구현 금지).
     BoarCreate:
       properties:
         ear_tag:
@@ -5963,6 +6088,37 @@ components:
       required:
       - success
       title: PilotSignupOut
+    ProductionSummary:
+      properties:
+        group_by:
+          type: string
+          title: Group By
+        period:
+          type: string
+          title: Period
+        country_scope:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Country Scope
+        benchmarks:
+          items:
+            $ref: '#/components/schemas/BenchmarkValue'
+          type: array
+          title: Benchmarks
+          default: []
+        rows:
+          items:
+            $ref: '#/components/schemas/ReproductionRow'
+          type: array
+          title: Rows
+          default: []
+      type: object
+      required:
+      - group_by
+      - period
+      title: ProductionSummary
+      description: '피그플랜식 통합표: rows + 해당 농장 country 기준값 동봉.'
     PrrsByGeneticsResponse:
       properties:
         farm_id:
@@ -6239,6 +6395,66 @@ components:
           - type: number
           - type: 'null'
           title: Rts Rate
+        total_born_sum:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Total Born Sum
+        born_alive_sum:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Born Alive Sum
+        total_stillborn:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Total Stillborn
+        total_mummified:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Total Mummified
+        stillborn_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Stillborn Rate
+        mummified_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Mummified Rate
+        birth_loss_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Birth Loss Rate
+        mating_1_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mating 1 Count
+        mating_2_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mating 2 Count
+        mating_3plus_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mating 3Plus Count
+        ai_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Ai Count
+        natural_count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Natural Count
       type: object
       required:
       - period

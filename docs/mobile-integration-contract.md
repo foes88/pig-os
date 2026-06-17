@@ -1,8 +1,10 @@
 # PigOS 모바일 ↔ 백엔드 연동 계약서 (Single Source of Truth)
 
 > 웹/백엔드 세션과 모바일(iOS/Android) 세션이 **이 문서 하나를 보고** 개발을 맞춘다.
-> 변경 시 이 문서를 먼저 갱신하고 양측에 공지. 최종 갱신: 2026-06-16.
+> 변경 시 이 문서를 먼저 갱신하고 양측에 공지. 최종 갱신: 2026-06-18.
 > API 라우트는 `GET http://<host>:8000/docs` (OpenAPI)와 항상 일치해야 한다.
+>
+> 📌 **2026-06-18 변경(모바일 반영 필수)**: ① 화면/메뉴 구조 재설계(§3.0) ② 보고서 API 확장 — 품종별 `group_by=breed` + `/reports/production-summary`(국가 기준값 동봉) + 확장지표(§3 KPI/보고서) ③ 알림 통합 — '관리대상'+'시스템알림' 한 화면 탭(§3 할일/알림) ④ 국가별 KPI 차등 기준값(KR=PigPlan2025 실데이터 시드)(§3 임계값/§5) ⑤ UI 아이콘=벡터, **이모지 금지**(§5).
 >
 > ⛔ **이 문서가 유일한 기준.** 모바일 레포의 옛 문서(`03-api-endpoints.md`,
 > `MOBILE_API_CHANGES_2026-06-09.md` 등)는 stale(모돈 상태값 오류·boars "미구현" 오인 등) →
@@ -45,6 +47,22 @@
 
 ## 3. 핵심 도메인 API (모바일 화면별)
 
+### 3.0 화면/메뉴 구조 (웹과 동일하게 — 2026-06-18 재설계)
+> 모바일 드로어/하단탭도 이 구조·명칭을 따른다(웹 `Sidebar.tsx` 기준). 라벨은 5개어.
+
+| 그룹 | 화면(route) | 설명 | 주요 API |
+|------|-------------|------|----------|
+| — | **대시보드** `/` | 생산현황 요약 | `GET /kpi/dashboard`(alerts·benchmarks 포함) |
+| — | **기록 입력** `/record` | 교배·분만·이유·사고·자돈폐사 **탭 통합 진입** | `POST /events/*` (응답에 `insights[]`) |
+| 돈군 | 모돈 `/sows` · 웅돈 `/boars` · 자돈 `/piglets` · 비육돈 `/finishers` | 돈군 목록/상세/등록 | `GET|POST /farms/{id}/{sows\|boars\|piglets\|finishers}` |
+| 할 일·알림 | **오늘 할 일** `/tasks` · **알림** `/alerts` | 알림은 한 화면 **2탭**: ①관리대상(과기한/도태권고) ②시스템알림 | `GET /tasks`, `/alerts/overdue`, `/alerts/cull-candidates`, `/notifications` |
+| 보고서 | KPI현황 `/kpi` · 생산성적(번식) · 비육성적 · 모돈보고서 · PRRS | 성적/보고서 | `GET /kpi/*`, `/reports/*`, `/analytics/prrs-by-genetics` |
+| — | Addon `/addons` · 설정 `/settings` | | |
+
+- **'분만사(Farrowing)' 메뉴 제거** — 분만은 `/record`의 분만 탭으로. (구 `/farrowing` 라우트는 직접 쓰지 말 것.)
+- **알림 통합**: 과거 '관리 알림'(/alerts)과 '알림'(/notifications)이 분리돼 있었으나 → **'알림' 하나**로. 모바일은 알림 화면에서 탭 2개로 표현(관리대상/시스템알림), 배지 = `overdue.total + notifications.unread_count`.
+- **KPI**는 '보고서' 그룹에 속함(별도 '분석' 그룹 없어짐).
+
 ### 농장 컨텍스트 / 설정
 - `GET /farms` · `GET /farms/{farm_id}` · `PATCH /farms/{farm_id}`
 - `GET /farms/{farm_id}/config` → 단위/통화 (`weight_unit, currency_code, currency_symbol, ...`, **country 기준 자동 분기**)
@@ -67,14 +85,29 @@
 ### KPI / 보고서 / 분석
 - `GET /farms/{farm_id}/kpi/dashboard` (PSY/NPD/FR + 모돈현황 + alerts + **country별 benchmarks**)
 - `GET /kpi/psy` · `/kpi/npd` · `/kpi/trend?kpi=&months=`
-- `GET /reports/reproduction?start&end&period` · `/reports/grow-finish` · `/reports/sows/{sow_id}/history`
 - `GET /farms/{farm_id}/analytics/prrs-by-genetics`
 
-### 할 일 / 알림
-- 오늘 할 일: `GET /farms/{farm_id}/tasks?status=&assigned_to=`, `POST /tasks/generate`, `PATCH /tasks/{id}`(DONE/DISMISS/assign)
-- 관리대상: `GET /farms/{farm_id}/alerts/overdue` · `/alerts/cull-candidates`
-- 인앱 알림: `GET /api/v1/notifications?unread_only=&limit=&offset=` (유저 스코프, `unread_count` 포함),
-  `PATCH /notifications/{id}/read`, `POST /notifications/read-all`, 생성배치 `POST /farms/{farm_id}/notifications/generate`
+#### 보고서 (2026-06-18 확장 — cowork R3/R5)
+- **번식 성적**: `GET /reports/reproduction?start&end&period={monthly|quarterly|annual}&group_by={period|breed}`
+  - `group_by=breed` → 기간 대신 **품종별 행**. 반환 `ReproductionRow[]`:
+    `period`(기간 또는 품종명), `total_matings, total_farrowings, total_weanings, fr, avg_tb, avg_ba, avg_weaned, avg_lactation_days, pwmr_a, pwmr_b, rts_rate`
+    + **확장지표**: `total_born_sum, born_alive_sum, total_stillborn, total_mummified, stillborn_rate, mummified_rate, birth_loss_rate, mating_1_count, mating_2_count, mating_3plus_count, ai_count, natural_count` (미집계 시 null)
+- **통합표(피그플랜식)**: `GET /reports/production-summary?start&end&period&group_by` → `ProductionSummary`:
+  `{ group_by, period, country_scope, benchmarks: BenchmarkValue[], rows: ReproductionRow[] }`
+  - `BenchmarkValue`: `{ metric_code, target, benchmark_avg, benchmark_top25, warning, critical, alert_direction, unit, source_ref, confidence }` — **농장 country 기준값**. 모바일은 행 값과 **비교 표시만**(목표/상위25% 대비), 판정·임계계산 재구현 금지.
+- **비육 성적**: `GET /reports/grow-finish?start&end&group_id?` → `GrowFinishRow[]`:
+  `{ group_code, start_date, end_date, head_in, head_out, avg_entry_weight_kg, avg_exit_weight_kg, adg_g, fcr, mortality_rate }`
+- **모돈 이력**: `GET /reports/sows/{sow_id}/history` → `SowHistoryCycle[]`:
+  `{ parity, mating_date, boar_ids[], farrowing_date, tb, ba, sb, mum, weaned, weaning_date, lactation_days, status }`
+- 기간 범위 >2년 → 400. CSV는 웹에서 클라이언트 변환(모바일은 표시/공유 자체 구현).
+
+### 할 일 / 알림  (2026-06-18: '알림' 화면은 2탭 통합)
+- **오늘 할 일** `/tasks`: `GET /farms/{farm_id}/tasks?status=&assigned_to=`, `POST /tasks/generate`, `PATCH /tasks/{id}`(DONE/DISMISS/assign)
+- **알림** `/alerts` = 한 화면 **2탭**:
+  - 탭① **관리대상**: `GET /farms/{farm_id}/alerts/overdue`(6유형, `total` 포함) · `/alerts/cull-candidates`
+  - 탭② **시스템 알림**: `GET /api/v1/notifications?unread_only=&limit=&offset=` (유저 스코프, `unread_count` 포함),
+    `PATCH /notifications/{id}/read`, `POST /notifications/read-all`, 생성배치 `POST /farms/{farm_id}/notifications/generate`
+  - 화면/탭 배지 = `overdue.total + notifications.unread_count`. (웹은 사이드바 '알림' 1개 + 통합배지, 화면 안에서 탭 전환.)
 
 ### 입력 즉시 분석 (Event Insight / Rule Engine) — 모바일 별도 구현 불필요
 - **Rule Engine·국가별 임계값·손실계산은 전부 백엔드.** 모바일은 재구현하지 않는다(웹과 동일 "렌더만").
@@ -93,6 +126,7 @@
 - `PATCH /api/v1/farms/{farm_id}/thresholds/{metric_code}` `{warning?, critical?}` → 농장 스코프 override upsert(우선순위 **농장>국가>글로벌**). direction/unit은 상위 scope에서 상속.
 - `DELETE /api/v1/farms/{farm_id}/thresholds/{metric_code}` → override 삭제 → 국가/글로벌 값으로 복귀.
 - 판정·해석은 백엔드. 모바일/웹은 목록 표시·override 입력만(렌더+편집), 임계 계산 재구현 금지.
+- **국가별 차등(2026-06-18)**: 기준값/임계/단위/정의가 국가(KR/US/CN/SEA/LatAm)마다 다름. scope 체인 **농장>국가(region)>글로벌**로 백엔드가 자동 해석 → 모바일은 `thresholds`·`kpi/dashboard`·`reports/production-summary` 응답의 country 기준값을 **그대로 표시**(국가분기 하드코딩 0줄). KR은 PigPlan2025 실데이터 벤치마크 시드 적용(region scope). 차등 근거 문서: `docs/specs/2026-06-17_country-kpi-differences.md`, `docs/specs/2026-06-17_pigplan-metrics-mapping.md`.
 
 ### 푸시 디바이스 (G2 — 신설)
 - `POST /api/v1/devices` `{platform: ANDROID|IOS|WEB, token, app_version?}` → 등록(토큰 기준 upsert)
@@ -129,6 +163,7 @@
 - **알림 severity**: `INFO, WARNING, CRITICAL` / **alert_type**: `OVERDUE_*, CULL_CANDIDATE, KPI_*`
 - **역할**: `FARM_OWNER, FARM_MANAGER, FARM_WORKER, VET, VIEWER` (org: `SUPER_ADMIN` 등)
 - **단위/통화**: 하드코딩 금지 — 반드시 `GET /farms/{id}/config` 응답 사용. country는 계정별로 다름(언어≠국가).
+- **UI 아이콘(2026-06-18)**: 유니코드 **이모지 금지**(웹은 R7에서 lucide 벡터로 전면 교체). 모바일도 SF Symbols(iOS)/Material Symbols(Android) 등 **벡터 아이콘**으로 통일 — 의미 아이콘(검색/알림/경고/심각/정보/완료/번식단계)은 웹 lucide 매핑에 맞춤.
 
 ---
 
@@ -163,6 +198,10 @@
 - [ ] §3 로그인 직후 `POST /devices`로 FCM/APNS 토큰 등록, 로그아웃 시 `DELETE /devices/{token}`
 - [ ] §4 로컬 스키마를 sync 엔티티와 1:1 정렬 → G4 실단말 E2E
 - [ ] §5 Enum/상수 하드코딩 금지, config 응답 사용
+- [ ] **§3.0 화면/메뉴 구조**를 웹과 동일하게(기록입력 탭통합, 돈군, 할일·알림 2탭, 보고서 그룹). '분만사' 메뉴 만들지 말 것.
+- [ ] **보고서 화면**: 번식(품종별 `group_by=breed` 토글) · 통합표(`production-summary`, 국가 기준값 대비 표시) · 비육 · 모돈이력. 국가분기 하드코딩 0.
+- [ ] **알림 화면 2탭**(관리대상/시스템알림) + 통합 배지(`overdue.total + unread_count`).
+- [ ] UI 아이콘 = 벡터(이모지 금지).
 
 **공통**
 - [ ] 계약 변경 = 이 문서 먼저 수정 → 커밋 → 양측 공지
