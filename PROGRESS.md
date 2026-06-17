@@ -453,3 +453,10 @@ cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에�
 - 교체 파일(9): `(app)/page.tsx`, `(app)/kpi/page.tsx`, `(app)/record/page.tsx`, `(app)/sows/[id]/page.tsx`, `components/{Topbar,BottomNav,ui,AskAiDrawer}.tsx`, `app/update/page.tsx`. PipeItem/Step icon prop을 string→ReactNode로.
 - 회귀 가드: `src/tests/no-emoji-guard.test.ts` — 핵심 9화면 picto charset 잔존 0 정적 스캔(vitest; e2e/playwright 미구성이라 소스스캔으로 대체).
 - 검증: `grep` picto 잔존 **0**(전 .tsx), `tsc --noEmit` EXIT 0. ⚠ 가드 테스트 실행은 Node 22.12+ 필요(vitest 제약 동일).
+
+### 🌙 보고서 고도화 야간작업 총괄 (R1~R7 전부 완료, push 미실시)
+- 커밋 7개: R1 `50baaac` · R2 `4f0afc1` · R3 `e993d64` · R4 `e784aef` · R5 `a3893b4` · R6 `61f48c3` · R7 `e1eb783`. (`08bcfbb` worker fix는 본 작업 아님 — 기존 커밋.)
+- **최종 게이트 GREEN**: 백엔드 `pytest tests/ = 344 passed`(정식 로컬 DB+py3.14), ruff clean, `import app.main` OK / 프론트 `tsc --noEmit` EXIT 0, i18n **1022키 × 5개 언어 parity 0 diff**, picto 이모지 잔존 0.
+- 산출물: 146지표 매핑 + 국가 KPI 차등(검증출처만) + reports API(breed/확장지표/production-summary) + KR2025 시드 마이그(파일) + /reports 프론트(품종/벤치마크/신규컬럼/CSV/5개어) + 통합테스트 + 이모지→lucide 전면교체+가드.
+- 수치 임의생성 0(출처 미확보는 빈칸). 운영DB 직접변경 0(시드는 마이그 파일만).
+- ⚠ **사람 재검증/적용 필요**: ① `cd api && uv run alembic upgrade head`(b1c2d3e4f5a6 KR 벤치 시드 적용) ② Node 22.12+에서 `cd src && npm run test`(vitest+이모지가드) ③ `git push`(미실시) ④ ③데이터부족 26지표(생시체중·분만4구분·재포유 등)는 스키마 확장 후 차기 작업.
