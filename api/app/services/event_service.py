@@ -469,6 +469,9 @@ async def _calc_piglet_adjustments(
 _REPRO_ALIAS = {"CULL": "CULLED", "DEATH": "DEAD"}
 _REPRO_TERMINAL = ("CULLED", "DEAD", "SOLD", "TRANSFER_OUT")
 _REPRO_ACCIDENT = ("RETURN_TO_ESTRUS", "EMPTY", "INFERTILE", "ABORTION")
+# 종료 event_type → 유효 SowStatus v2 매핑. "TRANSFER_OUT"은 SowStatus가 아니므로 TRANSFER로.
+# (removal_type에는 원래 event_type을 그대로 기록)
+_REPRO_TERMINAL_STATUS = {"CULLED": "CULLED", "DEAD": "DEAD", "SOLD": "SOLD", "TRANSFER_OUT": "TRANSFER"}
 
 
 async def apply_terminal_reproductive(
@@ -481,7 +484,7 @@ async def apply_terminal_reproductive(
     ev = _REPRO_ALIAS.get(event_type, event_type)
     if ev in _REPRO_TERMINAL:
         now = datetime.now(UTC)
-        sow.status = ev
+        sow.status = _REPRO_TERMINAL_STATUS[ev]  # 유효 SowStatus v2 (TRANSFER_OUT→TRANSFER)
         sow.exit_date = datetime.combine(event_date, datetime.min.time()).replace(tzinfo=UTC)
         sow.deleted_at = now
         db.add(Removal(farm_id=farm_id, sow_id=sow.id, removal_date=event_date, removal_type=ev))

@@ -318,11 +318,26 @@ async def _process_farrowing(
                                    detail=invalid), None
 
     if not dry_run:
+        # mating_id 는 NOT NULL FK — 해당 sow 최근 교배에 연결.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 mating(pending) 조회 위해 flush.
+        await db.flush()
+        mating = await db.scalar(
+            select(Mating)
+            .where(Mating.sow_id == item.sow_id, Mating.farm_id == farm_id, Mating.deleted_at.is_(None))
+            .order_by(Mating.mating_date.desc())
+            .limit(1)
+        )
+        if not mating:
+            return None, SyncRejected(
+                id=item.id, entity="farrowing", reason="MATING_NOT_FOUND",
+                detail={"sow_id": str(item.sow_id), "message": "No mating to attach farrowing to"},
+            ), None
+        # 모델 컬럼명: stillborn / mummified / farrowing_ease (sync 입력은 born_dead / mummies / farrowing_type).
         farrowing = Farrowing(
-            id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            id=item.id, farm_id=farm_id, sow_id=item.sow_id, mating_id=mating.id,
             farrowing_date=event_date, total_born=item.total_born,
-            born_alive=item.born_alive, born_dead=item.born_dead,
-            mummies=item.mummies, farrowing_type=item.farrowing_type, notes=item.notes,
+            born_alive=item.born_alive, stillborn=item.born_dead,
+            mummified=item.mummies, farrowing_ease=item.farrowing_type, notes=item.notes,
         )
         db.add(farrowing)
         db.add(_audit(farm_id, "farrowing", item.id, "CREATE", item.model_dump(mode="json")))
@@ -394,10 +409,25 @@ async def _process_weaning(
                                    detail=invalid), None
 
     if not dry_run:
+        # farrowing_id 는 NOT NULL FK — 해당 sow 최근 분만에 연결.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
+        await db.flush()
+        farrowing_id = await db.scalar(
+            select(Farrowing.id)
+            .where(Farrowing.sow_id == item.sow_id, Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None))
+            .order_by(Farrowing.farrowing_date.desc())
+            .limit(1)
+        )
+        if not farrowing_id:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="NO_ACTIVE_FARROWING",
+                detail={"sow_id": str(item.sow_id), "message": "No farrowing to attach weaning to"},
+            ), None
+        # 모델 컬럼명: avg_weaning_weight_kg (sync 입력은 avg_weight_kg).
         weaning = Weaning(
-            id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing_id,
             weaning_date=event_date, weaned_count=item.weaned_count,
-            avg_weight_kg=item.avg_weight_kg, notes=item.notes,
+            avg_weaning_weight_kg=item.avg_weight_kg, notes=item.notes,
         )
         db.add(weaning)
         db.add(_audit(farm_id, "weaning", item.id, "CREATE", item.model_dump(mode="json")))
@@ -459,7 +489,8 @@ async def _process_reproductive(
         )
         db.add(event)
         db.add(_audit(farm_id, "reproductive_event", item.id, "CREATE", item.model_dump(mode="json")))
-        # 상태 전이 — REST와 동일 공유 헬퍼(드리프트 방지, Codex P1)
+        # 상태 전이 — REST와 동일 공유 헬퍼(드리프트 방지, Codex P1).
+        # 헬퍼가 SowStatus v2 매핑(TRANSFER_OUT→TRANSFER 등) + soft-delete + Removal 처리.
         await apply_terminal_reproductive(db, sow, item.event_type, event_date, farm_id)
 
     return SyncAccepted(id=item.id, entity="reproductive_event", action="created"), None, None
@@ -556,9 +587,11 @@ async def _process_piglet_event(
         ), None
 
     if not dry_run:
-        # Resolve farrowing_id: explicit or auto-lookup latest for this sow
+        # Resolve farrowing_id: explicit or auto-lookup latest for this sow.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
         farrowing_id = item.farrowing_id
         if farrowing_id is None:
+            await db.flush()
             farrowing = await db.scalar(
                 select(Farrowing)
                 .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
@@ -596,8 +629,12 @@ async def _pull_server_changes(
     if since is None:
         return ServerChanges()
 
+    # 일부 이벤트 모델(Mating/PigletEvent 등)은 updated_at 없이 created_at만 가짐 → 모델별 컬럼 선택.
+    def _sync_col(model):
+        return model.updated_at if hasattr(model, "updated_at") else model.created_at
+
     def q(model, extra=None):
-        stmt = select(model).where(model.farm_id == farm_id, model.updated_at >= since)
+        stmt = select(model).where(model.farm_id == farm_id, _sync_col(model) >= since)
         if extra is not None:
             stmt = stmt.where(extra)
         return stmt
@@ -617,8 +654,12 @@ async def _pull_server_changes(
     ))
 
     def to_dict(obj, fields: list[str]) -> dict:
-        return {f: str(getattr(obj, f)) if isinstance(getattr(obj, f), UUID) else getattr(obj, f)
-                for f in fields}
+        # getattr default None: 모델에 없는 필드(updated_at 등)도 크래시 없이 null로.
+        out: dict = {}
+        for f in fields:
+            v = getattr(obj, f, None)
+            out[f] = str(v) if isinstance(v, UUID) else v
+        return out
 
     deleted = (
         [str(s.id) for s in sows if s.deleted_at and s.deleted_at >= since] +
@@ -629,7 +670,7 @@ async def _pull_server_changes(
 
     return ServerChanges(
         sows=       [to_dict(s, ["id","ear_tag","status","parity","updated_at"]) for s in sows if not s.deleted_at],
-        matings=    [to_dict(m, ["id","sow_id","mating_date","mating_type","updated_at"]) for m in matings if not m.deleted_at],
+        matings=    [to_dict(m, ["id","sow_id","mating_date","mating_type","created_at"]) for m in matings if not m.deleted_at],
         farrowings= [to_dict(f, [
             "id","sow_id","mating_id","breeding_cycle_id",
             "farrowing_date","total_born","born_alive",
