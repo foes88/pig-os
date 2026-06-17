@@ -394,3 +394,14 @@
 - 누적 커밋: 야간 16개(시작 프롬프트 제외 15). push 미실시(사람).
 - 최종: **312 passed**, ruff/tsc green. 발견·수정: 실제 버그성 갭 2건(동기화 검증 비대칭, 멀티팜 RBAC) 해소 + 회귀잠금 테스트 다수 + 문서 정합.
 - 남은 권고: 정식 py3.12+Docker 재검증 1회, `.gitattributes` 라인엔딩 정규화 정책.
+
+## 2026-06-17 — 정식환경 후속 (Claude Code, Docker PG + Python 3.14)
+cowork 야간 우회환경(pgserver+py3.10+UTC shim) 결과를 정식환경에서 재검증·마무리.
+- **A. 정식환경 회귀**: Docker Postgres + Python 3.14에서 전체 pytest **320 passed**(cowork 312 + 신규 8), ruff·tsc clean. py3.10↔3.14 차이 무관.
+- **B. 라인엔딩**: `.gitattributes`(* text=auto eol=lf) 추가 — 저장소는 이미 LF였고 churn 차단용. 단독 커밋 `51c3502`.
+- **C. sync 검증갭(finding #1 확장)**: SyncMating이 REST MatingCreate 규칙(mating_type AI|NATURAL, mating_number 1..5) 우회 → 항목별 VALIDATION_FAILED 추가. reproductive/piglet은 스키마 pattern으로 검증됨 확인. 테스트 3종. `1dbbdd5`.
+- **D. 농장쓰기 RBAC 전수**: 가드 없던 파괴적/설정 엔드포인트(sows cull·delete, finishers delete, events delete×3, farms PATCH×2)에 require_farm_role(OWNER/MANAGER) 적용. 일상입력은 WORKER 유지. RBAC 테스트 5종. `c25f645`.
+- **F. 프론트 vitest**: 정식 실행 — alerts 스모크의 next-intl mock 누락 수정 → **7 files / 16 tests 통과**. `88199b6`.
+  ⚠ vite8 require(ESM) → Node 22.12+ 필요(22.11은 --experimental-require-module).
+- **E. 동시성·경계 회귀**: [선택] 미실시 — 권고로 남김(중복 sync id, 동시 POST 멱등, report 기간경계).
+- 누적 미푸시 커밋 다수. push 미실시(사람 확인 후).
