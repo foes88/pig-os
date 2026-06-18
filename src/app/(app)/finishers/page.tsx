@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { finishersApi } from "@/lib/api/endpoints/finishers";
 import { useAuthStore } from "@/store/auth.store";
+import { canEntry } from "@/lib/auth/permissions";
 import type {
   CreateFinisherGroupRequest,
   FinisherGroup,
@@ -15,6 +16,7 @@ import type {
 export default function FinishersPage() {
   const t = useTranslations("finishers");
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const role = useAuthStore((s) => s.user?.role);
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [shippingId, setShippingId] = useState<string | null>(null);
@@ -56,13 +58,15 @@ export default function FinishersPage() {
             >
               {activeOnly ? t("activeOnly") : t("all")}
             </button>
-            <button
-              onClick={() => setShowForm(true)}
-              data-testid="finishers-add-btn"
-              className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
-            >
-              {t("addGroup")}
-            </button>
+            {canEntry(role) && (
+              <button
+                onClick={() => setShowForm(true)}
+                data-testid="finishers-add-btn"
+                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
+              >
+                {t("addGroup")}
+              </button>
+            )}
           </div>
         </div>
 

@@ -38,14 +38,18 @@ export function gotoApp(page: Page, path: string) {
   return page.goto(path, { waitUntil: "domcontentloaded" });
 }
 
-/** 실제 UI 로그인(시드 계정) → 대시보드(사이드바) 진입까지 대기. */
-export async function loginSeed(page: Page): Promise<void> {
+/** 실제 UI 로그인(임의 계정) → 사이드바 진입까지 대기. */
+export async function loginAs(page: Page, email: string, password: string): Promise<void> {
   await gotoApp(page, "/login");
-  await page.getByTestId("login-email").fill(SEED_EMAIL);
-  await page.getByTestId("login-password").fill(SEED_PASSWORD);
+  await page.getByTestId("login-email").fill(email);
+  await page.getByTestId("login-password").fill(password);
   await page.getByTestId("login-submit").click();
-  // 로그인 성공 → "/"로 replace. 사이드바가 뜨면 인증+초기 로드 완료.
   await expect(page.getByTestId("sidebar")).toBeVisible({ timeout: 30_000 });
+}
+
+/** 시드 OWNER 계정 로그인. */
+export async function loginSeed(page: Page): Promise<void> {
+  await loginAs(page, SEED_EMAIL, SEED_PASSWORD);
 }
 
 /** 충돌 없는 고유 귀표/코드. (테스트 파일에선 Date.now 사용 가능) */

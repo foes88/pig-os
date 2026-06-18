@@ -8,6 +8,7 @@ import { Pencil, LogOut, X } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { canEntry } from "@/lib/auth/permissions";
 import type {
   Sow,
   SowStatus,
@@ -42,6 +43,7 @@ export default function SowsPage() {
   const t = useTranslations("sows");
   const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const role = useAuthStore((s) => s.user?.role);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<SowStatus | "ALL">("ALL");
@@ -88,13 +90,15 @@ export default function SowsPage() {
               {meta ? t("totalCount", { n: meta.total }) : t("loading")}
             </p>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            data-testid="sows-add-btn"
-            className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
-          >
-            {t("addSow")}
-          </button>
+          {canEntry(role) && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              data-testid="sows-add-btn"
+              className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
+            >
+              {t("addSow")}
+            </button>
+          )}
         </div>
 
         {/* Status tabs + search */}
