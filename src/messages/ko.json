@@ -730,7 +730,8 @@
     "save": "저장",
     "saveNext": "저장 후 다음 모돈 →",
     "errGeneric": "요청 처리 중 오류가 발생했습니다.",
-    "loadMore": "더 보기 ({n})"
+    "loadMore": "더 보기 ({n})",
+    "selectSowHint": "모돈을 선택하면 위 항목을 입력할 수 있어요"
   },
   "addons": {
     "storeTitle": "Addon 스토어",

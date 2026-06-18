@@ -231,12 +231,25 @@ export default function RecordPage() {
         )}
 
         {!selectedSow ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-6">
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center text-text3"><PiggyBank size={28} /></div>
             <div>
               <p className="text-base font-bold text-text1">{t("selectSowTitle")}</p>
               <p className="text-xs text-text3 mt-1">{t("selectSowDesc")}</p>
             </div>
+            {/* 입력 가능한 이벤트 미리보기 — 모돈 선택 후 활성화됨 */}
+            <div className="flex flex-wrap gap-2 justify-center max-w-md mt-1">
+              {EVENT_TYPES.map((et) => (
+                <span
+                  key={et.value}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border"
+                  style={{ background: et.bg, borderColor: et.color, color: et.color }}
+                >
+                  {t(et.labelKey)}
+                </span>
+              ))}
+            </div>
+            <p className="text-[11px] text-text3 mt-1">{t("selectSowHint")}</p>
           </div>
         ) : (
           <div className="flex-1 flex flex-col overflow-hidden">

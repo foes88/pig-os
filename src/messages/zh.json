@@ -730,7 +730,8 @@
     "save": "保存",
     "saveNext": "保存并下一头 →",
     "errGeneric": "处理请求时发生错误。",
-    "loadMore": "加载更多 ({n})"
+    "loadMore": "加载更多 ({n})",
+    "selectSowHint": "选择母猪即可录入以上事件"
   },
   "addons": {
     "storeTitle": "插件商店",

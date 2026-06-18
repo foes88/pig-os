@@ -730,7 +730,8 @@
     "save": "Guardar",
     "saveNext": "Guardar y siguiente →",
     "errGeneric": "Ocurrió un error al procesar la solicitud.",
-    "loadMore": "Cargar más ({n})"
+    "loadMore": "Cargar más ({n})",
+    "selectSowHint": "Selecciona una cerda para registrar estos eventos"
   },
   "addons": {
     "storeTitle": "Tienda de Addons",
