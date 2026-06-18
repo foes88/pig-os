@@ -118,6 +118,16 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
 
   const t = (obj: L) => obj[lang];
 
+  // active 항목 = 현재 경로에 매칭되는 href 중 "가장 긴(가장 구체적인)" 하나만.
+  // (예: /reports/reproduction → '생산성적'만 active, 상위 '/reports'(모돈보고서)는 비활성)
+  const allHrefs = [
+    ...NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href)),
+    ...BOTTOM_ITEMS.map((i) => i.href),
+  ];
+  const activeHref = allHrefs
+    .filter((h) => (h === "/" ? pathname === "/" : pathname === h || pathname?.startsWith(h + "/")))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <aside
       data-testid="sidebar"
@@ -176,10 +186,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
               </div>
             )}
             {group.items.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname === item.href || pathname?.startsWith(item.href + "/");
+              const isActive = item.href === activeHref;
               const Icon = item.icon;
               return (
                 <Link
@@ -224,7 +231,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       {/* Bottom items */}
       <div className="border-t border-border py-2">
         {BOTTOM_ITEMS.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.href === activeHref;
           const Icon = item.icon;
           return (
             <Link
