@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, ValidationError
 from app.db.models.health import Removal
 from app.db.models.platform import AuditLog
 from app.db.models.sow import Sow
@@ -143,6 +143,13 @@ async def cull_sow(
     )
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
+
+    # 데이터 정합성: 포유 중 모돈 도태/판매/전출 시 자돈이 고아가 됨 → 이유·양자 먼저.
+    # (사고사 DEAD는 현실상 막을 수 없어 허용)
+    if sow.status == "LACTATING" and body.removal_type in ("CULLED", "SOLD", "TRANSFER"):
+        raise ValidationError(
+            "Sow is lactating — wean or foster the nursing piglets before removal/sale"
+        )
 
     now = datetime.now(UTC)
 

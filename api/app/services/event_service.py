@@ -30,7 +30,7 @@ from app.db.models.events import (
 from app.db.models.health import Removal
 from app.db.models.master import MedicationCatalog
 from app.db.models.platform import AuditLog
-from app.db.models.sow import BreedingCycle, Sow
+from app.db.models.sow import BreedingCycle, PigletGroup, Sow
 from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
@@ -442,6 +442,20 @@ async def record_weaning(
         if cycle:
             cycle.cycle_status = "WEANED"
             cycle.ended_at = datetime.now(UTC)
+
+    # 데이터 정합성: 이유된 자돈을 그룹으로 추적(떠다니는 두수 방지, PSY→MSY 사슬 연결).
+    # 이유 1건 = 자돈그룹 1개 자동 생성(head_count_in = weaned_count).
+    if req.weaned_count > 0:
+        code = f"WG-{req.weaning_date:%y%m%d}-{sow.ear_tag}"
+        exists = await db.scalar(
+            select(PigletGroup).where(PigletGroup.farm_id == farm_id, PigletGroup.group_code == code)
+        )
+        if not exists:
+            db.add(PigletGroup(
+                farm_id=farm_id, group_code=code, weaning_date=req.weaning_date,
+                head_count_in=req.weaned_count, created_by=user_id,
+                notes=f"auto: weaning {sow.ear_tag}",
+            ))
 
     await _audit(db, user_id, farm_id, "CREATE", "weanings", weaning.id, req.model_dump(mode="json"))
     await db.commit()
