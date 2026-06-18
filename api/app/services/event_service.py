@@ -57,6 +57,7 @@ NURSING_MIN_DAYS = 10
 NURSING_MAX_DAYS = 60
 MAX_MATING_PER_CYCLE = 5
 MAX_WEANED_COUNT = 30
+MAX_NURSING_COUNT = 24  # 양자 후 한 모돈 포유두수 상한(과혼잡 방지, 유두수+간호모돈 현실 상한)
 
 # 교배 가능 상태 — docs/SCREEN_MENU_SPEC.md 상태 정의 기준
 # GILT(후보돈) / OPEN(공태) / ACCIDENT(번식사고 후 재교배 대기)
@@ -606,6 +607,14 @@ async def record_piglet_event(
             raise ValidationError(
                 f"Cross-foster counterpart sow must be lactating (current: {target.status})"
             )
+        # V3 — 양자 전입(FOSTER_IN) 후 이 모돈 포유두수가 상한 초과 시 차단(과혼잡 방지)
+        if req.event_type == "FOSTER_IN":
+            fi, fo, dd = await _calc_piglet_adjustments(db, farrowing.id)
+            nursing_after = farrowing.born_alive + fi + req.piglet_count - fo - dd
+            if nursing_after > MAX_NURSING_COUNT:
+                raise ValidationError(
+                    f"Nursing count after foster-in ({nursing_after}) exceeds max {MAX_NURSING_COUNT}"
+                )
 
     # 정합성: 자돈 폐사 두수는 현재 포유 두수(생존+양자in-양자out-기존폐사) 초과 불가.
     # (초과 시 이유두수 공식이 음수로 깨져 두수가 안 맞음)

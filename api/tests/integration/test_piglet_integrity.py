@@ -12,7 +12,7 @@ from app.core.exceptions import ValidationError
 from app.core.security import create_access_token
 from app.db.models.events import Farrowing, Mating
 from app.db.models.platform import UserFarm
-from app.db.models.sow import PigletGroup
+from app.db.models.sow import PigletGroup, Sow
 from app.schemas.events import FarrowingCreate, PigletEventCreate, WeaningCreate, WeaningUpdate
 from app.db.models.events import Weaning
 from app.services import event_service
@@ -215,4 +215,27 @@ class TestWeaningEditGuard:
         with pytest.raises(ValidationError, match="effective litter"):
             await event_service.update_weaning(
                 db, test_farm.id, test_user.id, w.id, WeaningUpdate(weaned_count=20),
+            )
+
+
+class TestFosterOvercrowding:
+    """V3 — 양자 전입 후 포유두수 상한(과혼잡) 초과 차단."""
+    async def test_foster_in_overcrowding_blocked(self, db, test_farm, test_sow, test_user):
+        test_sow.status = "LACTATING"
+        m = Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=date(2024, 2, 1),
+                   mating_type="AI", mating_number=1)
+        db.add(m); await db.flush()
+        f = Farrowing(farm_id=test_farm.id, sow_id=test_sow.id, mating_id=m.id,
+                      farrowing_date=date(2024, 5, 26), total_born=21, born_alive=20,
+                      stillborn=1, mummified=0)
+        db.add(f)
+        # 상대(전입원) 모돈 — LACTATING
+        b = Sow(farm_id=test_farm.id, ear_tag="FOSTER-SRC", parity=1, status="LACTATING",
+                entry_date=datetime(2024, 1, 1, tzinfo=UTC), entry_type="PURCHASE")
+        db.add(b); await db.flush()
+        with pytest.raises(ValidationError, match="exceeds max"):
+            await event_service.record_piglet_event(
+                db, test_farm.id, test_user.id,
+                PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id, target_sow_id=b.id,
+                                  event_date=date(2024, 6, 1), event_type="FOSTER_IN", piglet_count=10),
             )

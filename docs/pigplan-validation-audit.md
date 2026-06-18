@@ -24,10 +24,10 @@
 |---|----|------|----------|
 | ~~V1~~ | ~~자돈 이벤트 날짜 순서~~ ✅ 완료 | — | `validate_piglet_event_date()` + lifespan, record_piglet_event 연결 |
 | ~~V2~~ | ~~양자 전입 모돈 검증~~ ✅ 완료 | — | FOSTER 시 target_sow_id 필수 + target 활성·LACTATING 확인(고아 자돈 방지) |
-| V3 | **양자 합계 상한**(생존+양자in ≤ 분만틀 수용 ~12-14) | 중 | Rule Engine "양자 집중" 경고 or validator |
+| ~~V3~~ | ~~양자 합계 상한(과혼잡)~~ ✅ 완료 | — | FOSTER_IN 후 포유두수 > MAX_NURSING(24) 차단 |
 | ~~V4~~ | ~~모돈 등록 날짜·중복귀표~~ ✅ 완료 | — | 입식일 미래금지 + 활성 귀표 중복 422 (create_sow). dob 필드 없어 생년월일 검증 제외 |
-| V5 | **미이유 폐사 표시**(폐사만 등록 후 이유 누락 → PSY 과다) | 중 | report-time "미이유 폐사" 표시 |
-| V6 | **도폐사 사유 세분류**(생식/절름/질병/나이/성적 등) | 낮 | 프론트 드롭다운 + reason_category enum |
+| V5 | 미이유 폐사 표시 | 낮(다음버전) | report-time 표기 — 리포트 개편 시 |
+| ~~V6~~ | ~~도폐사 사유 세분류~~ ✅ 완료 | — | reason_category enum 9종(REPRODUCTIVE/LAMENESS/DISEASE/AGE/PERFORMANCE…) 이미 강제 + 프론트 select |
 | ~~V7~~ | ~~edit 시 검증 적용~~ ✅ 완료 | — | update_weaning 두수 재검증 추가(update_farrowing은 기존 재검증). delete는 상태 롤백 검증됨 |
 
 ## 참고 소스
