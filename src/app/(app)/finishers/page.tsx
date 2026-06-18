@@ -58,6 +58,7 @@ export default function FinishersPage() {
             </button>
             <button
               onClick={() => setShowForm(true)}
+              data-testid="finishers-add-btn"
               className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
             >
               {t("addGroup")}
@@ -222,7 +223,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
         <div className="space-y-3">
           <Field label={t("fGroupCode")}>
             <input value={form.group_code} onChange={(e) => setForm((f) => ({ ...f, group_code: e.target.value }))}
-              placeholder={t("phGroupCode")} className="input" />
+              placeholder={t("phGroupCode")} data-testid="add-finisher-code" className="input" />
           </Field>
           <Field label={t("fBatchName")}>
             <input value={form.batch_name ?? ""} onChange={(e) => setForm((f) => ({ ...f, batch_name: e.target.value }))}
@@ -242,6 +243,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.group_code || !form.head_count_in || mutation.isPending}
+            data-testid="add-finisher-submit"
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
             {mutation.isPending ? t("regging") : t("reg")}
           </button>
