@@ -39,6 +39,8 @@
     "vitest.config.ts",
     "tests/**",
     "e2e/**",
-    "playwright.config.ts"
+    "e2e-live/**",
+    "playwright.config.ts",
+    "playwright.live.config.ts"
   ]
 }

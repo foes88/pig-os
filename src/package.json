@@ -12,7 +12,9 @@
     "test:run": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test --grep @smoke",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:live": "playwright test -c playwright.live.config.ts",
+    "test:e2e:live:ui": "playwright test -c playwright.live.config.ts --ui"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

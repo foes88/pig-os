@@ -90,6 +90,7 @@ export default function SowsPage() {
           </div>
           <button
             onClick={() => setShowAddModal(true)}
+            data-testid="sows-add-btn"
             className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
           >
             {t("addSow")}
@@ -631,6 +632,7 @@ function AddSowModal({
               value={form.ear_tag}
               onChange={(e) => set("ear_tag", e.target.value)}
               placeholder={t("phEarTag")}
+              data-testid="add-sow-ear-tag"
               className="input"
             />
           </Field>
@@ -685,6 +687,7 @@ function AddSowModal({
           <button
             onClick={() => mutation.mutate()}
             disabled={!form.ear_tag || mutation.isPending}
+            data-testid="add-sow-submit"
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50"
           >
             {mutation.isPending ? t("regging") : t("reg")}

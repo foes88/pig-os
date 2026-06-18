@@ -11,7 +11,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./tests/setup.ts"],
     // E2E(Playwright) 스펙은 vitest가 잡지 않도록 제외 — 별도 러너로 실행
-    exclude: [...configDefaults.exclude, "e2e/**"],
+    exclude: [...configDefaults.exclude, "e2e/**", "e2e-live/**"],
   },
   resolve: { alias: { "@": resolve(__dirname, ".") } },
 });
