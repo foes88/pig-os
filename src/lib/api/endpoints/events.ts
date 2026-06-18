@@ -6,6 +6,7 @@ import type {
   CreateReproductiveEventRequest,
   CreateWeaningRequest,
   Farrowing,
+  LedgerEntry,
   Mating,
   PigletEventRecord,
   ReproductiveEvent,
@@ -18,6 +19,9 @@ import type {
 const base = (farmId: string) => `/api/v1/farms/${farmId}/events`;
 
 export const eventsApi = {
+  ledger: (farmId: string, params?: { kind?: string; start_date?: string; end_date?: string; limit?: number }) =>
+    apiClient.get<LedgerEntry[]>(`${base(farmId)}/ledger`, { params }).then((r) => r.data),
+
   matings: {
     list: (farmId: string, sowId?: string) =>
       apiClient

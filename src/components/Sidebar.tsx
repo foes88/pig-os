@@ -72,6 +72,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
       { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản" } },
       { href: "/reports/grow-finish",  icon: Beef,      label: { en: "Grow-Finish",       ko: "비육성적",    zh: "育肥成绩", es: "Engorde",           vi: "Năng suất vỗ béo" } },
       { href: "/reports",              icon: FileText,  label: { en: "Sow Report",        ko: "모돈 보고서", zh: "母猪报告", es: "Informe de cerdas", vi: "Báo cáo nái" } },
+      { href: "/reports/ledger",       icon: ClipboardList, label: { en: "Work Ledger",   ko: "작업대장",    zh: "工作台账", es: "Registro",          vi: "Sổ công việc" } },
       { href: "/reports/prrs",         icon: Dna,       label: { en: "PRRS Genetics",     ko: "PRRS 유전",   zh: "PRRS基因", es: "PRRS genética",     vi: "PRRS di truyền" } },
     ],
   },

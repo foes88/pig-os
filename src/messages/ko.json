@@ -1190,5 +1190,22 @@
       "FARROWING_RATE": "분만율",
       "SOW_MORTALITY": "모돈폐사율"
     }
+  },
+  "ledger": {
+    "title": "작업대장",
+    "subtitle": "전 이벤트 통합 이력",
+    "all": "전체",
+    "kindMating": "교배",
+    "kindFarrowing": "분만",
+    "kindWeaning": "이유",
+    "kindRepro": "번식사고",
+    "kindPiglet": "자돈폐사",
+    "kindRemoval": "도폐사",
+    "colDate": "날짜",
+    "colKind": "유형",
+    "colSow": "모돈",
+    "colSummary": "내용",
+    "loading": "불러오는 중…",
+    "empty": "이벤트가 없습니다"
   }
 }

@@ -1190,5 +1190,22 @@
       "FARROWING_RATE": "Tasa de partos",
       "SOW_MORTALITY": "Mortalidad cerdas"
     }
+  },
+  "ledger": {
+    "title": "Registro de trabajo",
+    "subtitle": "Todos los eventos en una línea",
+    "all": "Todos",
+    "kindMating": "Monta",
+    "kindFarrowing": "Parto",
+    "kindWeaning": "Destete",
+    "kindRepro": "Evento repro.",
+    "kindPiglet": "Lechón",
+    "kindRemoval": "Baja",
+    "colDate": "Fecha",
+    "colKind": "Tipo",
+    "colSow": "Cerda",
+    "colSummary": "Detalle",
+    "loading": "Cargando…",
+    "empty": "Sin eventos"
   }
 }

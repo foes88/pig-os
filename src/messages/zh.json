@@ -1190,5 +1190,22 @@
       "FARROWING_RATE": "分娩率",
       "SOW_MORTALITY": "母猪死亡率"
     }
+  },
+  "ledger": {
+    "title": "工作台账",
+    "subtitle": "全部事件统一记录",
+    "all": "全部",
+    "kindMating": "配种",
+    "kindFarrowing": "分娩",
+    "kindWeaning": "断奶",
+    "kindRepro": "繁殖事件",
+    "kindPiglet": "仔猪",
+    "kindRemoval": "淘汰",
+    "colDate": "日期",
+    "colKind": "类型",
+    "colSow": "母猪",
+    "colSummary": "详情",
+    "loading": "加载中…",
+    "empty": "暂无事件"
   }
 }

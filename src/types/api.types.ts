@@ -840,6 +840,17 @@ export interface GrowFinishRow {
   mortality_rate: number | null;
 }
 
+export type LedgerKind = "mating" | "farrowing" | "weaning" | "reproductive" | "piglet" | "removal";
+
+export interface LedgerEntry {
+  id: string;
+  kind: LedgerKind;
+  event_date: string;
+  sow_id: string | null;
+  ear_tag: string | null;
+  summary: string;
+}
+
 export interface SowHistoryCycle {
   parity: number;
   mating_date: string | null;

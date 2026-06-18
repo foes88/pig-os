@@ -40,6 +40,8 @@ export const queryKeys = {
       ["events", "farrowings", farmId, sowId] as const,
     weanings: (farmId: string, sowId?: string) =>
       ["events", "weanings", farmId, sowId] as const,
+    ledger: (farmId: string, kind?: string) =>
+      ["events", "ledger", farmId, kind ?? "all"] as const,
   },
 
   kpi: {

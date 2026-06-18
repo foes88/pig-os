@@ -1190,5 +1190,22 @@
       "FARROWING_RATE": "Farrowing rate",
       "SOW_MORTALITY": "Sow mortality"
     }
+  },
+  "ledger": {
+    "title": "Work Ledger",
+    "subtitle": "All events in one timeline",
+    "all": "All",
+    "kindMating": "Mating",
+    "kindFarrowing": "Farrowing",
+    "kindWeaning": "Weaning",
+    "kindRepro": "Repro event",
+    "kindPiglet": "Piglet",
+    "kindRemoval": "Removal",
+    "colDate": "Date",
+    "colKind": "Type",
+    "colSow": "Sow",
+    "colSummary": "Detail",
+    "loading": "Loading…",
+    "empty": "No events"
   }
 }
