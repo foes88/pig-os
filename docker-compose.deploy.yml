@@ -1,0 +1,16 @@
+# 프로덕션 배포용 오버라이드 (docker-compose.prod.yml 과 함께 사용)
+#   docker compose -f docker-compose.prod.yml -f docker-compose.deploy.yml up -d --build web api worker redis
+#
+# 목적:
+#  - compose의 nginx 서비스는 띄우지 않음 (호스트 시스템 nginx가 80/443 점유)
+#  - web/api를 localhost 포트로 발행해 기존 서버 포트와 충돌 회피
+#    (3000=dawoon, 3001=topic-lab, 8000=pigsignal 사용 중 → 3010/8010 사용)
+#  - 시스템 nginx vhost(app.pigos.io→3010, api.pigos.io→8010)가 여기로 프록시
+# 자세한 내용: DEPLOY.md
+services:
+  web:
+    ports:
+      - "127.0.0.1:3010:3000"
+  api:
+    ports:
+      - "127.0.0.1:8010:8000"
