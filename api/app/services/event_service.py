@@ -47,6 +47,7 @@ from app.validators.date_rules import (
 )
 from app.validators.farrowing import validate_farrowing
 from app.validators.mating import validate_mating
+from app.validators.sow_state import validate_transition
 
 # 피그플랜 기준 상수
 GESTATION_MIN_DAYS = 100
@@ -290,6 +291,9 @@ async def record_farrowing(
     if existing_farrowing:
         raise ConflictError(f"Farrowing already recorded for mating {mating.id}")
 
+    # 상태전이 검증: 분만은 PREGNANT(임신)에서만 (중복·미발견 검사 뒤 = 더 구체적 에러 우선)
+    validate_transition(event="farrowing", current_status=sow.status)
+
     # 임신기간 검증 (100~130일)
     gestation = (req.farrowing_date - mating.mating_date).days
     if not (GESTATION_MIN_DAYS <= gestation <= GESTATION_MAX_DAYS):
@@ -391,6 +395,9 @@ async def record_weaning(
     )
     if existing_weaning:
         raise ConflictError(f"Weaning already recorded for farrowing {req.farrowing_id}")
+
+    # 상태전이 검증: 이유는 LACTATING(포유)에서만 (중복 검사 뒤 = 더 구체적 에러 우선)
+    validate_transition(event="weaning", current_status=sow.status)
 
     # 이유일 > 분만일 순서 검증 (app.validators)
     validate_weaning_after_farrowing(
@@ -571,6 +578,18 @@ async def record_piglet_event(
     # 양자 이동 두수 한도 검증 (app.validators)
     if req.event_type in ("FOSTER_IN", "FOSTER_OUT"):
         validate_cross_fostering(transfer_count=req.piglet_count)
+
+    # 정합성: 자돈 폐사 두수는 현재 포유 두수(생존+양자in-양자out-기존폐사) 초과 불가.
+    # (초과 시 이유두수 공식이 음수로 깨져 두수가 안 맞음)
+    if req.event_type == "DEATH":
+        foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
+        nursing = farrowing.born_alive + foster_in - foster_out - deaths
+        if req.piglet_count > nursing:
+            raise ValidationError(
+                f"Piglet deaths ({req.piglet_count}) exceed current nursing count "
+                f"({farrowing.born_alive} born_alive + {foster_in} in - {foster_out} out "
+                f"- {deaths} prior deaths = {nursing})"
+            )
 
     event = PigletEvent(
         farm_id=farm_id,

@@ -151,6 +151,13 @@ async def cull_sow(
             "Sow is lactating — wean or foster the nursing piglets before removal/sale"
         )
 
+    # 정합성: 도폐사일은 입식일 이후 & 미래일 금지 (입적 이력 보호)
+    entry_d = sow.entry_date.date() if hasattr(sow.entry_date, "date") else sow.entry_date
+    if entry_d and body.removal_date < entry_d:
+        raise ValidationError("removal_date cannot be before the sow's entry_date")
+    if body.removal_date > datetime.now(UTC).date():
+        raise ValidationError("removal_date cannot be in the future")
+
     now = datetime.now(UTC)
 
     # 紐⑤룉 ?곹깭 + soft-delete

@@ -8,11 +8,12 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 
+from app.core.exceptions import ValidationError
 from app.core.security import create_access_token
 from app.db.models.events import Farrowing, Mating
 from app.db.models.platform import UserFarm
 from app.db.models.sow import PigletGroup
-from app.schemas.events import WeaningCreate
+from app.schemas.events import FarrowingCreate, PigletEventCreate, WeaningCreate
 from app.services import event_service
 
 pytestmark = pytest.mark.asyncio
@@ -72,3 +73,66 @@ class TestCullLactatingBlocked:
             json={"removal_type": "DEAD", "removal_date": "2024-06-01"},
         )
         assert r.status_code == 201, r.text          # 사고사는 허용
+
+
+class TestEventStateGuards:
+    """PigPlan 정합성 — 잘못된 상태/두수/날짜 입력 차단(감사 HIGH 갭)."""
+
+    async def _farrow(self, db, farm, sow, user, born=10):
+        m = Mating(farm_id=farm.id, sow_id=sow.id, mating_date=date(2024, 2, 1),
+                   mating_type="AI", mating_number=1)
+        db.add(m)
+        await db.flush()
+        f = Farrowing(farm_id=farm.id, sow_id=sow.id, mating_id=m.id,
+                      farrowing_date=date(2024, 5, 26), total_born=born + 1,
+                      born_alive=born, stillborn=1, mummified=0)
+        db.add(f)
+        await db.flush()
+        return f
+
+    async def test_farrowing_wrong_state_blocked(self, db, test_farm, test_sow, test_user):
+        # PREGNANT 아닌 상태(OPEN)에서 분만 시도 → 차단
+        m = Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=date(2024, 2, 1),
+                   mating_type="AI", mating_number=1)
+        db.add(m)
+        test_sow.status = "OPEN"
+        await db.flush()
+        with pytest.raises(ValidationError, match="farrowing"):
+            await event_service.record_farrowing(
+                db, test_farm.id, test_user.id,
+                FarrowingCreate(sow_id=test_sow.id, mating_id=m.id, farrowing_date=date(2024, 5, 26),
+                                total_born=11, born_alive=10, stillborn=1, mummified=0),
+            )
+
+    async def test_weaning_wrong_state_blocked(self, db, test_farm, test_sow, test_user):
+        f = await self._farrow(db, test_farm, test_sow, test_user)
+        test_sow.status = "OPEN"  # LACTATING 아님
+        await db.flush()
+        with pytest.raises(ValidationError, match="weaning"):
+            await event_service.record_weaning(
+                db, test_farm.id, test_user.id,
+                WeaningCreate(sow_id=test_sow.id, farrowing_id=f.id,
+                              weaning_date=date(2024, 6, 16), weaned_count=10),
+            )
+
+    async def test_piglet_death_exceeds_nursing_blocked(self, db, test_farm, test_sow, test_user):
+        test_sow.status = "LACTATING"
+        f = await self._farrow(db, test_farm, test_sow, test_user, born=10)
+        with pytest.raises(ValidationError, match="exceed"):
+            await event_service.record_piglet_event(
+                db, test_farm.id, test_user.id,
+                PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id,
+                                  event_date=date(2024, 6, 1), event_type="DEATH", piglet_count=12),
+            )
+
+    async def test_cull_before_entry_blocked(self, client, db, test_user, test_farm, test_sow):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "OPEN"
+        await db.flush()
+        token = create_access_token(str(test_user.id), str(test_user.org_id), ["FARM_OWNER"])
+        r = await client.post(
+            f"/api/v1/farms/{test_farm.id}/sows/{test_sow.id}/cull",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"removal_type": "CULLED", "removal_date": "2023-01-01"},  # 입식(2024-01-01) 이전
+        )
+        assert r.status_code == 422, r.text
