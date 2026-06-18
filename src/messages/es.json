@@ -162,7 +162,8 @@
     "etTransfer": "Traslado",
     "etBorn": "Nacida en granja",
     "editTerminalNote": "Esta cerda ya salió (eliminada/vendida). El estado se gestiona en el flujo de baja.",
-    "selectFarm": "Seleccione una granja."
+    "selectFarm": "Seleccione una granja.",
+    "emptyGuide": "Registra tu primera cerda para iniciar el seguimiento."
   },
   "events": {
     "mating": {

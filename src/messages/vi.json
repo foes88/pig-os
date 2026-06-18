@@ -162,7 +162,8 @@
     "etTransfer": "Chuyển đến",
     "etBorn": "Tự sản xuất",
     "editTerminalNote": "Nái này đã xuất (loại/bán). Trạng thái quản lý qua quy trình loại thải.",
-    "selectFarm": "Vui lòng chọn trại."
+    "selectFarm": "Vui lòng chọn trại.",
+    "emptyGuide": "Đăng ký nái đầu tiên để bắt đầu theo dõi."
   },
   "events": {
     "mating": {

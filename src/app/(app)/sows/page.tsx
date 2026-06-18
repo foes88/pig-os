@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, LogOut, X } from "lucide-react";
+import { Pencil, LogOut, X, PiggyBank, ArrowRight } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
@@ -128,14 +128,32 @@ export default function SowsPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden">
           {isLoading ? (
             <div className="p-12 text-center text-text3 text-sm">{t("loading")}</div>
           ) : isError ? (
             <div className="p-12 text-center text-danger text-sm">{t("loadError")}</div>
           ) : filtered.length === 0 ? (
-            <div className="p-12 text-center text-text3 text-sm">
-              {search ? t("emptyNoResult", { q: search }) : t("emptyNoSows")}
+            <div className="flex flex-col items-center justify-center text-center gap-3 py-16 px-6">
+              <div className="w-14 h-14 rounded-2xl bg-bg2 border border-border flex items-center justify-center text-text3">
+                <PiggyBank size={26} />
+              </div>
+              <p className="text-sm font-bold text-text1">
+                {search ? t("emptyNoResult", { q: search }) : t("emptyNoSows")}
+              </p>
+              {!search && (
+                <>
+                  <p className="text-xs text-text3 max-w-xs">{t("emptyGuide")}</p>
+                  {canEntry(role) && (
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition mt-1"
+                    >
+                      {t("addSow")} <ArrowRight size={14} />
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <table className="w-full text-sm">

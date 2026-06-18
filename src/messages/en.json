@@ -162,7 +162,8 @@
     "etTransfer": "Transfer",
     "etBorn": "Born on-farm",
     "editTerminalNote": "This sow has exited (culled/sold). Status is managed via the removal flow.",
-    "selectFarm": "Please select a farm."
+    "selectFarm": "Please select a farm.",
+    "emptyGuide": "Register your first sow to start breeding & KPI tracking."
   },
   "events": {
     "mating": {

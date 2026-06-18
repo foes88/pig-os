@@ -162,7 +162,8 @@
     "etTransfer": "转入",
     "etBorn": "自繁",
     "editTerminalNote": "该母猪已淘汰/售出，状态由淘汰流程管理。",
-    "selectFarm": "请选择猪场。"
+    "selectFarm": "请选择猪场。",
+    "emptyGuide": "登记第一头母猪即可开始繁殖与指标追踪。"
   },
   "events": {
     "mating": {
