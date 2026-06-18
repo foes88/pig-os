@@ -76,7 +76,14 @@
     "aiDiagNoData": "Chưa đủ dữ liệu để phân tích. Nhập phối·đẻ·cai sữa để AI phân tích rủi ro và thiệt hại.",
     "emptyAlertsGuide": "Không phát hiện bất thường. Tiếp tục nhập, AI sẽ tự phân tích.",
     "riskDataQuality": "chất lượng dữ liệu",
-    "dataQuality": "Chất lượng dữ liệu"
+    "dataQuality": "Chất lượng dữ liệu",
+    "dataQualityLabel": "Chất lượng dữ liệu",
+    "todayActions": "Việc hôm nay",
+    "noTasks": "Không có việc. Nhập bản ghi để AI tự tạo công việc.",
+    "actionRecord": "Bổ sung bản ghi",
+    "actionAlerts": "{n} cần chú ý",
+    "viewAllTasks": "Xem tất cả",
+    "kpiSummary": "Chỉ số chính"
   },
   "sows": {
     "title": "Quản lý nái",

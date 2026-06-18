@@ -76,7 +76,14 @@
     "aiDiagNoData": "아직 분석할 기록이 충분치 않습니다. 교배·분만·이유를 입력하면 AI가 리스크·손실을 분석합니다.",
     "emptyAlertsGuide": "감지된 이상이 없습니다. 기록을 계속 입력하면 AI가 자동 분석합니다.",
     "riskDataQuality": "데이터 품질",
-    "dataQuality": "데이터 품질"
+    "dataQuality": "데이터 품질",
+    "dataQualityLabel": "데이터 품질",
+    "todayActions": "오늘 할 행동",
+    "noTasks": "예정된 작업이 없습니다. 기록을 입력하면 AI가 할 일을 자동 생성합니다.",
+    "actionRecord": "기록 보완",
+    "actionAlerts": "관리대상 {n}두",
+    "viewAllTasks": "전체 보기",
+    "kpiSummary": "핵심 지표"
   },
   "sows": {
     "title": "모돈 관리",

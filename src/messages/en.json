@@ -76,7 +76,14 @@
     "aiDiagNoData": "Not enough records to analyze yet. Enter mating·farrowing·weaning to let AI analyze risk and loss.",
     "emptyAlertsGuide": "No anomalies detected. Keep entering records and AI will analyze automatically.",
     "riskDataQuality": "data quality",
-    "dataQuality": "Data quality"
+    "dataQuality": "Data quality",
+    "dataQualityLabel": "Data quality",
+    "todayActions": "Today's actions",
+    "noTasks": "No actions due. Enter records and AI generates tasks automatically.",
+    "actionRecord": "Add records",
+    "actionAlerts": "{n} need attention",
+    "viewAllTasks": "View all",
+    "kpiSummary": "Key metrics"
   },
   "sows": {
     "title": "Sow management",

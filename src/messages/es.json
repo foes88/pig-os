@@ -76,7 +76,14 @@
     "aiDiagNoData": "Aún no hay registros suficientes. Ingresa monta·parto·destete para que la IA analice riesgo y pérdidas.",
     "emptyAlertsGuide": "Sin anomalías. Sigue registrando y la IA analizará automáticamente.",
     "riskDataQuality": "calidad de datos",
-    "dataQuality": "Calidad de datos"
+    "dataQuality": "Calidad de datos",
+    "dataQualityLabel": "Calidad de datos",
+    "todayActions": "Acciones de hoy",
+    "noTasks": "Sin acciones pendientes. Ingresa registros y la IA genera tareas.",
+    "actionRecord": "Añadir registros",
+    "actionAlerts": "{n} requieren atención",
+    "viewAllTasks": "Ver todo",
+    "kpiSummary": "Métricas clave"
   },
   "sows": {
     "title": "Gestión de cerdas",

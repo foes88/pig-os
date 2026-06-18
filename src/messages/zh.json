@@ -76,7 +76,14 @@
     "aiDiagNoData": "暂无足够记录可分析。录入配种·分娩·断奶后，AI将分析风险与损失。",
     "emptyAlertsGuide": "未检测到异常。持续录入记录，AI将自动分析。",
     "riskDataQuality": "数据质量",
-    "dataQuality": "数据质量"
+    "dataQuality": "数据质量",
+    "dataQualityLabel": "数据质量",
+    "todayActions": "今日行动",
+    "noTasks": "暂无待办。录入记录后，AI将自动生成任务。",
+    "actionRecord": "补充记录",
+    "actionAlerts": "{n}头需关注",
+    "viewAllTasks": "查看全部",
+    "kpiSummary": "核心指标"
   },
   "sows": {
     "title": "母猪管理",

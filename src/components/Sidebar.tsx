@@ -218,12 +218,11 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       <div className="px-3 pb-3">
         <button
           onClick={onAskAI}
-          className={`w-full flex items-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white transition ${
+          className={`w-full flex items-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-navy bg-primary-soft border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition ${
             collapsed ? "justify-center px-2" : "px-3"
           }`}
-          style={{ background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)" }}
         >
-          <MessageSquareText size={14} />
+          <MessageSquareText size={14} className="text-primary" />
           {!collapsed && <span>Ask AI</span>}
         </button>
       </div>
