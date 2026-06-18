@@ -43,6 +43,7 @@ from app.validators.date_rules import (
     validate_event_within_sow_lifespan,
     validate_farrowing_after_mating,
     validate_mating_after_last_weaning,
+    validate_piglet_event_date,
     validate_weaning_after_farrowing,
 )
 from app.validators.farrowing import validate_farrowing
@@ -575,9 +576,36 @@ async def record_piglet_event(
         if not farrowing:
             raise NotFoundError("No active farrowing found for this sow")
 
+    # V1 — 날짜 정합성: 자돈 이벤트는 분만일 이후, 이유 완료 시 이유일 이전. 미래일/입식전 금지.
+    wean = await db.scalar(
+        select(Weaning).where(Weaning.farrowing_id == farrowing.id, Weaning.deleted_at.is_(None))
+    )
+    validate_piglet_event_date(
+        event_date=req.event_date,
+        farrowing_date=farrowing.farrowing_date,
+        weaning_date=wean.weaning_date if wean else None,
+    )
+    validate_event_within_sow_lifespan(
+        event_date=req.event_date, entry_date=_as_date(sow.entry_date),
+        exit_date=_as_date(sow.exit_date), event_name="Piglet event",
+    )
+
     # 양자 이동 두수 한도 검증 (app.validators)
     if req.event_type in ("FOSTER_IN", "FOSTER_OUT"):
         validate_cross_fostering(transfer_count=req.piglet_count)
+        # V2 — 양자 전입/전출은 상대 모돈(target_sow_id)이 명시되고, 포유 중(LACTATING)이어야
+        # 고아 자돈/유령 참조를 방지.
+        if not req.target_sow_id:
+            raise ValidationError("Cross-foster requires target_sow_id (the counterpart sow)")
+        target = await db.scalar(
+            select(Sow).where(Sow.id == req.target_sow_id, Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+        )
+        if not target:
+            raise ValidationError("target_sow_id is not a valid active sow in this farm")
+        if target.status != "LACTATING":
+            raise ValidationError(
+                f"Cross-foster counterpart sow must be lactating (current: {target.status})"
+            )
 
     # 정합성: 자돈 폐사 두수는 현재 포유 두수(생존+양자in-양자out-기존폐사) 초과 불가.
     # (초과 시 이유두수 공식이 음수로 깨져 두수가 안 맞음)

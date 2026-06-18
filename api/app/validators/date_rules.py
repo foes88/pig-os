@@ -60,3 +60,16 @@ def validate_weaning_after_farrowing(
 ) -> None:
     """Weaning must be after the farrowing it ends."""
     validate_date_after(weaning_date, farrowing_date, "Weaning date", "the farrowing date")
+
+
+def validate_piglet_event_date(
+    *, event_date: date, farrowing_date: date | None, weaning_date: date | None = None
+) -> None:
+    """자돈 이벤트(폐사/양자)는 분만일 이후, 이유 완료 시 이유일 이전이어야 함.
+    (떠다니는 두수·타임라인 꼬임 방지 — V1)"""
+    validate_date_not_before(event_date, farrowing_date, "Piglet event date", "the farrowing date")
+    if weaning_date is not None and event_date > weaning_date:
+        raise ValidationError(
+            f"Piglet event date ({event_date.isoformat()}) cannot be after "
+            f"the weaning date ({weaning_date.isoformat()})"
+        )

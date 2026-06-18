@@ -136,3 +136,38 @@ class TestEventStateGuards:
             json={"removal_type": "CULLED", "removal_date": "2023-01-01"},  # 입식(2024-01-01) 이전
         )
         assert r.status_code == 422, r.text
+
+
+class TestPigletDateAndFosterGuards:
+    """V1 날짜순서 + V2 양자 전입 모돈 검증."""
+
+    async def _farrow(self, db, farm, sow, born=10, fdate=date(2024, 5, 26)):
+        m = Mating(farm_id=farm.id, sow_id=sow.id, mating_date=date(2024, 2, 1),
+                   mating_type="AI", mating_number=1)
+        db.add(m)
+        await db.flush()
+        f = Farrowing(farm_id=farm.id, sow_id=sow.id, mating_id=m.id, farrowing_date=fdate,
+                      total_born=born + 1, born_alive=born, stillborn=1, mummified=0)
+        db.add(f)
+        await db.flush()
+        return f
+
+    async def test_piglet_event_before_farrowing_blocked(self, db, test_farm, test_sow, test_user):
+        test_sow.status = "LACTATING"
+        f = await self._farrow(db, test_farm, test_sow)
+        with pytest.raises(ValidationError, match="farrowing"):
+            await event_service.record_piglet_event(
+                db, test_farm.id, test_user.id,
+                PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id,
+                                  event_date=date(2024, 5, 1), event_type="DEATH", piglet_count=1),
+            )
+
+    async def test_foster_requires_target(self, db, test_farm, test_sow, test_user):
+        test_sow.status = "LACTATING"
+        f = await self._farrow(db, test_farm, test_sow)
+        with pytest.raises(ValidationError, match="target_sow_id"):
+            await event_service.record_piglet_event(
+                db, test_farm.id, test_user.id,
+                PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id,
+                                  event_date=date(2024, 6, 1), event_type="FOSTER_OUT", piglet_count=2),
+            )

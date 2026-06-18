@@ -22,8 +22,8 @@
 ## ⬜ 남은 검증 갭 (다음 작업 — 우선순위순)
 | # | 갭 | 심각도 | 구현 방향 |
 |---|----|------|----------|
-| V1 | **자돈 이벤트 날짜 순서** (폐사/양자일 ≥ 분만일, ≤ 이유일) | 중-높 | `date_rules.py`에 `validate_piglet_event_date()` 추가 → record_piglet_event 연결 |
-| V2 | **양자 전입 모돈 검증** (target_sow_id 필수 + 해당 모돈 LACTATING + 분만 존재) | 중 | schemas FOSTER_IN시 target 필수 + event_service에서 target 상태 확인(고아 자돈 방지) |
+| ~~V1~~ | ~~자돈 이벤트 날짜 순서~~ ✅ 완료 | — | `validate_piglet_event_date()` + lifespan, record_piglet_event 연결 |
+| ~~V2~~ | ~~양자 전입 모돈 검증~~ ✅ 완료 | — | FOSTER 시 target_sow_id 필수 + target 활성·LACTATING 확인(고아 자돈 방지) |
 | V3 | **양자 합계 상한**(생존+양자in ≤ 분만틀 수용 ~12-14) | 중 | Rule Engine "양자 집중" 경고 or validator |
 | V4 | **모돈 등록 날짜**(입식일 미래금지·생년월일 ≤ 입식일·중복 귀표) | 중 | SowCreate에 `validate_sow_dates()` + 귀표 unique 검사 |
 | V5 | **미이유 폐사 표시**(폐사만 등록 후 이유 누락 → PSY 과다) | 중 | report-time "미이유 폐사" 표시 |
