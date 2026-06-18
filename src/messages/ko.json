@@ -83,7 +83,10 @@
     "actionRecord": "기록 보완",
     "actionAlerts": "관리대상 {n}두",
     "viewAllTasks": "전체 보기",
-    "kpiSummary": "핵심 지표"
+    "kpiSummary": "핵심 지표",
+    "estLoss": "올해 누적 손실(추정)",
+    "lostPigs": "{n}두",
+    "demoBadge": "참고"
   },
   "sows": {
     "title": "모돈 관리",

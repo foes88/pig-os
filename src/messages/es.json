@@ -83,7 +83,10 @@
     "actionRecord": "Añadir registros",
     "actionAlerts": "{n} requieren atención",
     "viewAllTasks": "Ver todo",
-    "kpiSummary": "Métricas clave"
+    "kpiSummary": "Métricas clave",
+    "estLoss": "Pérdida estimada (YTD)",
+    "lostPigs": "{n} cerdos",
+    "demoBadge": "ref"
   },
   "sows": {
     "title": "Gestión de cerdas",

@@ -117,7 +117,19 @@ export default function Dashboard() {
                   <div className={`text-xl font-extrabold font-mono ${quality >= 66 ? "text-success" : quality >= 33 ? "text-warning" : "text-danger"}`}>{quality}%</div>
                 </div>
               </div>
-              <p className="text-[15px] text-text1 leading-relaxed font-medium mb-4">{verdict}</p>
+              <p className="text-[15px] text-text1 leading-relaxed font-medium mb-3">{verdict}</p>
+              {data.estimated_loss && data.estimated_loss.amount > 0 && (
+                <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-lg bg-danger/8 border border-danger/20">
+                  <span className="text-[11px] font-semibold text-text3">{t("estLoss")}</span>
+                  <span className="text-sm font-extrabold font-mono text-danger">
+                    {data.estimated_loss.currency}{data.estimated_loss.amount.toLocaleString()}
+                  </span>
+                  <span className="text-[11px] text-text3">· {t("lostPigs", { n: data.estimated_loss.lost_pigs })}</span>
+                  {data.estimated_loss.demo && (
+                    <span className="text-[9px] font-bold bg-bg2 text-text3 rounded px-1 py-0.5">{t("demoBadge")}</span>
+                  )}
+                </div>
+              )}
               <div className="flex gap-2 flex-wrap">
                 <Link href="/record" className="inline-flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition">
                   {t("actionRecord")} <ArrowRight size={14} />

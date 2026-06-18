@@ -45,6 +45,9 @@ class DashboardKpi(BaseModel):
 
     alerts: list[Alert]
 
+    # LOSS_CALC — 올해 누적 손실 추정 {amount, currency, lost_pigs, basis, demo} | None
+    estimated_loss: dict | None = None
+
 
 class _KpiValueInternal(BaseModel):
     """Internal — rich KPI value with benchmarks. Not exposed in API responses."""

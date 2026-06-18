@@ -496,6 +496,9 @@ export interface KpiDashboard {
   country: string | null;
   benchmarks: Record<string, KpiBenchmark>;  // "PSY" | "NPD" | "FARROWING_RATE"
   alerts: Alert[];
+  estimated_loss?: {
+    amount: number; currency: string; lost_pigs: number; basis: string; demo: boolean;
+  } | null;
 }
 
 export interface KpiBenchmark {

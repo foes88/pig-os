@@ -83,7 +83,10 @@
     "actionRecord": "Bổ sung bản ghi",
     "actionAlerts": "{n} cần chú ý",
     "viewAllTasks": "Xem tất cả",
-    "kpiSummary": "Chỉ số chính"
+    "kpiSummary": "Chỉ số chính",
+    "estLoss": "Thiệt hại ước tính (năm)",
+    "lostPigs": "{n} con",
+    "demoBadge": "tham khảo"
   },
   "sows": {
     "title": "Quản lý nái",

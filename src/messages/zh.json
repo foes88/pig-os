@@ -83,7 +83,10 @@
     "actionRecord": "补充记录",
     "actionAlerts": "{n}头需关注",
     "viewAllTasks": "查看全部",
-    "kpiSummary": "核心指标"
+    "kpiSummary": "核心指标",
+    "estLoss": "今年累计损失(估算)",
+    "lostPigs": "{n}头",
+    "demoBadge": "参考"
   },
   "sows": {
     "title": "母猪管理",

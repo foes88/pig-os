@@ -393,12 +393,36 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         if f.severity in ("WARNING", "CRITICAL")
     ]
 
+    # LOSS_CALC — 올해 누적 자돈 손실(사산+미라 + 자돈폐사) × 출하두당가. 실데이터×실가격(날조 0).
+    from app.db.models.events import PigletEvent as _PE
+    from app.services.insight_service import _load_price
+    estimated_loss = None
+    price = await _load_price(db, farm)
+    if price:
+        ytd = date(year, 1, 1)
+        lost_sb = await db.scalar(
+            select(func.coalesce(func.sum(Farrowing.stillborn + Farrowing.mummified), 0))
+            .where(Farrowing.farm_id == farm.id, Farrowing.farrowing_date >= ytd, Farrowing.deleted_at.is_(None))
+        ) or 0
+        lost_pd = await db.scalar(
+            select(func.coalesce(func.sum(_PE.piglet_count), 0))
+            .where(_PE.farm_id == farm.id, _PE.event_type == "DEATH",
+                   _PE.event_date >= ytd, _PE.deleted_at.is_(None))
+        ) or 0
+        lost = int(lost_sb) + int(lost_pd)
+        if lost > 0:
+            estimated_loss = {
+                "amount": round(lost * price["price"]), "currency": price["currency"],
+                "lost_pigs": lost, "basis": "ytd_lost_piglets", "demo": price["demo"],
+            }
+
     return DashboardKpi(
         farm_id=farm.id,
         as_of=today,
         psy=psy_value,
         npd=npd_detail.avg_npd,
-        farrowing_rate=farrowing_rate,
+        # API는 비율(0~1)로 반환 — 프론트가 ×100해 % 표시. (RuleEngine 내부는 위 percent값 사용)
+        farrowing_rate=(farrowing_rate / 100) if farrowing_rate is not None else None,
         active_sows=sum(
             counts.get(s, 0)
             for s in ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")
@@ -417,4 +441,5 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
             "FARROWING_RATE": KpiBenchmark(avg=fr_bench.get("avg"), top25=fr_bench.get("top25"), target=fr_bench.get("target")),
         },
         alerts=alerts,
+        estimated_loss=estimated_loss,
     )

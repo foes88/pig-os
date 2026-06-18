@@ -83,7 +83,10 @@
     "actionRecord": "Add records",
     "actionAlerts": "{n} need attention",
     "viewAllTasks": "View all",
-    "kpiSummary": "Key metrics"
+    "kpiSummary": "Key metrics",
+    "estLoss": "Est. loss (YTD)",
+    "lostPigs": "{n} pigs",
+    "demoBadge": "ref"
   },
   "sows": {
     "title": "Sow management",
