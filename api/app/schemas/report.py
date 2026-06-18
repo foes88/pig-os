@@ -53,6 +53,16 @@ class ProductionSummary(BaseModel):
     rows: list[ReproductionRow] = []
 
 
+class LedgerEntry(BaseModel):
+    """작업대장(Work Ledger) 통합 항목 — 전 이벤트 유형을 한 줄로."""
+    id: str
+    kind: str            # mating | farrowing | weaning | reproductive | piglet | removal
+    event_date: str      # ISO date
+    sow_id: str | None = None
+    ear_tag: str | None = None
+    summary: str
+
+
 class GrowFinishRow(BaseModel):
     group_code: str
     start_date: str

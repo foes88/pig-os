@@ -5,14 +5,17 @@ All events are validated in event_service, which also handles:
 - breeding cycle management
 - audit logging
 """
+from datetime import date
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.db.models.events import Farrowing, Mating, PigletEvent, Weaning
+from app.db.models.events import Farrowing, Mating, PigletEvent, ReproductiveEvent, Weaning
+from app.db.models.health import Removal
 from app.db.models.master import EventDefinition
+from app.db.models.sow import Sow
 from app.schemas.events import (
     EventDefinitionResponse,
     FarrowingCreate,
@@ -29,6 +32,7 @@ from app.schemas.events import (
     WeaningResponse,
     WeaningUpdate,
 )
+from app.schemas.report import LedgerEntry
 from app.services import event_service, insight_service
 
 router = APIRouter(prefix="/farms/{farm_id}/events", tags=["Events"])
@@ -155,6 +159,65 @@ async def list_weanings(
         q = q.where(Weaning.sow_id == sow_id)
     rows = await db.scalars(q.order_by(Weaning.weaning_date.desc()).limit(limit))
     return [WeaningResponse.model_validate(r) for r in rows]
+
+
+@router.get("/ledger", response_model=list[LedgerEntry])
+async def event_ledger(
+    farm: FarmDep,
+    db: DbDep,
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
+    kind: str | None = Query(None, pattern="^(mating|farrowing|weaning|reproductive|piglet|removal)$"),
+    limit: int = Query(200, ge=1, le=1000),
+):
+    """작업대장 — 전 이벤트 유형(교배/분만/이유/사고/자돈/도폐사)을 한 목록으로 통합.
+    날짜 범위·유형 필터, 최신순. soft-delete 제외."""
+    def _in_range(d: date) -> bool:
+        return (start_date is None or d >= start_date) and (end_date is None or d <= end_date)
+
+    # sow_id → ear_tag 매핑(한 번 조회)
+    tag_rows = await db.execute(select(Sow.id, Sow.ear_tag).where(Sow.farm_id == farm.id))
+    tags = {sid: tag for sid, tag in tag_rows.all()}
+
+    entries: list[LedgerEntry] = []
+
+    if kind in (None, "mating"):
+        for m in await db.scalars(select(Mating).where(Mating.farm_id == farm.id, Mating.deleted_at.is_(None))):
+            if _in_range(m.mating_date):
+                entries.append(LedgerEntry(id=str(m.id), kind="mating", event_date=m.mating_date.isoformat(),
+                                           sow_id=str(m.sow_id), ear_tag=tags.get(m.sow_id),
+                                           summary=f"{m.mating_type} #{m.mating_number}"))
+    if kind in (None, "farrowing"):
+        for f in await db.scalars(select(Farrowing).where(Farrowing.farm_id == farm.id, Farrowing.deleted_at.is_(None))):
+            if _in_range(f.farrowing_date):
+                entries.append(LedgerEntry(id=str(f.id), kind="farrowing", event_date=f.farrowing_date.isoformat(),
+                                           sow_id=str(f.sow_id), ear_tag=tags.get(f.sow_id),
+                                           summary=f"TB {f.total_born} / BA {f.born_alive}"))
+    if kind in (None, "weaning"):
+        for w in await db.scalars(select(Weaning).where(Weaning.farm_id == farm.id, Weaning.deleted_at.is_(None))):
+            if _in_range(w.weaning_date):
+                entries.append(LedgerEntry(id=str(w.id), kind="weaning", event_date=w.weaning_date.isoformat(),
+                                           sow_id=str(w.sow_id), ear_tag=tags.get(w.sow_id),
+                                           summary=f"weaned {w.weaned_count}"))
+    if kind in (None, "reproductive"):
+        for r in await db.scalars(select(ReproductiveEvent).where(ReproductiveEvent.farm_id == farm.id, ReproductiveEvent.deleted_at.is_(None))):
+            if _in_range(r.event_date):
+                entries.append(LedgerEntry(id=str(r.id), kind="reproductive", event_date=r.event_date.isoformat(),
+                                           sow_id=str(r.sow_id), ear_tag=tags.get(r.sow_id), summary=r.event_type))
+    if kind in (None, "piglet"):
+        for p in await db.scalars(select(PigletEvent).where(PigletEvent.farm_id == farm.id, PigletEvent.deleted_at.is_(None))):
+            if _in_range(p.event_date):
+                entries.append(LedgerEntry(id=str(p.id), kind="piglet", event_date=p.event_date.isoformat(),
+                                           sow_id=str(p.sow_id), ear_tag=tags.get(p.sow_id),
+                                           summary=f"{p.event_type} {p.piglet_count}"))
+    if kind in (None, "removal"):
+        for rm in await db.scalars(select(Removal).where(Removal.farm_id == farm.id)):
+            if _in_range(rm.removal_date):
+                entries.append(LedgerEntry(id=str(rm.id), kind="removal", event_date=rm.removal_date.isoformat(),
+                                           sow_id=str(rm.sow_id), ear_tag=tags.get(rm.sow_id), summary=rm.removal_type))
+
+    entries.sort(key=lambda e: e.event_date, reverse=True)
+    return entries[:limit]
 
 
 @router.post("/weanings", response_model=WeaningResponse, status_code=201,

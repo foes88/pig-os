@@ -72,3 +72,38 @@ class TestEventListSoftDelete:
         w_ids = [x["id"] for x in rw.json()]
         assert str(f_live.id) in f_ids and str(f_dead.id) not in f_ids
         assert str(w_live.id) in w_ids and str(w_dead.id) not in w_ids
+
+
+class TestEventLedger:
+    """작업대장(통합 이벤트 목록) — 유형 통합·soft-delete 제외·kind 필터."""
+    async def test_ledger_merges_and_filters(self, client: AsyncClient, db, test_user, test_farm, test_sow):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        m = Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=date(2026, 2, 1),
+                   mating_type="AI", mating_number=1)
+        m_del = Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=date(2026, 2, 5),
+                       mating_type="AI", mating_number=1, deleted_at=datetime.now(UTC))
+        db.add_all([m, m_del])
+        await db.flush()
+        f = Farrowing(farm_id=test_farm.id, sow_id=test_sow.id, mating_id=m.id, farrowing_date=date(2026, 5, 26),
+                      total_born=11, born_alive=10, stillborn=1, mummified=0)
+        db.add(f)
+        await db.flush()
+
+        token = create_access_token(str(test_user.id), str(test_user.org_id), ["FARM_OWNER"])
+        h = {"Authorization": f"Bearer {token}"}
+
+        r = await client.get(f"/api/v1/farms/{test_farm.id}/events/ledger", headers=h)
+        assert r.status_code == 200, r.text
+        rows = r.json()
+        ids = {x["id"] for x in rows}
+        kinds = {x["kind"] for x in rows}
+        assert str(m.id) in ids and str(f.id) in ids          # 통합
+        assert str(m_del.id) not in ids                        # soft-delete 제외
+        assert {"mating", "farrowing"} <= kinds
+        # 최신순(분만 5/26 > 교배 2/1)
+        dates = [x["event_date"] for x in rows]
+        assert dates == sorted(dates, reverse=True)
+
+        rf = await client.get(f"/api/v1/farms/{test_farm.id}/events/ledger?kind=farrowing", headers=h)
+        assert rf.status_code == 200
+        assert all(x["kind"] == "farrowing" for x in rf.json())

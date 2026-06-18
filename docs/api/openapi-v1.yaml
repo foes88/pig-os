@@ -1323,6 +1323,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/events/ledger:
+    get:
+      tags:
+      - Events
+      summary: Event Ledger
+      description: '작업대장 — 전 이벤트 유형(교배/분만/이유/사고/자돈/도폐사)을 한 목록으로 통합.
+
+        날짜 범위·유형 필터, 최신순. soft-delete 제외.'
+      operationId: event_ledger_api_v1_farms__farm_id__events_ledger_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: start_date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Start Date
+      - name: end_date
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: End Date
+      - name: kind
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^(mating|farrowing|weaning|reproductive|piglet|removal)$
+          - type: 'null'
+          title: Kind
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 1000
+          minimum: 1
+          default: 200
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LedgerEntry'
+                title: Response Event Ledger Api V1 Farms  Farm Id  Events Ledger
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/farms/{farm_id}/events/reproductive:
     post:
       tags:
@@ -4908,6 +4982,38 @@ components:
       - npd
       - farrowing_rate
       title: KpiTrend
+    LedgerEntry:
+      properties:
+        id:
+          type: string
+          title: Id
+        kind:
+          type: string
+          title: Kind
+        event_date:
+          type: string
+          title: Event Date
+        sow_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sow Id
+        ear_tag:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ear Tag
+        summary:
+          type: string
+          title: Summary
+      type: object
+      required:
+      - id
+      - kind
+      - event_date
+      - summary
+      title: LedgerEntry
+      description: 작업대장(Work Ledger) 통합 항목 — 전 이벤트 유형을 한 줄로.
     LoginRequest:
       properties:
         email:
