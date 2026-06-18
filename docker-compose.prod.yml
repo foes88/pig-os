@@ -51,6 +51,10 @@ services:
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-}
     command: arq app.jobs.worker.WorkerSettings
+    # worker는 HTTP 서버가 없으므로 api Dockerfile의 /health 헬스체크를 비활성화
+    # (arq 프로세스는 redis 연결로 자체 동작 — false "unhealthy" 방지)
+    healthcheck:
+      disable: true
     depends_on:
       - redis
 

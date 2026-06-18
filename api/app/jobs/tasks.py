@@ -21,7 +21,7 @@ async def generate_tasks_job(ctx: dict) -> str:
     """전 활성 농장에 대해 alert 기반 Task 자동 생성/갱신."""
     async with AsyncSessionLocal() as db:
         farm_ids = list(await db.scalars(
-            select(Farm.id).where(Farm.deleted_at.is_(None))
+            select(Farm.id).where(Farm.active.is_(True))
         ))
 
     processed = 0
