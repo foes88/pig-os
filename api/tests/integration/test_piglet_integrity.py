@@ -171,3 +171,28 @@ class TestPigletDateAndFosterGuards:
                 PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id,
                                   event_date=date(2024, 6, 1), event_type="FOSTER_OUT", piglet_count=2),
             )
+
+
+class TestSowRegistrationGuards:
+    """V4 — 모돈 등록 정합성(입식일 미래금지·활성 귀표 중복)."""
+
+    def _token(self, u):
+        return create_access_token(str(u.id), str(u.org_id), ["FARM_OWNER"])
+
+    async def test_duplicate_ear_tag_blocked(self, client, db, test_user, test_farm):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        await db.flush()
+        h = {"Authorization": f"Bearer {self._token(test_user)}"}
+        body = {"ear_tag": "DUP-001", "entry_date": "2024-01-01", "entry_type": "GILT"}
+        r1 = await client.post(f"/api/v1/farms/{test_farm.id}/sows", headers=h, json=body)
+        assert r1.status_code == 201, r1.text
+        r2 = await client.post(f"/api/v1/farms/{test_farm.id}/sows", headers=h, json=body)
+        assert r2.status_code == 422 and "already exists" in r2.text.lower()
+
+    async def test_future_entry_date_blocked(self, client, db, test_user, test_farm):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        await db.flush()
+        h = {"Authorization": f"Bearer {self._token(test_user)}"}
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/sows", headers=h,
+                              json={"ear_tag": "FUT-001", "entry_date": "2099-01-01", "entry_type": "GILT"})
+        assert r.status_code == 422 and "future" in r.text.lower()

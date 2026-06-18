@@ -25,7 +25,7 @@
 | ~~V1~~ | ~~자돈 이벤트 날짜 순서~~ ✅ 완료 | — | `validate_piglet_event_date()` + lifespan, record_piglet_event 연결 |
 | ~~V2~~ | ~~양자 전입 모돈 검증~~ ✅ 완료 | — | FOSTER 시 target_sow_id 필수 + target 활성·LACTATING 확인(고아 자돈 방지) |
 | V3 | **양자 합계 상한**(생존+양자in ≤ 분만틀 수용 ~12-14) | 중 | Rule Engine "양자 집중" 경고 or validator |
-| V4 | **모돈 등록 날짜**(입식일 미래금지·생년월일 ≤ 입식일·중복 귀표) | 중 | SowCreate에 `validate_sow_dates()` + 귀표 unique 검사 |
+| ~~V4~~ | ~~모돈 등록 날짜·중복귀표~~ ✅ 완료 | — | 입식일 미래금지 + 활성 귀표 중복 422 (create_sow). dob 필드 없어 생년월일 검증 제외 |
 | V5 | **미이유 폐사 표시**(폐사만 등록 후 이유 누락 → PSY 과다) | 중 | report-time "미이유 폐사" 표시 |
 | V6 | **도폐사 사유 세분류**(생식/절름/질병/나이/성적 등) | 낮 | 프론트 드롭다운 + reason_category enum |
 | V7 | **edit/delete 시에도 위 검증 적용** | 중 | PATCH/DELETE 경로에 동일 가드 |

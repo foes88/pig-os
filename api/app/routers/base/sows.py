@@ -78,6 +78,18 @@ async def list_sows(
              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser):  # noqa: E501
     from datetime import UTC, datetime
+
+    # V4 정합성: 입식일 미래 금지 + 활성 귀표 중복 차단(깨끗한 422; DB unique는 500이라 사전 검사)
+    if body.entry_date > datetime.now(UTC).date():
+        raise ValidationError("entry_date cannot be in the future")
+    dup = await db.scalar(
+        select(Sow).where(
+            Sow.farm_id == farm.id, Sow.ear_tag == body.ear_tag, Sow.deleted_at.is_(None)
+        )
+    )
+    if dup:
+        raise ValidationError(f"ear_tag '{body.ear_tag}' already exists in this farm")
+
     sow = Sow(
         farm_id=farm.id,
         ear_tag=body.ear_tag,
