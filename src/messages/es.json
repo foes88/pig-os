@@ -63,7 +63,20 @@
     "herdLactating": "Lactante",
     "herdWeanedOpen": "Vacía/Destete",
     "herdActiveTotal": "Total activo",
-    "currentTarget": "Actual {cur} / meta {tgt}"
+    "currentTarget": "Actual {cur} / meta {tgt}",
+    "tierGood": "Cumplido",
+    "tierWarning": "Precaución",
+    "tierCritical": "Crítico",
+    "tierInsufficient": "Datos insuf.",
+    "dataInsufficient": "Datos insuficientes",
+    "aiDiagTitle": "Diagnóstico de IA",
+    "aiDiagRisk": "Riesgo principal: {risk}.",
+    "aiDiagInsufficient": " Pero faltan registros de {metrics}, la precisión es baja. Añade los últimos 90 días de monta·parto·destete para estimar pérdidas y prioridades.",
+    "aiDiagHealthy": "Los KPI están dentro del objetivo. Operación estable.",
+    "aiDiagNoData": "Aún no hay registros suficientes. Ingresa monta·parto·destete para que la IA analice riesgo y pérdidas.",
+    "emptyAlertsGuide": "Sin anomalías. Sigue registrando y la IA analizará automáticamente.",
+    "riskDataQuality": "calidad de datos",
+    "dataQuality": "Calidad de datos"
   },
   "sows": {
     "title": "Gestión de cerdas",

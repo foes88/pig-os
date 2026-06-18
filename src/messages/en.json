@@ -63,7 +63,20 @@
     "herdLactating": "Lactating",
     "herdWeanedOpen": "Open/Weaned",
     "herdActiveTotal": "Total active",
-    "currentTarget": "Now {cur} / target {tgt}"
+    "currentTarget": "Now {cur} / target {tgt}",
+    "tierGood": "Met",
+    "tierWarning": "Caution",
+    "tierCritical": "Critical",
+    "tierInsufficient": "Insufficient data",
+    "dataInsufficient": "Insufficient data",
+    "aiDiagTitle": "AI Operations Diagnosis",
+    "aiDiagRisk": "Top risk: {risk}.",
+    "aiDiagInsufficient": " However, {metrics} lack enough records, so analysis accuracy is low. Add the last 90 days of mating·farrowing·weaning records to enable loss estimates and priorities.",
+    "aiDiagHealthy": "Core KPIs are within target. Operations look stable.",
+    "aiDiagNoData": "Not enough records to analyze yet. Enter mating·farrowing·weaning to let AI analyze risk and loss.",
+    "emptyAlertsGuide": "No anomalies detected. Keep entering records and AI will analyze automatically.",
+    "riskDataQuality": "data quality",
+    "dataQuality": "Data quality"
   },
   "sows": {
     "title": "Sow management",

@@ -63,7 +63,20 @@
     "herdLactating": "포유",
     "herdWeanedOpen": "이유/공태",
     "herdActiveTotal": "활성 전체",
-    "currentTarget": "현재 {cur} / 목표 {tgt}"
+    "currentTarget": "현재 {cur} / 목표 {tgt}",
+    "tierGood": "목표 달성",
+    "tierWarning": "주의",
+    "tierCritical": "위험",
+    "tierInsufficient": "데이터 부족",
+    "dataInsufficient": "데이터 부족",
+    "aiDiagTitle": "AI 운영 진단",
+    "aiDiagRisk": "핵심 리스크는 {risk}입니다.",
+    "aiDiagInsufficient": " 다만 {metrics} 계산에 기록이 부족해 분석 정확도가 낮습니다. 최근 90일 교배·분만·이유 기록을 보완하면 손실 추정과 개선 우선순위를 계산할 수 있습니다.",
+    "aiDiagHealthy": "핵심 KPI가 목표 범위 내입니다. 안정적으로 운영 중입니다.",
+    "aiDiagNoData": "아직 분석할 기록이 충분치 않습니다. 교배·분만·이유를 입력하면 AI가 리스크·손실을 분석합니다.",
+    "emptyAlertsGuide": "감지된 이상이 없습니다. 기록을 계속 입력하면 AI가 자동 분석합니다.",
+    "riskDataQuality": "데이터 품질",
+    "dataQuality": "데이터 품질"
   },
   "sows": {
     "title": "모돈 관리",

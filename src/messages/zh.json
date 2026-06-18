@@ -63,7 +63,20 @@
     "herdLactating": "哺乳",
     "herdWeanedOpen": "空怀/断奶",
     "herdActiveTotal": "在栏合计",
-    "currentTarget": "当前 {cur} / 目标 {tgt}"
+    "currentTarget": "当前 {cur} / 目标 {tgt}",
+    "tierGood": "达标",
+    "tierWarning": "注意",
+    "tierCritical": "危险",
+    "tierInsufficient": "数据不足",
+    "dataInsufficient": "数据不足",
+    "aiDiagTitle": "AI运营诊断",
+    "aiDiagRisk": "核心风险为{risk}。",
+    "aiDiagInsufficient": " 但{metrics}记录不足，分析精度较低。补充最近90天配种·分娩·断奶记录可估算损失与优先级。",
+    "aiDiagHealthy": "核心KPI在目标范围内，运营稳定。",
+    "aiDiagNoData": "暂无足够记录可分析。录入配种·分娩·断奶后，AI将分析风险与损失。",
+    "emptyAlertsGuide": "未检测到异常。持续录入记录，AI将自动分析。",
+    "riskDataQuality": "数据质量",
+    "dataQuality": "数据质量"
   },
   "sows": {
     "title": "母猪管理",

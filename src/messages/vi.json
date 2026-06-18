@@ -63,7 +63,20 @@
     "herdLactating": "Nuôi con",
     "herdWeanedOpen": "Trống/Cai sữa",
     "herdActiveTotal": "Tổng đang nuôi",
-    "currentTarget": "Hiện {cur} / mục tiêu {tgt}"
+    "currentTarget": "Hiện {cur} / mục tiêu {tgt}",
+    "tierGood": "Đạt",
+    "tierWarning": "Chú ý",
+    "tierCritical": "Nguy hiểm",
+    "tierInsufficient": "Thiếu dữ liệu",
+    "dataInsufficient": "Thiếu dữ liệu",
+    "aiDiagTitle": "Chẩn đoán AI",
+    "aiDiagRisk": "Rủi ro chính: {risk}.",
+    "aiDiagInsufficient": " Tuy nhiên {metrics} thiếu bản ghi nên độ chính xác thấp. Bổ sung 90 ngày phối·đẻ·cai sữa gần nhất để ước tính thiệt hại và ưu tiên.",
+    "aiDiagHealthy": "KPI cốt lõi trong mục tiêu. Vận hành ổn định.",
+    "aiDiagNoData": "Chưa đủ dữ liệu để phân tích. Nhập phối·đẻ·cai sữa để AI phân tích rủi ro và thiệt hại.",
+    "emptyAlertsGuide": "Không phát hiện bất thường. Tiếp tục nhập, AI sẽ tự phân tích.",
+    "riskDataQuality": "chất lượng dữ liệu",
+    "dataQuality": "Chất lượng dữ liệu"
   },
   "sows": {
     "title": "Quản lý nái",
