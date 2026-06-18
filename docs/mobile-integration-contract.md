@@ -85,6 +85,7 @@
 - 이유: `GET|POST /events/weanings`, `PATCH|DELETE /events/weanings/{id}`
 - 기타: `POST /events/reproductive`(임신사고/RTS 등), `GET|POST /events/piglet_events`(포유자돈 폐사)
 - 이벤트 정의: `GET /events/definitions`
+- ⚠️ **soft-delete(2026-06-18)**: 이벤트 `DELETE`는 soft-delete(204) + **모돈 상태 롤백**(mating→OPEN / farrowing→PREGNANT / weaning→LACTATING). `GET` 목록은 `deleted_at` 건을 **반환하지 않음**(삭제 즉시 목록에서 사라짐). 모바일 로컬(Room/CoreData)도 삭제 sync 시 해당 행 제거 + 상태 롤백 미러링.
 
 ### KPI / 보고서 / 분석
 - `GET /farms/{farm_id}/kpi/dashboard` (PSY/NPD/FR + 모돈현황 + alerts + **country별 benchmarks**)
