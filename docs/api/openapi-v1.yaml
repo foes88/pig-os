@@ -3228,6 +3228,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/daily:
+    get:
+      tags:
+      - Reports
+      summary: Daily Report
+      description: 일일 사육현황 — 그날의 이벤트 요약 + 현재 돈군 스냅샷.
+      operationId: daily_report_api_v1_farms__farm_id__reports_daily_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: Date
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyReport'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/farms/{farm_id}/reports/reproduction:
     get:
       tags:
@@ -3915,6 +3954,94 @@ components:
       - parity
       - reasons
       title: CullCandidate
+    DailyCount:
+      properties:
+        count:
+          type: integer
+          title: Count
+        total_born:
+          type: integer
+          title: Total Born
+          default: 0
+        born_alive:
+          type: integer
+          title: Born Alive
+          default: 0
+        weaned:
+          type: integer
+          title: Weaned
+          default: 0
+        piglets:
+          type: integer
+          title: Piglets
+          default: 0
+      type: object
+      required:
+      - count
+      title: DailyCount
+    DailyHerd:
+      properties:
+        active_sows:
+          type: integer
+          title: Active Sows
+        gilts:
+          type: integer
+          title: Gilts
+        open:
+          type: integer
+          title: Open
+        pregnant:
+          type: integer
+          title: Pregnant
+        lactating:
+          type: integer
+          title: Lactating
+        accident:
+          type: integer
+          title: Accident
+      type: object
+      required:
+      - active_sows
+      - gilts
+      - open
+      - pregnant
+      - lactating
+      - accident
+      title: DailyHerd
+    DailyReport:
+      properties:
+        date:
+          type: string
+          title: Date
+        herd:
+          $ref: '#/components/schemas/DailyHerd'
+        matings:
+          type: integer
+          title: Matings
+        farrowings:
+          $ref: '#/components/schemas/DailyCount'
+        weanings:
+          $ref: '#/components/schemas/DailyCount'
+        accidents:
+          type: integer
+          title: Accidents
+        piglet_deaths:
+          $ref: '#/components/schemas/DailyCount'
+        removals:
+          type: integer
+          title: Removals
+      type: object
+      required:
+      - date
+      - herd
+      - matings
+      - farrowings
+      - weanings
+      - accidents
+      - piglet_deaths
+      - removals
+      title: DailyReport
+      description: 일일 사육현황 — PigPlan '일일보고서' 대응.
     DashboardKpi:
       properties:
         farm_id:

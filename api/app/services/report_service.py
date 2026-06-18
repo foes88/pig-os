@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.events import (
@@ -23,7 +23,7 @@ from app.db.models.events import (
     ReproductiveEvent,
     Weaning,
 )
-from app.db.models.health import FeedRecord
+from app.db.models.health import FeedRecord, Removal
 from app.db.models.ops import FinisherGroup
 from app.db.models.sow import BreedingCycle, Sow
 
@@ -358,6 +358,59 @@ async def get_reproduction_report(
         rts_breeds=[r[1] for r in rrows],
         death_breeds=[r[2] for r in drows],
     )
+
+
+async def get_daily_report(db: AsyncSession, farm_id: UUID, day: date) -> dict:
+    """일일 사육현황 — 그날의 이벤트 요약 + 현재 돈군 스냅샷. (PigPlan '일일보고서')"""
+    matings = await db.scalar(
+        select(func.count()).select_from(Mating)
+        .where(Mating.farm_id == farm_id, Mating.deleted_at.is_(None), Mating.mating_date == day)
+    )
+    f = (await db.execute(
+        select(func.count(), func.coalesce(func.sum(Farrowing.total_born), 0),
+               func.coalesce(func.sum(Farrowing.born_alive), 0))
+        .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None), Farrowing.farrowing_date == day)
+    )).one()
+    w = (await db.execute(
+        select(func.count(), func.coalesce(func.sum(Weaning.weaned_count), 0))
+        .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None), Weaning.weaning_date == day)
+    )).one()
+    accidents = await db.scalar(
+        select(func.count()).select_from(ReproductiveEvent)
+        .where(ReproductiveEvent.farm_id == farm_id, ReproductiveEvent.deleted_at.is_(None),
+               ReproductiveEvent.event_date == day)
+    )
+    pd = (await db.execute(
+        select(func.count(), func.coalesce(func.sum(PigletEvent.piglet_count), 0))
+        .where(PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None),
+               PigletEvent.event_type == "DEATH", PigletEvent.event_date == day)
+    )).one()
+    removals = await db.scalar(
+        select(func.count()).select_from(Removal)
+        .where(Removal.farm_id == farm_id, Removal.removal_date == day)
+    )
+    herd_rows = (await db.execute(
+        select(Sow.status, func.count()).where(Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+        .group_by(Sow.status)
+    )).all()
+    herd = {s: c for s, c in herd_rows}
+    active = ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")
+
+    return {
+        "date": day.isoformat(),
+        "herd": {
+            "active_sows": sum(herd.get(s, 0) for s in active),
+            "gilts": herd.get("GILT", 0), "open": herd.get("OPEN", 0),
+            "pregnant": herd.get("PREGNANT", 0), "lactating": herd.get("LACTATING", 0),
+            "accident": herd.get("ACCIDENT", 0),
+        },
+        "matings": matings or 0,
+        "farrowings": {"count": f[0], "total_born": int(f[1]), "born_alive": int(f[2])},
+        "weanings": {"count": w[0], "weaned": int(w[1])},
+        "accidents": accidents or 0,
+        "piglet_deaths": {"count": pd[0], "piglets": int(pd[1])},
+        "removals": removals or 0,
+    }
 
 
 async def get_grow_finish_report(

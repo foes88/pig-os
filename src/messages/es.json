@@ -1207,5 +1207,27 @@
     "colSummary": "Detalle",
     "loading": "Cargando…",
     "empty": "Sin eventos"
+  },
+  "dailyReport": {
+    "title": "Informe diario",
+    "subtitle": "Estado del hato y eventos del día",
+    "loading": "Cargando…",
+    "herd": "Hato",
+    "activeSows": "Activas",
+    "gilts": "Giltas",
+    "open": "Vacías",
+    "pregnant": "Gestantes",
+    "lactating": "Lactantes",
+    "accident": "Accidente",
+    "matings": "Montas",
+    "farrowings": "Partos",
+    "weanings": "Destetes",
+    "accidents": "Accidentes",
+    "removals": "Bajas",
+    "pigletDeaths": "Muertes lechones",
+    "totalBorn": "TN",
+    "bornAlive": "NV",
+    "weaned": "Destetados",
+    "piglets": "Lechones"
   }
 }

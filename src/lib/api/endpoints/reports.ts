@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import type {
+  DailyReport,
   GrowFinishRow,
   ProductionSummary,
   ReproductionRow,
@@ -9,6 +10,9 @@ import type {
 const base = (farmId: string) => `/api/v1/farms/${farmId}/reports`;
 
 export const reportsApi = {
+  daily: (farmId: string, date: string) =>
+    apiClient.get<DailyReport>(`${base(farmId)}/daily`, { params: { date } }).then((r) => r.data),
+
   reproduction: (
     farmId: string,
     startDate: string,

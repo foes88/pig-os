@@ -96,6 +96,8 @@
 - `GET /farms/{farm_id}/analytics/prrs-by-genetics`
 
 #### 보고서 (2026-06-18 확장 — cowork R3/R5)
+- **일일 사육현황**: `GET /reports/daily?date=YYYY-MM-DD` → `DailyReport`
+  `{ date, herd:{active_sows,gilts,open,pregnant,lactating,accident}, matings, farrowings:{count,total_born,born_alive}, weanings:{count,weaned}, accidents, piglet_deaths:{count,piglets}, removals }`. 당일 이벤트 집계 + 돈군 스냅샷(soft-delete 제외). PigPlan '일일보고서' 대응.
 - **번식 성적**: `GET /reports/reproduction?start&end&period={monthly|quarterly|annual}&group_by={period|breed}`
   - `group_by=breed` → 기간 대신 **품종별 행**. 반환 `ReproductionRow[]`:
     `period`(기간 또는 품종명), `total_matings, total_farrowings, total_weanings, fr, avg_tb, avg_ba, avg_weaned, avg_lactation_days, pwmr_a, pwmr_b, rts_rate`

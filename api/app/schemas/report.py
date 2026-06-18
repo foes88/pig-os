@@ -53,6 +53,36 @@ class ProductionSummary(BaseModel):
     rows: list[ReproductionRow] = []
 
 
+class DailyHerd(BaseModel):
+    active_sows: int
+    gilts: int
+    open: int
+    pregnant: int
+    lactating: int
+    accident: int
+
+
+class DailyCount(BaseModel):
+    count: int
+    # 분만: total_born/born_alive, 이유: weaned, 자돈폐사: piglets (해당 없으면 0)
+    total_born: int = 0
+    born_alive: int = 0
+    weaned: int = 0
+    piglets: int = 0
+
+
+class DailyReport(BaseModel):
+    """일일 사육현황 — PigPlan '일일보고서' 대응."""
+    date: str
+    herd: DailyHerd
+    matings: int
+    farrowings: DailyCount
+    weanings: DailyCount
+    accidents: int
+    piglet_deaths: DailyCount
+    removals: int
+
+
 class LedgerEntry(BaseModel):
     """작업대장(Work Ledger) 통합 항목 — 전 이벤트 유형을 한 줄로."""
     id: str

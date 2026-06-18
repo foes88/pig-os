@@ -1207,5 +1207,27 @@
     "colSummary": "Detail",
     "loading": "Loading…",
     "empty": "No events"
+  },
+  "dailyReport": {
+    "title": "Daily Report",
+    "subtitle": "Today's herd status & events",
+    "loading": "Loading…",
+    "herd": "Herd",
+    "activeSows": "Active",
+    "gilts": "Gilts",
+    "open": "Open",
+    "pregnant": "Pregnant",
+    "lactating": "Lactating",
+    "accident": "Accident",
+    "matings": "Matings",
+    "farrowings": "Farrowings",
+    "weanings": "Weanings",
+    "accidents": "Accidents",
+    "removals": "Removals",
+    "pigletDeaths": "Piglet deaths",
+    "totalBorn": "TB",
+    "bornAlive": "BA",
+    "weaned": "Weaned",
+    "piglets": "Piglets"
   }
 }

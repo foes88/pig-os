@@ -10,12 +10,13 @@ docker compose up -d postgres redis · alembic upgrade head · seed_e2e · uvico
 
 ## 완료된 것 (재작업 금지)
 - ✅ 작업대장(Work Ledger): `GET /events/ledger` + `/reports/ledger` 화면 (백+프+테스트)
+- ✅ **[G1] 일일 사육현황 리포트**: `GET /reports/daily` + `/reports/daily` 화면 (백+프+5개어+pytest+라이브) — **완료, 재작업 금지**
 - ✅ Alert→Task 자동생성: `task_service.generate_tasks` + `POST /tasks/generate` (이미 존재 — cron만 확인)
 - ✅ 이벤트 목록 soft-delete 제외 (버그수정+회귀)
 
 ## 작업 (우선순위순)
 
-### [G1] 일일 사육현황 리포트 (PigPlan '일일보고서/daily_report') — P1
+### [G1] 일일 사육현황 리포트 — ✅ 완료 (재작업 금지, G2부터 시작)
 - PigPlan 근거: `pigplan_mobile_2023/lib/.../daily_report.dart`(7섹션: 사육/교배/임신/생산/입출/거래/도폐사).
 - 백엔드: `GET /farms/{farm_id}/reports/daily?date=YYYY-MM-DD` → 그날의 요약:
   `{ date, herd:{active_sows,gestating,lactating,gilts}, matings, farrowings:{count,total_born,born_alive}, weanings:{count,weaned}, accidents, removals, piglet_deaths }`.

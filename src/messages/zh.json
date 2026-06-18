@@ -1207,5 +1207,27 @@
     "colSummary": "详情",
     "loading": "加载中…",
     "empty": "暂无事件"
+  },
+  "dailyReport": {
+    "title": "每日饲养现状",
+    "subtitle": "当日猪群现状与事件汇总",
+    "loading": "加载中…",
+    "herd": "猪群现状",
+    "activeSows": "在群",
+    "gilts": "后备",
+    "open": "空怀",
+    "pregnant": "妊娠",
+    "lactating": "哺乳",
+    "accident": "事故",
+    "matings": "配种",
+    "farrowings": "分娩",
+    "weanings": "断奶",
+    "accidents": "妊娠事故",
+    "removals": "淘汰",
+    "pigletDeaths": "仔猪死亡",
+    "totalBorn": "总产",
+    "bornAlive": "活产",
+    "weaned": "断奶",
+    "piglets": "头数"
   }
 }

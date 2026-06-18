@@ -1207,5 +1207,27 @@
     "colSummary": "Chi tiết",
     "loading": "Đang tải…",
     "empty": "Chưa có sự kiện"
+  },
+  "dailyReport": {
+    "title": "Báo cáo hàng ngày",
+    "subtitle": "Tình trạng đàn & sự kiện trong ngày",
+    "loading": "Đang tải…",
+    "herd": "Đàn",
+    "activeSows": "Đang nuôi",
+    "gilts": "Hậu bị",
+    "open": "Trống",
+    "pregnant": "Mang thai",
+    "lactating": "Nuôi con",
+    "accident": "Sự cố",
+    "matings": "Phối",
+    "farrowings": "Đẻ",
+    "weanings": "Cai sữa",
+    "accidents": "Sự cố TT",
+    "removals": "Loại thải",
+    "pigletDeaths": "Heo con chết",
+    "totalBorn": "Tổng đẻ",
+    "bornAlive": "Sống",
+    "weaned": "Cai sữa",
+    "piglets": "Số con"
   }
 }

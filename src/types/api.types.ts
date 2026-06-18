@@ -840,6 +840,25 @@ export interface GrowFinishRow {
   mortality_rate: number | null;
 }
 
+export interface DailyCount {
+  count: number;
+  total_born: number;
+  born_alive: number;
+  weaned: number;
+  piglets: number;
+}
+
+export interface DailyReport {
+  date: string;
+  herd: { active_sows: number; gilts: number; open: number; pregnant: number; lactating: number; accident: number };
+  matings: number;
+  farrowings: DailyCount;
+  weanings: DailyCount;
+  accidents: number;
+  piglet_deaths: DailyCount;
+  removals: number;
+}
+
 export type LedgerKind = "mating" | "farrowing" | "weaning" | "reproductive" | "piglet" | "removal";
 
 export interface LedgerEntry {

@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DbDep, FarmDep
 from app.schemas.report import (
+    DailyReport,
     GrowFinishRow,
     ProductionSummary,
     ReproductionRow,
@@ -21,6 +22,16 @@ from app.services import report_service
 router = APIRouter(prefix="/farms/{farm_id}/reports", tags=["Reports"])
 
 MAX_RANGE_DAYS = 731  # ~2 years
+
+
+@router.get("/daily", response_model=DailyReport)
+async def daily_report(
+    farm: FarmDep,
+    db: DbDep,
+    day: date = Query(..., alias="date"),
+):
+    """일일 사육현황 — 그날의 이벤트 요약 + 현재 돈군 스냅샷."""
+    return await report_service.get_daily_report(db, farm.id, day)
 
 
 def _check_range(start: date, end: date) -> None:

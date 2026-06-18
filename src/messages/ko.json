@@ -1207,5 +1207,27 @@
     "colSummary": "내용",
     "loading": "불러오는 중…",
     "empty": "이벤트가 없습니다"
+  },
+  "dailyReport": {
+    "title": "일일 사육현황",
+    "subtitle": "당일 돈군 현황·이벤트 요약",
+    "loading": "불러오는 중…",
+    "herd": "돈군 현황",
+    "activeSows": "사육두수",
+    "gilts": "후보돈",
+    "open": "공태",
+    "pregnant": "임신",
+    "lactating": "포유",
+    "accident": "사고",
+    "matings": "교배",
+    "farrowings": "분만",
+    "weanings": "이유",
+    "accidents": "임신사고",
+    "removals": "도폐사",
+    "pigletDeaths": "자돈폐사",
+    "totalBorn": "총산",
+    "bornAlive": "생존",
+    "weaned": "이유",
+    "piglets": "두수"
   }
 }
