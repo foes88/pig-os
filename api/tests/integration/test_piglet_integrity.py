@@ -13,7 +13,8 @@ from app.core.security import create_access_token
 from app.db.models.events import Farrowing, Mating
 from app.db.models.platform import UserFarm
 from app.db.models.sow import PigletGroup
-from app.schemas.events import FarrowingCreate, PigletEventCreate, WeaningCreate
+from app.schemas.events import FarrowingCreate, PigletEventCreate, WeaningCreate, WeaningUpdate
+from app.db.models.events import Weaning
 from app.services import event_service
 
 pytestmark = pytest.mark.asyncio
@@ -196,3 +197,22 @@ class TestSowRegistrationGuards:
         r = await client.post(f"/api/v1/farms/{test_farm.id}/sows", headers=h,
                               json={"ear_tag": "FUT-001", "entry_date": "2099-01-01", "entry_type": "GILT"})
         assert r.status_code == 422 and "future" in r.text.lower()
+
+
+class TestWeaningEditGuard:
+    """V7 — 이유 수정 시에도 두수 재검증."""
+    async def test_update_weaning_over_litter_blocked(self, db, test_farm, test_sow, test_user):
+        m = Mating(farm_id=test_farm.id, sow_id=test_sow.id, mating_date=date(2024, 2, 1),
+                   mating_type="AI", mating_number=1)
+        db.add(m); await db.flush()
+        f = Farrowing(farm_id=test_farm.id, sow_id=test_sow.id, mating_id=m.id,
+                      farrowing_date=date(2024, 5, 26), total_born=11, born_alive=10,
+                      stillborn=1, mummified=0)
+        db.add(f); await db.flush()
+        w = Weaning(farm_id=test_farm.id, sow_id=test_sow.id, farrowing_id=f.id,
+                    weaning_date=date(2024, 6, 16), weaned_count=10)
+        db.add(w); await db.flush()
+        with pytest.raises(ValidationError, match="effective litter"):
+            await event_service.update_weaning(
+                db, test_farm.id, test_user.id, w.id, WeaningUpdate(weaned_count=20),
+            )

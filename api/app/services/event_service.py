@@ -759,6 +759,18 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
     data = body.model_dump(exclude_unset=True)
     for k, v in data.items():
         setattr(w, k, v)
+    # V7 정합성: 수정 시에도 이유두수 재검증(유효 복당두수·상한 초과 차단)
+    if w.weaned_count > MAX_WEANED_COUNT:
+        raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
+    if w.farrowing_id:
+        farrowing = await db.get(Farrowing, w.farrowing_id)
+        if farrowing:
+            foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
+            effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
+            if w.weaned_count > effective:
+                raise ValidationError(
+                    f"weaned_count ({w.weaned_count}) > effective litter ({effective})"
+                )
     await _audit(db, user_id, farm_id, "UPDATE", "weanings", w.id, data)
     await db.commit(); await db.refresh(w)
     return w
