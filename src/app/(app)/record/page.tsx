@@ -261,6 +261,7 @@ export default function RecordPage() {
                 <button
                   key={et.value}
                   onClick={() => setEventType(et.value)}
+                  data-testid={`event-tab-${et.value}`}
                   style={eventType === et.value
                     ? { background: et.bg, borderColor: et.color, color: et.color }
                     : undefined
@@ -751,6 +752,7 @@ function SaveFooter({
         type="button"
         disabled={disabled || loading}
         onClick={onSave}
+        data-testid="event-save"
         className="flex-1 bg-surface border border-border text-text2 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-border transition"
       >
         {loading ? t("saving") : t("save")}

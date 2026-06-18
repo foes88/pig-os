@@ -85,7 +85,7 @@ async def list_matings(
     sow_id: UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
 ):
-    q = select(Mating).where(Mating.farm_id == farm.id)
+    q = select(Mating).where(Mating.farm_id == farm.id, Mating.deleted_at.is_(None))
     if sow_id:
         q = q.where(Mating.sow_id == sow_id)
     rows = await db.scalars(q.order_by(Mating.mating_date.desc()).limit(limit))
@@ -118,7 +118,7 @@ async def list_farrowings(
     sow_id: UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
 ):
-    q = select(Farrowing).where(Farrowing.farm_id == farm.id)
+    q = select(Farrowing).where(Farrowing.farm_id == farm.id, Farrowing.deleted_at.is_(None))
     if sow_id:
         q = q.where(Farrowing.sow_id == sow_id)
     rows = await db.scalars(q.order_by(Farrowing.farrowing_date.desc()).limit(limit))
@@ -150,7 +150,7 @@ async def list_weanings(
     sow_id: UUID | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
 ):
-    q = select(Weaning).where(Weaning.farm_id == farm.id)
+    q = select(Weaning).where(Weaning.farm_id == farm.id, Weaning.deleted_at.is_(None))
     if sow_id:
         q = q.where(Weaning.sow_id == sow_id)
     rows = await db.scalars(q.order_by(Weaning.weaning_date.desc()).limit(limit))

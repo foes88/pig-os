@@ -56,6 +56,37 @@ export function uniqueTag(prefix = "E2E"): string {
   return `${prefix}-${_base}-${_seq}`;
 }
 
+/** N일 전 날짜(YYYY-MM-DD). 번식 사이클 날짜 검증(임신 100~130/포유 10~60)을 통과시키기 위함. */
+export function daysAgo(n: number): string {
+  return new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** 활성 패널의 날짜 입력(첫 type=date)을 설정. */
+export async function setPanelDate(page: Page, dateStr: string): Promise<void> {
+  await page.locator('input[type="date"]').first().fill(dateStr);
+}
+
+/** /sows에서 새 모돈 UI 등록 → 목록 반영까지 대기. 반환=귀표.
+ *  entry_date를 과거로 소급(기본 200일 전)해 이벤트 날짜가 입식일 이후가 되도록. */
+export async function createSowViaUI(page: Page, prefix = "BC"): Promise<string> {
+  const tag = uniqueTag(prefix);
+  await gotoApp(page, "/sows");
+  await page.getByTestId("sows-add-btn").click();
+  await page.getByTestId("add-sow-ear-tag").fill(tag);
+  // 모달 내 입식일(type=date)을 200일 전으로
+  await page.locator('input[type="date"]').first().fill(daysAgo(200));
+  await page.getByTestId("add-sow-submit").click();
+  await expect(page.getByText(tag, { exact: true })).toBeVisible({ timeout: 15_000 });
+  return tag;
+}
+
+/** /record에서 해당 귀표 모돈을 검색→선택(우측 이벤트 패널 활성). */
+export async function recordSelectSow(page: Page, tag: string): Promise<void> {
+  await gotoApp(page, "/record");
+  await page.getByPlaceholder("Search tag...").fill(tag);
+  await page.getByText(tag, { exact: true }).click();
+}
+
 const I18N_NAMESPACES = [
   "prrsReport", "nav", "dashboard", "sows", "events", "kpi", "chat", "auth", "errors",
   "upgrade", "common", "sowStatus", "alerts", "validation", "settings", "reports", "users",

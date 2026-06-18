@@ -118,10 +118,12 @@ export function RecentEventsSection({
             <span className="text-xs font-mono text-text2">{e.date}</span>
             <span className="text-xs text-text3 flex-1 truncate">{e.summary}</span>
             <button onClick={() => setEditing(e)} title={t("edit")}
+              data-testid={`event-edit-${e.kind}`}
               className="p-1 rounded text-text3 hover:text-primary hover:bg-primary/5 transition">
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => setConfirmDel(e)} title={t("delete")}
+              data-testid={`event-delete-${e.kind}`}
               className="p-1 rounded text-text3 hover:text-danger hover:bg-red-50 transition">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -253,6 +255,7 @@ function EditModal({
             {t("cancel")}
           </button>
           <button onClick={() => save.mutate()} disabled={save.isPending}
+            data-testid="event-edit-save"
             className="flex-1 text-sm font-medium text-white bg-primary rounded-lg py-2 hover:opacity-90 transition disabled:opacity-50">
             {save.isPending ? t("saving") : t("save")}
           </button>
@@ -275,6 +278,7 @@ function ConfirmDeleteModal({
           {t("cancel")}
         </button>
         <button onClick={onConfirm} disabled={busy}
+          data-testid="event-delete-confirm"
           className="flex-1 text-sm font-medium text-white bg-danger rounded-lg py-2 hover:opacity-90 transition disabled:opacity-50">
           {busy ? t("deleting") : t("delete")}
         </button>
