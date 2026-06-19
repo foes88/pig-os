@@ -90,6 +90,18 @@
   전 이벤트 유형 **통합·최신순**, soft-delete 제외. PigPlan '작업대장' 대응. 모바일 '작업 이력' 화면에 사용.
 - ⚠️ **soft-delete(2026-06-18)**: 이벤트 `DELETE`는 soft-delete(204) + **모돈 상태 롤백**(mating→OPEN / farrowing→PREGNANT / weaning→LACTATING). `GET` 목록은 `deleted_at` 건을 **반환하지 않음**(삭제 즉시 목록에서 사라짐). 모바일 로컬(Room/CoreData)도 삭제 sync 시 해당 행 제거 + 상태 롤백 미러링.
 
+#### ⚠️ P0 입력 검증 + 신규 필드 (2026-06-19 — 모바일도 동일 적용)
+> 검증의 **최종 권위는 백엔드**(웹·모바일·sync 공용). 모바일은 동일 기준으로 **클라 사전검증**해 즉시 피드백 + 422 폴백.
+> 전체 기준: `docs/VALIDATION_SPEC.md`, `docs/DEV_GUIDE.md §5`.
+
+- **분만 `POST /events/farrowings`** 요청에 선택 필드 추가: `avg_birth_weight_kg`(≤3.0kg), `born_alive_male`, `born_alive_female`(입력 시 합 = born_alive). 응답에 `nursing_head`(포유개시두수, 초기값=born_alive), `avg_birth_weight_kg` 추가. 검증: TB≤35, SB/MUM≤25, BA≤TB, TB=BA+SB+MUM.
+- **이유 `POST /events/weanings`**: `weaned_count == nursing_head - 폐사 - 양자out + 양자in` **항등식 강제**(불일치 시 422). 즉, 폐사·양자를 piglet_events로 먼저 기록해야 적게 이유 가능. `avg_weaning_weight_kg`는 **2~12kg** 범위.
+- **교배 `POST /events/matings`**: 동일 모돈·동일 날짜 중복 교배 **409**, 웅돈은 **ACTIVE 상태만** 사용 가능(아니면 422). 교배가능 상태 GILT/OPEN/ACCIDENT.
+- **자돈 이벤트 `POST /events/piglet_events`**: 응답에 `age_days`(=event_date−farrowing_date) 추가. **양자(FOSTER_IN/OUT)는 `target_sow_id` 필수 + 대상 모돈 LACTATING**. 서버가 **반대편 거울 레코드 자동생성**(FOSTER_OUT→대상에 FOSTER_IN) — 모바일은 한쪽만 보내면 됨(양쪽 보내면 중복). 폐사두수 > 현재 포유두수면 422.
+- **임신 중 도폐사**(`POST /events/reproductive` event_type=CULLED/DEAD, 모돈 PREGNANT): **사유(notes) 필수**(없으면 422).
+- **비육돈 `POST /finishers`**: 입식두수≥1, 입식체중 5~50kg. **출하 `POST /finishers/{id}/ship`**: 출하두수≤입식두수, 출하체중≤200kg & 입식체중 초과, 출하완료 그룹 재출하 차단.
+- 신규 DB 컬럼(마이그레이션 `dbeb4c5ed00f`): `farrowings.nursing_head`, `farrowings.avg_birth_weight_kg`, `piglet_events.age_days`. **sync pull 스키마에 반영**.
+
 ### KPI / 보고서 / 분석
 - `GET /farms/{farm_id}/kpi/dashboard` (PSY/NPD/FR + 모돈현황 + alerts + **country별 benchmarks**)
 - `GET /kpi/psy` · `/kpi/npd` · `/kpi/trend?kpi=&months=`
@@ -109,6 +121,15 @@
   `{ group_code, start_date, end_date, head_in, head_out, avg_entry_weight_kg, avg_exit_weight_kg, adg_g, fcr, mortality_rate }`
 - **모돈 이력**: `GET /reports/sows/{sow_id}/history` → `SowHistoryCycle[]`:
   `{ parity, mating_date, boar_ids[], farrowing_date, tb, ba, sb, mum, weaned, weaning_date, lactation_days, status }`
+- **모돈 현재 상태표 (2026-06-19, MVP #1)**: `GET /reports/sow-status` → `SowStatusReport`:
+  `{ total, by_status:{GILT,OPEN,PREGNANT,LACTATING,ACCIDENT}, sows:[{sow_id,ear_tag,status,parity,entry_date}] }`. 활성 모돈만.
+- **분만·포유·이유 성적표 (2026-06-19, MVP #3)**: `GET /reports/farrowing?start_date&end_date` → `FarrowingPerfRow[]` (산차별):
+  `{ parity, farrowings, avg_total_born, avg_born_alive, avg_stillborn, avg_mummified, avg_weaned, avg_lactation_days, litters_weaned }`.
+- **도폐사·포유폐사 리포트 (2026-06-19, MVP #4)**: `GET /reports/mortality?start_date&end_date` → `MortalityReport`:
+  `{ removals_by_type:[{key,count}], removals_by_reason:[{key,count}], piglet_deaths_by_reason:[{key,count,piglets}], total_removals, total_piglet_deaths, born_alive_in_period, preweaning_mortality_rate }`. key는 enum 원값(CULLED/REPRODUCTIVE/CRUSHING 등) — 라벨은 클라가 i18n 매핑.
+- **데이터 품질/정합성 (2026-06-19 신규, MVP #5)**: `GET /reports/data-quality?as_of=YYYY-MM-DD?` → `DataQualityIssue[]`:
+  `{ issue_type, severity(CRITICAL|WARNING), sow_id, ear_tag, detail, event_date }`.
+  `issue_type`: `LITTER_MISMATCH`(총산≠BA+SB+MUM) · `WEANED_MISMATCH`(이유>유효복당) · `DATE_REVERSAL`(분만<교배/이유<분만) · `STATUS_ORPHAN`(PREGNANT인데 교배無 등) · `MISSING_FARROWING`(교배 후 130일↑ 미분만) · `MISSING_WEANING`(분만 후 60일↑ 미이유). 모바일 '데이터 점검' 화면에 사용. PigPlan '오류/누락 점검' 대응.
 - 기간 범위 >2년 → 400. CSV는 웹에서 클라이언트 변환(모바일은 표시/공유 자체 구현).
 
 ### 할 일 / 알림  (2026-06-18: '알림' 화면은 2탭 통합)
@@ -238,8 +259,11 @@ API/계약은 플랫폼 무관 → **공유 검증 1벌**. 단말 글루는 **iO
 4. 할 일/알림: `GET /tasks`, `GET /notifications`(+unread_count), read/read-all
 5. sync: `POST /sync` push/pull 왕복, 6개 엔티티 필드 매핑
 6. devices: `POST /devices` 등록 → `DELETE /devices/{token}` 해제
+7. **P0 검증(2026-06-19)**: 분만 TB=BA+SB+MUM·체중≤3 · 이유 항등식 422 · 이유체중 2~12 · 동일날짜 교배 409 · 웅돈 ACTIVE만 · 임신중 도폐사 사유필수 · 양자 거울레코드 자동(한쪽만 전송) · 비육 입식5~50/출하≤200. 클라 사전검증 + 422 메시지 노출 일치 확인.
+8. **보고서(2026-06-19)**: `GET /reports/{sow-status,farrowing,mortality,data-quality}` 200·스키마 일치(§보고서). 빈/대량 농장 양쪽.
 
 > 이 시나리오는 응답 JSON·상태코드 기준이라 iOS/Android 결과가 같아야 한다. 다르면 클라 글루 버그.
+> 백엔드/웹 검증 현황: `docs/verification/qa_qc_2026-06-19.md` (ruff·tsc·i18n·build·pytest379·live30 그린, vitest는 Node<20.12 보류).
 
 ### 8b. 플랫폼별 글루 검증 (iOS / Android 각각)
 | 검증 항목 | Android | iOS |
