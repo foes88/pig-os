@@ -14,10 +14,13 @@
 ```bash
 # 각 모바일 레포에서 (백엔드 계약 변경 때마다 재실행)
 mkdir -p docs/contract
-cp /c/dev/PigOS/docs/mobile-integration-contract.md       docs/contract/
-cp /c/dev/PigOS/docs/api/openapi-v1.yaml                  docs/contract/
+cp /c/dev/PigOS/docs/mobile-integration-contract.md        docs/contract/
+cp /c/dev/PigOS/docs/api/openapi-v1.yaml                   docs/contract/
 cp /c/dev/PigOS/docs/specs/2026-05-19_offline-sync-spec.md docs/contract/
+cp /c/dev/PigOS/docs/specs/2026-06-19_partial-weaning-spec.md docs/contract/   # 계약서가 참조
 git add docs/contract && git commit -m "docs: sync backend contract (YYYY-MM-DD)"
+
+# (참고) 계약서가 참조하는 스펙이 늘면 이 cp 목록에도 같이 추가할 것.
 ```
 
 > 백엔드에서 라우트/스키마가 바뀌면: `cd api && uv run python scripts/gen_openapi.py` 재생성 → 위 `cp` 재복사 → 모바일 세션에 "docs/contract 갱신됨" 한 줄 공지.
@@ -74,6 +77,7 @@ cd <pigos-ios> && claude --dangerously-skip-permissions
 
 - **공통 계약 검증(§8a, 플랫폼 무관, 1벌)**: login→Bearer→401 refresh→재시도 · `GET /farms/{id}/config` 단위·통화 · 이벤트 POST→PATCH→DELETE(상태 롤백) · `POST /sync` push/pull 왕복(6엔티티) · `POST /devices`→`DELETE`. **iOS·Android 결과가 같아야 함** — 다르면 글루 버그.
 - **🆕 P0 검증 계약(2026-06-19, 모바일 클라 사전검증 + 422 폴백 동일)**: 분만 TB=BA+SB+MUM·출생체중≤3 · 이유두수 항등식(weaned==nursing−폐사−out+in) 422 · 이유체중 2~12 · 교배 동일날짜 409·웅돈 ACTIVE만 · 임신중 도폐사 사유필수 · 양자 거울레코드 자동생성(한쪽만 전송) · 비육 입식 5~50/출하≤200. (백엔드 검증결과 = 권위, 모바일은 즉시 UX피드백만.)
+- **🆕 부분이유(2026-06-19, P1 #1)**: 이유 `is_partial: bool=false`. true=잔여까지 부분이유+모돈 LACTATING 유지(여러 번), false=잔여 전량 강제+OPEN, 잔여 0 추가이유 409. 모바일 이유 화면에 토글 추가. 스펙 `docs/specs/2026-06-19_partial-weaning-spec.md`.
 - **🆕 보고서 엔드포인트(2026-06-19)**: `GET /reports/{sow-status,farrowing,mortality,data-quality}` 응답 스키마 = 계약서 §보고서. 빈 농장/대량 데이터 양쪽에서 200·크래시 0 확인.
 - **플랫폼별 글루(§8b)**: 네트워크 평문예외·푸시·로컬DB·백그라운드는 OS API가 달라 iOS/Android **각각** 검증.
 - **검증 현황(백엔드/웹)**: ruff·tsc·i18n(1084×5)·build 그린 / pytest 379 · live E2E 30 통과 / vitest는 로컬 Node<20.12로 보류(`docs/verification/qa_qc_2026-06-19.md`). 모바일은 동일 계약을 단말에서 재검증.
