@@ -1,6 +1,8 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// 기본 빈 문자열 = 상대경로(같은 출처) → Next 서버 rewrites가 백엔드로 프록시.
+// 브라우저가 LAN IP를 직접 안 잡아도 돼 PC/폰/VPN 무관하게 안정적.
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
