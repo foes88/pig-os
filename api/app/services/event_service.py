@@ -653,6 +653,8 @@ async def record_piglet_event(
         # 고아 자돈/유령 참조를 방지.
         if not req.target_sow_id:
             raise ValidationError("Cross-foster requires target_sow_id (the counterpart sow)")
+        if req.target_sow_id == sow.id:
+            raise ValidationError("Cross-foster target must be a different sow (cannot foster to self)")
         target = await db.scalar(
             select(Sow).where(Sow.id == req.target_sow_id, Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
         )
@@ -778,6 +780,19 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
         await _ensure_period_unlocked(db, farm_id, data["mating_date"])
     for k, v in data.items():
         setattr(m, k, v)
+    # 견고화: 수정도 생성(record_mating)과 동일 제약 재검증
+    if "boar_id" in data and m.boar_id:
+        boar = await db.scalar(select(Boar).where(Boar.id == m.boar_id, Boar.farm_id == farm_id))
+        if not boar:
+            raise NotFoundError(f"Boar {m.boar_id} not found in farm")
+        if boar.status != "ACTIVE":
+            raise ValidationError(f"Boar {boar.ear_tag} is '{boar.status}' and cannot be used for mating")
+    if "mating_date" in data and data["mating_date"]:
+        dup = await db.scalar(select(Mating).where(
+            Mating.sow_id == m.sow_id, Mating.mating_date == m.mating_date,
+            Mating.deleted_at.is_(None), Mating.id != m.id))
+        if dup:
+            raise ConflictError("A mating is already recorded for this sow on this date")
     await _audit(db, user_id, farm_id, "UPDATE", "matings", m.id, data)
     await db.commit(); await db.refresh(m)
     return m
@@ -818,6 +833,17 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
     validate_farrowing(total_born=f.total_born, born_alive=f.born_alive,
                        stillborn=f.stillborn, mummified=f.mummified,
                        avg_birth_weight_kg=f.avg_birth_weight_kg)
+    # 견고화: 실산 축소가 기존 이유두수 합/양자 정합성을 깨면 차단(두수 꼬임 방지)
+    if "born_alive" in data:
+        fi, fo, deaths = await _calc_piglet_adjustments(db, f.id)
+        effective = max(0, f.born_alive + fi - fo - deaths)
+        weaned_sum = await db.scalar(select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+            Weaning.farrowing_id == f.id, Weaning.deleted_at.is_(None))) or 0
+        if int(weaned_sum) > effective:
+            raise ValidationError(
+                f"born_alive too low: already weaned {int(weaned_sum)} exceeds effective litter {effective}"
+            )
+        f.nursing_head = f.born_alive  # 포유개시두수 동기화
     await _audit(db, user_id, farm_id, "UPDATE", "farrowings", f.id, data)
     await db.commit(); await db.refresh(f)
     return f
@@ -861,9 +887,13 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
         if farrowing:
             foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
             effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
-            if w.weaned_count > effective:
+            # 견고화: 부분이유 형제 합계까지 고려(이 이유 + 다른 이유들 ≤ 유효복당)
+            others = await db.scalar(select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+                Weaning.farrowing_id == farrowing.id, Weaning.deleted_at.is_(None),
+                Weaning.id != w.id)) or 0
+            if int(others) + w.weaned_count > effective:
                 raise ValidationError(
-                    f"weaned_count ({w.weaned_count}) > effective litter ({effective})"
+                    f"total weaned ({int(others) + w.weaned_count}) > effective litter ({effective})"
                 )
     await _audit(db, user_id, farm_id, "UPDATE", "weanings", w.id, data)
     await db.commit(); await db.refresh(w)

@@ -100,6 +100,7 @@
 - **교배 `POST /events/matings`**: 동일 모돈·동일 날짜 중복 교배 **409**, 웅돈은 **ACTIVE 상태만** 사용 가능(아니면 422). 교배가능 상태 GILT/OPEN/ACCIDENT.
 - **자돈 이벤트 `POST /events/piglet_events`**: 응답에 `age_days`(=event_date−farrowing_date) 추가. **양자(FOSTER_IN/OUT)는 `target_sow_id` 필수 + 대상 모돈 LACTATING**. 서버가 **반대편 거울 레코드 자동생성**(FOSTER_OUT→대상에 FOSTER_IN) — 모바일은 한쪽만 보내면 됨(양쪽 보내면 중복). 폐사두수 > 현재 포유두수면 422.
 - **임신 중 도폐사**(`POST /events/reproductive` event_type=CULLED/DEAD, 모돈 PREGNANT): **사유(notes) 필수**(없으면 422).
+- **🆕 수정/삭제 경로 견고화(2026-06-19)**: 생성과 동일 제약을 **수정(PATCH)에도 재적용**. `update_mating`: 웅돈 변경 시 ACTIVE 검사·교배일 변경 시 동일날짜 중복 409. `update_farrowing`: 실산을 이미 이유한 두수 밑으로 축소 시 422(두수 꼬임 방지)+nursing_head 동기화. `update_weaning`: 부분이유 형제 합계까지 ≤ 유효복당 검증. **양자 self-target(target==sow) 422**. 모바일 편집 화면도 동일 동작.
 - **비육돈 `POST /finishers`**: 입식두수≥1, 입식체중 5~50kg. **출하 `POST /finishers/{id}/ship`**: 출하두수≤입식두수, 출하체중≤200kg & 입식체중 초과, 출하완료 그룹 재출하 차단.
 - 신규 DB 컬럼(마이그레이션 `dbeb4c5ed00f`): `farrowings.nursing_head`, `farrowings.avg_birth_weight_kg`, `piglet_events.age_days`. **sync pull 스키마에 반영**.
 
