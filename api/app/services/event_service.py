@@ -423,17 +423,21 @@ async def record_weaning(
         if not farrowing:
             raise NotFoundError("No farrowing found for this sow")
 
-    # 중복 이유 검증 (피그플랜 dedup: 동일 farrowing_id로 이유 1회만)
-    existing_weaning = await db.scalar(
-        select(Weaning).where(
-            Weaning.farrowing_id == req.farrowing_id,
-            Weaning.deleted_at.is_(None),
+    # 부분이유 모델: 잔여 포유두수 = 유효복당두수 - 기존 이유합
+    foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
+    effective_litter = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
+    prior_weaned = await db.scalar(
+        select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+            Weaning.farrowing_id == farrowing.id, Weaning.deleted_at.is_(None)
         )
-    )
-    if existing_weaning:
-        raise ConflictError(f"Weaning already recorded for farrowing {req.farrowing_id}")
+    ) or 0
+    remaining = effective_litter - int(prior_weaned)
 
-    # 상태전이 검증: 이유는 LACTATING(포유)에서만 (중복 검사 뒤 = 더 구체적 에러 우선)
+    # 이미 전부 이유됨 → 더 이상 이유 불가 (기존 dedup 대체)
+    if remaining <= 0:
+        raise ConflictError(f"Litter already fully weaned for farrowing {farrowing.id}")
+
+    # 상태전이 검증: 이유는 LACTATING(포유)에서만 (잔여 검사 뒤 = 더 구체적 에러 우선)
     validate_transition(event="weaning", current_status=sow.status)
 
     # 이유일 > 분만일 순서 검증 (app.validators)
@@ -457,28 +461,22 @@ async def record_weaning(
             f"Average weaning weight {req.avg_weaning_weight_kg}kg is outside the valid range (2~12kg)"
         )
 
-    # 이유두수 검증: foster 이벤트 반영
-    foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
-    effective_litter = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
+    # 두수 상한 + 잔여 초과 검증
     if req.weaned_count > MAX_WEANED_COUNT:
         raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
-    if req.weaned_count > effective_litter:
+    if req.weaned_count > remaining:
         raise ValidationError(
-            f"weaned_count ({req.weaned_count}) > effective litter "
-            f"({farrowing.born_alive} born_alive + {foster_in} foster_in "
-            f"- {foster_out} foster_out - {deaths} deaths = {effective_litter})"
+            f"weaned_count ({req.weaned_count}) > remaining nursing "
+            f"(effective litter {effective_litter} - already weaned {int(prior_weaned)} = {remaining})"
         )
 
-    # P0-BE-1: 이유두수 항등식 검증 (weaned == nursing_head - deaths - out + in)
+    # 최종이유(is_partial=False)는 잔여 전량 == weaned_count 항등식 강제.
+    # 부분이유(is_partial=True)는 weaned_count <= remaining 허용(위에서 검증).
     # 출처: PigPlan DataValidationChk.java L747~752
-    nursing_head = farrowing.nursing_head or farrowing.born_alive
-    validate_weaning(
-        weaned=req.weaned_count,
-        nursing_head=nursing_head,
-        deaths=deaths,
-        transfers_out=foster_out,
-        transfers_in=foster_in,
-    )
+    if not req.is_partial:
+        validate_weaning(weaned=req.weaned_count, nursing_head=remaining)
+
+    remaining_after = remaining - req.weaned_count
 
     weaning = Weaning(
         farm_id=farm_id,
@@ -495,19 +493,20 @@ async def record_weaning(
     db.add(weaning)
     await db.flush()
 
-    # 이유 → 공태 복귀 (SCREEN_MENU_SPEC: Weaning = Lactating → Open)
-    sow.status = "OPEN"
-
-    if farrowing.breeding_cycle_id:
-        cycle = await db.get(BreedingCycle, farrowing.breeding_cycle_id)
-        if cycle:
-            cycle.cycle_status = "WEANED"
-            cycle.ended_at = datetime.now(UTC)
+    # 잔여 포유두수 0 → 이유 완료(공태 복귀 + 사이클 종료). 잔여>0(부분이유) → LACTATING 유지.
+    if remaining_after <= 0:
+        sow.status = "OPEN"
+        if farrowing.breeding_cycle_id:
+            cycle = await db.get(BreedingCycle, farrowing.breeding_cycle_id)
+            if cycle:
+                cycle.cycle_status = "WEANED"
+                cycle.ended_at = datetime.now(UTC)
+    # else: 부분이유 — 모돈 LACTATING 유지, 사이클 FARROWED 유지
 
     # 데이터 정합성: 이유된 자돈을 그룹으로 추적(떠다니는 두수 방지, PSY→MSY 사슬 연결).
-    # 이유 1건 = 자돈그룹 1개 자동 생성(head_count_in = weaned_count).
+    # 이유 1건 = 자돈그룹 1개 자동 생성. 같은 날 부분이유 복수 대비 weaning id suffix로 충돌 방지.
     if req.weaned_count > 0:
-        code = f"WG-{req.weaning_date:%y%m%d}-{sow.ear_tag}"
+        code = f"WG-{req.weaning_date:%y%m%d}-{sow.ear_tag}-{str(weaning.id)[:4]}"
         exists = await db.scalar(
             select(PigletGroup).where(PigletGroup.farm_id == farm_id, PigletGroup.group_code == code)
         )

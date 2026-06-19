@@ -529,6 +529,7 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
   const [count, setCount] = useState(0);
   const [weight, setWeight] = useState("");
   const [date, setDate] = useState(today());
+  const [partial, setPartial] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
@@ -536,10 +537,11 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
       eventsApi.weanings.create(farmId, {
         sow_id: sow.id, weaning_date: date, weaned_count: count,
         avg_weaning_weight_kg: weight ? Number(weight) : undefined,
+        is_partial: partial,
       } as CreateWeaningRequest).then((resp) => ({ goNext, insights: resp.insights })),
     onSuccess: ({ goNext, insights }) => {
       onSaved(t("savedWeaning", { tag: sow.ear_tag, n: count }), sow.id, goNext, insights);
-      setCount(0); setWeight(""); setDate(today()); setError(null);
+      setCount(0); setWeight(""); setDate(today()); setPartial(false); setError(null);
     },
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
@@ -567,6 +569,12 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
           onChange={(e) => setWeight(e.target.value)}
           placeholder={t("phWeanWeight")} className="input" />
       </Field>
+      <label className="flex items-center gap-2 mt-4 cursor-pointer select-none">
+        <input type="checkbox" checked={partial} onChange={(e) => setPartial(e.target.checked)}
+          className="w-4 h-4 accent-primary" />
+        <span className="text-sm font-semibold text-text2">{t("partialWeaning")}</span>
+      </label>
+      <p className="text-[11px] text-text3 mt-1">{partial ? t("partialHint") : t("finalHint")}</p>
       {error && <p className="text-xs text-danger mt-3">{error}</p>}
       <div className="mt-5">
         <SaveFooter disabled={count < 1} loading={mutation.isPending}

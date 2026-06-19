@@ -284,6 +284,7 @@ export interface CreateWeaningRequest {
   weaning_date: string;
   weaned_count: number;
   avg_weaning_weight_kg?: number;
+  is_partial?: boolean;
   notes?: string;
 }
 

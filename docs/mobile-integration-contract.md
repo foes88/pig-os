@@ -96,6 +96,7 @@
 
 - **분만 `POST /events/farrowings`** 요청에 선택 필드 추가: `avg_birth_weight_kg`(≤3.0kg), `born_alive_male`, `born_alive_female`(입력 시 합 = born_alive). 응답에 `nursing_head`(포유개시두수, 초기값=born_alive), `avg_birth_weight_kg` 추가. 검증: TB≤35, SB/MUM≤25, BA≤TB, TB=BA+SB+MUM.
 - **이유 `POST /events/weanings`**: `weaned_count == nursing_head - 폐사 - 양자out + 양자in` **항등식 강제**(불일치 시 422). 즉, 폐사·양자를 piglet_events로 먼저 기록해야 적게 이유 가능. `avg_weaning_weight_kg`는 **2~12kg** 범위.
+  - **🆕 부분이유 `is_partial: bool=false`(2026-06-19, P1)**: 잔여 포유두수 = 유효복당 − 기존이유합. `is_partial=true`면 `weaned_count ≤ 잔여` 허용 + 모돈 **LACTATING 유지**(여러 번 이유 가능). `is_partial=false`(기본/최종)면 `weaned_count == 잔여` 강제 + 모돈 **OPEN** 전이. 잔여 0인데 추가 이유 시 **409**. 미전송 시 최종이유(하위호환). 스펙: `docs/specs/2026-06-19_partial-weaning-spec.md`.
 - **교배 `POST /events/matings`**: 동일 모돈·동일 날짜 중복 교배 **409**, 웅돈은 **ACTIVE 상태만** 사용 가능(아니면 422). 교배가능 상태 GILT/OPEN/ACCIDENT.
 - **자돈 이벤트 `POST /events/piglet_events`**: 응답에 `age_days`(=event_date−farrowing_date) 추가. **양자(FOSTER_IN/OUT)는 `target_sow_id` 필수 + 대상 모돈 LACTATING**. 서버가 **반대편 거울 레코드 자동생성**(FOSTER_OUT→대상에 FOSTER_IN) — 모바일은 한쪽만 보내면 됨(양쪽 보내면 중복). 폐사두수 > 현재 포유두수면 422.
 - **임신 중 도폐사**(`POST /events/reproductive` event_type=CULLED/DEAD, 모돈 PREGNANT): **사유(notes) 필수**(없으면 422).

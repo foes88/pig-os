@@ -93,6 +93,7 @@ class WeaningCreate(BaseModel):
     weaning_date: date
     weaned_count: int = Field(..., ge=0, le=30)
     avg_weaning_weight_kg: float | None = Field(None, gt=0)
+    is_partial: bool = False  # 부분이유: 잔여 포유두수 > 0 허용, 모돈 LACTATING 유지
     notes: str | None = None
 
 

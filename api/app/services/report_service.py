@@ -675,21 +675,29 @@ async def get_data_quality_report(db: AsyncSession, farm_id: UUID, today: date) 
     weanings = list(await db.scalars(
         select(Weaning).where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None))
     ))
+    # 부분이유 대비: farrowing별 이유두수 합계가 유효복당두수 초과 시 불일치
+    weaned_sum_by_f: dict = {}
+    last_wean_date: dict = {}
     for w in weanings:
+        weaned_sum_by_f[w.farrowing_id] = weaned_sum_by_f.get(w.farrowing_id, 0) + w.weaned_count
+        if w.farrowing_id not in last_wean_date or w.weaning_date > last_wean_date[w.farrowing_id]:
+            last_wean_date[w.farrowing_id] = w.weaning_date
         base = ba_by_f.get(w.farrowing_id)
+        if base and base[2] and w.weaning_date < base[2]:
+            tag = sows[base[1]].ear_tag if base[1] in sows else "?"
+            add("DATE_REVERSAL", "CRITICAL", base[1], tag,
+                f"weaning {w.weaning_date} before farrowing {base[2]}", w.weaning_date)
+    for fid, total_weaned in weaned_sum_by_f.items():
+        base = ba_by_f.get(fid)
         if not base:
             continue
-        ba, sow_id, fdate = base
-        a = adj.get(w.farrowing_id, {"FOSTER_IN": 0, "FOSTER_OUT": 0, "DEATH": 0})
+        ba, sow_id, _ = base
+        a = adj.get(fid, {"FOSTER_IN": 0, "FOSTER_OUT": 0, "DEATH": 0})
         effective = max(0, ba + a["FOSTER_IN"] - a["FOSTER_OUT"] - a["DEATH"])
-        if w.weaned_count > effective:
+        if total_weaned > effective:
             tag = sows[sow_id].ear_tag if sow_id in sows else "?"
             add("WEANED_MISMATCH", "CRITICAL", sow_id, tag,
-                f"weaned {w.weaned_count} > effective litter {effective}", w.weaning_date)
-        if fdate and w.weaning_date < fdate:
-            tag = sows[sow_id].ear_tag if sow_id in sows else "?"
-            add("DATE_REVERSAL", "CRITICAL", sow_id, tag,
-                f"weaning {w.weaning_date} before farrowing {fdate}", w.weaning_date)
+                f"total weaned {total_weaned} > effective litter {effective}", last_wean_date.get(fid))
 
     # 4) 입력 누락(과기한): PREGNANT인데 최근 교배 후 130일↑ 미분만 / LACTATING인데 분만 후 60일↑ 미이유
     last_mate: dict = {}
