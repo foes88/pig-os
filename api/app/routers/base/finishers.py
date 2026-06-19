@@ -17,6 +17,12 @@ from app.schemas.finisher import (
     FinisherGroupShip,
     FinisherGroupUpdate,
 )
+from app.validators.finisher import (
+    validate_finisher_entry,
+    validate_finisher_event_count,
+    validate_finisher_exit_weight,
+    validate_finisher_not_shipped,
+)
 
 router = APIRouter(prefix="/farms/{farm_id}/finishers", tags=["Finishers"])
 
@@ -52,6 +58,11 @@ async def create_finisher_group(
     current_user: CurrentUser,
 ):
     """비육돈 그룹 입식 등록"""
+    # P0-BE-12: 입식 두수·체중 검증
+    validate_finisher_entry(
+        entry_count=body.head_count_in,
+        avg_entry_weight_kg=body.avg_entry_weight_kg,
+    )
     existing = await db.scalar(
         select(FinisherGroup).where(
             FinisherGroup.farm_id == farm.id,
@@ -94,6 +105,19 @@ async def ship_finisher_group(
         raise NotFoundError(f"Finisher group {group_id} not found")
     if group.end_date is not None:
         raise ConflictError("Group already shipped")
+
+    # P0-BE-12: 출하 두수 ≤ 잔여(입식) 두수, 출하체중 범위·입식체중 초과 검증
+    validate_finisher_not_shipped(shipped_at=group.end_date)
+    validate_finisher_event_count(
+        action_count=body.head_count_out,
+        remaining_head=group.head_count_in or 0,
+        label="Shipped head count",
+    )
+    if body.avg_exit_weight_kg:
+        validate_finisher_exit_weight(
+            avg_exit_weight_kg=body.avg_exit_weight_kg,
+            avg_entry_weight_kg=group.avg_entry_weight_kg,
+        )
 
     group.end_date = body.end_date
     group.head_count_out = body.head_count_out

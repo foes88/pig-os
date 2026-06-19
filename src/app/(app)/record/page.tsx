@@ -6,6 +6,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, PiggyBank } from "lucide-react";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { sowsApi } from "@/lib/api/endpoints/sows";
+import {
+  farrowingSchema, weaningSchema, matingSchema, cullSchema, pigletEventSchema, firstError,
+} from "@/lib/validation/eventSchemas";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { InsightBanner } from "@/components/InsightBanner";
 import { queryKeys } from "@/lib/api/queryKeys";
@@ -328,6 +331,7 @@ export default function RecordPage() {
 
 function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
   const t = useTranslations("record");
+  const tv = useTranslations("validation");
   const [total, setTotal] = useState(0);
   const [still, setStill] = useState(0);
   const [mummy, setMummy] = useState(0);
@@ -357,6 +361,15 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
     },
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
+
+  function submit(goNext: boolean) {
+    const err = firstError(farrowingSchema, {
+      farrowing_date: date, total_born: total, born_alive: alive,
+      stillborn: still, mummified: mummy, avg_birth_weight_kg: weight,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate(goNext);
+  }
 
   return (
     <div className="max-w-lg">
@@ -444,7 +457,7 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
       </button>
 
       {error && <p className="text-xs text-danger mb-3">{error}</p>}
-      <SaveFooter disabled={hasError || total === 0} loading={mutation.isPending} onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+      <SaveFooter disabled={hasError || total === 0} loading={mutation.isPending} onSave={() => submit(false)} onSaveNext={() => submit(true)} />
     </div>
   );
 }
@@ -453,6 +466,7 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
 
 function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
   const t = useTranslations("record");
+  const tv = useTranslations("validation");
   const [form, setForm] = useState<CreateMatingRequest>({
     sow_id: sow.id, mating_date: today(), mating_type: "AI", semen_batch: "", notes: "",
   });
@@ -468,6 +482,12 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
     },
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
+
+  function submit(goNext: boolean) {
+    const err = firstError(matingSchema, { mating_date: form.mating_date }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate(goNext);
+  }
 
   return (
     <div className="max-w-lg space-y-4">
@@ -496,7 +516,7 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
       <SaveFooter disabled={false} loading={mutation.isPending}
-        onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+        onSave={() => submit(false)} onSaveNext={() => submit(true)} />
     </div>
   );
 }
@@ -505,6 +525,7 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
 
 function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
   const t = useTranslations("record");
+  const tv = useTranslations("validation");
   const [count, setCount] = useState(0);
   const [weight, setWeight] = useState("");
   const [date, setDate] = useState(today());
@@ -523,6 +544,15 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
 
+  function submit(goNext: boolean) {
+    const err = firstError(weaningSchema, {
+      weaning_date: date, weaned_count: count,
+      avg_weaning_weight_kg: weight ? Number(weight) : undefined,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate(goNext);
+  }
+
   return (
     <div className="max-w-lg">
       <Field label={t("weaningDate")}>
@@ -540,7 +570,7 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
       {error && <p className="text-xs text-danger mt-3">{error}</p>}
       <div className="mt-5">
         <SaveFooter disabled={count < 1} loading={mutation.isPending}
-          onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+          onSave={() => submit(false)} onSaveNext={() => submit(true)} />
       </div>
     </div>
   );
@@ -621,6 +651,7 @@ const REASON_CATEGORY_KEYS = [
 
 function CullPanel({ farmId, sow, onSaved }: PanelProps) {
   const t = useTranslations("record");
+  const tv = useTranslations("validation");
   const tStatus = useTranslations("sowStatus");
   const queryClient = useQueryClient();
   const [form, setForm] = useState<SowCullRequest>({
@@ -641,6 +672,14 @@ function CullPanel({ farmId, sow, onSaved }: PanelProps) {
     },
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
+
+  function submit(goNext: boolean) {
+    const err = firstError(cullSchema, {
+      removal_type: form.removal_type, removal_date: form.removal_date,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate(goNext);
+  }
 
   return (
     <div className="max-w-lg space-y-4">
@@ -674,7 +713,7 @@ function CullPanel({ farmId, sow, onSaved }: PanelProps) {
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
       <SaveFooter disabled={!form.removal_date} loading={mutation.isPending}
-        onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+        onSave={() => submit(false)} onSaveNext={() => submit(true)} />
     </div>
   );
 }
@@ -692,6 +731,7 @@ const PIGLET_DEATH_REASON_KEYS = [
 
 function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
   const t = useTranslations("record");
+  const tv = useTranslations("validation");
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CreatePigletEventRequest>({
     sow_id: sow.id,
@@ -712,6 +752,14 @@ function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
     },
     onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
   });
+
+  function submit(goNext: boolean) {
+    const err = firstError(pigletEventSchema, {
+      event_type: form.event_type, event_date: form.event_date, piglet_count: form.piglet_count,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate(goNext);
+  }
 
   return (
     <div className="max-w-lg space-y-4">
@@ -742,7 +790,7 @@ function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
       <SaveFooter disabled={!form.event_date} loading={mutation.isPending}
-        onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+        onSave={() => submit(false)} onSaveNext={() => submit(true)} />
     </div>
   );
 }

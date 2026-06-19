@@ -24,6 +24,12 @@ export const queryKeys = {
       ["reports", "grow-finish", farmId, start, end] as const,
     sowHistory: (farmId: string, sowId: string) =>
       ["reports", "sow-history", farmId, sowId] as const,
+    dataQuality: (farmId: string) => ["reports", "data-quality", farmId] as const,
+    sowStatus: (farmId: string) => ["reports", "sow-status", farmId] as const,
+    farrowing: (farmId: string, start: string, end: string) =>
+      ["reports", "farrowing", farmId, start, end] as const,
+    mortality: (farmId: string, start: string, end: string) =>
+      ["reports", "mortality", farmId, start, end] as const,
   },
 
   sows: {

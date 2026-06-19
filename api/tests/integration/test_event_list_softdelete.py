@@ -3,7 +3,6 @@
 라이브 E2E(event-rollback)가 발견: 삭제(204)된 교배가 GET /events/matings 목록에 남던 버그.
 """
 from datetime import UTC, date, datetime
-from uuid import uuid4
 
 import pytest
 from httpx import AsyncClient

@@ -70,6 +70,9 @@ class Farrowing(Base):
     stillborn: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     mummified: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # Constraint: total_born = born_alive + stillborn + mummified (enforced in DB trigger)
+    # 포유개시두수 — 초기값 = born_alive, 양자 이동(piglet_event) 시 집계로 갱신 (P0-BE-4)
+    nursing_head: Mapped[int | None] = mapped_column(Integer)
+    avg_birth_weight_kg: Mapped[float | None] = mapped_column()  # 평균 출생체중(kg), 검증 ≤3.0 (P0-BE-6)
     farrowing_ease: Mapped[str | None] = mapped_column(String(20))  # EASY / ASSISTED / DIFFICULT
     notes: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
@@ -155,6 +158,7 @@ class PigletEvent(Base):
     event_type: Mapped[str] = mapped_column(String(20), nullable=False)
     # STILLBORN_REMOVAL / DEATH / FOSTER_IN / FOSTER_OUT
     piglet_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    age_days: Mapped[int | None] = mapped_column(Integer)  # 자돈 일령 = event_date - farrowing_date (P0-BE-5)
     reason: Mapped[str | None] = mapped_column(String(50))
     # CRUSHING / SCOURS / STARVATION / CONGENITAL / HYPOTHERMIA / OTHER
     target_sow_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("sows.id"))

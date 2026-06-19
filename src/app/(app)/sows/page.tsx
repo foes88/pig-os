@@ -9,6 +9,7 @@ import { sowsApi } from "@/lib/api/endpoints/sows";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { sowEntrySchema, firstError } from "@/lib/validation/eventSchemas";
 import type {
   Sow,
   SowStatus,
@@ -622,6 +623,7 @@ function AddSowModal({
   onSuccess: () => void;
 }) {
   const t = useTranslations("sows");
+  const tv = useTranslations("validation");
   const [form, setForm] = useState<CreateSowRequest>({
     ear_tag: "",
     entry_date: new Date().toISOString().slice(0, 10),
@@ -642,6 +644,14 @@ function AddSowModal({
 
   const set = (k: keyof CreateSowRequest, v: string | number) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  function submit() {
+    const err = firstError(sowEntrySchema, {
+      ear_tag: form.ear_tag, entry_date: form.entry_date, entry_type: form.entry_type,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate();
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -707,7 +717,7 @@ function AddSowModal({
             {t("cancel")}
           </button>
           <button
-            onClick={() => mutation.mutate()}
+            onClick={submit}
             disabled={!form.ear_tag || mutation.isPending}
             data-testid="add-sow-submit"
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50"

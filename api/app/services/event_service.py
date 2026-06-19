@@ -30,7 +30,7 @@ from app.db.models.events import (
 from app.db.models.health import Removal
 from app.db.models.master import MedicationCatalog
 from app.db.models.platform import AuditLog
-from app.db.models.sow import BreedingCycle, PigletGroup, Sow
+from app.db.models.sow import Boar, BreedingCycle, PigletGroup, Sow
 from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
@@ -49,6 +49,7 @@ from app.validators.date_rules import (
 from app.validators.farrowing import validate_farrowing
 from app.validators.mating import validate_mating
 from app.validators.sow_state import validate_transition
+from app.validators.weaning import validate_weaning
 
 # 피그플랜 기준 상수
 GESTATION_MIN_DAYS = 100
@@ -177,8 +178,37 @@ async def record_mating(
 ) -> Mating:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
 
-    # 교배 가능 상태 + 날짜 검증 (app.validators)
-    validate_mating(sow_status=sow.status)
+    # 교배 가능 상태 + 웅돈 순서 검증 (P0-BE-9: boar 슬롯 인자 전달)
+    validate_mating(
+        sow_status=sow.status,
+        boar_1=req.boar_id,
+        boar_2=getattr(req, "boar_id_2", None),
+        boar_3=getattr(req, "boar_id_3", None),
+    )
+
+    # P0-BE-8: 웅돈은 ACTIVE 상태만 교배 사용 가능
+    if req.boar_id:
+        boar = await db.scalar(
+            select(Boar).where(Boar.id == req.boar_id, Boar.farm_id == farm_id)
+        )
+        if not boar:
+            raise NotFoundError(f"Boar {req.boar_id} not found in farm")
+        if boar.status != "ACTIVE":
+            raise ValidationError(
+                f"Boar {boar.ear_tag} is '{boar.status}' and cannot be used for mating"
+            )
+
+    # P0-BE-7: 동일 날짜 중복 교배 방지
+    dup = await db.scalar(
+        select(Mating).where(
+            Mating.sow_id == sow.id,
+            Mating.mating_date == req.mating_date,
+            Mating.deleted_at.is_(None),
+        )
+    )
+    if dup:
+        raise ConflictError("A mating is already recorded for this sow on this date")
+
     validate_event_within_sow_lifespan(
         event_date=req.mating_date,
         entry_date=_as_date(sow.entry_date),
@@ -310,12 +340,15 @@ async def record_farrowing(
             f"total_born ({req.total_born}) != born_alive + stillborn + mummified ({expected_total})"
         )
 
-    # 분만 입력값 한도 + 날짜 순서 검증 (app.validators)
+    # 분만 입력값 한도 + 날짜 순서 검증 (app.validators) — P0-BE-6: 출생체중·암수 인자 완성
     validate_farrowing(
         total_born=req.total_born,
         born_alive=req.born_alive,
         stillborn=req.stillborn,
         mummified=req.mummified,
+        avg_birth_weight_kg=getattr(req, "avg_birth_weight_kg", None),
+        male=getattr(req, "born_alive_male", None),
+        female=getattr(req, "born_alive_female", None),
     )
     validate_event_within_sow_lifespan(
         event_date=req.farrowing_date,
@@ -337,6 +370,8 @@ async def record_farrowing(
         born_alive=req.born_alive,
         stillborn=req.stillborn,
         mummified=req.mummified,
+        nursing_head=req.born_alive,  # P0-BE-4: 포유개시두수 초기값 = 실산 (양자 발생 시 갱신)
+        avg_birth_weight_kg=getattr(req, "avg_birth_weight_kg", None),
         farrowing_ease=req.farrowing_ease,
         notes=req.notes,
         created_by=user_id,
@@ -416,6 +451,12 @@ async def record_weaning(
     # 컴플라이언스: 국가별 최소 이유일령 검증
     await _check_wean_compliance(db, farm_id, nursing_days)
 
+    # P0-BE-2: 이유체중 유효 범위 2~12kg
+    if req.avg_weaning_weight_kg is not None and not (2.0 <= req.avg_weaning_weight_kg <= 12.0):
+        raise ValidationError(
+            f"Average weaning weight {req.avg_weaning_weight_kg}kg is outside the valid range (2~12kg)"
+        )
+
     # 이유두수 검증: foster 이벤트 반영
     foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
     effective_litter = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
@@ -427,6 +468,17 @@ async def record_weaning(
             f"({farrowing.born_alive} born_alive + {foster_in} foster_in "
             f"- {foster_out} foster_out - {deaths} deaths = {effective_litter})"
         )
+
+    # P0-BE-1: 이유두수 항등식 검증 (weaned == nursing_head - deaths - out + in)
+    # 출처: PigPlan DataValidationChk.java L747~752
+    nursing_head = farrowing.nursing_head or farrowing.born_alive
+    validate_weaning(
+        weaned=req.weaned_count,
+        nursing_head=nursing_head,
+        deaths=deaths,
+        transfers_out=foster_out,
+        transfers_in=foster_in,
+    )
 
     weaning = Weaning(
         farm_id=farm_id,
@@ -526,6 +578,10 @@ async def record_reproductive_event(
     req: ReproductiveEventCreate,
 ) -> ReproductiveEvent:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+
+    # P0-BE-10: 임신 중 도폐사(CULLED/DEAD) 시 사유(notes) 필수
+    if sow.status == "PREGNANT" and req.event_type in ("CULLED", "DEAD") and not req.notes:
+        raise ValidationError("A reason (notes) is required when culling/removing a pregnant sow")
 
     event = ReproductiveEvent(
         farm_id=farm_id,
@@ -635,6 +691,7 @@ async def record_piglet_event(
         event_date=req.event_date,
         event_type=req.event_type,
         piglet_count=req.piglet_count,
+        age_days=(req.event_date - farrowing.farrowing_date).days,  # P0-BE-5: 자돈 일령 자동계산
         reason=req.reason,
         target_sow_id=req.target_sow_id,
         target_farrowing_id=req.target_farrowing_id,
@@ -642,6 +699,33 @@ async def record_piglet_event(
         created_by=user_id,
     )
     db.add(event)
+    await db.flush()
+
+    # P0-BE-3: 양자 거울 레코드 자동생성 — FOSTER_IN/OUT 반대편(target_sow)에 대칭 이벤트 생성.
+    # 없으면 nursing_head 집계가 한쪽만 반영됨. 출처: MdYangjaWrMapper.xml L383~398
+    if req.event_type in ("FOSTER_IN", "FOSTER_OUT") and req.target_sow_id:
+        mirror_type = "FOSTER_IN" if req.event_type == "FOSTER_OUT" else "FOSTER_OUT"
+        target_farrowing = await db.scalar(
+            select(Farrowing)
+            .where(Farrowing.sow_id == req.target_sow_id, Farrowing.deleted_at.is_(None))
+            .order_by(Farrowing.farrowing_date.desc())
+            .limit(1)
+        )
+        if target_farrowing:
+            db.add(PigletEvent(
+                farm_id=farm_id,
+                farrowing_id=target_farrowing.id,
+                sow_id=req.target_sow_id,
+                event_date=req.event_date,
+                event_type=mirror_type,
+                piglet_count=req.piglet_count,
+                age_days=(req.event_date - target_farrowing.farrowing_date).days,
+                target_sow_id=sow.id,
+                target_farrowing_id=farrowing.id,
+                notes=f"auto-mirror:{event.id}",
+                created_by=user_id,
+            ))
+
     await _audit(db, user_id, farm_id, "CREATE", "piglet_events", event.id, req.model_dump(mode="json"))
     await db.commit()
     await db.refresh(event)
@@ -731,8 +815,10 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
     for k, v in data.items():
         setattr(f, k, v)
     f.total_born = f.born_alive + f.stillborn + f.mummified
+    # P0-BE-13: 수정 시에도 출생체중 포함 재검증
     validate_farrowing(total_born=f.total_born, born_alive=f.born_alive,
-                       stillborn=f.stillborn, mummified=f.mummified)
+                       stillborn=f.stillborn, mummified=f.mummified,
+                       avg_birth_weight_kg=f.avg_birth_weight_kg)
     await _audit(db, user_id, farm_id, "UPDATE", "farrowings", f.id, data)
     await db.commit(); await db.refresh(f)
     return f

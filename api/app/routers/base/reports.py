@@ -12,10 +12,14 @@ from fastapi import APIRouter, HTTPException, Query
 from app.core.dependencies import DbDep, FarmDep
 from app.schemas.report import (
     DailyReport,
+    DataQualityIssue,
+    FarrowingPerfRow,
     GrowFinishRow,
+    MortalityReport,
     ProductionSummary,
     ReproductionRow,
     SowHistoryCycle,
+    SowStatusReport,
 )
 from app.services import report_service
 
@@ -32,6 +36,46 @@ async def daily_report(
 ):
     """일일 사육현황 — 그날의 이벤트 요약 + 현재 돈군 스냅샷."""
     return await report_service.get_daily_report(db, farm.id, day)
+
+
+@router.get("/sow-status", response_model=SowStatusReport)
+async def sow_status_report(farm: FarmDep, db: DbDep):
+    """#1 모돈 현재 상태표 — 상태별 두수 + 모돈 목록."""
+    return await report_service.get_sow_status_report(db, farm.id)
+
+
+@router.get("/farrowing", response_model=list[FarrowingPerfRow])
+async def farrowing_report(
+    farm: FarmDep,
+    db: DbDep,
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+):
+    """#3 산차별 분만/포유/이유 성적표."""
+    _check_range(start_date, end_date)
+    return await report_service.get_farrowing_report(db, farm.id, start_date, end_date)
+
+
+@router.get("/mortality", response_model=MortalityReport)
+async def mortality_report(
+    farm: FarmDep,
+    db: DbDep,
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+):
+    """#4 도폐사/포유폐사 리포트 — 유형·사유별 + 이유전 폐사율."""
+    _check_range(start_date, end_date)
+    return await report_service.get_mortality_report(db, farm.id, start_date, end_date)
+
+
+@router.get("/data-quality", response_model=list[DataQualityIssue])
+async def data_quality_report(
+    farm: FarmDep,
+    db: DbDep,
+    as_of: date = Query(default_factory=date.today, description="과기한 판정 기준일(기본 오늘)"),
+):
+    """데이터 정합성 점검 — 두수 불일치·날짜 역전·상태 고아·입력 누락(과기한)."""
+    return await report_service.get_data_quality_report(db, farm.id, as_of)
 
 
 def _check_range(start: date, end: date) -> None:

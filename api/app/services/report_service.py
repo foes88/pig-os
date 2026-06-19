@@ -470,3 +470,259 @@ async def get_sow_history(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> list
         [{"cycle_id": r[0], "date": r[1], "tb": r[2], "ba": r[3], "sb": r[4], "mum": r[5]} for r in farrowings],
         [{"cycle_id": r[0], "date": r[1], "weaned": r[2], "lactation_days": r[3]} for r in weanings],
     )
+
+
+# ── #1 모돈 현재 상태표 (DEV_GUIDE §5-C) ──────────────────────────────────────
+ACTIVE_STATUSES = ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")
+
+
+async def get_sow_status_report(db: AsyncSession, farm_id: UUID) -> dict:
+    """현재 모돈 상태별 두수 + 모돈 목록 (활성 개체만)."""
+    rows = list(await db.scalars(
+        select(Sow).where(Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+        .order_by(Sow.status, Sow.ear_tag)
+    ))
+    by_status = {s: 0 for s in ACTIVE_STATUSES}
+    sows = []
+    for s in rows:
+        if s.status in by_status:
+            by_status[s.status] += 1
+        sows.append({
+            "sow_id": str(s.id), "ear_tag": s.ear_tag, "status": s.status,
+            "parity": s.parity,
+            "entry_date": _as_iso(s.entry_date),
+        })
+    return {"total": len(rows), "by_status": by_status, "sows": sows}
+
+
+def _as_iso(v) -> str | None:
+    if v is None:
+        return None
+    return v.date().isoformat() if hasattr(v, "date") else v.isoformat()
+
+
+# ── #3 분만·포유·이유 성적표 (산차별) ─────────────────────────────────────────
+def build_farrowing_rows(farrowings: list[dict], weanings_by_f: dict) -> list[dict]:
+    """산차별 분만/이유 성적 집계 (pure)."""
+    buckets: dict[int, dict] = {}
+    for f in farrowings:
+        p = f["parity"] or 0
+        b = buckets.setdefault(p, {
+            "parity": p, "_n": 0, "tb": [], "ba": [], "sb": [], "mum": [],
+            "weaned": [], "lact": [],
+        })
+        b["_n"] += 1
+        b["tb"].append(f["tb"]); b["ba"].append(f["ba"])
+        b["sb"].append(f["sb"]); b["mum"].append(f["mum"])
+        w = weanings_by_f.get(f["id"])
+        if w:
+            b["weaned"].append(w["weaned"])
+            if w["lact"] is not None:
+                b["lact"].append(w["lact"])
+    rows = []
+    for p in sorted(buckets):
+        b = buckets[p]
+        rows.append({
+            "parity": p, "farrowings": b["_n"],
+            "avg_total_born": _avg(b["tb"]), "avg_born_alive": _avg(b["ba"]),
+            "avg_stillborn": _avg(b["sb"]), "avg_mummified": _avg(b["mum"]),
+            "avg_weaned": _avg(b["weaned"]), "avg_lactation_days": _avg(b["lact"]),
+            "litters_weaned": len(b["weaned"]),
+        })
+    return rows
+
+
+async def get_farrowing_report(db: AsyncSession, farm_id: UUID, start: date, end: date) -> list[dict]:
+    """산차별 분만/포유/이유 성적표 (기간 내 분만 기준)."""
+    f_rows = (await db.execute(
+        select(Farrowing.id, BreedingCycle.parity, Farrowing.total_born, Farrowing.born_alive,
+               Farrowing.stillborn, Farrowing.mummified)
+        .outerjoin(BreedingCycle, BreedingCycle.id == Farrowing.breeding_cycle_id)
+        .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None),
+               Farrowing.farrowing_date >= start, Farrowing.farrowing_date <= end)
+    )).all()
+    farrowings = [
+        {"id": r[0], "parity": r[1], "tb": r[2], "ba": r[3], "sb": r[4], "mum": r[5]}
+        for r in f_rows
+    ]
+    f_ids = [f["id"] for f in farrowings]
+    weanings_by_f: dict = {}
+    if f_ids:
+        for r in (await db.execute(
+            select(Weaning.farrowing_id, Weaning.weaned_count, Weaning.weaning_age_days)
+            .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None),
+                   Weaning.farrowing_id.in_(f_ids))
+        )).all():
+            weanings_by_f[r[0]] = {"weaned": r[1], "lact": r[2]}
+    return build_farrowing_rows(farrowings, weanings_by_f)
+
+
+# ── #4 도폐사 / 포유폐사 리포트 ───────────────────────────────────────────────
+async def get_mortality_report(db: AsyncSession, farm_id: UUID, start: date, end: date) -> dict:
+    """기간 내 모돈 도폐사(유형·사유별) + 포유자돈 폐사(사유별) + 이유전 폐사율."""
+    by_type = [
+        {"key": k, "count": c} for k, c in (await db.execute(
+            select(Removal.removal_type, func.count())
+            .where(Removal.farm_id == farm_id, Removal.deleted_at.is_(None),
+                   Removal.removal_date >= start, Removal.removal_date <= end)
+            .group_by(Removal.removal_type).order_by(func.count().desc())
+        )).all()
+    ]
+    by_reason = [
+        {"key": k or "UNKNOWN", "count": c} for k, c in (await db.execute(
+            select(Removal.reason_category, func.count())
+            .where(Removal.farm_id == farm_id, Removal.deleted_at.is_(None),
+                   Removal.removal_date >= start, Removal.removal_date <= end)
+            .group_by(Removal.reason_category).order_by(func.count().desc())
+        )).all()
+    ]
+    pd_rows = (await db.execute(
+        select(PigletEvent.reason, func.count(), func.coalesce(func.sum(PigletEvent.piglet_count), 0))
+        .where(PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None),
+               PigletEvent.event_type == "DEATH",
+               PigletEvent.event_date >= start, PigletEvent.event_date <= end)
+        .group_by(PigletEvent.reason).order_by(func.count().desc())
+    )).all()
+    piglet_deaths_by_reason = [
+        {"key": r[0] or "UNKNOWN", "count": r[1], "piglets": int(r[2])} for r in pd_rows
+    ]
+    total_removals = sum(x["count"] for x in by_type)
+    total_piglet_deaths = sum(x["piglets"] for x in piglet_deaths_by_reason)
+
+    # 이유전 폐사율 = 기간 내 포유폐사 / 기간 내 실산 × 100 (근사)
+    born_alive = await db.scalar(
+        select(func.coalesce(func.sum(Farrowing.born_alive), 0))
+        .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None),
+               Farrowing.farrowing_date >= start, Farrowing.farrowing_date <= end)
+    ) or 0
+    pre_wean_rate = round(total_piglet_deaths / born_alive * 100, 1) if born_alive else None
+
+    return {
+        "removals_by_type": by_type,
+        "removals_by_reason": by_reason,
+        "piglet_deaths_by_reason": piglet_deaths_by_reason,
+        "total_removals": total_removals,
+        "total_piglet_deaths": total_piglet_deaths,
+        "born_alive_in_period": int(born_alive),
+        "preweaning_mortality_rate": pre_wean_rate,
+    }
+
+
+# ── 데이터 품질/정합성 리포트 (#5 — DEV_GUIDE §5-C) ───────────────────────────
+# "두수 안 꼬임"을 가시화: 두수 불일치·날짜 역전·상태 고아·입력 누락(과기한) 탐지.
+# 검증이 막는 신규 입력 외에, 레거시/sync 경로로 들어온 부정합을 사후 점검한다.
+
+GESTATION_OVERDUE_DAYS = 130   # 임신 후 이 일수 초과 미분만 → 분만 입력 누락 의심
+LACTATION_OVERDUE_DAYS = 60    # 분만 후 이 일수 초과 미이유 → 이유 입력 누락 의심
+
+
+async def get_data_quality_report(db: AsyncSession, farm_id: UUID, today: date) -> list[dict]:
+    """농장의 데이터 정합성 이슈 목록. severity: CRITICAL(두수/역전) | WARNING(누락/고아)."""
+    issues: list[dict] = []
+
+    def add(issue_type, severity, sow_id, ear_tag, detail, event_date=None):
+        issues.append({
+            "issue_type": issue_type, "severity": severity,
+            "sow_id": str(sow_id) if sow_id else None, "ear_tag": ear_tag,
+            "detail": detail, "event_date": event_date.isoformat() if event_date else None,
+        })
+
+    # 모돈 메타 (ear_tag/status/entry/exit)
+    sows = {
+        s.id: s for s in await db.scalars(
+            select(Sow).where(Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+        )
+    }
+
+    # 1) 분만 두수 불일치 (total != BA+SB+MUM)
+    farrowings = list(await db.scalars(
+        select(Farrowing).where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None))
+    ))
+    for f in farrowings:
+        if f.total_born != f.born_alive + f.stillborn + f.mummified:
+            tag = sows[f.sow_id].ear_tag if f.sow_id in sows else "?"
+            add("LITTER_MISMATCH", "CRITICAL", f.sow_id, tag,
+                f"total_born {f.total_born} ≠ BA {f.born_alive}+SB {f.stillborn}+MUM {f.mummified}",
+                f.farrowing_date)
+
+    # 2) 분만 < 교배 날짜 역전
+    mate_dates = {
+        r[0]: r[1] for r in (await db.execute(
+            select(Mating.id, Mating.mating_date).where(
+                Mating.farm_id == farm_id, Mating.deleted_at.is_(None))
+        )).all()
+    }
+    for f in farrowings:
+        md = mate_dates.get(f.mating_id)
+        if md and f.farrowing_date < md:
+            tag = sows[f.sow_id].ear_tag if f.sow_id in sows else "?"
+            add("DATE_REVERSAL", "CRITICAL", f.sow_id, tag,
+                f"farrowing {f.farrowing_date} before mating {md}", f.farrowing_date)
+
+    # 3) 이유두수 > 유효 복당두수 (born_alive + foster_in - foster_out - deaths)
+    pe_rows = (await db.execute(
+        select(PigletEvent.farrowing_id, PigletEvent.event_type,
+               func.coalesce(func.sum(PigletEvent.piglet_count), 0))
+        .where(PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None))
+        .group_by(PigletEvent.farrowing_id, PigletEvent.event_type)
+    )).all()
+    adj: dict = {}
+    for fid, et, n in pe_rows:
+        d = adj.setdefault(fid, {"FOSTER_IN": 0, "FOSTER_OUT": 0, "DEATH": 0})
+        if et in d:
+            d[et] = int(n)
+    ba_by_f = {f.id: (f.born_alive, f.sow_id, f.farrowing_date) for f in farrowings}
+    weanings = list(await db.scalars(
+        select(Weaning).where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None))
+    ))
+    for w in weanings:
+        base = ba_by_f.get(w.farrowing_id)
+        if not base:
+            continue
+        ba, sow_id, fdate = base
+        a = adj.get(w.farrowing_id, {"FOSTER_IN": 0, "FOSTER_OUT": 0, "DEATH": 0})
+        effective = max(0, ba + a["FOSTER_IN"] - a["FOSTER_OUT"] - a["DEATH"])
+        if w.weaned_count > effective:
+            tag = sows[sow_id].ear_tag if sow_id in sows else "?"
+            add("WEANED_MISMATCH", "CRITICAL", sow_id, tag,
+                f"weaned {w.weaned_count} > effective litter {effective}", w.weaning_date)
+        if fdate and w.weaning_date < fdate:
+            tag = sows[sow_id].ear_tag if sow_id in sows else "?"
+            add("DATE_REVERSAL", "CRITICAL", sow_id, tag,
+                f"weaning {w.weaning_date} before farrowing {fdate}", w.weaning_date)
+
+    # 4) 입력 누락(과기한): PREGNANT인데 최근 교배 후 130일↑ 미분만 / LACTATING인데 분만 후 60일↑ 미이유
+    last_mate: dict = {}
+    for r in (await db.execute(
+        select(Mating.sow_id, func.max(Mating.mating_date)).where(
+            Mating.farm_id == farm_id, Mating.deleted_at.is_(None)).group_by(Mating.sow_id)
+    )).all():
+        last_mate[r[0]] = r[1]
+    last_farrow: dict = {}
+    for r in (await db.execute(
+        select(Farrowing.sow_id, func.max(Farrowing.farrowing_date)).where(
+            Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None)).group_by(Farrowing.sow_id)
+    )).all():
+        last_farrow[r[0]] = r[1]
+
+    for sow in sows.values():
+        if sow.status == "PREGNANT":
+            md = last_mate.get(sow.id)
+            if md is None:
+                add("STATUS_ORPHAN", "WARNING", sow.id, sow.ear_tag,
+                    "status PREGNANT but no mating recorded")
+            elif (today - md).days > GESTATION_OVERDUE_DAYS:
+                add("MISSING_FARROWING", "WARNING", sow.id, sow.ear_tag,
+                    f"{(today - md).days}d since mating, farrowing not recorded", md)
+        elif sow.status == "LACTATING":
+            fd = last_farrow.get(sow.id)
+            if fd is None:
+                add("STATUS_ORPHAN", "WARNING", sow.id, sow.ear_tag,
+                    "status LACTATING but no farrowing recorded")
+            elif (today - fd).days > LACTATION_OVERDUE_DAYS:
+                add("MISSING_WEANING", "WARNING", sow.id, sow.ear_tag,
+                    f"{(today - fd).days}d since farrowing, weaning not recorded", fd)
+
+    severity_rank = {"CRITICAL": 0, "WARNING": 1}
+    issues.sort(key=lambda i: (severity_rank.get(i["severity"], 9), i["issue_type"]))
+    return issues

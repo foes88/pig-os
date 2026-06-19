@@ -862,6 +862,61 @@ export interface DailyReport {
   removals: number;
 }
 
+export interface SowStatusRow {
+  sow_id: string;
+  ear_tag: string;
+  status: SowStatus;
+  parity: number;
+  entry_date: string | null;
+}
+
+export interface SowStatusReport {
+  total: number;
+  by_status: Record<string, number>;
+  sows: SowStatusRow[];
+}
+
+export interface FarrowingPerfRow {
+  parity: number;
+  farrowings: number;
+  avg_total_born: number | null;
+  avg_born_alive: number | null;
+  avg_stillborn: number | null;
+  avg_mummified: number | null;
+  avg_weaned: number | null;
+  avg_lactation_days: number | null;
+  litters_weaned: number;
+}
+
+export interface MortalityCount {
+  key: string;
+  count: number;
+  piglets: number | null;
+}
+
+export interface MortalityReport {
+  removals_by_type: MortalityCount[];
+  removals_by_reason: MortalityCount[];
+  piglet_deaths_by_reason: MortalityCount[];
+  total_removals: number;
+  total_piglet_deaths: number;
+  born_alive_in_period: number;
+  preweaning_mortality_rate: number | null;
+}
+
+export type DataQualityIssueType =
+  | "LITTER_MISMATCH" | "WEANED_MISMATCH" | "DATE_REVERSAL"
+  | "STATUS_ORPHAN" | "MISSING_FARROWING" | "MISSING_WEANING";
+
+export interface DataQualityIssue {
+  issue_type: DataQualityIssueType;
+  severity: "CRITICAL" | "WARNING";
+  sow_id: string | null;
+  ear_tag: string | null;
+  detail: string;
+  event_date: string | null;
+}
+
 export type LedgerKind = "mating" | "farrowing" | "weaning" | "reproductive" | "piglet" | "removal";
 
 export interface LedgerEntry {

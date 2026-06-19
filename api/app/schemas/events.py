@@ -54,6 +54,9 @@ class FarrowingCreate(BaseModel):
     born_alive: int = Field(..., ge=0)
     stillborn: int = Field(default=0, ge=0)
     mummified: int = Field(default=0, ge=0)
+    avg_birth_weight_kg: float | None = Field(None, gt=0, description="평균 출생체중(kg)")
+    born_alive_male: int | None = Field(None, ge=0)
+    born_alive_female: int | None = Field(None, ge=0)
     farrowing_ease: str | None = Field(None, pattern="^(EASY|ASSISTED|DIFFICULT)$")
     notes: str | None = None
 
@@ -74,6 +77,8 @@ class FarrowingResponse(UUIDMixin):
     born_alive: int
     stillborn: int
     mummified: int
+    nursing_head: int | None = None
+    avg_birth_weight_kg: float | None = None
     farrowing_ease: str | None
     breeding_cycle_id: UUID | None
     created_at: datetime
@@ -167,6 +172,7 @@ class FarrowingUpdate(BaseModel):
     born_alive: int | None = Field(None, ge=0)
     stillborn: int | None = Field(None, ge=0)
     mummified: int | None = Field(None, ge=0)
+    avg_birth_weight_kg: float | None = Field(None, gt=0)
     notes: str | None = None
 
 

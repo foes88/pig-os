@@ -20,6 +20,9 @@ import {
   Beef,
   ListTodo,
   Dna,
+  ShieldCheck,
+  Baby,
+  TrendingDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -69,12 +72,16 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
     label: { en: "Reports", ko: "보고서", zh: "报告", es: "Informes", vi: "Báo cáo" },
     items: [
       { href: "/kpi",                  icon: BarChart3, label: { en: "KPI Summary",       ko: "KPI 현황",    zh: "指标概览", es: "Resumen KPI",       vi: "Tổng quan KPI" } },
+      { href: "/reports/sow-status",   icon: PiggyBank, label: { en: "Sow Status",        ko: "모돈 현황",   zh: "母猪状态", es: "Estado cerdas",     vi: "Trạng thái nái" } },
       { href: "/reports/daily",        icon: FileText,  label: { en: "Daily Report",      ko: "일일 현황",   zh: "每日现状", es: "Informe diario",    vi: "Báo cáo ngày" } },
+      { href: "/reports/farrowing",    icon: Baby,      label: { en: "Farrow & Wean",     ko: "분만·이유",   zh: "分娩断奶", es: "Parto y destete",   vi: "Đẻ & cai sữa" } },
+      { href: "/reports/mortality",    icon: TrendingDown, label: { en: "Mortality",      ko: "도폐사·폐사", zh: "淘汰死亡", es: "Mortalidad",        vi: "Loại thải & chết" } },
       { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản" } },
       { href: "/reports/grow-finish",  icon: Beef,      label: { en: "Grow-Finish",       ko: "비육성적",    zh: "育肥成绩", es: "Engorde",           vi: "Năng suất vỗ béo" } },
       { href: "/reports",              icon: FileText,  label: { en: "Sow Report",        ko: "모돈 보고서", zh: "母猪报告", es: "Informe de cerdas", vi: "Báo cáo nái" } },
       { href: "/reports/ledger",       icon: ClipboardList, label: { en: "Work Ledger",   ko: "작업대장",    zh: "工作台账", es: "Registro",          vi: "Sổ công việc" } },
       { href: "/reports/prrs",         icon: Dna,       label: { en: "PRRS Genetics",     ko: "PRRS 유전",   zh: "PRRS基因", es: "PRRS genética",     vi: "PRRS di truyền" } },
+      { href: "/reports/data-quality", icon: ShieldCheck, label: { en: "Data Quality",    ko: "데이터 품질", zh: "数据质量", es: "Calidad de datos",  vi: "Chất lượng dữ liệu" } },
     ],
   },
   {

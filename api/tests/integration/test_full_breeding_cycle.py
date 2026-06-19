@@ -6,6 +6,7 @@ from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.events import PigletEvent
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
 from app.schemas.events import FarrowingCreate, MatingCreate, WeaningCreate
@@ -24,6 +25,12 @@ async def _cycle(db, farm, sow, user, mate_d, farrow_d, wean_d, ba=12, weaned=11
                         born_alive=ba, stillborn=1, mummified=0))
     await db.refresh(sow)
     assert sow.status == "LACTATING"
+
+    # 포유 폐사 기록 — 이유두수 항등식(weaned == nursing - deaths) 충족
+    if ba > weaned:
+        db.add(PigletEvent(farm_id=farm.id, farrowing_id=f.id, sow_id=sow.id,
+                           event_date=farrow_d, event_type="DEATH", piglet_count=ba - weaned))
+        await db.flush()
 
     w = await event_service.record_weaning(
         db, farm.id, user.id,

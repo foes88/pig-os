@@ -106,6 +106,61 @@ class GrowFinishRow(BaseModel):
     mortality_rate: float | None = None
 
 
+class SowStatusRow(BaseModel):
+    sow_id: str
+    ear_tag: str
+    status: str
+    parity: int
+    entry_date: str | None = None
+
+
+class SowStatusReport(BaseModel):
+    """#1 모돈 현재 상태표."""
+    total: int
+    by_status: dict[str, int]   # GILT/OPEN/PREGNANT/LACTATING/ACCIDENT
+    sows: list[SowStatusRow]
+
+
+class FarrowingPerfRow(BaseModel):
+    """#3 산차별 분만/포유/이유 성적."""
+    parity: int
+    farrowings: int
+    avg_total_born: float | None = None
+    avg_born_alive: float | None = None
+    avg_stillborn: float | None = None
+    avg_mummified: float | None = None
+    avg_weaned: float | None = None
+    avg_lactation_days: float | None = None
+    litters_weaned: int = 0
+
+
+class MortalityCount(BaseModel):
+    key: str
+    count: int
+    piglets: int | None = None
+
+
+class MortalityReport(BaseModel):
+    """#4 도폐사/포유폐사 리포트."""
+    removals_by_type: list[MortalityCount]
+    removals_by_reason: list[MortalityCount]
+    piglet_deaths_by_reason: list[MortalityCount]
+    total_removals: int
+    total_piglet_deaths: int
+    born_alive_in_period: int
+    preweaning_mortality_rate: float | None = None
+
+
+class DataQualityIssue(BaseModel):
+    """데이터 정합성 이슈 1건 (#5 데이터 품질 리포트)."""
+    issue_type: str      # LITTER_MISMATCH | WEANED_MISMATCH | DATE_REVERSAL | STATUS_ORPHAN | MISSING_FARROWING | MISSING_WEANING
+    severity: str        # CRITICAL | WARNING
+    sow_id: str | None = None
+    ear_tag: str | None = None
+    detail: str
+    event_date: str | None = None
+
+
 class SowHistoryCycle(BaseModel):
     parity: int
     mating_date: str | None = None

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { finishersApi } from "@/lib/api/endpoints/finishers";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { finisherEntrySchema, finisherShipSchema, firstError } from "@/lib/validation/eventSchemas";
 import type {
   CreateFinisherGroupRequest,
   FinisherGroup,
@@ -204,6 +205,7 @@ export default function FinishersPage() {
 
 function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onClose: () => void; onSuccess: () => void }) {
   const t = useTranslations("finishers");
+  const tv = useTranslations("validation");
   const [form, setForm] = useState<CreateFinisherGroupRequest>({
     group_code: "",
     start_date: new Date().toISOString().slice(0, 10),
@@ -219,6 +221,15 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
       setError(typeof detail === "string" ? detail : t("regFailed"));
     },
   });
+
+  function submit() {
+    const err = firstError(finisherEntrySchema, {
+      group_code: form.group_code, start_date: form.start_date,
+      head_count_in: form.head_count_in, avg_entry_weight_kg: form.avg_entry_weight_kg,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate();
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -246,7 +257,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
-          <button onClick={() => mutation.mutate()} disabled={!form.group_code || !form.head_count_in || mutation.isPending}
+          <button onClick={submit} disabled={!form.group_code || !form.head_count_in || mutation.isPending}
             data-testid="add-finisher-submit"
             className="flex-1 bg-primary text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
             {mutation.isPending ? t("regging") : t("reg")}
@@ -259,6 +270,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
 
 function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; groupId: string; onClose: () => void; onSuccess: () => void }) {
   const t = useTranslations("finishers");
+  const tv = useTranslations("validation");
   const [form, setForm] = useState<FinisherGroupShipRequest>({
     end_date: new Date().toISOString().slice(0, 10),
     head_count_out: 0,
@@ -273,6 +285,15 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
       setError(typeof detail === "string" ? detail : t("shipFailed"));
     },
   });
+
+  function submit() {
+    const err = firstError(finisherShipSchema, {
+      end_date: form.end_date, head_count_out: form.head_count_out,
+      avg_exit_weight_kg: form.avg_exit_weight_kg,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate();
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -292,7 +313,7 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
         {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
-          <button onClick={() => mutation.mutate()} disabled={!form.head_count_out || mutation.isPending}
+          <button onClick={submit} disabled={!form.head_count_out || mutation.isPending}
             className="flex-1 bg-amber-500 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
             {mutation.isPending ? t("shipping") : t("shipDone")}
           </button>

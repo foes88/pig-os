@@ -47,6 +47,15 @@ def weaning_req(sow_id, farrowing_id, weaning_date=date(2026, 5, 16)) -> Weaning
     )
 
 
+async def _record_death(db, farm, sow, farrowing, count, when=date(2026, 4, 26)):
+    """포유 중 자돈 폐사 기록 — 이유두수 항등식(P0-BE-1: weaned == nursing-deaths) 충족용."""
+    db.add(PigletEvent(
+        farm_id=farm.id, farrowing_id=farrowing.id, sow_id=sow.id,
+        event_date=when, event_type="DEATH", piglet_count=count,
+    ))
+    await db.flush()
+
+
 # ── 교배 테스트 ───────────────────────────────────────────────────────────────
 
 class TestRecordMating:
@@ -209,6 +218,7 @@ class TestRecordWeaning:
     ):
         """정상 이유 → sow.status ACTIVE (재교배 가능)"""
         farrowing = await self._setup_farrowing(db, test_farm, test_sow, test_user)
+        await _record_death(db, test_farm, test_sow, farrowing, 1)  # 12 born - 1 death = 11 weaned
         weaning = await event_service.record_weaning(
             db, test_farm.id, test_user.id, weaning_req(test_sow.id, farrowing.id)
         )
@@ -223,6 +233,7 @@ class TestRecordWeaning:
     ):
         """동일 분만에 이유 2회 → ConflictError (피그플랜 dedup)"""
         farrowing = await self._setup_farrowing(db, test_farm, test_sow, test_user)
+        await _record_death(db, test_farm, test_sow, farrowing, 1)  # 12 born - 1 death = 11 weaned
         await event_service.record_weaning(
             db, test_farm.id, test_user.id, weaning_req(test_sow.id, farrowing.id)
         )
@@ -262,6 +273,7 @@ class TestRecordWeaning:
             piglet_count=3,
         ))
         await db.flush()
+        await _record_death(db, test_farm, test_sow, farrowing, 1)  # 12 + 3 in - 1 death = 14
 
         weaning = await event_service.record_weaning(
             db, test_farm.id, test_user.id,
@@ -269,7 +281,7 @@ class TestRecordWeaning:
                 sow_id=test_sow.id,
                 farrowing_id=farrowing.id,
                 weaning_date=date(2026, 5, 16),
-                weaned_count=14,  # born_alive(12) + foster_in(3) - 1 = 14
+                weaned_count=14,  # born_alive(12) + foster_in(3) - 1 death = 14
             )
         )
         assert weaning.weaned_count == 14
@@ -318,6 +330,7 @@ class TestFullBreedingCycle:
                 born_alive=13, stillborn=1, mummified=0,
             )
         )
+        await _record_death(db, test_farm, test_sow, f1, 1, when=date(2025, 4, 26))  # 13 - 1 = 12
         w1 = await event_service.record_weaning(
             db, test_farm.id, test_user.id,
             WeaningCreate(
@@ -343,6 +356,7 @@ class TestFullBreedingCycle:
                 born_alive=11, stillborn=2, mummified=1,
             )
         )
+        await _record_death(db, test_farm, test_sow, f2, 1, when=date(2025, 9, 12))  # 11 - 1 = 10
         await event_service.record_weaning(
             db, test_farm.id, test_user.id,
             WeaningCreate(

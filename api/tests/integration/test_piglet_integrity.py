@@ -10,11 +10,10 @@ from sqlalchemy import select
 
 from app.core.exceptions import ValidationError
 from app.core.security import create_access_token
-from app.db.models.events import Farrowing, Mating
+from app.db.models.events import Farrowing, Mating, Weaning
 from app.db.models.platform import UserFarm
 from app.db.models.sow import PigletGroup, Sow
 from app.schemas.events import FarrowingCreate, PigletEventCreate, WeaningCreate, WeaningUpdate
-from app.db.models.events import Weaning
 from app.services import event_service
 
 pytestmark = pytest.mark.asyncio
