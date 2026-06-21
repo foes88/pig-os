@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -139,56 +138,51 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
     <aside
       data-testid="sidebar"
       style={{ width: w }}
-      className="hidden md:flex fixed top-0 left-0 h-screen bg-surface border-r border-border flex-col z-50 transition-all duration-200 overflow-hidden"
+      className="hidden md:flex fixed top-0 left-0 h-screen bg-console border-r border-console-line flex-col z-50 transition-all duration-200 overflow-hidden"
     >
-      {/* Logo */}
-      <div className="flex items-center justify-between px-3 py-3 border-b border-border flex-shrink-0">
-        {collapsed ? (
-          <div className="flex items-center justify-center w-full">
-            <Image
-              src="/logos/pigos-symbol-light.svg"
-              alt="PigOS"
-              width={28}
-              height={28}
-              className="object-contain"
-              priority
-            />
-          </div>
-        ) : (
-          <Link href="/" className="flex-1">
-            <Image
-              src="/logos/pigos-logo-horizontal-light.svg"
-              alt="PigOS"
-              width={96}
-              height={36}
-              className="object-contain object-left"
-              priority
-            />
-          </Link>
+      {/* Logo — green mark + PigOS (Operational Console) */}
+      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-console-line flex-shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 flex-1 min-w-0">
+          <span className="w-[30px] h-[30px] rounded-lg bg-brand flex items-center justify-center flex-shrink-0">
+            <PiggyBank size={18} className="text-white" />
+          </span>
+          {!collapsed && <span className="text-[16px] font-bold text-console-text tracking-tight">PigOS</span>}
+        </Link>
+        {!collapsed && (
+          <span className="ml-auto text-[9.5px] font-mono text-console-mut border border-console-line px-1.5 py-0.5 rounded">
+            v4
+          </span>
         )}
         <button
           onClick={onCollapse}
-          className="ml-1 p-1 rounded-md text-muted hover:text-text hover:bg-bg2 transition flex-shrink-0"
+          className="p-1 rounded-md text-console-mut hover:text-console-text hover:bg-console2 transition flex-shrink-0"
           title={collapsed ? "Expand" : "Collapse"}
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
-      {/* Farm name */}
+      {/* Farm switcher */}
       {!collapsed && (
-        <div className="px-4 py-2.5 border-b border-border">
-          <div className="text-[10px] text-muted uppercase tracking-widest mb-0.5">Farm</div>
-          <div className="text-xs font-semibold text-text truncate">{user?.name ?? "My Farm"}</div>
+        <div className="px-3 pt-3 pb-1.5">
+          <div className="bg-console2 rounded-[9px] px-3 py-2.5 flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-md bg-brand text-white flex items-center justify-center text-[11px] font-bold font-mono flex-shrink-0">
+              {(user?.name ?? "F").slice(0, 2).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-semibold text-console-text truncate">{user?.name ?? "My Farm"}</div>
+              <div className="text-[10px] text-console-mut truncate">{user?.email ?? "farm"}</div>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-2">
+      <nav className="flex-1 overflow-y-auto py-1.5 px-3">
         {NAV_GROUPS.map((group, gi) => (
-          <div key={gi} className="mb-1">
+          <div key={gi} className={gi ? "mt-3" : "mt-1"}>
             {!collapsed && group.label && (
-              <div className="px-4 pt-3 pb-1 text-[9px] font-bold text-faint uppercase tracking-widest">
+              <div className="px-2.5 pt-1 pb-1 text-[9.5px] font-bold text-console-mut uppercase tracking-[0.1em]">
                 {t(group.label)}
               </div>
             )}
@@ -201,16 +195,17 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
                   href={item.href}
                   data-testid={`nav-${item.href === "/" ? "dashboard" : item.href.slice(1).replace(/\//g, "-")}`}
                   title={collapsed ? t(item.label) : undefined}
-                  className={`flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
+                  className={`relative flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] text-sm transition-all ${
                     isActive
-                      ? "bg-primary/8 text-primary font-semibold"
-                      : "text-muted hover:bg-bg2 hover:text-text"
+                      ? "bg-console3 text-console-text font-semibold"
+                      : "text-console-mut hover:bg-console2 hover:text-console-text"
                   } ${collapsed ? "justify-center" : ""}`}
                 >
-                  <Icon size={15} className="flex-shrink-0" />
+                  {isActive && <span className="absolute left-0 top-[7px] bottom-[7px] w-[3px] rounded-full bg-brand" />}
+                  <Icon size={16} className="flex-shrink-0" />
                   {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
                   {!collapsed && item.badge === "alerts" && (alertCount + unreadCount) > 0 && (
-                    <span className="ml-auto text-[10px] font-bold bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
+                    <span className="ml-auto text-[10px] font-bold font-mono bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
                       {alertCount + unreadCount}
                     </span>
                   )}
@@ -222,20 +217,20 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       </nav>
 
       {/* Ask AI button */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-2.5">
         <button
           onClick={onAskAI}
-          className={`w-full flex items-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-navy bg-primary-soft border border-primary/20 hover:bg-primary/10 hover:border-primary/40 transition ${
+          className={`w-full flex items-center gap-2 rounded-[9px] py-2.5 text-sm font-semibold text-console-text bg-console2 border border-console-line hover:bg-console3 transition ${
             collapsed ? "justify-center px-2" : "px-3"
           }`}
         >
-          <MessageSquareText size={14} className="text-primary" />
+          <MessageSquareText size={14} className="text-brand" />
           {!collapsed && <span>Ask AI</span>}
         </button>
       </div>
 
-      {/* Bottom items */}
-      <div className="border-t border-border py-2">
+      {/* Bottom: settings + user */}
+      <div className="border-t border-console-line py-2 px-3">
         {BOTTOM_ITEMS.map((item) => {
           const isActive = item.href === activeHref;
           const Icon = item.icon;
@@ -245,25 +240,25 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
               href={item.href}
               data-testid={`nav-${item.href.slice(1).replace(/\//g, "-")}`}
               title={collapsed ? t(item.label) : undefined}
-              className={`flex items-center gap-2.5 mx-2 px-2.5 py-2 rounded-lg text-sm transition-all ${
-                isActive ? "bg-primary/8 text-primary font-semibold" : "text-muted hover:bg-bg2 hover:text-text"
+              className={`relative flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] text-sm transition-all ${
+                isActive ? "bg-console3 text-console-text font-semibold" : "text-console-mut hover:bg-console2 hover:text-console-text"
               } ${collapsed ? "justify-center" : ""}`}
             >
-              <Icon size={15} className="flex-shrink-0" />
+              {isActive && <span className="absolute left-0 top-[7px] bottom-[7px] w-[3px] rounded-full bg-brand" />}
+              <Icon size={16} className="flex-shrink-0" />
               {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
             </Link>
           );
         })}
 
-        {/* User */}
         {user && !collapsed && (
-          <div className="flex items-center gap-2.5 mx-2 px-2.5 py-2 mt-1">
-            <div className="w-7 h-7 rounded-full bg-purple flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+          <div className="flex items-center gap-2.5 px-2.5 py-2 mt-1">
+            <div className="w-7 h-7 rounded-full bg-console3 flex items-center justify-center text-console-text text-[10px] font-bold flex-shrink-0">
               {user.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold text-text truncate">{user.name}</div>
-              <div className="text-[10px] text-muted truncate">{user.email}</div>
+              <div className="text-[12px] font-semibold text-console-text truncate">{user.name}</div>
+              <div className="text-[10px] text-console-mut truncate">{user.email}</div>
             </div>
           </div>
         )}
