@@ -1,63 +1,90 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Brand / surfaces (light) ── */
-  --color-bg:           #FAFAF9;
-  --color-bg2:          #F1F5F3;
+  /* ════════════════════════════════════════════════════════════════
+     "Operational Console" 테마 (design_handoff 2026-06). 웜페이퍼 + 잉크 + 그린.
+     기존 토큰 이름은 전부 유지(유틸 클래스 비파괴) — 값만 신규 팔레트로 매핑.
+     색 의미 규칙: ink=구조/주요버튼, brand(green)=저장·활성, red=위험 전용.
+     ════════════════════════════════════════════════════════════════ */
+  /* ── Surfaces (warm bone paper) ── */
+  --color-bg:           #F4F1EA;  /* paper */
+  --color-bg2:          #ECE7DB;  /* paper-2 (recessed) */
   --color-surface:      #FFFFFF;
   --color-panel:        #FFFFFF;
-  --color-panel-hi:     #F8F8F6;
+  --color-panel-hi:     #FAF8F2;  /* surface-2 */
+  --color-paper:        #F4F1EA;
+  --color-paper2:       #ECE7DB;
+  --color-surface2:     #FAF8F2;
+  --color-surface3:     #F2EEE5;
 
-  /* ── Text ── */
-  --color-text:         #0F172A;
-  --color-text2:        #1E293B;
-  --color-muted:        #64748B;
-  --color-faint:        #94A3B8;
+  /* ── Text (ink) ── */
+  --color-text:         #1C1A16;  /* ink */
+  --color-text2:        #46423A;  /* ink-2 */
+  --color-muted:        #857F73;  /* ink-3 */
+  --color-faint:        #B4AEA2;  /* ink-4 */
+  --color-text3:        #857F73;
+  --color-text1:        #1C1A16;
+  --color-background:   #F4F1EA;
+  --color-ink:          #1C1A16;
+  --color-ink2:         #46423A;
+  --color-ink3:         #857F73;
+  --color-ink4:         #B4AEA2;
 
-  /* ── Legacy aliases (기존 코드 호환) ── */
-  --color-text3:        #64748B;
-  --color-text1:        #0F172A;
-  --color-background:   #FAFAF9;
+  /* ── Borders (hairline) ── */
+  --color-border:       rgba(28,26,22,0.10);
+  --color-border-strong:rgba(28,26,22,0.16);
 
-  /* ── Borders ── */
-  --color-border:       #E7E5E4;
-  --color-border-strong:#CBD5CF;
+  /* ── Primary = ink (구조/주요버튼) · Brand = green (저장·활성) ── */
+  --color-primary:      #1E7A4D;  /* 코드베이스 primary 액센트 → 그린(저장·활성) */
+  --color-primary-d:    #155F3B;
+  --color-primary-soft: #E5EFE8;
+  --color-brand:        #1E7A4D;
+  --color-brand-2:      #155F3B;
+  --color-brand-3:      #0F4A2E;
+  --color-brand-soft:   #E5EFE8;
+  --color-clay:         #B65A37;  /* 대체 웜 브랜드(옵션) */
 
-  /* ── Primary (actions, links) ── */
-  --color-primary:      #2563EB;
-  --color-primary-d:    #1D4ED8;
-  --color-primary-soft: #EFF6FF;
+  /* ── Navy alias → ink (기존 bg-navy 사용처가 자동으로 잉크색) ── */
+  --color-navy:         #1C1A16;
 
-  /* ── Navy (PigOS brand — logo, primary buttons) ── */
-  --color-navy:         #0D1B3E;
+  /* ── Dark console sidebar ── */
+  --color-console:      #1A1813;
+  --color-console2:     #241F18;
+  --color-console3:     #2E2920;
+  --color-console-line: rgba(247,242,232,0.10);
+  --color-console-text: #EFEADF;
+  --color-console-mut:  #9B9486;
 
-  /* ── Status ── */
-  --color-danger:       #DC2626;
-  --color-red:          #DC2626;
-  --color-red-soft:     #FEF2F2;
-  --color-warning:      #D97706;
-  --color-amber:        #D97706;
-  --color-amber-soft:   #FFFBEB;
-  --color-success:      #059669;
-  --color-green:        #059669;
-  --color-green-soft:   #ECFDF5;
-  --color-purple:       #7C3AED;
-  --color-purple-soft:  #F5F3FF;
+  /* ── Status (red = danger only) ── */
+  --color-danger:       #BE3A2C;
+  --color-red:          #BE3A2C;
+  --color-red-soft:     #F6E2DE;
+  --color-warning:      #B0791C;
+  --color-amber:        #B0791C;
+  --color-amber-soft:   #F6EED9;
+  --color-success:      #1E7A4D;
+  --color-green:        #1E7A4D;
+  --color-green-soft:   #E5EFE8;
+  --color-blue:         #2C5E8A;
+  --color-blue-soft:    #E2ECF3;
+  --color-purple:       #6B4FA0;
+  --color-purple-soft:  #ECE6F3;
 
-  /* ── Logo accent ── */
-  --color-snout:        #E83B2F;
+  /* ── Logo accent (red dot) ── */
+  --color-snout:        #BE3A2C;
 
-  /* ── Typography ── */
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* ── Typography (IBM Plex) ── */
+  --font-sans: "IBM Plex Sans KR", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* ── Radii ── */
-  --radius-card: 14px;
-  --radius-btn:  8px;
+  --radius-card: 13px;
+  --radius-btn:  9px;
+  --radius-chip: 6px;
 
   /* ── Shadows ── */
-  --shadow-card:  0 1px 3px rgba(15,23,42,.05), 0 4px 16px rgba(15,23,42,.05);
-  --shadow-hover: 0 4px 6px rgba(15,23,42,.06), 0 12px 32px rgba(15,23,42,.08);
+  --shadow-card:  0 1px 2px rgba(28,26,22,.05), 0 8px 24px rgba(28,26,22,.06);
+  --shadow-hover: 0 24px 64px rgba(28,26,22,.20);
 }
 
 /* ── Dark theme ── */
@@ -106,7 +133,7 @@
 
   /* 카드 공통 */
   .card {
-    @apply bg-surface border border-border rounded-[14px];
+    @apply bg-surface border border-border rounded-[13px];
     box-shadow: var(--shadow-card);
   }
 
