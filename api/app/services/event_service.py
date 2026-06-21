@@ -809,12 +809,24 @@ async def delete_mating(db, farm_id, user_id, mating_id) -> None:
         raise ConflictError("Cannot delete a mating that already has a farrowing")
     m.deleted_at = datetime.now(UTC)
     sow = await _get_active_sow(db, farm_id, m.sow_id)
-    sow.status = rollback_status_on_delete("mating")
+    # 견고화: 같은 사이클에 다른 교배(재교배)가 남아있으면 임신 유지 — 마지막 교배 삭제 때만 OPEN/FAILED 롤백.
+    remaining_matings = 0
     if m.breeding_cycle_id:
-        cycle = await db.get(BreedingCycle, m.breeding_cycle_id)
-        if cycle:
-            cycle.cycle_status = "FAILED"
-            cycle.ended_at = datetime.now(UTC)
+        remaining_matings = await db.scalar(select(func.count()).select_from(Mating).where(
+            Mating.breeding_cycle_id == m.breeding_cycle_id, Mating.deleted_at.is_(None))) or 0
+    if remaining_matings > 0:
+        # 재교배 잔존 → 모돈 PREGNANT 유지, 사이클 MATED 유지, 교배횟수만 재계산
+        if m.breeding_cycle_id:
+            cycle = await db.get(BreedingCycle, m.breeding_cycle_id)
+            if cycle:
+                cycle.mating_count = int(remaining_matings)
+    else:
+        sow.status = rollback_status_on_delete("mating")
+        if m.breeding_cycle_id:
+            cycle = await db.get(BreedingCycle, m.breeding_cycle_id)
+            if cycle:
+                cycle.cycle_status = "FAILED"
+                cycle.ended_at = datetime.now(UTC)
     await _audit(db, user_id, farm_id, "DELETE", "matings", m.id, {"id": str(m.id)})
     await db.commit()
 
