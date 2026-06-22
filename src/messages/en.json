@@ -1007,7 +1007,8 @@
         "title": "AI Bundle 30-day free trial extended",
         "body": "The AI Bundle free trial period is extended to 30 days."
       }
-    ]
+    ],
+    "empty": "No announcements"
   },
   "support": {
     "title": "Support",
@@ -1495,6 +1496,32 @@
     "actApproveAccount": "Approve & create account",
     "approvePrompt": "Set an initial password for {name} (min 8 chars). Deliver it to the user directly.",
     "approveDone": "Account created. Email: {email} / Password: {pw} — deliver to the user.",
-    "pwTooShort": "Password must be at least 8 characters."
+    "pwTooShort": "Password must be at least 8 characters.",
+    "annTitle": "Announcements",
+    "annSubtitle": "Create and manage platform announcements",
+    "annNew": "New announcement",
+    "annEmpty": "No announcements yet",
+    "annHidden": "hidden",
+    "annEdit": "Edit announcement",
+    "annFieldTitle": "Title",
+    "annFieldBody": "Body",
+    "annPinned": "Pinned",
+    "annPublished": "Published",
+    "annSave": "Save",
+    "annDeleteConfirm": "Delete this announcement?",
+    "supTitle": "Support tickets",
+    "supSubtitle": "Customer 1:1 inquiries and replies",
+    "supColSubject": "Subject",
+    "supColDate": "Date",
+    "supOpen": "Open",
+    "supEmpty": "No tickets",
+    "tsOpen": "Open",
+    "tsAnswered": "Answered",
+    "tsClosed": "Closed",
+    "supStaff": "Staff",
+    "supCustomer": "Customer",
+    "supReplyPlaceholder": "Write a reply…",
+    "supSendReply": "Send reply",
+    "cancel": "Cancel"
   }
 }

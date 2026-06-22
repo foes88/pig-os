@@ -1007,7 +1007,8 @@
         "title": "Prueba gratis de 30 días del Paquete IA",
         "body": "El periodo de prueba gratis del Paquete IA se extiende a 30 días."
       }
-    ]
+    ],
+    "empty": "Sin anuncios"
   },
   "support": {
     "title": "Soporte",
@@ -1495,6 +1496,32 @@
     "actApproveAccount": "Aprobar y crear cuenta",
     "approvePrompt": "Define una contraseña inicial para {name} (mín 8). Entrégala al usuario directamente.",
     "approveDone": "Cuenta creada. Correo: {email} / Contraseña: {pw} — entrégala al usuario.",
-    "pwTooShort": "La contraseña debe tener al menos 8 caracteres."
+    "pwTooShort": "La contraseña debe tener al menos 8 caracteres.",
+    "annTitle": "Anuncios",
+    "annSubtitle": "Crear y gestionar anuncios",
+    "annNew": "Nuevo anuncio",
+    "annEmpty": "Sin anuncios",
+    "annHidden": "oculto",
+    "annEdit": "Editar anuncio",
+    "annFieldTitle": "Título",
+    "annFieldBody": "Contenido",
+    "annPinned": "Fijado",
+    "annPublished": "Publicado",
+    "annSave": "Guardar",
+    "annDeleteConfirm": "¿Eliminar este anuncio?",
+    "supTitle": "Tickets de soporte",
+    "supSubtitle": "Consultas 1:1 de clientes y respuestas",
+    "supColSubject": "Asunto",
+    "supColDate": "Fecha",
+    "supOpen": "Abrir",
+    "supEmpty": "Sin tickets",
+    "tsOpen": "Abierto",
+    "tsAnswered": "Respondido",
+    "tsClosed": "Cerrado",
+    "supStaff": "Operador",
+    "supCustomer": "Cliente",
+    "supReplyPlaceholder": "Escribe una respuesta…",
+    "supSendReply": "Enviar respuesta",
+    "cancel": "Cancelar"
   }
 }

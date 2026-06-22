@@ -1043,3 +1043,17 @@ export interface PilotSignupRow {
   role: string; lang: string; status: string; notes: string | null; created_at: string | null;
 }
 export interface AdminPaged<T> { items: T[]; meta: { total: number; page: number; per_page: number; pages: number }; }
+
+export interface AnnouncementOut {
+  id: string; title: string; body: string;
+  category: "GENERAL" | "UPDATE" | "MAINTENANCE";
+  pinned: boolean; published: boolean;
+  publish_from: string | null; publish_until: string | null;
+  lang: string | null; created_at: string | null;
+}
+export interface SupportReplyOut { id: string; author_id: string | null; is_staff: boolean; body: string; created_at: string | null; }
+export interface SupportTicketOut {
+  id: string; user_id: string; farm_id: string | null;
+  subject: string; body: string; status: "OPEN" | "ANSWERED" | "CLOSED"; created_at: string | null;
+}
+export interface SupportTicketDetail extends SupportTicketOut { replies: SupportReplyOut[]; }

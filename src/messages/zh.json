@@ -1007,7 +1007,8 @@
         "title": "AI 套餐30天免费试用延长",
         "body": "AI 套餐免费试用期延长至30天。"
       }
-    ]
+    ],
+    "empty": "暂无公告"
   },
   "support": {
     "title": "客户支持",
@@ -1495,6 +1496,32 @@
     "actApproveAccount": "批准并创建账号",
     "approvePrompt": "为 {name} 设置初始密码（至少8位），并直接交给用户。",
     "approveDone": "账号已创建。邮箱：{email} / 密码：{pw} — 请交给用户。",
-    "pwTooShort": "密码至少需要8位。"
+    "pwTooShort": "密码至少需要8位。",
+    "annTitle": "公告管理",
+    "annSubtitle": "创建与管理平台公告",
+    "annNew": "新建公告",
+    "annEmpty": "暂无公告",
+    "annHidden": "隐藏",
+    "annEdit": "编辑公告",
+    "annFieldTitle": "标题",
+    "annFieldBody": "内容",
+    "annPinned": "置顶",
+    "annPublished": "发布",
+    "annSave": "保存",
+    "annDeleteConfirm": "删除此公告？",
+    "supTitle": "咨询管理",
+    "supSubtitle": "客户1:1咨询与回复",
+    "supColSubject": "主题",
+    "supColDate": "日期",
+    "supOpen": "打开",
+    "supEmpty": "暂无咨询",
+    "tsOpen": "待处理",
+    "tsAnswered": "已回复",
+    "tsClosed": "已关闭",
+    "supStaff": "运营",
+    "supCustomer": "客户",
+    "supReplyPlaceholder": "输入回复…",
+    "supSendReply": "发送回复",
+    "cancel": "取消"
   }
 }

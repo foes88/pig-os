@@ -37,6 +37,11 @@ from app.db.models.ops import (  # noqa: F401
     SyncLog,
     Task,
 )
+from app.db.models.content import (  # noqa: F401
+    Announcement,
+    SupportReply,
+    SupportTicket,
+)
 from app.db.models.pilot_signup import PilotSignup  # noqa: F401
 from app.db.models.platform import (  # noqa: F401
     AddonSubscription,

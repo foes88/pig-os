@@ -169,7 +169,8 @@ async def update_member_status(
                 new_value=after,
             )
         )
-    await db.flush()
+    await db.commit()
+    await db.refresh(u)
 
     fc = await db.scalar(select(func.count()).select_from(UserFarm).where(UserFarm.user_id == u.id)) or 0
     org_name = await db.scalar(select(Organization.name).where(Organization.id == u.org_id)) if u.org_id else None
@@ -270,7 +271,7 @@ async def approve_pilot_signup(
             new_value={"signup_status": "onboarded", "user_id": str(user.id)},
         )
     )
-    await db.flush()
+    await db.commit()
 
     return PilotApproveResult(
         user_id=str(user.id),

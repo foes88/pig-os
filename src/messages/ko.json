@@ -1007,7 +1007,8 @@
         "title": "AI 번들 30일 무료 체험 연장",
         "body": "AI 번들 무료 체험 기간이 30일로 연장됩니다."
       }
-    ]
+    ],
+    "empty": "공지가 없습니다"
   },
   "support": {
     "title": "고객지원",
@@ -1495,6 +1496,32 @@
     "actApproveAccount": "승인·계정 생성",
     "approvePrompt": "{name} 의 초기 비밀번호를 입력하세요(8자 이상). 가입자에게 직접 전달하세요.",
     "approveDone": "계정 생성됨. 이메일: {email} / 비밀번호: {pw} — 가입자에게 전달하세요.",
-    "pwTooShort": "비밀번호는 8자 이상이어야 합니다."
+    "pwTooShort": "비밀번호는 8자 이상이어야 합니다.",
+    "annTitle": "공지 관리",
+    "annSubtitle": "플랫폼 공지 작성·관리",
+    "annNew": "새 공지",
+    "annEmpty": "공지가 없습니다",
+    "annHidden": "숨김",
+    "annEdit": "공지 수정",
+    "annFieldTitle": "제목",
+    "annFieldBody": "내용",
+    "annPinned": "상단 고정",
+    "annPublished": "게시",
+    "annSave": "저장",
+    "annDeleteConfirm": "이 공지를 삭제할까요?",
+    "supTitle": "문의 관리",
+    "supSubtitle": "고객 1:1 문의 접수·답변",
+    "supColSubject": "제목",
+    "supColDate": "날짜",
+    "supOpen": "열기",
+    "supEmpty": "문의가 없습니다",
+    "tsOpen": "접수",
+    "tsAnswered": "답변완료",
+    "tsClosed": "종료",
+    "supStaff": "운영자",
+    "supCustomer": "고객",
+    "supReplyPlaceholder": "답변을 입력하세요…",
+    "supSendReply": "답변 전송",
+    "cancel": "취소"
   }
 }

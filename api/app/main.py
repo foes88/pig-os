@@ -111,11 +111,17 @@ app.include_router(analytics.router,   prefix=V1)
 app.include_router(members.router,     prefix=V1)
 
 # ── Admin console (SUPER_ADMIN 전용, 전사 스코프) ─────────────────────────────
+from app.routers.admin import content_router as admin_content_router  # noqa: E402
 from app.routers.admin import core_router as admin_core_router  # noqa: E402
 from app.routers.admin import users_router as admin_users_router  # noqa: E402
+from app.routers.base import announcements as base_announcements  # noqa: E402
+from app.routers.base import support as base_support  # noqa: E402
 
 app.include_router(admin_core_router,   prefix=V1)
 app.include_router(admin_users_router,  prefix=V1)
+app.include_router(admin_content_router, prefix=V1)
+app.include_router(base_announcements.router, prefix=V1)
+app.include_router(base_support.router, prefix=V1)
 
 # ── Addon routers (auto-discovered from AddonRegistry) ───────────────────────
 for addon in AddonRegistry.all():

@@ -4,8 +4,22 @@ import type {
   AdminMemberRow,
   AdminOverview,
   AdminPaged,
+  AnnouncementOut,
   PilotSignupRow,
+  SupportTicketDetail,
+  SupportTicketOut,
 } from "@/types/api.types";
+
+export interface AnnouncementInput {
+  title: string;
+  body: string;
+  category?: string;
+  pinned?: boolean;
+  published?: boolean;
+  publish_from?: string | null;
+  publish_until?: string | null;
+  lang?: string | null;
+}
 
 // 운영자 어드민 콘솔 API (SUPER_ADMIN 전용, 전사 스코프). 백엔드 /api/v1/admin/*.
 const BASE = "/api/v1/admin";
@@ -47,4 +61,21 @@ export const adminApi = {
         body,
       )
       .then((r) => r.data),
+
+  // 공지
+  announcements: () => apiClient.get<AnnouncementOut[]>(`${BASE}/announcements`).then((r) => r.data),
+  createAnnouncement: (body: AnnouncementInput) =>
+    apiClient.post<AnnouncementOut>(`${BASE}/announcements`, body).then((r) => r.data),
+  updateAnnouncement: (id: string, body: Partial<AnnouncementInput>) =>
+    apiClient.put<AnnouncementOut>(`${BASE}/announcements/${id}`, body).then((r) => r.data),
+  deleteAnnouncement: (id: string) =>
+    apiClient.delete(`${BASE}/announcements/${id}`).then((r) => r.data),
+
+  // 문의
+  tickets: (params: { status?: string; page?: number; per_page?: number } = {}) =>
+    apiClient.get<AdminPaged<SupportTicketOut>>(`${BASE}/support`, { params }).then((r) => r.data),
+  ticket: (id: string) =>
+    apiClient.get<SupportTicketDetail>(`${BASE}/support/${id}`).then((r) => r.data),
+  replyTicket: (id: string, bodyText: string) =>
+    apiClient.post<SupportTicketDetail>(`${BASE}/support/${id}/reply`, { body: bodyText }).then((r) => r.data),
 };
