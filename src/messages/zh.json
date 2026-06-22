@@ -163,7 +163,16 @@
     "etBorn": "自繁",
     "editTerminalNote": "该母猪已淘汰/售出，状态由淘汰流程管理。",
     "selectFarm": "请选择猪场。",
-    "emptyGuide": "登记第一头母猪即可开始繁殖与指标追踪。"
+    "emptyGuide": "登记第一头母猪即可开始繁殖与指标追踪。",
+    "thRisk": "风险",
+    "riskShort": {
+      "gilt_no_estrus": "未发情",
+      "gilt_overdue_mating": "后备未配",
+      "pregnant_overdue_farrowing": "分娩超期",
+      "lactating_overdue_weaning": "断奶超期",
+      "open_overdue_mating": "配种超期",
+      "accident_overdue_mating": "复配超期"
+    }
   },
   "events": {
     "mating": {

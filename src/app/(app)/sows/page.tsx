@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, LogOut, X, PiggyBank, ArrowRight } from "lucide-react";
+import { Pencil, LogOut, X, PiggyBank, ArrowRight, Search, AlertTriangle } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
+import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { ALERT_META, SEVERITY_PILL } from "@/lib/alerts/meta";
+import type { OverdueType } from "@/types/api.types";
 import { sowEntrySchema, firstError } from "@/lib/validation/eventSchemas";
 import type {
   Sow,
@@ -27,17 +30,17 @@ const STATUS_TABS: (SowStatus | "ALL")[] = ["ALL", "GILT", "OPEN", "PREGNANT", "
 const ACTIVE_SOW_STATUSES = ["GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT"] as const;
 type ActiveSowStatus = (typeof ACTIVE_SOW_STATUSES)[number];
 
-// 상태 → 배지 색상 (라벨은 sowStatus 키)
+// 상태 → 배지 색상 (Forest Green 토큰만 사용 — raw 팔레트/블루 금지. 라벨은 sowStatus 키)
 const STATUS_CLS: Record<string, string> = {
-  GILT:      "bg-cyan-50 text-cyan-600",
-  OPEN:      "bg-slate-100 text-slate-600",
+  GILT:      "bg-green-soft text-brand-2",
+  OPEN:      "bg-bg2 text-text2",
   PREGNANT:  "bg-green-soft text-success",
-  LACTATING: "bg-green-50 text-green-600",
-  ACCIDENT:  "bg-orange-50 text-orange-600",
-  CULLED:    "bg-red-50 text-red-500",
-  DEAD:      "bg-gray-100 text-gray-500",
-  SOLD:      "bg-emerald-50 text-emerald-600",
-  TRANSFER:  "bg-amber-50 text-amber-600",
+  LACTATING: "bg-green-soft text-success",
+  ACCIDENT:  "bg-amber-soft text-warning",
+  CULLED:    "bg-red-soft text-danger",
+  DEAD:      "bg-red-soft text-danger",
+  SOLD:      "bg-green-soft text-success",
+  TRANSFER:  "bg-amber-soft text-warning",
 };
 
 export default function SowsPage() {
@@ -65,6 +68,15 @@ export default function SowsPage() {
     queryFn: () => sowsApi.list(farmId!, params),
     enabled: !!farmId,
   });
+
+  // 위험 신호(관리대상) 연동 — sow_id → overdue type. 실제 룰엔진 결과만 사용.
+  const { data: overdue } = useQuery({
+    queryKey: queryKeys.alerts.overdue(farmId ?? ""),
+    queryFn: () => alertsApi.overdue(farmId!),
+    enabled: !!farmId,
+  });
+  const riskBySow = new Map<string, OverdueType>();
+  for (const o of overdue?.items ?? []) if (!riskBySow.has(o.sow_id)) riskBySow.set(o.sow_id, o.type);
 
   const sows = data?.items ?? [];
   const meta = data?.meta;
@@ -102,30 +114,33 @@ export default function SowsPage() {
           )}
         </div>
 
-        {/* Status tabs + search */}
-        <div className="flex items-center justify-between mb-4 gap-4">
-          <div className="flex gap-1">
+        {/* Search + filter chips */}
+        <div className="flex items-center gap-3 mb-4 flex-wrap">
+          <div className="relative w-60">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text3" />
+            <input
+              type="text"
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-surface text-sm text-text1 outline-none focus:border-primary"
+            />
+          </div>
+          <div className="flex gap-1.5 flex-wrap">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => { setStatusFilter(tab); setPage(1); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold border transition ${
                   statusFilter === tab
-                    ? "bg-primary text-white"
-                    : "bg-surface border border-border text-text2 hover:bg-border"
+                    ? "bg-console text-white border-console"
+                    : "bg-surface border-border text-text2 hover:bg-bg2"
                 }`}
               >
                 {tab === "ALL" ? t("tabAll") : tStatus(tab)}
               </button>
             ))}
           </div>
-          <input
-            type="text"
-            placeholder={t("searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-border bg-surface text-sm text-text1 w-48 outline-none focus:border-primary"
-          />
         </div>
 
         {/* Table */}
@@ -165,7 +180,7 @@ export default function SowsPage() {
                   <th className="text-right px-4 py-3 font-medium">{t("thParity")}</th>
                   <th className="text-left px-4 py-3 font-medium">{t("thBreed")}</th>
                   <th className="text-left px-4 py-3 font-medium">{t("thEntryDate")}</th>
-                  <th className="text-left px-4 py-3 font-medium">{t("thNote")}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t("thRisk")}</th>
                   <th className="text-right px-4 py-3 font-medium">{t("thActions")}</th>
                 </tr>
               </thead>
@@ -191,8 +206,18 @@ export default function SowsPage() {
                       <td className="px-4 py-3 text-text3 font-mono text-xs">
                         {sow.entry_date.slice(0, 10)}
                       </td>
-                      <td className="px-4 py-3 text-text3 text-xs max-w-[160px] truncate">
-                        {sow.breed_company ?? "-"}
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const rt = riskBySow.get(sow.id);
+                          if (!rt) return <span className="text-text3 text-xs">—</span>;
+                          const m = ALERT_META[rt];
+                          return (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${SEVERITY_PILL[m.severity]}`}>
+                              <AlertTriangle size={10} />
+                              {t(`riskShort.${rt}`)}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">

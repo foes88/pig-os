@@ -163,7 +163,16 @@
     "etBorn": "Tự sản xuất",
     "editTerminalNote": "Nái này đã xuất (loại/bán). Trạng thái quản lý qua quy trình loại thải.",
     "selectFarm": "Vui lòng chọn trại.",
-    "emptyGuide": "Đăng ký nái đầu tiên để bắt đầu theo dõi."
+    "emptyGuide": "Đăng ký nái đầu tiên để bắt đầu theo dõi.",
+    "thRisk": "Rủi ro",
+    "riskShort": {
+      "gilt_no_estrus": "Chưa lên giống",
+      "gilt_overdue_mating": "Hậu bị chưa phối",
+      "pregnant_overdue_farrowing": "Đẻ trễ",
+      "lactating_overdue_weaning": "Cai trễ",
+      "open_overdue_mating": "Phối trễ",
+      "accident_overdue_mating": "Phối lại trễ"
+    }
   },
   "events": {
     "mating": {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ReportsTabs } from "@/components/ReportsTabs";
 import { useQuery } from "@tanstack/react-query";
 import { Baby } from "lucide-react";
 
@@ -38,6 +39,7 @@ export default function FarrowingReportPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
+      <ReportsTabs />
       <header className="mb-4">
         <h1 className="text-xl font-extrabold text-text flex items-center gap-2">
           <Baby size={20} className="text-primary" /> {t("title")}

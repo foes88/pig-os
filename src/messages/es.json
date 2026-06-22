@@ -163,7 +163,16 @@
     "etBorn": "Nacida en granja",
     "editTerminalNote": "Esta cerda ya salió (eliminada/vendida). El estado se gestiona en el flujo de baja.",
     "selectFarm": "Seleccione una granja.",
-    "emptyGuide": "Registra tu primera cerda para iniciar el seguimiento."
+    "emptyGuide": "Registra tu primera cerda para iniciar el seguimiento.",
+    "thRisk": "Riesgo",
+    "riskShort": {
+      "gilt_no_estrus": "Sin celo",
+      "gilt_overdue_mating": "Gilta s/montar",
+      "pregnant_overdue_farrowing": "Parto atrasado",
+      "lactating_overdue_weaning": "Destete atrasado",
+      "open_overdue_mating": "Monta atrasada",
+      "accident_overdue_mating": "Remonta atrasada"
+    }
   },
   "events": {
     "mating": {

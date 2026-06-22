@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ReportsTabs } from "@/components/ReportsTabs";
 import { useQuery } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 
@@ -25,6 +26,7 @@ export default function ComprehensiveDailyPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
+      <ReportsTabs />
       <header className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-extrabold text-text flex items-center gap-2">

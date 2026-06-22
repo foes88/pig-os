@@ -6,20 +6,21 @@ import { useQuery } from "@tanstack/react-query";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { ReportsTabs } from "@/components/ReportsTabs";
 import type { KpiTrend } from "@/types/api.types";
 
-// label/unit은 렌더 시 t()로 해석 (모듈 레벨이라 키만 보관)
+// label/unit은 렌더 시 t()로 해석 (모듈 레벨이라 키만 보관). 색은 Forest 토큰 클래스(raw hex 금지).
 const KPI_LIST = [
-  { key: "psy",            label: "PSY",  unitKey: "unitPsy",     good: "high", color: "#0F6342" },
-  { key: "npd",            label: "NPD",  unitKey: "unitDays",    good: "low",  color: "#5F4B2C" },
-  { key: "farrowing_rate", labelKey: "kpiFarrowingRate", unitKey: "unitPercent", good: "high", color: "#059669" },
+  { key: "psy",            label: "PSY",  unitKey: "unitPsy",     good: "high", colorClass: "text-success" },
+  { key: "npd",            label: "NPD",  unitKey: "unitDays",    good: "low",  colorClass: "text-insufficient" },
+  { key: "farrowing_rate", labelKey: "kpiFarrowingRate", unitKey: "unitPercent", good: "high", colorClass: "text-brand-2" },
 ] as const;
 
 type KpiKey = (typeof KPI_LIST)[number]["key"];
 
 // ─── Simple SVG bar chart ─────────────────────────────────────────────────────
 
-function BarChart({ data, kpiKey, color }: { data: KpiTrend[]; kpiKey: KpiKey; color: string }) {
+function BarChart({ data, kpiKey, colorClass }: { data: KpiTrend[]; kpiKey: KpiKey; colorClass: string }) {
   const values = data.map((d) => d[kpiKey] ?? 0);
   const max = Math.max(...values, 0.001);
 
@@ -38,73 +39,45 @@ function BarChart({ data, kpiKey, color }: { data: KpiTrend[]; kpiKey: KpiKey; c
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ overflow: "visible" }}>
-      {/* Y grid + labels */}
+      {/* Y grid + labels (token: border/muted) */}
       {ticks.map((tick) => {
         const y = chartH - (tick / max) * chartH;
         return (
           <g key={tick}>
             <line
-              x1={PAD_LEFT}
-              x2={W}
-              y1={y}
-              y2={y}
-              stroke="#e5e7eb"
+              x1={PAD_LEFT} x2={W} y1={y} y2={y}
+              className="text-border" stroke="currentColor"
               strokeWidth={tick === 0 ? 1.5 : 0.75}
               strokeDasharray={tick === 0 ? "none" : "3,3"}
             />
-            <text x={PAD_LEFT - 4} y={y + 4} textAnchor="end" fontSize={9} fill="#9ca3af">
-              {tick}
-            </text>
+            <text x={PAD_LEFT - 4} y={y + 4} textAnchor="end" fontSize={9} className="fill-muted">{tick}</text>
           </g>
         );
       })}
 
-      {/* Bars */}
-      {data.map((row, i) => {
-        const val = row[kpiKey] ?? 0;
-        const barH = (val / max) * chartH;
-        const x = PAD_LEFT + i * ((W - PAD_LEFT) / data.length) + ((W - PAD_LEFT) / data.length - barW) / 2;
-        const y = chartH - barH;
-        const isLast = i === data.length - 1;
-
-        return (
-          <g key={row.period}>
-            {/* Bar */}
-            <rect
-              x={x}
-              y={y}
-              width={barW}
-              height={barH}
-              rx={3}
-              fill={color}
-              opacity={isLast ? 1 : 0.55}
-            />
-            {/* Value label on top */}
-            {val > 0 && (
-              <text
-                x={x + barW / 2}
-                y={y - 3}
-                textAnchor="middle"
-                fontSize={9}
-                fill={color}
-                fontWeight="600"
-              >
-                {kpiKey === "farrowing_rate" ? `${val.toFixed(1)}%` : val.toFixed(1)}
+      {/* Bars (token: currentColor via colorClass) */}
+      <g className={colorClass}>
+        {data.map((row, i) => {
+          const val = row[kpiKey] ?? 0;
+          const barH = (val / max) * chartH;
+          const x = PAD_LEFT + i * ((W - PAD_LEFT) / data.length) + ((W - PAD_LEFT) / data.length - barW) / 2;
+          const y = chartH - barH;
+          const isLast = i === data.length - 1;
+          return (
+            <g key={row.period}>
+              <rect x={x} y={y} width={barW} height={barH} rx={3} fill="currentColor" opacity={isLast ? 1 : 0.5} />
+              {val > 0 && (
+                <text x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize={9} fill="currentColor" fontWeight="600">
+                  {kpiKey === "farrowing_rate" ? `${val.toFixed(1)}%` : val.toFixed(1)}
+                </text>
+              )}
+              <text x={x + barW / 2} y={chartH + 14} textAnchor="middle" fontSize={9} className="fill-muted">
+                {row.period.slice(5)}
               </text>
-            )}
-            {/* X label */}
-            <text
-              x={x + barW / 2}
-              y={chartH + 14}
-              textAnchor="middle"
-              fontSize={9}
-              fill="#9ca3af"
-            >
-              {row.period.slice(5)} {/* "06" from "2026-06" */}
-            </text>
-          </g>
-        );
-      })}
+            </g>
+          );
+        })}
+      </g>
     </svg>
   );
 }
@@ -169,6 +142,7 @@ export default function ReportsPage() {
 
   return (
     <div className="p-7 max-w-4xl">
+      <ReportsTabs />
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -205,21 +179,21 @@ export default function ReportsPage() {
       {/* KPI 요약 카드 */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {KPI_LIST.map((k) => {
-          const { key, color } = k;
+          const { key, colorClass } = k;
           const raw = dashboard?.[key as keyof typeof dashboard];
           const value = typeof raw === "number" ? raw : null;
+          const selected = trendKpi === key;
           return (
             <div
               key={key}
-              className="bg-surface border border-border rounded-2xl p-5 cursor-pointer transition hover:border-primary/40"
+              className={`bg-surface border rounded-2xl p-5 cursor-pointer transition ${selected ? "border-primary" : "border-border hover:border-primary/40"}`}
               onClick={() => setTrendKpi(key)}
-              style={trendKpi === key ? { borderColor: color, boxShadow: `0 0 0 1px ${color}20` } : {}}
             >
               <div className="text-xs font-semibold text-text3 mb-1">{kpiLabel(k)}</div>
               {isLoading ? (
                 <div className="h-8 bg-border rounded animate-pulse w-16" />
               ) : (
-                <div className="text-3xl font-extrabold font-mono tracking-tight" style={trendKpi === key ? { color } : { color: "var(--color-text)" }}>
+                <div className={`text-3xl font-extrabold font-mono tracking-tight ${selected ? colorClass : "text-text"}`}>
                   {value != null ? value.toFixed(1) : "-"}
                   <span className="text-sm font-normal text-text3 ml-1">{kpiUnit(k)}</span>
                 </div>
@@ -295,12 +269,9 @@ export default function ReportsPage() {
           <div className="py-8 text-center text-sm text-text3">{t("noTrend")}</div>
         ) : view === "chart" ? (
           <div className="px-2">
-            <BarChart data={trend} kpiKey={trendKpi} color={activeKpi.color} />
+            <BarChart data={trend} kpiKey={trendKpi} colorClass={activeKpi.colorClass} />
             <div className="flex items-center gap-1.5 mt-3 text-xs text-text3">
-              <span
-                className="inline-block w-3 h-3 rounded-sm"
-                style={{ background: activeKpi.color }}
-              />
+              <span className={`inline-block w-3 h-3 rounded-sm bg-current ${activeKpi.colorClass}`} />
               {kpiLabel(activeKpi)} ({kpiUnit(activeKpi)})
               <span className="ml-2 opacity-60">{t("legendRecent")}</span>
             </div>

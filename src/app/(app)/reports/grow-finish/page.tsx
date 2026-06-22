@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ReportsTabs } from "@/components/ReportsTabs";
 
 import { downloadCsv } from "@/lib/utils/csv";
 import { useQuery } from "@tanstack/react-query";
@@ -58,6 +59,7 @@ export default function GrowFinishReportPage() {
 
   return (
     <div className="p-7 max-w-5xl">
+      <ReportsTabs />
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>

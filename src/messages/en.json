@@ -163,7 +163,16 @@
     "etBorn": "Born on-farm",
     "editTerminalNote": "This sow has exited (culled/sold). Status is managed via the removal flow.",
     "selectFarm": "Please select a farm.",
-    "emptyGuide": "Register your first sow to start breeding & KPI tracking."
+    "emptyGuide": "Register your first sow to start breeding & KPI tracking.",
+    "thRisk": "Risk",
+    "riskShort": {
+      "gilt_no_estrus": "No estrus",
+      "gilt_overdue_mating": "Unbred gilt",
+      "pregnant_overdue_farrowing": "Farrow overdue",
+      "lactating_overdue_weaning": "Wean overdue",
+      "open_overdue_mating": "Breed overdue",
+      "accident_overdue_mating": "Re-breed overdue"
+    }
   },
   "events": {
     "mating": {
