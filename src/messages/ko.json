@@ -1447,5 +1447,21 @@
     "actWeanNow": "포유일령 충족 시 즉시 이유",
     "actCheckLitter": "이유 전 자돈 건강 점검",
     "actGiltStimulation": "웅돈 자극 적용 / 후보돈 이동"
+  },
+  "admin": {
+    "checkingAccess": "접근 권한 확인 중…",
+    "navOverview": "개요",
+    "navMembers": "회원 관리",
+    "navAnnouncements": "공지 관리",
+    "navSupport": "문의 관리",
+    "backToApp": "앱으로 돌아가기",
+    "overviewTitle": "운영자 콘솔",
+    "overviewSubtitle": "플랫폼 전사 개요 (SUPER_ADMIN 전용)",
+    "cardOrgs": "조직",
+    "cardFarms": "활성 농장",
+    "cardUsers": "사용자",
+    "cardSows": "모돈",
+    "loadError": "관리자 데이터를 불러오지 못했습니다",
+    "phase0Note": "Phase 0 — 기반. 회원/공지/문의는 다음 단계."
   }
 }

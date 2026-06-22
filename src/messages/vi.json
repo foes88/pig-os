@@ -1447,5 +1447,21 @@
     "actWeanNow": "Cai sữa ngay nếu đủ ngày tuổi",
     "actCheckLitter": "Kiểm tra sức khỏe ổ trước khi cai",
     "actGiltStimulation": "Kích thích bằng đực / chuyển chuồng hậu bị"
+  },
+  "admin": {
+    "checkingAccess": "Đang kiểm tra quyền truy cập…",
+    "navOverview": "Tổng quan",
+    "navMembers": "Thành viên",
+    "navAnnouncements": "Thông báo",
+    "navSupport": "Hỗ trợ",
+    "backToApp": "Về ứng dụng",
+    "overviewTitle": "Bảng điều khiển vận hành",
+    "overviewSubtitle": "Tổng quan toàn nền tảng (chỉ SUPER_ADMIN)",
+    "cardOrgs": "Tổ chức",
+    "cardFarms": "Trại hoạt động",
+    "cardUsers": "Người dùng",
+    "cardSows": "Nái",
+    "loadError": "Không tải được dữ liệu quản trị",
+    "phase0Note": "Giai đoạn 0 — nền tảng. Thành viên / thông báo / hỗ trợ sắp tới."
   }
 }

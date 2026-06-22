@@ -1447,5 +1447,21 @@
     "actWeanNow": "Destetar ahora si la edad lo permite",
     "actCheckLitter": "Revisar salud de la camada antes del destete",
     "actGiltStimulation": "Aplicar estimulación con verraco / reubicar"
+  },
+  "admin": {
+    "checkingAccess": "Verificando acceso…",
+    "navOverview": "Resumen",
+    "navMembers": "Miembros",
+    "navAnnouncements": "Anuncios",
+    "navSupport": "Soporte",
+    "backToApp": "Volver a la app",
+    "overviewTitle": "Consola de operador",
+    "overviewSubtitle": "Resumen de toda la plataforma (solo SUPER_ADMIN)",
+    "cardOrgs": "Organizaciones",
+    "cardFarms": "Granjas activas",
+    "cardUsers": "Usuarios",
+    "cardSows": "Cerdas",
+    "loadError": "Error al cargar datos de admin",
+    "phase0Note": "Fase 0 — base. Miembros / anuncios / soporte a continuación."
   }
 }

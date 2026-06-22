@@ -1447,5 +1447,21 @@
     "actWeanNow": "Wean now if litter age allows",
     "actCheckLitter": "Check litter health before weaning",
     "actGiltStimulation": "Apply boar stimulation / relocate gilt"
+  },
+  "admin": {
+    "checkingAccess": "Checking access…",
+    "navOverview": "Overview",
+    "navMembers": "Members",
+    "navAnnouncements": "Announcements",
+    "navSupport": "Support",
+    "backToApp": "Back to app",
+    "overviewTitle": "Operator Console",
+    "overviewSubtitle": "Platform-wide overview (SUPER_ADMIN only)",
+    "cardOrgs": "Organizations",
+    "cardFarms": "Active farms",
+    "cardUsers": "Users",
+    "cardSows": "Sows",
+    "loadError": "Failed to load admin data",
+    "phase0Note": "Phase 0 — foundation. Members / announcements / support coming next."
   }
 }

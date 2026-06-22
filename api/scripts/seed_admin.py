@@ -45,6 +45,7 @@ async def main() -> None:
             name="Platform Admin",
             password_hash=hash_password(PASSWORD),
             role="SUPER_ADMIN",
+            system_role="SUPER_ADMIN",  # 백엔드 게이트(require_super_admin) 권위 필드
             language="ko",
         )
         db.add(user)

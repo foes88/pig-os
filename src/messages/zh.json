@@ -1447,5 +1447,21 @@
     "actWeanNow": "若哺乳日龄达标即可断奶",
     "actCheckLitter": "断奶前检查仔猪健康",
     "actGiltStimulation": "施加公猪刺激/转栏"
+  },
+  "admin": {
+    "checkingAccess": "正在检查访问权限…",
+    "navOverview": "概览",
+    "navMembers": "会员管理",
+    "navAnnouncements": "公告管理",
+    "navSupport": "咨询管理",
+    "backToApp": "返回应用",
+    "overviewTitle": "运营者控制台",
+    "overviewSubtitle": "平台全局概览（仅 SUPER_ADMIN）",
+    "cardOrgs": "组织",
+    "cardFarms": "活跃农场",
+    "cardUsers": "用户",
+    "cardSows": "母猪",
+    "loadError": "加载管理数据失败",
+    "phase0Note": "第0阶段 — 基础。会员/公告/咨询即将推出。"
   }
 }

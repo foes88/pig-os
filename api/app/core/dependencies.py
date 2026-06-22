@@ -124,6 +124,20 @@ def require_role(*roles: str):
     return Depends(_check)
 
 
+async def require_super_admin(current_user: CurrentUser) -> User:
+    """플랫폼 운영자(SUPER_ADMIN) 전용 가드 — 어드민 콘솔(/admin) 전 엔드포인트에 사용.
+
+    테넌트 스코프가 아니라 전사 조회/운영 권한. 미인가 시 403.
+    반환값으로 현재 운영자 User를 제공(감사·작성자 기록용).
+    """
+    if effective_system_role(current_user) != "SUPER_ADMIN":
+        raise ForbiddenError("Required role: SUPER_ADMIN")
+    return current_user
+
+
+SuperAdmin = Annotated[User, Depends(require_super_admin)]
+
+
 def require_farm_role(*roles: str):
     """농장 스코프 역할 가드 — path의 farm_id에 대한 사용자의 '농장별' 역할로 판정.
 

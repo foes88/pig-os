@@ -1013,3 +1013,11 @@ export interface PrrsByGeneticsResponse {
   total_affected: number;
   total_events: number;
 }
+
+// ─── Admin Console (운영자 어드민, SUPER_ADMIN 전용) ───────────────────────────
+export interface AdminOverview {
+  organizations: number;
+  farms: number;
+  users: number;
+  sows: number;
+}
