@@ -31,9 +31,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const role = useAuthStore((s) => s.user?.role);
 
   // chrome 언어를 next-intl 쿠키와 동기화. 비관리자가 ko 쿠키를 갖고 있으면 en으로 강제(한국어=관리자 전용).
+  // role 미하이드레이트(undefined) 시엔 클램프 보류 — 섣불리 admin의 ko 선택을 덮어쓰지 않도록 role 확정 후에만.
   useEffect(() => {
     let l = readLocaleCookie();
-    if (l === "ko" && !isPlatformAdmin(role)) {
+    if (l === "ko" && role && !isPlatformAdmin(role)) {
       l = "en";
       document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000; SameSite=Lax`;
       try { localStorage.setItem("pigos_lang", "en"); } catch { /* ignore */ }
