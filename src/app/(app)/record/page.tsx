@@ -642,22 +642,31 @@ function ReproPanel({ farmId, sow, onSaved }: PanelProps) {
 
   return (
     <div className="max-w-lg space-y-4">
-      <p className="text-xs text-text3">{t("reproDesc")}</p>
-      <Field label={t("eventType")}>
-        <select value={form.event_type}
-          onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value as CreateReproductiveEventRequest["event_type"] }))}
-          className="input">
-          {REPRO_TYPE_KEYS.map((rt) => <option key={rt.value} value={rt.value}>{t(rt.key)}</option>)}
-        </select>
-      </Field>
-      <Field label={t("eventDate")}>
-        <input type="date" value={form.event_date}
-          onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
-          className="input" />
-      </Field>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveFooter disabled={false} loading={mutation.isPending}
-        onSave={() => mutation.mutate(false)} onSaveNext={() => mutation.mutate(true)} />
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="amber" />
+      <Group label={t("eventType")} accent="amber">
+        <p className="text-xs text-muted -mt-1">{t("reproDesc")}</p>
+        <Field label={t("eventType")}>
+          <select value={form.event_type}
+            onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value as CreateReproductiveEventRequest["event_type"] }))}
+            className="input">
+            {REPRO_TYPE_KEYS.map((rt) => <option key={rt.value} value={rt.value}>{t(rt.key)}</option>)}
+          </select>
+        </Field>
+        <DateField label={t("eventDate")} value={form.event_date}
+          onChange={(v) => setForm((f) => ({ ...f, event_date: v }))} />
+      </Group>
+      {error && <ValidationBanner tone="red" title={error} />}
+      <RecordFooter>
+        <button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
     </div>
   );
 }
@@ -717,37 +726,41 @@ function CullPanel({ farmId, sow, onSaved }: PanelProps) {
 
   return (
     <div className="max-w-lg space-y-4">
-      <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs text-red-600">
-        {t("cullWarn")}
-      </div>
-      <Field label={t("removalType")}>
-        <select value={form.removal_type}
-          onChange={(e) => setForm((f) => ({ ...f, removal_type: e.target.value as SowCullRequest["removal_type"] }))}
-          className="input">
-          {REMOVAL_TYPE_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
-        </select>
-      </Field>
-      <Field label={t("removalDate")}>
-        <input type="date" value={form.removal_date}
-          onChange={(e) => setForm((f) => ({ ...f, removal_date: e.target.value }))}
-          className="input" />
-      </Field>
-      <Field label={t("reasonCat")}>
-        <select value={form.reason_category ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, reason_category: (e.target.value || undefined) as SowCullRequest["reason_category"] }))}
-          className="input">
-          <option value="">{t("selectNone")}</option>
-          {REASON_CATEGORY_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
-        </select>
-      </Field>
-      <Field label={t("reasonDetail")}>
-        <input value={form.reason_detail ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, reason_detail: e.target.value || undefined }))}
-          placeholder={t("phReasonDetail")} className="input" />
-      </Field>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveFooter disabled={!form.removal_date} loading={mutation.isPending}
-        onSave={() => submit(false)} onSaveNext={() => submit(true)} />
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="red" />
+      <ValidationBanner tone="red" title={t("cullWarn")} />
+      <Group label={t("removalType")} accent="red">
+        <Field label={t("removalType")}>
+          <select value={form.removal_type}
+            onChange={(e) => setForm((f) => ({ ...f, removal_type: e.target.value as SowCullRequest["removal_type"] }))}
+            className="input">
+            {REMOVAL_TYPE_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
+          </select>
+        </Field>
+        <DateField label={t("removalDate")} value={form.removal_date}
+          onChange={(v) => setForm((f) => ({ ...f, removal_date: v }))} />
+        <Field label={t("reasonCat")}>
+          <select value={form.reason_category ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, reason_category: (e.target.value || undefined) as SowCullRequest["reason_category"] }))}
+            className="input">
+            <option value="">{t("selectNone")}</option>
+            {REASON_CATEGORY_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
+          </select>
+        </Field>
+        <Field label={t("reasonDetail")}>
+          <input value={form.reason_detail ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, reason_detail: e.target.value || undefined }))}
+            placeholder={t("phReasonDetail")} className="input" />
+        </Field>
+      </Group>
+      {error && <ValidationBanner tone="red" title={error} />}
+      <RecordFooter>
+        {/* 위험 동작 → 저장 버튼 danger red */}
+        <button type="button" disabled={!form.removal_date || mutation.isPending} onClick={() => submit(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] bg-danger text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("save")}
+        </button>
+      </RecordFooter>
     </div>
   );
 }
@@ -797,34 +810,43 @@ function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
 
   return (
     <div className="max-w-lg space-y-4">
-      <div className="bg-pink-50 border border-pink-100 rounded-xl px-4 py-3 text-xs text-pink-700">
-        {t("pdDesc")}
-      </div>
-      <Field label={t("deathDate")}>
-        <input type="date" value={form.event_date}
-          onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
-          className="input" />
-      </Field>
-      <Field label={t("deathCount")}>
-        <Stepper label="" value={form.piglet_count} onChange={(v) => setForm((f) => ({ ...f, piglet_count: v }))}
-          min={1} max={30} colorClass="text-danger" />
-      </Field>
-      <Field label={t("deathCause")}>
-        <select value={form.reason ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, reason: (e.target.value || undefined) as CreatePigletEventRequest["reason"] }))}
-          className="input">
-          <option value="">{t("selectNone")}</option>
-          {PIGLET_DEATH_REASON_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
-        </select>
-      </Field>
-      <Field label={t("memo")}>
-        <input value={form.notes ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value || undefined }))}
-          placeholder={t("phMemo")} className="input" />
-      </Field>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveFooter disabled={!form.event_date} loading={mutation.isPending}
-        onSave={() => submit(false)} onSaveNext={() => submit(true)} />
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="red" />
+      <ValidationBanner tone="amber" title={t("pdDesc")} />
+      <Group label={t("deathDate")} accent="red">
+        <DateField label={t("deathDate")} value={form.event_date}
+          onChange={(v) => setForm((f) => ({ ...f, event_date: v }))} />
+        <Field label={t("deathCount")}>
+          <div className="-my-1">
+            <Stepper label="" value={form.piglet_count} onChange={(v) => setForm((f) => ({ ...f, piglet_count: v }))}
+              min={1} max={30} colorClass="text-danger" />
+          </div>
+        </Field>
+        <Field label={t("deathCause")}>
+          <select value={form.reason ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, reason: (e.target.value || undefined) as CreatePigletEventRequest["reason"] }))}
+            className="input">
+            <option value="">{t("selectNone")}</option>
+            {PIGLET_DEATH_REASON_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
+          </select>
+        </Field>
+        <Field label={t("memo")}>
+          <input value={form.notes ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value || undefined }))}
+            placeholder={t("phMemo")} className="input" />
+        </Field>
+      </Group>
+      {error && <ValidationBanner tone="red" title={error} />}
+      <RecordFooter>
+        <button type="button" disabled={!form.event_date || mutation.isPending} onClick={() => submit(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={!form.event_date || mutation.isPending} onClick={() => submit(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
     </div>
   );
 }
