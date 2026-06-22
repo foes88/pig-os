@@ -810,10 +810,13 @@ async def delete_mating(db, farm_id, user_id, mating_id) -> None:
     m.deleted_at = datetime.now(UTC)
     sow = await _get_active_sow(db, farm_id, m.sow_id)
     # 견고화: 같은 사이클에 다른 교배(재교배)가 남아있으면 임신 유지 — 마지막 교배 삭제 때만 OPEN/FAILED 롤백.
+    # ⚠️ 방금 삭제한 m을 명시적으로 제외(Mating.id != m.id) — deleted_at flush 타이밍에 의존하지 않게.
     remaining_matings = 0
     if m.breeding_cycle_id:
         remaining_matings = await db.scalar(select(func.count()).select_from(Mating).where(
-            Mating.breeding_cycle_id == m.breeding_cycle_id, Mating.deleted_at.is_(None))) or 0
+            Mating.breeding_cycle_id == m.breeding_cycle_id,
+            Mating.id != m.id,
+            Mating.deleted_at.is_(None))) or 0
     if remaining_matings > 0:
         # 재교배 잔존 → 모돈 PREGNANT 유지, 사이클 MATED 유지, 교배횟수만 재계산
         if m.breeding_cycle_id:

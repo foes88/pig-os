@@ -10,7 +10,7 @@ import {
   farrowingSchema, weaningSchema, matingSchema, cullSchema, pigletEventSchema, firstError,
 } from "@/lib/validation/eventSchemas";
 import {
-  Group, SowChip, Segmented, DateField, ValidationBanner, RecordFooter, SaveHint, Lifecycle, AutoCalc,
+  Group, SowChip, Segmented, DateField, ValidationBanner, RecordFooter, Lifecycle, AutoCalc,
 } from "@/components/record/kit";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { InsightBanner } from "@/components/InsightBanner";
@@ -296,32 +296,35 @@ export default function RecordPage() {
               ))}
             </div>
 
-            {/* Form area */}
+            {/* Form area — 2열: 입력 폼 | 모돈 컨텍스트 레일 (우측 빈공간 채움) */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
-              {eventType === "farrowing" && (
-                <FarrowingPanel
-                  farmId={farmId}
-                  sow={selectedSow}
-                  onSaved={handleSaved}
-                />
-              )}
-              {eventType === "mating" && (
-                <MatingPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
-              )}
-              {eventType === "weaning" && (
-                <WeaningPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
-              )}
-              {eventType === "repro" && (
-                <ReproPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
-              )}
-              {eventType === "cull" && (
-                <CullPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
-              )}
-              {eventType === "piglet_death" && (
-                <PigletDeathPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
-              )}
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] gap-6 items-start">
+                <div className="min-w-0">
+                  {eventType === "farrowing" && (
+                    <FarrowingPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "mating" && (
+                    <MatingPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "weaning" && (
+                    <WeaningPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "repro" && (
+                    <ReproPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "cull" && (
+                    <CullPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "piglet_death" && (
+                    <PigletDeathPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                </div>
 
-              <RecentEventsSection farmId={farmId} sowId={selectedSow.id} />
+                {/* 우측 컨텍스트 레일 — 이 모돈의 최근 기록(입력 맥락) */}
+                <aside className="min-w-0">
+                  <RecentEventsSection farmId={farmId} sowId={selectedSow.id} />
+                </aside>
+              </div>
             </div>
           </div>
         )}
@@ -442,7 +445,7 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
 
       {error && <ValidationBanner tone="red" title={error} />}
 
-      <RecordFooter left={<SaveHint label={t("draftSaved")} />}>
+      <RecordFooter>
         <button type="button" disabled={hasError || total === 0 || mutation.isPending} onClick={() => submit(false)}
           data-testid="event-save"
           className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
@@ -510,7 +513,7 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
 
       {error && <ValidationBanner tone="red" title={error} />}
 
-      <RecordFooter left={<SaveHint label={t("draftSaved")} />}>
+      <RecordFooter>
         <button type="button" disabled={mutation.isPending} onClick={() => submit(false)}
           data-testid="event-save"
           className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
@@ -592,7 +595,7 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
 
       {error && <ValidationBanner tone="red" title={error} />}
 
-      <RecordFooter left={<SaveHint label={t("draftSaved")} />}>
+      <RecordFooter>
         <button type="button" disabled={count < 1 || mutation.isPending} onClick={() => submit(false)}
           data-testid="event-save"
           className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">

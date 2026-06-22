@@ -29,6 +29,18 @@ async def _new_sow(db, farm, tag, status="GILT"):
     return s
 
 
+async def test_delete_only_mating_rolls_back_to_open(db: AsyncSession, test_farm, test_sow, test_user):
+    """단일 교배 삭제 → 모돈 OPEN 복귀 (재교배 잔존 카운트가 삭제건을 제외해야 함)."""
+    m = await event_service.record_mating(
+        db, test_farm.id, test_user.id,
+        MatingCreate(sow_id=test_sow.id, mating_date=date(2026, 1, 1), mating_type="AI"))
+    await db.refresh(test_sow)
+    assert test_sow.status == "PREGNANT"
+    await event_service.delete_mating(db, test_farm.id, test_user.id, m.id)
+    await db.refresh(test_sow)
+    assert test_sow.status == "OPEN"
+
+
 async def _farrow(db, farm, sow, user, ba=12):
     m = await event_service.record_mating(
         db, farm.id, user.id, MatingCreate(sow_id=sow.id, mating_date=date(2026, 1, 1), mating_type="AI"))
