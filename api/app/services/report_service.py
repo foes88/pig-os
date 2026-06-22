@@ -25,7 +25,7 @@ from app.db.models.events import (
 )
 from app.db.models.health import FeedRecord, Removal
 from app.db.models.ops import FinisherGroup
-from app.db.models.sow import BreedingCycle, Sow
+from app.db.models.sow import Boar, BreedingCycle, Sow
 
 RTS_EVENT_TYPES = ("RETURN_TO_ESTRUS", "ABORTION", "EMPTY", "INFERTILE")
 VALID_PERIODS = ("monthly", "quarterly", "annual")
@@ -470,6 +470,132 @@ async def get_sow_history(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> list
         [{"cycle_id": r[0], "date": r[1], "tb": r[2], "ba": r[3], "sb": r[4], "mum": r[5]} for r in farrowings],
         [{"cycle_id": r[0], "date": r[1], "weaned": r[2], "lactation_days": r[3]} for r in weanings],
     )
+
+
+# ── 종합일보 (Comprehensive Daily Report) — PigPlan .mrd 6섹션 → PigOS ──────────
+# 일계(당일) + 월계(당월 1일~당일). 출처 매핑: docs/specs/2026-06-19_comprehensive-daily-report-spec.md
+async def get_comprehensive_daily_report(db: AsyncSession, farm_id: UUID, day: date) -> dict:
+    from datetime import date as _date
+    month_start = _date(day.year, day.month, 1)
+
+    def _rng(col, monthly: bool):
+        return (col >= month_start, col <= day) if monthly else (col == day,)
+
+    # ── ① 돈군 현황(당일 스냅샷) ──
+    herd_rows = (await db.execute(
+        select(Sow.status, func.count()).where(Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+        .group_by(Sow.status)
+    )).all()
+    herd = {s: c for s, c in herd_rows}
+    boars = await db.scalar(select(func.count()).select_from(Boar).where(Boar.farm_id == farm_id, Boar.status == "ACTIVE")) or 0
+    # 포유자돈: 포유 중(미이유) 분만들의 잔여 = born_alive + foster_in - foster_out - deaths - weaned
+    lact_farrows = list(await db.scalars(
+        select(Farrowing).join(Sow, Sow.id == Farrowing.sow_id)
+        .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None), Sow.status == "LACTATING")
+    ))
+    nursing = 0
+    for f in lact_farrows:
+        pe = (await db.execute(
+            select(PigletEvent.event_type, func.coalesce(func.sum(PigletEvent.piglet_count), 0))
+            .where(PigletEvent.farrowing_id == f.id, PigletEvent.deleted_at.is_(None))
+            .group_by(PigletEvent.event_type)
+        )).all()
+        adj = {t: int(n) for t, n in pe}
+        fi, fo, dd = adj.get("FOSTER_IN", 0), adj.get("FOSTER_OUT", 0), adj.get("DEATH", 0)
+        wn = await db.scalar(select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+            Weaning.farrowing_id == f.id, Weaning.deleted_at.is_(None))) or 0
+        nursing += max(0, f.born_alive + fi - fo - dd - int(wn))
+    finishers = await db.scalar(select(func.coalesce(func.sum(FinisherGroup.head_count_in - func.coalesce(FinisherGroup.head_count_out, 0)), 0))
+        .where(FinisherGroup.farm_id == farm_id, FinisherGroup.deleted_at.is_(None), FinisherGroup.end_date.is_(None))) or 0
+    herd_block = {
+        "gilt": herd.get("GILT", 0), "open": herd.get("OPEN", 0), "pregnant": herd.get("PREGNANT", 0),
+        "lactating": herd.get("LACTATING", 0), "accident": herd.get("ACCIDENT", 0),
+        "sows_total": sum(herd.get(s, 0) for s in ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")),
+        "boars": int(boars), "nursing_piglets": nursing, "finishers": int(finishers),
+    }
+
+    # ── ③ 교배현황 (후보/경산/재교배) 일계·월계 ──
+    async def mating_block(monthly: bool):
+        rows = (await db.execute(
+            select(Mating.mating_number, BreedingCycle.parity)
+            .outerjoin(BreedingCycle, BreedingCycle.id == Mating.breeding_cycle_id)
+            .where(Mating.farm_id == farm_id, Mating.deleted_at.is_(None), *_rng(Mating.mating_date, monthly))
+        )).all()
+        total = len(rows)
+        gilt = sum(1 for mn, p in rows if mn == 1 and (p or 0) <= 1)
+        sow = sum(1 for mn, p in rows if mn == 1 and (p or 0) >= 2)
+        re = sum(1 for mn, _ in rows if (mn or 1) >= 2)
+        return {"total": total, "gilt": gilt, "sow": sow, "rebreed": re}
+
+    # ── ④ 임신사고 (유형별) 일계·월계 ──
+    async def accident_block(monthly: bool):
+        rows = (await db.execute(
+            select(ReproductiveEvent.event_type, func.count())
+            .where(ReproductiveEvent.farm_id == farm_id, ReproductiveEvent.deleted_at.is_(None),
+                   ReproductiveEvent.event_type.in_(RTS_EVENT_TYPES), *_rng(ReproductiveEvent.event_date, monthly))
+            .group_by(ReproductiveEvent.event_type)
+        )).all()
+        by = {t: c for t, c in rows}
+        return {"total": sum(by.values()), "rts": by.get("RETURN_TO_ESTRUS", 0),
+                "abortion": by.get("ABORTION", 0), "empty": by.get("EMPTY", 0), "infertile": by.get("INFERTILE", 0)}
+
+    # ── ⑤ 생산현황 (분만/이유/자돈폐사) 일계·월계 ──
+    async def production_block(monthly: bool):
+        f = (await db.execute(
+            select(func.count(), func.coalesce(func.sum(Farrowing.total_born), 0),
+                   func.coalesce(func.sum(Farrowing.born_alive), 0), func.coalesce(func.sum(Farrowing.stillborn), 0),
+                   func.coalesce(func.sum(Farrowing.mummified), 0), func.avg(Farrowing.avg_birth_weight_kg))
+            .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None), *_rng(Farrowing.farrowing_date, monthly))
+        )).one()
+        w = (await db.execute(
+            select(func.count(), func.coalesce(func.sum(Weaning.weaned_count), 0),
+                   func.avg(Weaning.avg_weaning_weight_kg), func.avg(Weaning.weaning_age_days))
+            .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None), *_rng(Weaning.weaning_date, monthly))
+        )).one()
+        pd = (await db.execute(
+            select(func.coalesce(func.sum(PigletEvent.piglet_count), 0))
+            .where(PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None),
+                   PigletEvent.event_type == "DEATH", *_rng(PigletEvent.event_date, monthly))
+        )).one()
+        return {
+            "farrowings": f[0], "total_born": int(f[1]), "born_alive": int(f[2]),
+            "stillborn": int(f[3]), "mummified": int(f[4]),
+            "avg_birth_weight": round(float(f[5]), 2) if f[5] is not None else None,
+            "weanings": w[0], "weaned": int(w[1]),
+            "avg_weaning_weight": round(float(w[2]), 2) if w[2] is not None else None,
+            "avg_weaning_age": round(float(w[3]), 1) if w[3] is not None else None,
+            "piglet_deaths": int(pd[0]),
+        }
+
+    # ── ⑥ 전입출·폐사 일계·월계 ──
+    async def inout_block(monthly: bool):
+        sow_in = (await db.execute(
+            select(Sow.entry_type, func.count()).where(Sow.farm_id == farm_id, *_rng(func.date(Sow.entry_date), monthly))
+            .group_by(Sow.entry_type)
+        )).all()
+        in_map = {et: c for et, c in sow_in}
+        rm = (await db.execute(
+            select(Removal.removal_type, func.count()).where(Removal.farm_id == farm_id, Removal.deleted_at.is_(None),
+                   *_rng(Removal.removal_date, monthly)).group_by(Removal.removal_type)
+        )).all()
+        rm_map = {t: c for t, c in rm}
+        boar_in = await db.scalar(select(func.count()).select_from(Boar).where(
+            Boar.farm_id == farm_id, *_rng(func.date(Boar.entry_date), monthly))) or 0
+        return {
+            "gilt_in": in_map.get("GILT", 0), "sow_in": sum(c for et, c in in_map.items() if et != "GILT"),
+            "dead": rm_map.get("DEAD", 0), "culled": rm_map.get("CULLED", 0),
+            "sold": rm_map.get("SOLD", 0), "transfer": rm_map.get("TRANSFER", 0),
+            "boar_in": int(boar_in),
+        }
+
+    return {
+        "date": day.isoformat(),
+        "herd": herd_block,
+        "mating": {"day": await mating_block(False), "month": await mating_block(True)},
+        "accidents": {"day": await accident_block(False), "month": await accident_block(True)},
+        "production": {"day": await production_block(False), "month": await production_block(True)},
+        "inout": {"day": await inout_block(False), "month": await inout_block(True)},
+    }
 
 
 # ── #1 모돈 현재 상태표 (DEV_GUIDE §5-C) ──────────────────────────────────────

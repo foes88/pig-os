@@ -38,6 +38,16 @@ async def daily_report(
     return await report_service.get_daily_report(db, farm.id, day)
 
 
+@router.get("/comprehensive-daily")
+async def comprehensive_daily_report(
+    farm: FarmDep,
+    db: DbDep,
+    day: date = Query(default_factory=date.today, alias="date"),
+):
+    """종합일보 — PigPlan .mrd 6섹션(돈군/교배/임신사고/생산/전입출) 일계·월계. dict 반환."""
+    return await report_service.get_comprehensive_daily_report(db, farm.id, day)
+
+
 @router.get("/sow-status", response_model=SowStatusReport)
 async def sow_status_report(farm: FarmDep, db: DbDep):
     """#1 모돈 현재 상태표 — 상태별 두수 + 모돈 목록."""

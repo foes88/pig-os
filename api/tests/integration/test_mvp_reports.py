@@ -94,3 +94,24 @@ async def test_mortality_report_empty(db: AsyncSession, test_farm):
     rep = await report_service.get_mortality_report(db, test_farm.id, date(2026, 1, 1), date(2026, 12, 31))
     assert rep["total_removals"] == 0
     assert rep["preweaning_mortality_rate"] is None
+
+
+# ── 종합일보 (Comprehensive Daily) ────────────────────────────────────────────
+async def test_comprehensive_daily_report(db: AsyncSession, test_farm, test_sow, test_user):
+    # 교배(당일) → 분만은 미래라 별도. 여기선 교배 1건 당일 + 돈군 스냅샷 확인.
+    m = await event_service.record_mating(
+        db, test_farm.id, test_user.id,
+        MatingCreate(sow_id=test_sow.id, mating_date=date(2026, 6, 19), mating_type="AI"))
+    rep = await report_service.get_comprehensive_daily_report(db, test_farm.id, date(2026, 6, 19))
+    assert rep["date"] == "2026-06-19"
+    # 교배 당일 1건 (후보돈=GILT parity0→cycle.parity1)
+    assert rep["mating"]["day"]["total"] == 1
+    assert rep["mating"]["day"]["gilt"] == 1
+    assert rep["mating"]["month"]["total"] == 1
+    # 돈군: 교배 후 PREGNANT 1
+    assert rep["herd"]["pregnant"] == 1
+    # 섹션 구조 존재
+    for k in ("herd", "mating", "accidents", "production", "inout"):
+        assert k in rep
+    assert "day" in rep["production"] and "month" in rep["production"]
+    _ = m
