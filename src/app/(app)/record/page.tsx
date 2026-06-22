@@ -560,30 +560,49 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
   }
 
   return (
-    <div className="max-w-lg">
-      <Field label={t("weaningDate")}>
-        <input type="date" value={date}
-          onChange={(e) => setDate(e.target.value)} className="input mb-4" />
-      </Field>
-      <div className="bg-surface border border-border rounded-2xl px-4 divide-y divide-border mb-4">
-        <Stepper label={t("weanedCount")} sub="Weaned count" value={count} onChange={setCount} colorClass="text-warning" />
-      </div>
-      <Field label={t("avgWeanWeight")}>
+    <div className="max-w-lg space-y-4">
+      <Lifecycle steps={[t("tabMating"), t("lcGest"), t("tabFarrowing"), t("tabWeaning")]} active={3} />
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="brand" />
+
+      <Group label={t("weaningDate")}>
+        <DateField value={date} onChange={setDate} />
+      </Group>
+
+      <Group label={t("weanedCount")}>
+        <div className="-my-1">
+          <Stepper label={t("weanedCount")} sub="Weaned count" value={count} onChange={setCount} colorClass="text-success" />
+        </div>
+      </Group>
+
+      <Group label={t("avgWeanWeight")}>
         <input type="number" step="0.1" min={0} value={weight}
           onChange={(e) => setWeight(e.target.value)}
           placeholder={t("phWeanWeight")} className="input" />
-      </Field>
-      <label className="flex items-center gap-2 mt-4 cursor-pointer select-none">
-        <input type="checkbox" checked={partial} onChange={(e) => setPartial(e.target.checked)}
-          className="w-4 h-4 accent-primary" />
-        <span className="text-sm font-semibold text-text2">{t("partialWeaning")}</span>
-      </label>
-      <p className="text-[11px] text-text3 mt-1">{partial ? t("partialHint") : t("finalHint")}</p>
-      {error && <p className="text-xs text-danger mt-3">{error}</p>}
-      <div className="mt-5">
-        <SaveFooter disabled={count < 1} loading={mutation.isPending}
-          onSave={() => submit(false)} onSaveNext={() => submit(true)} />
-      </div>
+      </Group>
+
+      {/* 부분이유 토글 */}
+      <Group>
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input type="checkbox" checked={partial} onChange={(e) => setPartial(e.target.checked)}
+            className="w-4 h-4 accent-[var(--color-brand)]" />
+          <span className="text-sm font-semibold text-text2">{t("partialWeaning")}</span>
+        </label>
+        <p className="text-[11px] text-muted">{partial ? t("partialHint") : t("finalHint")}</p>
+      </Group>
+
+      {error && <ValidationBanner tone="red" title={error} />}
+
+      <RecordFooter left={<SaveHint label={t("draftSaved")} />}>
+        <button type="button" disabled={count < 1 || mutation.isPending} onClick={() => submit(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={count < 1 || mutation.isPending} onClick={() => submit(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
     </div>
   );
 }
