@@ -1021,3 +1021,25 @@ export interface AdminOverview {
   users: number;
   sows: number;
 }
+
+export interface AdminMemberRow {
+  id: string;
+  email: string | null;
+  name: string;
+  role: string;
+  system_role: string;
+  approval_status: "PENDING" | "APPROVED" | "REJECTED";
+  active: boolean;
+  org_id: string | null;
+  org_name: string | null;
+  farm_count: number;
+  created_at: string | null;
+  last_login_at: string | null;
+}
+export interface AdminMemberFarm { farm_id: string; role: string; }
+export interface AdminMemberDetail extends AdminMemberRow { farms: AdminMemberFarm[]; }
+export interface PilotSignupRow {
+  id: string; name: string; email: string; farm_size: string; country: string;
+  role: string; lang: string; status: string; notes: string | null; created_at: string | null;
+}
+export interface AdminPaged<T> { items: T[]; meta: { total: number; page: number; per_page: number; pages: number }; }

@@ -1,7 +1,7 @@
-"""운영자 어드민 콘솔 — Phase 0 (기반) + Phase 1 (회원 운영) 진입점.
+"""운영자 어드민 콘솔 — 기반(overview/me).
 
-SUPER_ADMIN 전용. 전사(cross-tenant) 조회/운영. 모든 라우트는 require_super_admin 가드.
-프리픽스: /api/v1/admin
+SUPER_ADMIN 전용. 전사(cross-tenant) 조회/운영. 라우터 전체 require_super_admin 가드.
+프리픽스: /api/v1/admin. 회원 관리는 admin/users.py, 콘텐츠는 admin/content.py 등으로 분리.
 """
 from typing import Annotated
 
@@ -15,7 +15,6 @@ from app.db.models.platform import User
 router = APIRouter(
     prefix="/admin",
     tags=["Admin Console"],
-    # 라우터 전체를 SUPER_ADMIN 으로 보호 (경로별 누락 방지)
     dependencies=[Depends(require_super_admin)],
 )
 

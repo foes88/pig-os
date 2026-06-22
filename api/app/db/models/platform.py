@@ -111,6 +111,11 @@ class User(Base):
     )  # SUPER_ADMIN | VENDOR_ADMIN | DISTRIBUTOR_ADMIN | DEALER_ADMIN | FARM_* | VET | VIEWER | API_CLIENT
     language: Mapped[str] = mapped_column(String(5), default="en")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # 가입 승인 상태 (운영자 콘솔). PENDING=승인대기 / APPROVED=승인 / REJECTED=반려.
+    # 기존 사용자·신규 기본 APPROVED(잠김 방지). 로그인 강제는 별도 단계(현재는 운영자 표시·관리용).
+    approval_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="APPROVED", server_default="APPROVED"
+    )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

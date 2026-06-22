@@ -69,3 +69,84 @@ async def test_admin_me_forbidden_for_viewer(client: AsyncClient, db: AsyncSessi
     viewer = await _mk_user(db, test_org, "VIEWER")
     r = await client.get("/api/v1/admin/me", headers=_auth(viewer))
     assert r.status_code == 403
+
+
+# ─── Phase 1: 회원/가입승인 ────────────────────────────────────────────────────
+async def test_members_list_forbidden_for_owner(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    owner = await _mk_user(db, test_org, "FARM_OWNER")
+    r = await client.get("/api/v1/admin/members", headers=_auth(owner))
+    assert r.status_code == 403
+
+
+async def test_members_list_and_search(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    admin = await _mk_user(db, test_org, "SUPER_ADMIN")
+    await _mk_user(db, test_org, "FARM_OWNER")
+    await db.flush()
+    r = await client.get("/api/v1/admin/members", headers=_auth(admin))
+    assert r.status_code == 200
+    body = r.json()
+    assert "items" in body and "meta" in body
+    assert body["meta"]["total"] >= 2
+    # 상태 필터 유효성
+    bad = await client.get("/api/v1/admin/members?status=BOGUS", headers=_auth(admin))
+    assert bad.status_code == 422
+
+
+async def test_member_status_approve_reject(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    admin = await _mk_user(db, test_org, "SUPER_ADMIN")
+    target = await _mk_user(db, test_org, "FARM_OWNER")
+    await db.flush()
+    # 반려
+    r = await client.patch(
+        f"/api/v1/admin/members/{target.id}/status",
+        headers=_auth(admin), json={"approval_status": "REJECTED", "active": False},
+    )
+    assert r.status_code == 200
+    assert r.json()["approval_status"] == "REJECTED"
+    assert r.json()["active"] is False
+    # 재승인
+    r2 = await client.patch(
+        f"/api/v1/admin/members/{target.id}/status",
+        headers=_auth(admin), json={"approval_status": "APPROVED", "active": True},
+    )
+    assert r2.json()["approval_status"] == "APPROVED"
+    # 잘못된 상태
+    bad = await client.patch(
+        f"/api/v1/admin/members/{target.id}/status",
+        headers=_auth(admin), json={"approval_status": "NOPE"},
+    )
+    assert bad.status_code == 422
+
+
+async def test_pilot_signup_list_and_approve(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    from app.db.models.pilot_signup import PilotSignup
+    admin = await _mk_user(db, test_org, "SUPER_ADMIN")
+    signup = PilotSignup(
+        name="Nguyen Farm", email=f"pilot-{uuid.uuid4().hex[:6]}@ex.com",
+        farm_size="500_1000", country="Vietnam", role="owner", lang="vi", status="pending",
+    )
+    db.add(signup)
+    await db.flush()
+
+    lst = await client.get("/api/v1/admin/pilot-signups", headers=_auth(admin))
+    assert lst.status_code == 200
+    assert lst.json()["meta"]["total"] >= 1
+
+    appr = await client.post(
+        f"/api/v1/admin/pilot-signups/{signup.id}/approve",
+        headers=_auth(admin), json={"initial_password": "pilot1234!", "system_role": "FARM_OWNER"},
+    )
+    assert appr.status_code == 200, appr.text
+    assert appr.json()["email"] == signup.email
+    # 중복 승인 차단
+    again = await client.post(
+        f"/api/v1/admin/pilot-signups/{signup.id}/approve",
+        headers=_auth(admin), json={"initial_password": "pilot1234!"},
+    )
+    assert again.status_code == 409
+
+
+async def test_pilot_signup_forbidden_for_viewer(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    viewer = await _mk_user(db, test_org, "VIEWER")
+    r = await client.get("/api/v1/admin/pilot-signups", headers=_auth(viewer))
+    assert r.status_code == 403
