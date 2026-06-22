@@ -1533,6 +1533,15 @@
     "ruleSave": "저장",
     "ruleOn": "켜짐",
     "ruleOff": "꺼짐",
-    "rulesNote": "빈 임계값 = 코드 기본값. 변경은 다음 평가부터 적용됩니다."
+    "rulesNote": "빈 임계값 = 코드 기본값. 변경은 다음 평가부터 적용됩니다.",
+    "navAudit": "활동 로그",
+    "auditTitle": "활동 로그",
+    "auditSubtitle": "모든 운영자 작업(회원·콘텐츠·규칙)",
+    "auditEmpty": "활동 내역 없음",
+    "auditColWhen": "시각",
+    "auditColActor": "작업자",
+    "auditColAction": "작업",
+    "auditColEntity": "대상",
+    "auditColChange": "변경"
   }
 }

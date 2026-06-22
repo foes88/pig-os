@@ -1533,6 +1533,15 @@
     "ruleSave": "保存",
     "ruleOn": "开",
     "ruleOff": "关",
-    "rulesNote": "空阈值=代码默认值。更改在下次评估时生效。"
+    "rulesNote": "空阈值=代码默认值。更改在下次评估时生效。",
+    "navAudit": "活动日志",
+    "auditTitle": "活动日志",
+    "auditSubtitle": "所有运营操作（会员·内容·规则）",
+    "auditEmpty": "暂无活动",
+    "auditColWhen": "时间",
+    "auditColActor": "操作者",
+    "auditColAction": "操作",
+    "auditColEntity": "对象",
+    "auditColChange": "变更"
   }
 }

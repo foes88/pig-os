@@ -1533,6 +1533,15 @@
     "ruleSave": "Guardar",
     "ruleOn": "On",
     "ruleOff": "Off",
-    "rulesNote": "Umbral vacío = valor por defecto del código. Los cambios se aplican en la próxima evaluación."
+    "rulesNote": "Umbral vacío = valor por defecto del código. Los cambios se aplican en la próxima evaluación.",
+    "navAudit": "Registro",
+    "auditTitle": "Registro de actividad",
+    "auditSubtitle": "Todas las acciones del operador (miembros, contenido, reglas)",
+    "auditEmpty": "Sin actividad",
+    "auditColWhen": "Cuándo",
+    "auditColActor": "Actor",
+    "auditColAction": "Acción",
+    "auditColEntity": "Entidad",
+    "auditColChange": "Cambio"
   }
 }

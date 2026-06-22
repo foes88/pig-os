@@ -5,8 +5,9 @@
 하위 모듈: admin(overview/me) · users(회원/베타가입) · content(공지/문의, Phase 2) ...
 """
 from app.routers.admin.admin import router as core_router
+from app.routers.admin.audit import router as audit_router
 from app.routers.admin.content import router as content_router
 from app.routers.admin.rules import router as rules_router
 from app.routers.admin.users import router as users_router
 
-__all__ = ["core_router", "users_router", "content_router", "rules_router"]
+__all__ = ["core_router", "users_router", "content_router", "rules_router", "audit_router"]

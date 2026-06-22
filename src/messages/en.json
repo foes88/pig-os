@@ -1533,6 +1533,15 @@
     "ruleSave": "Save",
     "ruleOn": "On",
     "ruleOff": "Off",
-    "rulesNote": "Blank threshold = code default. Changes apply on the next evaluation."
+    "rulesNote": "Blank threshold = code default. Changes apply on the next evaluation.",
+    "navAudit": "Activity log",
+    "auditTitle": "Activity log",
+    "auditSubtitle": "All operator actions (members, content, rules)",
+    "auditEmpty": "No activity yet",
+    "auditColWhen": "When",
+    "auditColActor": "Actor",
+    "auditColAction": "Action",
+    "auditColEntity": "Entity",
+    "auditColChange": "Change"
   }
 }

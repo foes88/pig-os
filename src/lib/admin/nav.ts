@@ -4,6 +4,7 @@ import {
   Megaphone,
   LifeBuoy,
   SlidersHorizontal,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,4 +25,5 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/announcements", labelKey: "navAnnouncements", icon: Megaphone, status: "ready" },
   { href: "/admin/support", labelKey: "navSupport", icon: LifeBuoy, status: "ready" },
   { href: "/admin/rules", labelKey: "navRules", icon: SlidersHorizontal, status: "ready" },
+  { href: "/admin/audit", labelKey: "navAudit", icon: ScrollText, status: "ready" },
 ];

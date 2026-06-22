@@ -6,6 +6,7 @@ import type {
   AdminPaged,
   AdminRuleRow,
   AnnouncementOut,
+  AuditRow,
   PilotSignupRow,
   SupportTicketDetail,
   SupportTicketOut,
@@ -84,4 +85,8 @@ export const adminApi = {
   rules: () => apiClient.get<AdminRuleRow[]>(`${BASE}/rules`).then((r) => r.data),
   updateRule: (ruleId: string, body: { enabled?: boolean; warning?: number | null; critical?: number | null }) =>
     apiClient.patch<AdminRuleRow>(`${BASE}/rules/${ruleId}`, body).then((r) => r.data),
+
+  // 활동 로그
+  auditLog: (params: { action?: string; entity_type?: string; page?: number; per_page?: number } = {}) =>
+    apiClient.get<AdminPaged<AuditRow>>(`${BASE}/audit-log`, { params }).then((r) => r.data),
 };

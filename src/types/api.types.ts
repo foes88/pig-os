@@ -1062,3 +1062,10 @@ export interface AdminRuleRow {
   rule_id: string; domain: string; description: string; tier: string;
   enabled: boolean; warning: number | null; critical: number | null;
 }
+
+export interface AuditRow {
+  id: string; actor_id: string | null; actor_name: string | null;
+  action: string; entity_type: string; entity_id: string | null;
+  old_value: Record<string, unknown> | null; new_value: Record<string, unknown> | null;
+  created_at: string | null;
+}

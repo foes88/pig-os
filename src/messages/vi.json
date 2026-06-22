@@ -1533,6 +1533,15 @@
     "ruleSave": "Lưu",
     "ruleOn": "Bật",
     "ruleOff": "Tắt",
-    "rulesNote": "Ngưỡng trống = mặc định mã. Thay đổi áp dụng ở lần đánh giá kế tiếp."
+    "rulesNote": "Ngưỡng trống = mặc định mã. Thay đổi áp dụng ở lần đánh giá kế tiếp.",
+    "navAudit": "Nhật ký",
+    "auditTitle": "Nhật ký hoạt động",
+    "auditSubtitle": "Mọi thao tác vận hành (thành viên·nội dung·quy tắc)",
+    "auditEmpty": "Chưa có hoạt động",
+    "auditColWhen": "Thời gian",
+    "auditColActor": "Người thực hiện",
+    "auditColAction": "Hành động",
+    "auditColEntity": "Đối tượng",
+    "auditColChange": "Thay đổi"
   }
 }
