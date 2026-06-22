@@ -9,10 +9,10 @@ import { useAuthStore } from "@/store/auth.store";
 import type { Alert } from "@/types/api.types";
 
 const SEVERITY_STYLE: Record<string, { cls: string }> = {
-  OK:       { cls: "bg-green-50 border-green-200 text-green-700" },
-  INFO:     { cls: "bg-blue-50 border-blue-200 text-blue-700" },
-  WARNING:  { cls: "bg-amber-50 border-amber-200 text-amber-700" },
-  CRITICAL: { cls: "bg-red-50 border-red-200 text-red-700" },
+  OK:       { cls: "bg-green-soft border-success/30 text-success" },
+  INFO:     { cls: "bg-green-soft border-success/30 text-success" },
+  WARNING:  { cls: "bg-amber-soft border-warning/40 text-warning" },
+  CRITICAL: { cls: "bg-red-soft border-danger/40 text-danger" },
 };
 
 export default function KpiPage() {
@@ -165,10 +165,10 @@ function KpiCard({
 
 function HerdCard({ label, value, color, unit }: { label: string; value: number; color: string; unit: string }) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-50 border-blue-100 text-blue-700",
-    green: "bg-green-50 border-green-100 text-green-700",
-    amber: "bg-amber-50 border-amber-100 text-amber-700",
-    slate: "bg-slate-50 border-slate-200 text-slate-700",
+    blue: "bg-green-soft border-success/20 text-success",
+    green: "bg-green-soft border-success/30 text-brand-2",
+    amber: "bg-amber-soft border-warning/30 text-warning",
+    slate: "bg-surface3 border-border text-text2",
   };
   return (
     <div className={`border rounded-xl p-4 ${colors[color] ?? colors.slate}`}>

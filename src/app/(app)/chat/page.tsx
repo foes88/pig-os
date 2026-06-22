@@ -8,17 +8,17 @@ import { useAuthStore } from "@/store/auth.store";
 import type { ChatResponse, FindingOut } from "@/types/api.types";
 
 const SEVERITY_COLOR: Record<string, string> = {
-  OK:       "border-green-200 bg-green-50",
-  INFO:     "border-blue-200 bg-blue-50",
-  WARNING:  "border-amber-200 bg-amber-50",
-  CRITICAL: "border-red-200 bg-red-50",
+  OK:       "border-success/30 bg-green-soft",
+  INFO:     "border-success/30 bg-green-soft",
+  WARNING:  "border-warning/40 bg-amber-soft",
+  CRITICAL: "border-danger/40 bg-red-soft",
 };
 
 const SEVERITY_TEXT: Record<string, string> = {
-  OK:       "text-green-700",
-  INFO:     "text-blue-700",
-  WARNING:  "text-amber-700",
-  CRITICAL: "text-red-700",
+  OK:       "text-success",
+  INFO:     "text-success",
+  WARNING:  "text-warning",
+  CRITICAL: "text-danger",
 };
 
 const SUGGESTED_KEYS = ["q1", "q2", "q3", "q4"] as const;
@@ -87,7 +87,7 @@ export default function ChatPage() {
             <h1 className="text-base font-extrabold tracking-tight">Q&A</h1>
             <p className="text-[11px] text-text3">{t("headerSubtitle")}</p>
           </div>
-          <span className="ml-auto text-[9px] font-bold bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded">
+          <span className="ml-auto text-[9px] font-bold bg-success text-white px-2 py-0.5 rounded">
             BASE
           </span>
         </div>
