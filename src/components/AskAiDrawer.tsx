@@ -78,7 +78,7 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
-              style={{ background: "linear-gradient(135deg,#2563EB,#7C3AED)" }}>
+              style={{ background: "linear-gradient(135deg,#123A2A,#178A5A)" }}>
               <Sparkles size={15} />
             </div>
             <div>

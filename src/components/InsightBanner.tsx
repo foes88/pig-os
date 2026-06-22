@@ -104,12 +104,12 @@ function Badges({ ins, t, small }: { ins: EventInsight; t: ReturnType<typeof use
   return (
     <span className="inline-flex items-center gap-1 flex-wrap mt-0.5">
       {ins.is_global_fallback && (
-        <span className={`${cls} border-blue-200 text-blue-600 bg-blue-50/50`}>
+        <span className={`${cls} border-success/30 text-success bg-green-soft`}>
           <Globe className="w-2.5 h-2.5" />{t("badge.global")}
         </span>
       )}
       {ins.is_proxy && (
-        <span className={`${cls} border-purple-200 text-purple-600 bg-purple-50/50`}>{t("badge.proxy")}</span>
+        <span className={`${cls} border-insufficient-border text-insufficient bg-insufficient-soft`}>{t("badge.proxy")}</span>
       )}
       {ins.confidence && (
         <span className={`${cls} ${CONF_CLS[ins.confidence] ?? "border-border text-text3"}`}>

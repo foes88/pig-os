@@ -174,7 +174,7 @@ export default function Dashboard() {
               <KpiCard
                 t={t}
                 label={t("statAiAlerts")}
-                tier={topAlert ? (topAlert.severity === "CRITICAL" ? "critical" : topAlert.severity === "WARNING" ? "warning" : "good") : "good"}
+                tier={topAlert ? (topAlert.severity === "CRITICAL" ? "critical" : topAlert.severity === "WARNING" ? "warning" : "normal") : "normal"}
                 value={String(alerts.length)}
                 rawTierLabel={t("severeWarn", {
                   crit: alerts.filter((a) => a.severity === "CRITICAL").length,
@@ -199,7 +199,7 @@ export default function Dashboard() {
             {/* 2-col: 알림(dedup) | 군집 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Card title={t("ruleAlerts")} badge={t("alertCount", { n: alerts.length })} badgeColor="purple" className="mb-3" children={<></>} />
+                <Card title={t("ruleAlerts")} badge={t("alertCount", { n: alerts.length })} badgeColor="green" className="mb-3" children={<></>} />
                 {alerts.length === 0 ? (
                   <div className="bg-bg2/40 border border-border rounded-xl p-5 flex items-start gap-3">
                     <CheckCircle2 className="text-success flex-shrink-0 mt-0.5" size={18} />
@@ -259,7 +259,7 @@ function KpiCard({ t, label, tier, value, rawTierLabel }: {
 }) {
   const s = TIER_STYLE[tier];
   const tierLabel = rawTierLabel ?? t(
-    tier === "good" ? "tierGood" : tier === "warning" ? "tierWarning" : tier === "critical" ? "tierCritical" : "tierInsufficient",
+    tier === "normal" ? "tierGood" : tier === "warning" ? "tierWarning" : tier === "critical" ? "tierCritical" : "tierInsufficient",
   );
   return (
     <div className="rounded-2xl border border-border bg-surface px-4 py-3.5">
@@ -284,9 +284,9 @@ function StageIcon({ stage }: { stage: keyof typeof STAGE_ICON }) {
 function AlertCard({ alert }: { alert: Alert }) {
   const t = useTranslations("dashboard");
   const Icon = SEVERITY_ICON[alert.severity] ?? SEVERITY_ICON.INFO;
-  const cls = alert.severity === "CRITICAL" ? "bg-red-50 border-red-200 text-danger"
-    : alert.severity === "WARNING" ? "bg-amber-50 border-amber-200 text-warning"
-    : "bg-blue-50 border-blue-200 text-primary";
+  const cls = alert.severity === "CRITICAL" ? "bg-red-soft border-danger/40 text-danger"
+    : alert.severity === "WARNING" ? "bg-amber-soft border-warning/40 text-warning"
+    : "bg-green-soft border-success/30 text-success";
   return (
     <div className={`border rounded-xl px-4 py-3 mb-2 flex items-start gap-3 ${cls}`}>
       <Icon size={16} className="flex-shrink-0 mt-0.5" />

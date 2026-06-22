@@ -2,76 +2,102 @@
 
 @theme {
   /* ════════════════════════════════════════════════════════════════
-     "Operational Console" 테마 (design_handoff 2026-06). 웜페이퍼 + 잉크 + 그린.
-     기존 토큰 이름은 전부 유지(유틸 클래스 비파괴) — 값만 신규 팔레트로 매핑.
-     색 의미 규칙: ink=구조/주요버튼, brand(green)=저장·활성, red=위험 전용.
+     "Deep Forest Green" 프리미엄 B2B Farm OS (2026-06 컬러 재정리).
+     기존 토큰 이름 전부 유지(유틸 클래스 비파괴) — 값만 Forest 팔레트로 매핑.
+     색 의미: PigOS Green=브랜드/CTA(solid 독점) · normal green=상태(outline only)
+              · AI mint=AI 전용(fill) · severity= normal|warning|critical|insufficient.
      ════════════════════════════════════════════════════════════════ */
-  /* ── Surfaces (warm bone paper) ── */
-  --color-bg:           #F4F1EA;  /* paper */
-  --color-bg2:          #ECE7DB;  /* paper-2 (recessed) */
+  /* ── Primitive ── */
+  --color-forest-900: #0B241A;
+  --color-forest-800: #123A2A;
+  --color-green-700:  #0F6342;
+  --color-green-600:  #147A50;
+  --color-green-500:  #178A5A;
+  --color-green-100:  #E8F6EF;
+  --color-ivory-100:  #F7F5EF;
+  --color-ivory-200:  #F4F1E9;
+  --color-charcoal-900: #17211B;
+  --color-muted-700:  #4B5563;
+  --color-status-green-700: #166534;  /* white 카드 내 normal 텍스트 */
+  --color-brown-700:  #5F4B2C;  --color-brown-100: #ECE4D3;  --color-brown-200: #D8CCB7;
+
+  /* ── Surfaces (ivory) ── */
+  --color-bg:           #F4F1E9;  /* ivory-200 */
+  --color-bg2:          #F7F5EF;  /* ivory-100 */
   --color-surface:      #FFFFFF;
   --color-panel:        #FFFFFF;
-  --color-panel-hi:     #FAF8F2;  /* surface-2 */
-  --color-paper:        #F4F1EA;
-  --color-paper2:       #ECE7DB;
-  --color-surface2:     #FAF8F2;
-  --color-surface3:     #F2EEE5;
+  --color-panel-hi:     #F7F5EF;
+  --color-paper:        #F4F1E9;
+  --color-paper2:       #F7F5EF;
+  --color-surface2:     #F7F5EF;
+  --color-surface3:     #F0EDE3;
 
-  /* ── Text (ink) ── */
-  --color-text:         #1C1A16;  /* ink */
-  --color-text2:        #46423A;  /* ink-2 */
-  --color-muted:        #857F73;  /* ink-3 */
-  --color-faint:        #B4AEA2;  /* ink-4 */
-  --color-text3:        #857F73;
-  --color-text1:        #1C1A16;
-  --color-background:   #F4F1EA;
-  --color-ink:          #1C1A16;
-  --color-ink2:         #46423A;
-  --color-ink3:         #857F73;
-  --color-ink4:         #B4AEA2;
+  /* ── Text (charcoal) ── */
+  --color-text:         #17211B;
+  --color-text2:        #2C3A30;
+  --color-muted:        #4B5563;
+  --color-faint:        #8A8F86;
+  --color-text3:        #4B5563;
+  --color-text1:        #17211B;
+  --color-background:   #F4F1E9;
+  --color-ink:          #17211B;
+  --color-ink2:         #2C3A30;
+  --color-ink3:         #4B5563;
+  --color-ink4:         #8A8F86;
 
-  /* ── Borders (hairline) ── */
-  --color-border:       rgba(28,26,22,0.10);
-  --color-border-strong:rgba(28,26,22,0.16);
+  /* ── Borders ── */
+  --color-border:       #E5E1D8;
+  --color-border-strong:#D8D2C5;
 
-  /* ── Primary = ink (구조/주요버튼) · Brand = green (저장·활성) ── */
-  --color-primary:      #1E7A4D;  /* 코드베이스 primary 액센트 → 그린(저장·활성) */
-  --color-primary-d:    #155F3B;
-  --color-primary-soft: #E5EFE8;
-  --color-brand:        #1E7A4D;
-  --color-brand-2:      #155F3B;
-  --color-brand-3:      #0F4A2E;
-  --color-brand-soft:   #E5EFE8;
-  --color-clay:         #B65A37;  /* 대체 웜 브랜드(옵션) */
+  /* ── Brand / CTA (PigOS Green = solid 독점) ── */
+  --color-primary:      #178A5A;  /* green-500 */
+  --color-primary-d:    #147A50;
+  --color-primary-soft: #E8F6EF;  /* green-100 */
+  --color-brand:        #178A5A;
+  --color-brand-2:      #147A50;
+  --color-brand-3:      #0F6342;
+  --color-brand-soft:   #E8F6EF;
 
-  /* ── Navy alias → ink (기존 bg-navy 사용처가 자동으로 잉크색) ── */
-  --color-navy:         #1C1A16;
+  /* ── Navy alias → forest-800 (구조 버튼) ── */
+  --color-navy:         #123A2A;
 
-  /* ── Dark console sidebar ── */
-  --color-console:      #1A1813;
-  --color-console2:     #241F18;
-  --color-console3:     #2E2920;
-  --color-console-line: rgba(247,242,232,0.10);
-  --color-console-text: #EFEADF;
-  --color-console-mut:  #9B9486;
+  /* ── Forest sidebar (console alias 유지) ── */
+  --color-forest:       #123A2A;
+  --color-console:      #123A2A;  /* forest-800 */
+  --color-console2:     #0F3324;  /* depth */
+  --color-console3:     #0B241A;  /* forest-900 — hover/footer depth */
+  --color-console-line: rgba(232,246,239,0.10);
+  --color-console-text: #F7F5EF;
+  --color-console-mut:  #B8C7BD;
 
-  /* ── Status (red = danger only) ── */
-  --color-danger:       #BE3A2C;
-  --color-red:          #BE3A2C;
-  --color-red-soft:     #F6E2DE;
-  --color-warning:      #B0791C;
-  --color-amber:        #B0791C;
-  --color-amber-soft:   #F6EED9;
-  --color-success:      #1E7A4D;
-  --color-green:        #1E7A4D;
-  --color-green-soft:   #E5EFE8;
+  /* ── AI (mint fill 전용) ── */
+  --color-ai:           #123A2A;
+  --color-ai-border:    #B7E1CB;
+  --color-ai-badge:     #E8F6EF;
+  --color-mint:         #E8F6EF;
+
+  /* ── Severity: normal|warning|critical|insufficient ── */
+  --color-success:      #166534;  /* normal (outline) */
+  --color-green:        #166534;
+  --color-green-soft:   #E8F6EF;
+  --color-danger:       #DC2626;  /* critical */
+  --color-red:          #DC2626;
+  --color-red-soft:     #FEF2F2;
+  --color-warning:      #D97706;
+  --color-amber:        #D97706;
+  --color-amber-soft:   #FFF7ED;
+  --color-insufficient: #5F4B2C;
+  --color-insufficient-soft: #ECE4D3;
+  --color-insufficient-border: #D8CCB7;
+
+  /* ── Help-only blue (AI 영역 사용 금지) ── */
   --color-blue:         #2C5E8A;
   --color-blue-soft:    #E2ECF3;
-  --color-purple:       #6B4FA0;
-  --color-purple-soft:  #ECE6F3;
+  --color-purple:       #166534;  /* purple 잔재 → normal green로 흡수 */
+  --color-purple-soft:  #E8F6EF;
 
-  /* ── Logo accent (red dot) ── */
-  --color-snout:        #BE3A2C;
+  /* ── Logo accent ── */
+  --color-snout:        #DC2626;
 
   /* ── Typography (IBM Plex) ── */
   --font-sans: "IBM Plex Sans KR", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
@@ -82,9 +108,9 @@
   --radius-btn:  9px;
   --radius-chip: 6px;
 
-  /* ── Shadows ── */
-  --shadow-card:  0 1px 2px rgba(28,26,22,.05), 0 8px 24px rgba(28,26,22,.06);
-  --shadow-hover: 0 24px 64px rgba(28,26,22,.20);
+  /* ── Shadows (카드 분리) ── */
+  --shadow-card:  0 1px 2px rgba(23,33,27,.06), 0 1px 3px rgba(23,33,27,.04);
+  --shadow-hover: 0 4px 12px rgba(23,33,27,.08);
 }
 
 /* ── Dark theme ── */
