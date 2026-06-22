@@ -79,6 +79,8 @@ cd <pigos-ios> && claude --dangerously-skip-permissions
 - **🆕 P0 검증 계약(2026-06-19, 모바일 클라 사전검증 + 422 폴백 동일)**: 분만 TB=BA+SB+MUM·출생체중≤3 · 이유두수 항등식(weaned==nursing−폐사−out+in) 422 · 이유체중 2~12 · 교배 동일날짜 409·웅돈 ACTIVE만 · 임신중 도폐사 사유필수 · 양자 거울레코드 자동생성(한쪽만 전송) · 비육 입식 5~50/출하≤200. (백엔드 검증결과 = 권위, 모바일은 즉시 UX피드백만.)
 - **🆕 부분이유(2026-06-19, P1 #1)**: 이유 `is_partial: bool=false`. true=잔여까지 부분이유+모돈 LACTATING 유지(여러 번), false=잔여 전량 강제+OPEN, 잔여 0 추가이유 409. 모바일 이유 화면에 토글 추가. 스펙 `docs/specs/2026-06-19_partial-weaning-spec.md`.
 - **🆕 보고서 엔드포인트(2026-06-19)**: `GET /reports/{sow-status,farrowing,mortality,data-quality}` 응답 스키마 = 계약서 §보고서. 빈 농장/대량 데이터 양쪽에서 200·크래시 0 확인.
+- **🆕 설명가능 AI 신호 표시 규약(2026-06-22, API 변경 없음 — 표시 일관성)**: `GET /alerts/overdue`의 6 `OverdueType`을 모바일도 동일 분류로 렌더. 심각도: `pregnant_overdue_farrowing`·`open_overdue_mating`=critical, `accident_overdue_mating`·`lactating_overdue_weaning`·`gilt_overdue_mating`=warning, `gilt_no_estrus`=info. 신호 상세는 **감지규칙 + 현재값 vs 임계 + 영향 + 권장조치**를 함께 보여줘 "왜 떴는지" 설명(웹 `src/lib/alerts/meta.ts` 단일소스 — 모바일도 동일 임계·규칙·권장조치 미러). 손실 금액 등 미보유 데이터 **위조 금지**(실 룰엔진 근거만). 개체 목록 화면(/sows)에는 overdue 연동 '위험' 배지 표시.
+- **🆕 생산성적 보고서 허브(2026-06-22)**: 웹은 생산/번식/분만/비육/종합일보를 단일 탭 허브로 통합. 모바일도 보고서 진입점을 동일 5분류 탭/세그먼트로 묶어 일관성 유지(신규 API 없음, 기존 reports 엔드포인트 재사용).
 - **플랫폼별 글루(§8b)**: 네트워크 평문예외·푸시·로컬DB·백그라운드는 OS API가 달라 iOS/Android **각각** 검증.
 - **검증 현황(백엔드/웹)**: ruff·tsc·i18n(1084×5)·build 그린 / pytest 379 · live E2E 30 통과 / vitest는 로컬 Node<20.12로 보류(`docs/verification/qa_qc_2026-06-19.md`). 모바일은 동일 계약을 단말에서 재검증.
 - 릴리스 = 8a 공통 통과 + 8b 각각 통과 + 계약서 §6 갭(G1 푸시활성화/G4 실단말 sync/G5 이미지) closed 또는 "다음 버전" 합의.

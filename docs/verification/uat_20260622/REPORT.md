@@ -76,6 +76,23 @@ cd src && npx playwright test --config=playwright.live.config.ts
 - **생산성적 단일화면 통합**: reproduction/farrowing/production-summary 개별 존재, 통합 화면은 폴리시 잔여
 - **vitest 프론트 단위테스트**: Node 20.11<20.12 (styleText 미지원)로 차단 → Node 업그레이드는 사용자 작업
 
+## 추가 사이클 — 07~10 풀 hifi + 생산성적 통합 (2026-06-22 오후)
+
+검증 대상:
+- 차트 원자(Spark/LineChart/MiniBars) — raw hex 0, text-* 토큰 currentColor 상속
+- 07 KPI(/kpi): 스파크라인 KPI카드 + PSY·NPD 추이(벤치선) + 손실/신호요약 + 전월비교 + AI정형요약(템플릿)
+- 08 AI신호목록(/alerts): 심각도탭 + 타입별 신호카드(규칙근거·경과) + 도태권고
+- 09 AI신호상세(/alerts/[type]): 감지규칙 + 현재값vs임계 + 영향 + 관련개체 조치 + 권장조치 + Claude질문 — **설명가능 AI**
+- 10 개체테이블(/sows): Forest 토큰 배지(블루계열 제거) + 필터칩 + overdue 연동 '위험' 컬럼
+- 생산성적 통합: ReportsTabs(생산/번식/분만/비육/종합일보) 5개 리포트 단일 허브
+
+실행 결과:
+- `tsc --noEmit` 0 · `next build` 43/43 그린
+- live E2E: `npx playwright test --config=playwright.live.config.ts` → **31 passed (0 failed)**, read 스윕에 `/alerts/[type]` 포함
+- 정직성: 손실 금액 등 미보유 데이터 위조 0 — 모든 신호는 실 룰엔진(overdue/cull) 근거만 사용
+
+게이트 통과(사용자 시각검수 잔여): Forest Green 색감·hifi 레이아웃 최종 느낌은 사람 확인.
+
 ## 결론
-이번 사이클 변경분(색 시스템·record·종합일보·P0·버그수정) **회귀 0**.
-백엔드 390 + live 30 + 타입/빌드 그린. 깨진 화면·원시 i18n 키 없음.
+이번 사이클 변경분(색 시스템·record·종합일보·P0·버그수정·07~10 hifi·생산성적 통합) **회귀 0**.
+백엔드 390 + live 31 + 타입/빌드 그린. 깨진 화면·원시 i18n 키 없음.
