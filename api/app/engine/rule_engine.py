@@ -139,8 +139,14 @@ class RuleEngine:
             tiers = ["base"]
 
         rules = RuleRegistry.for_intent(intent, tiers)
+        # 운영자가 비활성한 규칙은 건너뜀(ctx.extra["rule_configs"][rule_id].enabled=False).
+        # 설정 행이 없으면 활성(기본). 비파괴적 폴백.
+        rule_configs: dict = ctx.extra.get("rule_configs", {}) if ctx.extra else {}
         all_findings: list[Finding] = []
         for rule in rules:
+            cfg = rule_configs.get(rule.rule_id)
+            if cfg is not None and cfg.get("enabled") is False:
+                continue
             findings = await rule.fn(ctx)
             all_findings.extend(findings)
 

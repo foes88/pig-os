@@ -1522,6 +1522,17 @@
     "supCustomer": "Cliente",
     "supReplyPlaceholder": "Escribe una respuesta…",
     "supSendReply": "Enviar respuesta",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "rulesTitle": "Reglas IA",
+    "rulesSubtitle": "Ajusta umbrales y activa/desactiva reglas — sin desplegar",
+    "ruleColRule": "Regla",
+    "ruleColDomain": "Dominio",
+    "ruleColWarning": "Aviso",
+    "ruleColCritical": "Crítico",
+    "ruleColEnabled": "Activo",
+    "ruleSave": "Guardar",
+    "ruleOn": "On",
+    "ruleOff": "Off",
+    "rulesNote": "Umbral vacío = valor por defecto del código. Los cambios se aplican en la próxima evaluación."
   }
 }

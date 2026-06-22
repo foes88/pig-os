@@ -6,6 +6,7 @@
 """
 from app.routers.admin.admin import router as core_router
 from app.routers.admin.content import router as content_router
+from app.routers.admin.rules import router as rules_router
 from app.routers.admin.users import router as users_router
 
-__all__ = ["core_router", "users_router", "content_router"]
+__all__ = ["core_router", "users_router", "content_router", "rules_router"]

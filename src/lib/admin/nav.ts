@@ -23,5 +23,5 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin/users", labelKey: "navMembers", icon: Users, status: "ready" },
   { href: "/admin/announcements", labelKey: "navAnnouncements", icon: Megaphone, status: "ready" },
   { href: "/admin/support", labelKey: "navSupport", icon: LifeBuoy, status: "ready" },
-  { href: "/admin/rules", labelKey: "navRules", icon: SlidersHorizontal, status: "soon" },
+  { href: "/admin/rules", labelKey: "navRules", icon: SlidersHorizontal, status: "ready" },
 ];

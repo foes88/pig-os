@@ -4,6 +4,7 @@ import type {
   AdminMemberRow,
   AdminOverview,
   AdminPaged,
+  AdminRuleRow,
   AnnouncementOut,
   PilotSignupRow,
   SupportTicketDetail,
@@ -78,4 +79,9 @@ export const adminApi = {
     apiClient.get<SupportTicketDetail>(`${BASE}/support/${id}`).then((r) => r.data),
   replyTicket: (id: string, bodyText: string) =>
     apiClient.post<SupportTicketDetail>(`${BASE}/support/${id}/reply`, { body: bodyText }).then((r) => r.data),
+
+  // AI 규칙
+  rules: () => apiClient.get<AdminRuleRow[]>(`${BASE}/rules`).then((r) => r.data),
+  updateRule: (ruleId: string, body: { enabled?: boolean; warning?: number | null; critical?: number | null }) =>
+    apiClient.patch<AdminRuleRow>(`${BASE}/rules/${ruleId}`, body).then((r) => r.data),
 };

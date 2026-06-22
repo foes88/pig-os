@@ -43,6 +43,7 @@ from app.db.models.content import (  # noqa: F401
     SupportTicket,
 )
 from app.db.models.pilot_signup import PilotSignup  # noqa: F401
+from app.db.models.rule_config import RuleConfig  # noqa: F401
 from app.db.models.platform import (  # noqa: F401
     AddonSubscription,
     AuditLog,

@@ -1522,6 +1522,17 @@
     "supCustomer": "고객",
     "supReplyPlaceholder": "답변을 입력하세요…",
     "supSendReply": "답변 전송",
-    "cancel": "취소"
+    "cancel": "취소",
+    "rulesTitle": "AI 규칙",
+    "rulesSubtitle": "신호 임계값 조정·규칙 on/off — 배포 없이 적용",
+    "ruleColRule": "규칙",
+    "ruleColDomain": "영역",
+    "ruleColWarning": "주의",
+    "ruleColCritical": "긴급",
+    "ruleColEnabled": "활성",
+    "ruleSave": "저장",
+    "ruleOn": "켜짐",
+    "ruleOff": "꺼짐",
+    "rulesNote": "빈 임계값 = 코드 기본값. 변경은 다음 평가부터 적용됩니다."
   }
 }

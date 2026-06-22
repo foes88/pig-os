@@ -1522,6 +1522,17 @@
     "supCustomer": "Customer",
     "supReplyPlaceholder": "Write a reply…",
     "supSendReply": "Send reply",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "rulesTitle": "AI rules",
+    "rulesSubtitle": "Adjust signal thresholds and toggle rules — no deploy needed",
+    "ruleColRule": "Rule",
+    "ruleColDomain": "Domain",
+    "ruleColWarning": "Warning",
+    "ruleColCritical": "Critical",
+    "ruleColEnabled": "Enabled",
+    "ruleSave": "Save",
+    "ruleOn": "On",
+    "ruleOff": "Off",
+    "rulesNote": "Blank threshold = code default. Changes apply on the next evaluation."
   }
 }

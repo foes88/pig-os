@@ -1057,3 +1057,8 @@ export interface SupportTicketOut {
   subject: string; body: string; status: "OPEN" | "ANSWERED" | "CLOSED"; created_at: string | null;
 }
 export interface SupportTicketDetail extends SupportTicketOut { replies: SupportReplyOut[]; }
+
+export interface AdminRuleRow {
+  rule_id: string; domain: string; description: string; tier: string;
+  enabled: boolean; warning: number | null; critical: number | null;
+}

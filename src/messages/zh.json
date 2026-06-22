@@ -1522,6 +1522,17 @@
     "supCustomer": "客户",
     "supReplyPlaceholder": "输入回复…",
     "supSendReply": "发送回复",
-    "cancel": "取消"
+    "cancel": "取消",
+    "rulesTitle": "AI 规则",
+    "rulesSubtitle": "调整信号阈值与启停规则 — 无需部署",
+    "ruleColRule": "规则",
+    "ruleColDomain": "领域",
+    "ruleColWarning": "注意",
+    "ruleColCritical": "紧急",
+    "ruleColEnabled": "启用",
+    "ruleSave": "保存",
+    "ruleOn": "开",
+    "ruleOff": "关",
+    "rulesNote": "空阈值=代码默认值。更改在下次评估时生效。"
   }
 }

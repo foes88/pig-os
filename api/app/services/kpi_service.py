@@ -23,6 +23,7 @@ from app.engine.rules import (
     disease as _disease_rules,  # noqa: F401
 )
 from app.schemas.kpi import Alert, DashboardKpi, KpiBenchmark, KpiTrend, NpdBreakdown, PsyDetail
+from app.services.rule_config_service import load_rule_configs
 
 
 async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict:
@@ -198,6 +199,9 @@ async def build_rule_context(
     # Disease prevalence extra context
     notifiable_diseases = await _recent_notifiable_diseases(db, farm.id)
 
+    # 운영자 규칙 설정(임계/활성) — 행 없으면 빈 dict → 엔진이 코드 기본값으로 폴백
+    rule_configs = await load_rule_configs(db)
+
     return RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
@@ -208,7 +212,7 @@ async def build_rule_context(
         },
         sow_counts=counts,
         as_of=today,
-        extra={"recent_notifiable_diseases": notifiable_diseases},
+        extra={"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs},
     )
 
 

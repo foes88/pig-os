@@ -1522,6 +1522,17 @@
     "supCustomer": "Khách hàng",
     "supReplyPlaceholder": "Nhập trả lời…",
     "supSendReply": "Gửi trả lời",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "rulesTitle": "Quy tắc AI",
+    "rulesSubtitle": "Điều chỉnh ngưỡng tín hiệu và bật/tắt quy tắc — không cần triển khai",
+    "ruleColRule": "Quy tắc",
+    "ruleColDomain": "Lĩnh vực",
+    "ruleColWarning": "Cảnh báo",
+    "ruleColCritical": "Khẩn cấp",
+    "ruleColEnabled": "Bật",
+    "ruleSave": "Lưu",
+    "ruleOn": "Bật",
+    "ruleOff": "Tắt",
+    "rulesNote": "Ngưỡng trống = mặc định mã. Thay đổi áp dụng ở lần đánh giá kế tiếp."
   }
 }

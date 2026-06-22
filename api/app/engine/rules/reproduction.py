@@ -37,13 +37,20 @@ def _thresholds(ctx: RuleContext, kpi: str, default_w: float, default_c: float) 
     )
 
 
+def _cfg_default(ctx: RuleContext, rule_id: str, default_w: float, default_c: float) -> tuple[float, float]:
+    """운영자 규칙 설정(ctx.extra["rule_configs"])의 임계값을 코드 기본값 대신 사용. 없으면 기본값."""
+    cfg = (ctx.extra.get("rule_configs", {}) if ctx.extra else {}).get(rule_id) or {}
+    w, c = cfg.get("warning"), cfg.get("critical")
+    return (w if w is not None else default_w, c if c is not None else default_c)
+
+
 # ── WSI overdue ───────────────────────────────────────────────────────────────
 
 async def _wsi_overdue(ctx: RuleContext) -> list[Finding]:
     wsi = ctx.kpi.get("WSI")
     if wsi is None:
         return []
-    warning, critical = _thresholds(ctx, "WSI", WSI_WARNING, WSI_CRITICAL)
+    warning, critical = _thresholds(ctx, "WSI", *_cfg_default(ctx, "wsi.overdue", WSI_WARNING, WSI_CRITICAL))
     severity = _severity_above(wsi, warning, critical)
     if severity is None:
         return []
@@ -74,7 +81,7 @@ async def _rts_rate_high(ctx: RuleContext) -> list[Finding]:
     rts = ctx.kpi.get("RTS_RATE")
     if rts is None:
         return []
-    warning, critical = _thresholds(ctx, "RTS_RATE", RTS_WARNING, RTS_CRITICAL)
+    warning, critical = _thresholds(ctx, "RTS_RATE", *_cfg_default(ctx, "rts.rate_high", RTS_WARNING, RTS_CRITICAL))
     severity = _severity_above(rts, warning, critical)
     if severity is None:
         return []
@@ -119,7 +126,7 @@ async def _pwmr_high(ctx: RuleContext) -> list[Finding]:
     pwmr = _compute_pwmr(ctx, method)
     if pwmr is None:
         return []
-    warning, critical = _thresholds(ctx, "PWMR", PWMR_WARNING, PWMR_CRITICAL)
+    warning, critical = _thresholds(ctx, "PWMR", *_cfg_default(ctx, "pwmr.high", PWMR_WARNING, PWMR_CRITICAL))
     severity = _severity_above(pwmr, warning, critical)
     if severity is None:
         return []
