@@ -9,6 +9,9 @@ import { sowsApi } from "@/lib/api/endpoints/sows";
 import {
   farrowingSchema, weaningSchema, matingSchema, cullSchema, pigletEventSchema, firstError,
 } from "@/lib/validation/eventSchemas";
+import {
+  Group, SowChip, Segmented, DateField, ValidationBanner, RecordFooter, SaveHint, Lifecycle,
+} from "@/components/record/kit";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { InsightBanner } from "@/components/InsightBanner";
 import { queryKeys } from "@/lib/api/queryKeys";
@@ -491,32 +494,41 @@ function MatingPanel({ farmId, sow, onSaved }: PanelProps) {
 
   return (
     <div className="max-w-lg space-y-4">
-      <Field label={t("matingDate")}>
-        <input type="date" value={form.mating_date}
-          onChange={(e) => setForm((f) => ({ ...f, mating_date: e.target.value }))}
-          className="input" />
-      </Field>
-      <Field label={t("matingMethod")}>
-        <select value={form.mating_type}
-          onChange={(e) => setForm((f) => ({ ...f, mating_type: e.target.value as "AI" | "NATURAL" }))}
-          className="input">
-          <option value="AI">{t("methodAI")}</option>
-          <option value="NATURAL">{t("methodNatural")}</option>
-        </select>
-      </Field>
-      <Field label={t("semenNo")}>
-        <input value={form.semen_batch ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, semen_batch: e.target.value }))}
-          placeholder={t("phSemen")} className="input" />
-      </Field>
-      <Field label={t("note")}>
-        <input value={form.notes ?? ""}
-          onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-          className="input" />
-      </Field>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveFooter disabled={false} loading={mutation.isPending}
-        onSave={() => submit(false)} onSaveNext={() => submit(true)} />
+      <Lifecycle steps={[t("tabMating"), t("lcGest"), t("tabFarrowing"), t("tabWeaning")]} active={0} />
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="brand" />
+
+      <Group label={t("matingInfo")} accent="brand">
+        <DateField label={t("matingDate")} value={form.mating_date}
+          onChange={(v) => setForm((f) => ({ ...f, mating_date: v }))} />
+        <Segmented<"AI" | "NATURAL">
+          label={t("matingMethod")} value={form.mating_type}
+          options={[{ v: "AI", l: t("methodAI") }, { v: "NATURAL", l: t("methodNatural") }]}
+          onChange={(v) => setForm((f) => ({ ...f, mating_type: v }))} />
+        <Field label={t("semenNo")}>
+          <input value={form.semen_batch ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, semen_batch: e.target.value }))}
+            placeholder={t("phSemen")} className="input" />
+        </Field>
+        <Field label={t("note")}>
+          <input value={form.notes ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+            className="input" />
+        </Field>
+      </Group>
+
+      {error && <ValidationBanner tone="red" title={error} />}
+
+      <RecordFooter left={<SaveHint label={t("draftSaved")} />}>
+        <button type="button" disabled={mutation.isPending} onClick={() => submit(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={mutation.isPending} onClick={() => submit(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
     </div>
   );
 }
