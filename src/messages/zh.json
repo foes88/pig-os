@@ -700,6 +700,7 @@
     "fosterDesc": "将仔猪转给代奶母猪时 — 提升PSY准确度",
     "noteDifficulty": "难度: {d}",
     "matingInfo": "配种信息",
+    "litterCounts": "产仔数",
     "lcGest": "妊娠",
     "draftSaved": "已暂存",
     "matingDate": "配种日 *",

@@ -10,7 +10,7 @@ import {
   farrowingSchema, weaningSchema, matingSchema, cullSchema, pigletEventSchema, firstError,
 } from "@/lib/validation/eventSchemas";
 import {
-  Group, SowChip, Segmented, DateField, ValidationBanner, RecordFooter, SaveHint, Lifecycle,
+  Group, SowChip, Segmented, DateField, ValidationBanner, RecordFooter, SaveHint, Lifecycle, AutoCalc,
 } from "@/components/record/kit";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { InsightBanner } from "@/components/InsightBanner";
@@ -375,92 +375,84 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
   }
 
   return (
-    <div className="max-w-lg">
-      {/* Date */}
-      <div className="flex items-center gap-3 mb-4">
-        <label className="text-xs font-semibold text-text3 w-16 shrink-0">{t("farrowDate")}</label>
-        <input
-          type="date" value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="input flex-1"
-        />
-      </div>
+    <div className="max-w-lg space-y-4">
+      <Lifecycle steps={[t("tabMating"), t("lcGest"), t("tabFarrowing"), t("tabWeaning")]} active={2} />
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="brand" />
 
-      {/* Steppers */}
-      <div className="bg-surface border border-border rounded-2xl px-4 divide-y divide-border mb-3">
-        <Stepper label={t("totalBorn")} sub="Total born" value={total} onChange={setTotal} max={35} />
-        <Stepper label={t("stillborn")} sub="Stillborn" value={still} onChange={setStill} colorClass="text-danger" />
-        <Stepper label={t("mummified")} sub="Mummified" value={mummy} onChange={setMummy} colorClass="text-warning" />
-      </div>
+      <Group label={t("farrowDate")}>
+        <DateField value={date} onChange={setDate} />
+      </Group>
 
-      {/* Auto-calc born alive */}
-      <div className={`rounded-2xl px-5 py-4 flex items-center justify-between mb-3 ${
-        hasError
-          ? "bg-red-50 border border-red-200"
-          : "bg-green-50 border border-green-100"
-      }`}>
-        <div>
-          <div className={`text-xs font-bold font-mono tracking-wider ${hasError ? "text-danger" : "text-success"}`}>
-            {t("bornAliveAuto")}
-          </div>
-          <div className="text-[11px] text-text3 mt-0.5">
-            {hasError ? t("errExceed") : t("formula")}
-          </div>
+      {/* 산자수 스텝퍼 (testid 유지) */}
+      <Group label={t("litterCounts")}>
+        <div className="-my-1 divide-y divide-border">
+          <Stepper label={t("totalBorn")} sub="Total born" value={total} onChange={setTotal} max={35} />
+          <Stepper label={t("stillborn")} sub="Stillborn" value={still} onChange={setStill} colorClass="text-danger" />
+          <Stepper label={t("mummified")} sub="Mummified" value={mummy} onChange={setMummy} colorClass="text-warning" />
         </div>
-        <span className={`text-[40px] font-extrabold font-mono tracking-tight ${hasError ? "text-danger" : "text-success"}`}>
-          {alive}
-        </span>
-      </div>
+      </Group>
 
-      {/* Birth weight */}
-      <div className="bg-surface border border-border rounded-2xl px-5 py-3.5 flex items-center justify-between mb-3">
-        <div>
-          <div className="text-sm font-semibold text-text">{t("avgBirthWeight")}</div>
-          <div className="text-[11px] text-text3 mt-0.5">Avg birth weight</div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={() => setWeight((w) => Math.max(0, +(w - 0.1).toFixed(1)))}
-            className="w-10 h-10 rounded-xl border border-border bg-background text-text2 text-lg flex items-center justify-center hover:bg-border transition">−</button>
-          <span className="min-w-[52px] text-center text-xl font-bold font-mono">{weight.toFixed(1)}</span>
-          <button type="button" onClick={() => setWeight((w) => +(w + 0.1).toFixed(1))}
-            className="w-10 h-10 rounded-xl border border-border bg-background text-text2 text-lg flex items-center justify-center hover:bg-border transition">+</button>
-          <div className="flex bg-background rounded-lg overflow-hidden border border-border">
-            {(["kg", "lbs"] as const).map((u) => (
-              <button key={u} type="button" onClick={() => setUnit(u)}
-                className={`px-3 py-1.5 text-xs font-bold font-mono transition ${unit === u ? "bg-navy text-white" : "text-text3"}`}>{u}</button>
-            ))}
+      {/* 실산자 자동계산 히어로 */}
+      <AutoCalc
+        label={t("bornAliveAuto")}
+        sub={hasError ? t("errExceed") : t("formula")}
+        value={alive}
+        error={hasError}
+        tone="brand"
+      />
+
+      {/* 평균 생시체중 */}
+      <Group label={t("avgBirthWeight")}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-text2">kg / lbs</span>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setWeight((w) => Math.max(0, +(w - 0.1).toFixed(1)))}
+              className="w-10 h-10 rounded-[9px] border border-border-strong bg-surface text-text2 text-lg flex items-center justify-center hover:bg-bg2 transition">−</button>
+            <span className="min-w-[52px] text-center text-xl font-bold font-mono">{weight.toFixed(1)}</span>
+            <button type="button" onClick={() => setWeight((w) => +(w + 0.1).toFixed(1))}
+              className="w-10 h-10 rounded-[9px] bg-text text-white text-lg flex items-center justify-center hover:opacity-90 transition">+</button>
+            <div className="flex bg-surface3 rounded-md overflow-hidden border border-border p-0.5">
+              {(["kg", "lbs"] as const).map((u) => (
+                <button key={u} type="button" onClick={() => setUnit(u)}
+                  className={`px-3 py-1.5 text-xs font-bold font-mono rounded transition ${unit === u ? "bg-text text-white" : "text-muted"}`}>{u}</button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </Group>
 
-      {/* Difficulty */}
-      <div className="mb-4">
-        <div className="text-xs font-semibold text-text3 mb-2">{t("difficulty")}</div>
-        <div className="flex gap-2">
-          {([["NORMAL", t("diffNormal")], ["ASSISTED", t("diffAssisted")], ["DIFFICULT", t("diffDifficult")]] as const).map(([k, l]) => (
-            <button key={k} type="button" onClick={() => setDifficulty(k)}
-              className={`flex-1 py-2.5 rounded-xl border text-sm font-semibold transition ${
-                difficulty === k
-                  ? "bg-navy text-white border-navy"
-                  : "bg-surface border-border text-text2 hover:bg-border"
-              }`}>{l}</button>
-          ))}
-        </div>
-      </div>
+      {/* 분만 난이도 */}
+      <Group label={t("difficulty")}>
+        <Segmented<"NORMAL" | "ASSISTED" | "DIFFICULT">
+          value={difficulty}
+          options={[{ v: "NORMAL", l: t("diffNormal") }, { v: "ASSISTED", l: t("diffAssisted") }, { v: "DIFFICULT", l: t("diffDifficult") }]}
+          onChange={setDifficulty} />
+      </Group>
 
-      {/* Cross-foster */}
+      {/* 양자(cross-foster) CTA — forest/green */}
       <button type="button"
-        className="w-full bg-blue-50 border border-dashed border-blue-200 rounded-2xl px-4 py-3 flex items-center gap-3 mb-5 hover:bg-blue-100 transition">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white text-sm font-bold">+</div>
+        className="w-full bg-green-soft border border-dashed border-success/40 rounded-[13px] px-4 py-3 flex items-center gap-3 hover:opacity-90 transition">
+        <div className="w-8 h-8 rounded-lg bg-success flex items-center justify-center text-white text-sm font-bold flex-shrink-0">+</div>
         <div className="flex-1 text-left">
-          <div className="text-sm font-semibold text-primary">{t("fosterTitle")}</div>
-          <div className="text-[11px] text-text3 mt-0.5">{t("fosterDesc")}</div>
+          <div className="text-sm font-semibold text-success">{t("fosterTitle")}</div>
+          <div className="text-[11px] text-muted mt-0.5">{t("fosterDesc")}</div>
         </div>
-        <span className="text-primary text-xs">›</span>
+        <span className="text-success text-xs">›</span>
       </button>
 
-      {error && <p className="text-xs text-danger mb-3">{error}</p>}
-      <SaveFooter disabled={hasError || total === 0} loading={mutation.isPending} onSave={() => submit(false)} onSaveNext={() => submit(true)} />
+      {error && <ValidationBanner tone="red" title={error} />}
+
+      <RecordFooter left={<SaveHint label={t("draftSaved")} />}>
+        <button type="button" disabled={hasError || total === 0 || mutation.isPending} onClick={() => submit(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={hasError || total === 0 || mutation.isPending} onClick={() => submit(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
     </div>
   );
 }
