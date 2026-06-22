@@ -2,18 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { Sparkles, FileDown, Printer, BarChart3 } from "lucide-react";
 import { kpiApi } from "@/lib/api/endpoints/kpi";
-import { SEVERITY_ICON } from "@/lib/icons";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
-import type { Alert } from "@/types/api.types";
-
-const SEVERITY_STYLE: Record<string, { cls: string }> = {
-  OK:       { cls: "bg-green-soft border-success/30 text-success" },
-  INFO:     { cls: "bg-green-soft border-success/30 text-success" },
-  WARNING:  { cls: "bg-amber-soft border-warning/40 text-warning" },
-  CRITICAL: { cls: "bg-red-soft border-danger/40 text-danger" },
-};
+import { Spark, LineChart } from "@/components/ui/charts";
+import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
+import type { KpiDashboard, KpiTrend } from "@/types/api.types";
 
 export default function KpiPage() {
   const t = useTranslations("kpi");
@@ -26,6 +21,12 @@ export default function KpiPage() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  const { data: trend } = useQuery({
+    queryKey: queryKeys.kpi.trend(farmId ?? "", "ALL", 12),
+    queryFn: () => kpiApi.trend(farmId!, "PSY", 12),
+    enabled: !!farmId,
+  });
+
   if (!farmId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -35,9 +36,13 @@ export default function KpiPage() {
   }
 
   return (
-    <div className="p-7">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+    <div className="p-7 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-green-soft flex items-center justify-center">
+            <BarChart3 size={18} className="text-primary" />
+          </div>
           <div>
             <h1 className="text-[22px] font-extrabold tracking-tight">{t("pageTitle")}</h1>
             {data && (
@@ -46,154 +51,256 @@ export default function KpiPage() {
               </p>
             )}
           </div>
-          <button
-            onClick={() => refetch()}
-            className="text-xs text-text3 border border-border rounded-lg px-3 py-1.5 hover:bg-border transition"
-          >
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => refetch()} className="text-xs text-text3 border border-border rounded-lg px-3 py-2 hover:bg-bg2 transition">
             {t("refresh")}
           </button>
+          <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 text-xs text-text2 border border-border rounded-lg px-3 py-2 hover:bg-bg2 transition">
+            <FileDown size={14} /> {t("export")}
+          </button>
+          <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-primary rounded-lg px-3 py-2 hover:opacity-90 transition">
+            <Printer size={14} /> {t("print")}
+          </button>
         </div>
+      </div>
 
-        {isLoading && (
-          <div className="text-center text-text3 py-20">{t("calculating")}</div>
-        )}
+      {isLoading && <div className="text-center text-text3 py-20">{t("calculating")}</div>}
+      {isError && <div className="bg-red-soft border border-danger/30 rounded-xl p-4 text-sm text-danger">{t("loadError")}</div>}
 
-        {isError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
-            {t("loadError")}
+      {data && (
+        <>
+          {/* KPI cards with sparklines */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <KpiCard
+              label="PSY" desc={t("psyDesc")}
+              value={fmt(data.psy, 1)} bench={data.benchmarks?.PSY?.target ?? 28}
+              tier={psyTier(data.psy)} spark={trend?.map((r) => r.psy)} t={t}
+            />
+            <KpiCard
+              label="NPD" desc={t("npdDesc")} unit={t("daysUnit")}
+              value={fmt(data.npd, 1)} bench={data.benchmarks?.NPD?.target ?? 35}
+              tier={npdTier(data.npd)} invert spark={trend?.map((r) => r.npd)} t={t}
+            />
+            <KpiCard
+              label={t("frLabel")} desc={t("frDesc")} unit="%"
+              value={data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(1) : "—"}
+              bench={data.benchmarks?.FARROWING_RATE?.target ?? 90}
+              tier={farrowingRateTier(data.farrowing_rate)}
+              spark={trend?.map((r) => (r.farrowing_rate != null ? r.farrowing_rate * 100 : null))} t={t}
+            />
+            <div className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between">
+              <span className="text-[11px] font-bold tracking-wide uppercase text-text3">{t("herdActiveTotal")}</span>
+              <div className="font-mono text-3xl font-extrabold text-text">{data.active_sows}<span className="text-sm text-text3 font-semibold ml-1">{t("headUnit")}</span></div>
+              <div className="flex gap-2 text-[10px] text-text3 font-mono mt-1">
+                <span>{t("herdPregnant")} {data.gestating}</span>
+                <span>{t("herdLactating")} {data.lactating}</span>
+              </div>
+            </div>
           </div>
-        )}
 
-        {data && (
-          <>
-            {/* Core KPI cards — 목표값은 국가별 벤치마크(API)에서, 없으면 폴백 */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              {(() => {
-                const psyT = data.benchmarks?.PSY?.target ?? 28;
-                const npdT = data.benchmarks?.NPD?.target ?? 35;
-                const frT = data.benchmarks?.FARROWING_RATE?.target ?? 90;
-                return (
-                  <>
-                    <KpiCard
-                      label="PSY"
-                      desc={t("psyDesc")}
-                      value={data.psy != null ? data.psy.toFixed(1) : "-"}
-                      benchmark={`≥ ${psyT}`}
-                      good={data.psy != null && data.psy >= psyT}
-                      avg={data.benchmarks?.PSY?.avg ?? null}
-                      top25={data.benchmarks?.PSY?.top25 ?? null}
-                    />
-                    <KpiCard
-                      label="NPD"
-                      desc={t("npdDesc")}
-                      value={data.npd != null ? data.npd.toFixed(1) + t("daysUnit") : "-"}
-                      benchmark={`≤ ${npdT}${t("daysUnit")}`}
-                      good={data.npd != null && data.npd <= npdT}
-                      invert
-                      avg={data.benchmarks?.NPD?.avg ?? null}
-                      top25={data.benchmarks?.NPD?.top25 ?? null}
-                    />
-                    <KpiCard
-                      label={t("frLabel")}
-                      desc={t("frDesc")}
-                      value={data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(1) + "%" : "-"}
-                      benchmark={`≥ ${frT}%`}
-                      good={data.farrowing_rate != null && data.farrowing_rate * 100 >= frT}
-                      avg={data.benchmarks?.FARROWING_RATE?.avg ?? null}
-                      top25={data.benchmarks?.FARROWING_RATE?.top25 ?? null}
-                    />
-                  </>
-                );
-              })()}
-            </div>
-
-            {/* Herd status */}
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              <HerdCard label={t("herdPregnant")} value={data.gestating} color="blue" unit={t("headUnit")} />
-              <HerdCard label={t("herdLactating")} value={data.lactating} color="green" unit={t("headUnit")} />
-              <HerdCard label={t("herdWeanedOpen")} value={data.weaned} color="amber" unit={t("headUnit")} />
-              <HerdCard label={t("herdActiveTotal")} value={data.active_sows} color="slate" unit={t("headUnit")} />
-            </div>
-
-            {/* Alerts */}
-            {data.alerts.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bold mb-3">{t("ruleAlerts")}</h2>
-                <div className="space-y-2">
-                  {data.alerts.map((alert, i) => (
-                    <AlertRow key={i} alert={alert} />
-                  ))}
+          {/* Trend + Loss */}
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-3.5">
+            <div className="bg-surface border border-border rounded-2xl p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-sm font-bold text-text">{t("trendTitle")}</span>
+                <div className="flex gap-3 text-[11px] text-text3">
+                  <Legend className="text-success" label="PSY" />
+                  <Legend className="text-warning" label="NPD" />
+                  <Legend className="text-text3" label={t("benchmark")} dash />
                 </div>
               </div>
-            )}
+              {trend && trend.length >= 2 ? (
+                <LineChart
+                  h={210}
+                  xLabels={trend.map((r) => r.period.slice(2))}
+                  bench={data.benchmarks?.PSY?.target ?? 28}
+                  series={[
+                    { data: trend.map((r) => r.psy ?? 0), colorClass: "text-success" },
+                    { data: trend.map((r) => (r.npd != null ? r.npd / 1.6 : 0)), colorClass: "text-warning", fill: false },
+                  ]}
+                />
+              ) : (
+                <div className="py-16 text-center text-text3 text-sm">{t("emptyTrend")}</div>
+              )}
+            </div>
+            <LossCard loss={data.estimated_loss} alerts={data.alerts} t={t} />
+          </div>
 
-            {data.alerts.length === 0 && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700">
-                {t("noAlerts")}
-              </div>
-            )}
-          </>
-        )}
+          {/* Compare + AI summary */}
+          <div className="grid lg:grid-cols-[1.5fr_1fr] gap-3.5">
+            <CompareCard trend={trend} t={t} />
+            <AiSummaryCard data={data} trend={trend} t={t} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
+function fmt(v: number | null | undefined, d: number) {
+  return v != null && Number.isFinite(v) ? v.toFixed(d) : "—";
+}
+
 function KpiCard({
-  label, desc, value, benchmark, good, invert = false, avg = null, top25 = null,
+  label, desc, value, unit, bench, tier, invert = false, spark, t,
 }: {
-  label: string; desc: string; value: string;
-  benchmark: string; good: boolean; invert?: boolean;
-  avg?: number | null; top25?: number | null;
+  label: string; desc: string; value: string; unit?: string;
+  bench: number; tier: KpiTier; invert?: boolean; spark?: (number | null)[]; t: (k: string, v?: Record<string, string | number | Date>) => string;
 }) {
-  const t = useTranslations("kpi");
-  const color = value === "-" ? "text-text3" : good ? "text-success" : "text-danger";
+  const style = TIER_STYLE[tier];
+  const num = parseFloat(value);
+  const delta = Number.isFinite(num) ? num - bench : null;
+  // invert(낮을수록 좋음, 예: NPD): delta ≤ 0 이 좋음
+  const deltaGood = delta == null ? false : invert ? delta <= 0 : delta >= 0;
+  const sparkData = (spark ?? []).filter((v): v is number => v != null && Number.isFinite(v));
   return (
-    <div className="bg-surface border border-border rounded-xl p-5">
-      <div className="text-xs text-text3 mb-1">{desc}</div>
-      <div className="text-[11px] font-bold text-text2 mb-2 uppercase tracking-wide">{label}</div>
-      <div className={`font-mono text-3xl font-extrabold ${color}`}>{value}</div>
-      <div className="text-[10px] text-text3 mt-2">{t("target", { v: benchmark })}</div>
-      {(avg != null || top25 != null) && (
-        <div className="flex gap-3 mt-1.5 pt-1.5 border-t border-border text-[10px] text-text3 font-mono">
-          {avg != null && <span>{t("vsAvg", { v: avg })}</span>}
-          {top25 != null && <span>{t("vsTop25", { v: top25 })}</span>}
+    <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold tracking-wide uppercase text-text3">{label}</span>
+        <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+      </div>
+      <div className="text-[10px] text-text3 -mt-1">{desc}</div>
+      <div className="flex items-baseline gap-1">
+        <span className={`font-mono text-3xl font-extrabold leading-none ${style.text}`}>{value}</span>
+        {unit && value !== "—" && <span className="text-xs text-text3 font-semibold">{unit}</span>}
+      </div>
+      <div className="flex items-center gap-1.5 text-[11px] text-text3">
+        {delta != null && (
+          <span className={`font-mono font-bold ${deltaGood ? "text-success" : style.text}`}>
+            {delta > 0 ? "+" : ""}{delta.toFixed(1)}
+          </span>
+        )}
+        <span>{t("vsBench", { v: bench })}</span>
+      </div>
+      {sparkData.length >= 2 && (
+        <div className={style.text}>
+          <Spark data={sparkData} w={210} h={30} />
         </div>
       )}
     </div>
   );
 }
 
-function HerdCard({ label, value, color, unit }: { label: string; value: number; color: string; unit: string }) {
-  const colors: Record<string, string> = {
-    blue: "bg-green-soft border-success/20 text-success",
-    green: "bg-green-soft border-success/30 text-brand-2",
-    amber: "bg-amber-soft border-warning/30 text-warning",
-    slate: "bg-surface3 border-border text-text2",
-  };
+function Legend({ label, className, dash }: { label: string; className: string; dash?: boolean }) {
   return (
-    <div className={`border rounded-xl p-4 ${colors[color] ?? colors.slate}`}>
-      <div className="text-[10px] font-medium mb-1">{label}</div>
-      <div className="font-mono text-2xl font-extrabold">{value}{unit}</div>
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="w-3.5 border-t-2" style={{ borderStyle: dash ? "dashed" : "solid", borderColor: "currentColor" }} />
+      <span className="text-text3">{label}</span>
+    </span>
+  );
+}
+
+function LossCard({
+  loss, alerts, t,
+}: {
+  loss: KpiDashboard["estimated_loss"]; alerts: KpiDashboard["alerts"];
+  t: (k: string, v?: Record<string, string | number | Date>) => string;
+}) {
+  // 손실 추정치가 있으면 표시. 없으면 관리신호(룰엔진)를 심각도별로 집계해 표시 — 가짜 금액 없음.
+  const crit = alerts.filter((a) => a.severity === "CRITICAL").length;
+  const warn = alerts.filter((a) => a.severity === "WARNING").length;
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-4" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="text-sm font-bold text-text">{loss ? t("lossTitle") : t("signalSummaryTitle")}</div>
+      {loss ? (
+        <>
+          <div className="text-xs text-text3 mb-2">{t("lossSub")}</div>
+          <div className="font-mono text-3xl font-extrabold text-danger">
+            {new Intl.NumberFormat().format(Math.round(loss.amount))} {loss.currency}
+          </div>
+          <div className="text-[11px] text-text3 mt-1.5 leading-relaxed">
+            {t("lostPigs", { n: loss.lost_pigs })} · {loss.basis}
+            {loss.demo && <span className="ml-1 px-1.5 py-0.5 rounded bg-insufficient-soft text-insufficient border border-insufficient-border text-[9px] font-bold">DEMO</span>}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="text-xs text-text3 mb-3">{t("signalSummarySub")}</div>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="rounded-xl border border-danger/30 bg-red-soft px-3 py-2.5">
+              <div className="font-mono text-2xl font-extrabold text-danger">{crit}</div>
+              <div className="text-[10px] text-danger font-semibold">{t("sevCritical")}</div>
+            </div>
+            <div className="rounded-xl border border-warning/40 bg-amber-soft px-3 py-2.5">
+              <div className="font-mono text-2xl font-extrabold text-warning">{warn}</div>
+              <div className="text-[10px] text-warning font-semibold">{t("sevWarning")}</div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-function AlertRow({ alert }: { alert: Alert }) {
-  const t = useTranslations("kpi");
-  const style = SEVERITY_STYLE[alert.severity] ?? SEVERITY_STYLE.INFO;
-  const Icon = SEVERITY_ICON[alert.severity] ?? SEVERITY_ICON.INFO;
+function CompareCard({ trend, t }: { trend?: KpiTrend[]; t: (k: string, v?: Record<string, string | number | Date>) => string }) {
+  const rows = trend && trend.length >= 2 ? trend.slice(-2) : null;
+  const prev = rows?.[0];
+  const curr = rows?.[1];
+  const mk = (key: string, label: string, p: number | null | undefined, c: number | null | undefined, d = 1, invert = false) => {
+    const delta = p != null && c != null ? c - p : null;
+    const goodDir = delta == null ? "text-text3" : (invert ? delta <= 0 : delta >= 0) ? "text-success" : "text-danger";
+    return (
+      <tr key={key} className="border-t border-border">
+        <td className="px-4 py-2.5 text-sm font-semibold text-text2">{label}</td>
+        <td className="px-4 py-2.5 text-sm text-right font-mono text-text3">{p != null ? p.toFixed(d) : "—"}</td>
+        <td className="px-4 py-2.5 text-sm text-right font-mono font-bold text-text">{c != null ? c.toFixed(d) : "—"}</td>
+        <td className="px-4 py-2.5 text-right">
+          <span className={`font-mono text-xs font-bold ${goodDir}`}>{delta != null ? (delta > 0 ? "+" : "") + delta.toFixed(d) : "—"}</span>
+        </td>
+      </tr>
+    );
+  };
   return (
-    <div className={`border rounded-xl px-4 py-3 flex items-start gap-3 ${style.cls}`}>
-      <Icon size={16} className="flex-shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold">{alert.kpi} — {alert.message}</div>
-        {alert.current_value != null && (
-          <div className="text-[10px] mt-0.5 opacity-75">
-            {t("currentTarget", { cur: alert.current_value.toFixed(1), tgt: alert.target_value?.toFixed(1) ?? "-" })}
-          </div>
-        )}
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="px-4 py-3 text-sm font-bold text-text border-b border-border">{t("compareTitle")}</div>
+      {rows ? (
+        <table className="w-full">
+          <thead>
+            <tr className="bg-bg2 text-text3 text-[10px] uppercase tracking-wide">
+              <th className="text-left font-bold px-4 py-2">{t("colMetric")}</th>
+              <th className="text-right font-bold px-4 py-2">{prev?.period.slice(2)}</th>
+              <th className="text-right font-bold px-4 py-2">{curr?.period.slice(2)}</th>
+              <th className="text-right font-bold px-4 py-2">Δ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mk("psy", "PSY", prev?.psy, curr?.psy)}
+            {mk("npd", "NPD", prev?.npd, curr?.npd, 1, true)}
+            {mk("fr", t("frLabel"), prev?.farrowing_rate != null ? prev.farrowing_rate * 100 : null, curr?.farrowing_rate != null ? curr.farrowing_rate * 100 : null)}
+          </tbody>
+        </table>
+      ) : (
+        <div className="py-12 text-center text-text3 text-sm">{t("emptyTrend")}</div>
+      )}
+    </div>
+  );
+}
+
+function AiSummaryCard({
+  data, trend, t,
+}: {
+  data: KpiDashboard; trend?: KpiTrend[]; t: (k: string, v?: Record<string, string | number | Date>) => string;
+}) {
+  // 데이터 기반 정형 요약(LLM 아님 — 판단 위조 없음). Addon #1 활성 시 LLM Renderer로 교체.
+  const last2 = trend && trend.length >= 2 ? trend.slice(-2) : null;
+  const psyDelta = last2 && last2[0].psy != null && last2[1].psy != null ? last2[1].psy - last2[0].psy : null;
+  const crit = data.alerts.filter((a) => a.severity === "CRITICAL").length;
+  const summary = t("aiSummaryBody", {
+    psy: fmt(data.psy, 1),
+    psyDelta: psyDelta != null ? (psyDelta > 0 ? "+" : "") + psyDelta.toFixed(1) : "—",
+    fr: data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(0) : "—",
+    signals: data.alerts.length,
+    crit,
+  });
+  return (
+    <div className="rounded-2xl bg-console p-4 flex flex-col gap-3 text-white">
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center"><Sparkles size={15} className="text-white" /></div>
+        <span className="text-sm font-bold">{t("aiSummary")}</span>
+        <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/70">{t("aiTemplateBadge")}</span>
       </div>
-      <span className="text-[9px] font-bold opacity-60 flex-shrink-0">{alert.rule_id}</span>
+      <p className="text-[13px] leading-relaxed text-white/85 italic">{summary}</p>
     </div>
   );
 }
