@@ -56,9 +56,9 @@ export function AIBubble({
   children: ReactNode;
 }) {
   return (
-    <div className="bg-gradient-to-r from-purple-50/50 to-blue-50/50 border border-purple-200/40 rounded-xl rounded-bl-sm p-4 mb-3">
-      <div className="text-[9px] font-bold tracking-wider uppercase text-purple mb-1.5 flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-purple animate-pulse" />
+    <div className="bg-green-soft border border-ai-border rounded-xl rounded-bl-sm p-4 mb-3">
+      <div className="text-[9px] font-bold tracking-wider uppercase text-success mb-1.5 flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
         {label}
       </div>
       <div className="text-[13px] text-text2 leading-relaxed">{children}</div>
@@ -88,7 +88,7 @@ export function AIAction({
     critical: { bg: "bg-red-50", text: "text-danger", Icon: AlertOctagon, label: "Critical" },
     high: { bg: "bg-amber-50", text: "text-warning", Icon: Zap, label: "High" },
     medium: { bg: "bg-emerald-50", text: "text-primary", Icon: Lightbulb, label: "Optimization" },
-    insight: { bg: "bg-purple-50", text: "text-purple", Icon: Sparkles, label: "Prediction" },
+    insight: { bg: "bg-green-soft", text: "text-purple", Icon: Sparkles, label: "Prediction" },
   };
 
   const p = priorityStyles[priority];
@@ -130,8 +130,8 @@ export function Tag({
     green: "bg-green-50 text-success",
     red: "bg-red-50 text-danger",
     yellow: "bg-amber-50 text-warning",
-    blue: "bg-blue-50 text-blue",
-    purple: "bg-purple-50 text-purple",
+    blue: "bg-green-soft text-blue",
+    purple: "bg-green-soft text-purple",
   };
 
   return (

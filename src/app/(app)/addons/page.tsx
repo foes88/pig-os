@@ -28,8 +28,8 @@ interface AddonCard {
 }
 
 const ADDONS: AddonCard[] = [
-  { key: "aiInsight", icon: BrainCircuit,    iconBg: "bg-violet-50",  iconColor: "text-violet-600", tag: "beta",        category: "analytics" },
-  { key: "autoTask",  icon: ListChecks,      iconBg: "bg-blue-50",    iconColor: "text-blue-600",   tag: "coming_soon", category: "ops" },
+  { key: "aiInsight", icon: BrainCircuit,    iconBg: "bg-green-soft",  iconColor: "text-success", tag: "beta",        category: "analytics" },
+  { key: "autoTask",  icon: ListChecks,      iconBg: "bg-green-soft",    iconColor: "text-success",   tag: "coming_soon", category: "ops" },
   { key: "feed",      icon: Package,         iconBg: "bg-amber-50",   iconColor: "text-amber-600",  tag: "coming_soon", category: "ops" },
   { key: "iot",       icon: Thermometer,     iconBg: "bg-rose-50",    iconColor: "text-rose-500",   tag: "coming_soon", category: "iot" },
   { key: "export",    icon: FileSpreadsheet, iconBg: "bg-emerald-50", iconColor: "text-emerald-600",tag: "coming_soon", category: "analytics" },
@@ -48,7 +48,7 @@ const CATEGORIES: { value: Category; labelKey: string }[] = [
 
 const TAG_STYLE: Record<AddonCard["tag"], string> = {
   free:        "bg-green-50 text-green-700 border-green-200",
-  beta:        "bg-blue-50 text-blue-600 border-blue-200",
+  beta:        "bg-green-soft text-success border-success/30",
   coming_soon: "bg-bg2 text-text3 border-border",
 };
 
@@ -81,7 +81,7 @@ export default function AddonsPage() {
         <div className="absolute -right-10 -bottom-16 w-[260px] h-[260px] opacity-[0.07] pointer-events-none select-none">
           <Image src="/logos/pigos-symbol-dark.svg" alt="" fill className="object-contain" />
         </div>
-        <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#FF5A66] via-[#2563EB] to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#FF5A66] via-[#0F6342] to-transparent" />
 
         <div className="relative z-10 px-7 py-7 lg:flex lg:items-center lg:justify-between lg:gap-10">
           <div className="max-w-md">
@@ -172,7 +172,7 @@ export default function AddonsPage() {
                 className={`text-xs font-semibold rounded-lg px-3 py-2 transition ${
                   disabled
                     ? "bg-bg2 text-text3/60 cursor-default"
-                    : "bg-primary text-white hover:bg-blue-700"
+                    : "bg-primary text-white hover:bg-success"
                 }`}
               >
                 {disabled ? t("btnSoon") : addon.tag === "beta" ? t("btnBeta") : t("btnFree")}

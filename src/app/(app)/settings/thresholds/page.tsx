@@ -12,7 +12,7 @@ import type { ThresholdRow } from "@/types/api.types";
 const SCOPE_META: Record<string, { icon: typeof Globe; cls: string }> = {
   farm:    { icon: Building2, cls: "text-primary border-primary/30 bg-primary/5" },
   country: { icon: Flag,      cls: "text-green-600 border-green-200 bg-green-50" },
-  global:  { icon: Globe,     cls: "text-blue-600 border-blue-200 bg-blue-50" },
+  global:  { icon: Globe,     cls: "text-success border-success/30 bg-green-soft" },
 };
 const CONF_CLS: Record<string, string> = {
   high: "text-green-600", medium: "text-amber-600", low: "text-red-500",

@@ -24,12 +24,12 @@ interface QuickInputDrawerProps {
 type L = Record<Locale, string>;
 
 const EVENTS: { id: string; icon: React.ElementType; color: string; soft: string; label: L }[] = [
-  { id: "mating",    icon: Syringe,       color: "#2563EB", soft: "#EFF6FF", label: { en: "Mating",       ko: "교배",    zh: "配种",   es: "Monta",          vi: "Phối giống" } },
+  { id: "mating",    icon: Syringe,       color: "#0F6342", soft: "#E8F6EF", label: { en: "Mating",       ko: "교배",    zh: "配种",   es: "Monta",          vi: "Phối giống" } },
   { id: "farrowing", icon: Baby,          color: "#059669", soft: "#ECFDF5", label: { en: "Farrowing",    ko: "분만",    zh: "分娩",   es: "Parto",          vi: "Đẻ" } },
   { id: "weaning",   icon: Sprout,        color: "#D97706", soft: "#FFFBEB", label: { en: "Weaning",      ko: "이유",    zh: "断奶",   es: "Destete",        vi: "Cai sữa" } },
   { id: "repro",     icon: AlertTriangle, color: "#DC2626", soft: "#FEF2F2", label: { en: "Repro Event",  ko: "임신사고", zh: "繁殖事故", es: "Evento Repro",  vi: "Sự cố sinh sản" } },
   { id: "cull",      icon: ClipboardX,    color: "#64748B", soft: "#F8FAFC", label: { en: "Cull / Death", ko: "도폐사",  zh: "淘汰/死亡", es: "Eliminación",  vi: "Loại/Chết" } },
-  { id: "piglet",    icon: Layers,        color: "#7C3AED", soft: "#F5F3FF", label: { en: "Piglet Group", ko: "자돈 그룹", zh: "仔猪组",  es: "Grupo Lechones", vi: "Nhóm heo con" } },
+  { id: "piglet",    icon: Layers,        color: "#5F4B2C", soft: "#ECE4D3", label: { en: "Piglet Group", ko: "자돈 그룹", zh: "仔猪组",  es: "Grupo Lechones", vi: "Nhóm heo con" } },
   { id: "finisher",  icon: Beef,          color: "#0D1B3E", soft: "#F0F4FF", label: { en: "Finisher",     ko: "비육돈",  zh: "育肥猪",  es: "Finalización",   vi: "Heo thịt" } },
   { id: "foster",    icon: Repeat,        color: "#0891B2", soft: "#ECFEFF", label: { en: "Foster",       ko: "양자",    zh: "寄养",   es: "Adopción",       vi: "Nuôi ghép" } },
 ];

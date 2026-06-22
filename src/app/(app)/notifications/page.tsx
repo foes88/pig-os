@@ -19,7 +19,7 @@ const PAGE_SIZE = 20;
 const SEVERITY_STYLES: Record<Alert["severity"], { bg: string; dot: string; key: string }> = {
   CRITICAL: { bg: "bg-red-50 border-red-200",   dot: "bg-danger",   key: "sevCritical" },
   WARNING:  { bg: "bg-amber-50 border-amber-200", dot: "bg-warning",  key: "sevWarning" },
-  INFO:     { bg: "bg-blue-50 border-blue-200",   dot: "bg-primary",  key: "sevInfo" },
+  INFO:     { bg: "bg-green-soft border-success/30",   dot: "bg-primary",  key: "sevInfo" },
   OK:       { bg: "bg-surface border-border",     dot: "bg-success",  key: "sevOk" },
 };
 
@@ -216,7 +216,7 @@ export default function NotificationsPage() {
                 key={n.id}
                 onClick={() => clickable && handleClick(n)}
                 className={`border rounded-2xl px-4 py-3 flex items-start gap-3 transition ${
-                  n.read_at ? "border-border bg-surface" : "border-primary/30 bg-blue-50/40"
+                  n.read_at ? "border-border bg-surface" : "border-primary/30 bg-green-soft/40"
                 } ${clickable ? "cursor-pointer hover:border-primary" : ""}`}
               >
                 <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.severity ? (SEV_DOT[n.severity] ?? "bg-text3") : "bg-text3"}`} />

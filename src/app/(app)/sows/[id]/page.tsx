@@ -15,7 +15,7 @@ import { useAuthStore } from "@/store/auth.store";
 const STATUS_CLS: Record<string, string> = {
   GILT:      "bg-cyan-50 text-cyan-600",
   OPEN:      "bg-slate-100 text-slate-600",
-  PREGNANT:  "bg-blue-50 text-blue-600",
+  PREGNANT:  "bg-green-soft text-success",
   LACTATING: "bg-green-50 text-green-600",
   ACCIDENT:  "bg-orange-50 text-orange-600",
   CULLED:    "bg-red-50 text-red-500",
@@ -225,7 +225,7 @@ export default function SowDetailPage() {
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         weaning ? "bg-green-50 text-green-600" :
                         farrowing ? "bg-amber-50 text-amber-600" :
-                        "bg-blue-50 text-blue-600"
+                        "bg-green-soft text-success"
                       }`}>
                         {weaning ? t("cycleWeaned") : farrowing ? t("cycleNursing") : t("cyclePregnant")}
                       </span>

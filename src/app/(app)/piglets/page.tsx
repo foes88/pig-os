@@ -83,7 +83,7 @@ export default function PigletsPage() {
                         <span className="font-mono font-bold text-text1">{g.group_code}</span>
                         {g.batch_name && <span className="text-xs text-text3">— {g.batch_name}</span>}
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isActive ? "bg-blue-50 text-blue-600" : "bg-slate-100 text-slate-500"
+                          isActive ? "bg-green-soft text-success" : "bg-slate-100 text-slate-500"
                         }`}>
                           {isActive ? t("statusActive") : (TRANSFER_TYPE_KEY[g.transfer_type ?? ""] ? t(TRANSFER_TYPE_KEY[g.transfer_type ?? ""]) : t("statusDone"))}
                         </span>
@@ -115,7 +115,7 @@ export default function PigletsPage() {
                   {isActive && (
                     <button
                       onClick={() => setTransferId(g.id)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-blue-500/90 transition"
+                      className="bg-success text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-success/90 transition"
                     >
                       {t("transferSale")}
                     </button>
@@ -250,7 +250,7 @@ function TransferModal({ farmId, groupId, onClose, onSuccess }: { farmId: string
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.head_count_out || mutation.isPending}
-            className="flex-1 bg-blue-500 text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
+            className="flex-1 bg-success text-white rounded-lg py-2 text-sm font-semibold disabled:opacity-50">
             {mutation.isPending ? t("processing") : t("transferDone")}
           </button>
         </div>

@@ -28,7 +28,7 @@ export default function ProfilePage() {
       )}
 
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-16 h-16 rounded-full bg-purple-600 text-white flex items-center justify-center text-xl font-bold">
+        <div className="w-16 h-16 rounded-full bg-success text-white flex items-center justify-center text-xl font-bold">
           {initials}
         </div>
         <button className="px-4 py-2 rounded-xl border border-border bg-surface text-xs font-semibold text-text2 hover:bg-border transition">

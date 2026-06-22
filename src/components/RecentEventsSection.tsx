@@ -26,7 +26,7 @@ interface UnifiedEvent {
 }
 
 const KIND_STYLE: Record<Kind, string> = {
-  mating: "bg-blue-50 text-blue-700 border-blue-200",
+  mating: "bg-green-soft text-success border-success/30",
   farrowing: "bg-green-50 text-green-700 border-green-200",
   weaning: "bg-amber-50 text-amber-700 border-amber-200",
 };

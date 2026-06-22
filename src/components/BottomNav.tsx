@@ -37,7 +37,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
               <div
                 className="w-10 h-10 rounded-xl -mt-2 flex items-center justify-center text-white text-lg"
                 style={{
-                  background: "linear-gradient(135deg, #2563EB 0%, #7C3AED 100%)",
+                  background: "linear-gradient(135deg, #0F6342 0%, #5F4B2C 100%)",
                   boxShadow: "0 4px 12px rgba(37,99,235,.4)",
                 }}
               >

@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 
 // 비텍스트 메타(색상/날짜/고정)는 코드, 텍스트(tag/title/body)는 i18n items[]에서
 const META = [
-  { tagColor: "text-primary bg-blue-50 border-blue-100", date: "2026-05-28", pinned: true },
+  { tagColor: "text-primary bg-green-soft border-success/30", date: "2026-05-28", pinned: true },
   { tagColor: "text-warning bg-amber-50 border-amber-100", date: "2026-05-25", pinned: false },
   { tagColor: "text-success bg-green-50 border-green-100", date: "2026-05-10", pinned: false },
 ];

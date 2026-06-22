@@ -35,17 +35,17 @@ type EventType = "farrowing" | "mating" | "weaning" | "repro" | "cull" | "piglet
 // label은 record.tabXxx 키로 해석
 const EVENT_TYPES: { value: EventType; labelKey: string; color: string; bg: string }[] = [
   { value: "farrowing",    labelKey: "tabFarrowing",   color: "#0E9F6E", bg: "#0E9F6E18" },
-  { value: "mating",       labelKey: "tabMating",      color: "#2563EB", bg: "#2563EB18" },
+  { value: "mating",       labelKey: "tabMating",      color: "#0F6342", bg: "#0F634218" },
   { value: "weaning",      labelKey: "tabWeaning",     color: "#D97706", bg: "#D9770618" },
-  { value: "repro",        labelKey: "tabRepro",       color: "#7C3AED", bg: "#7C3AED18" },
+  { value: "repro",        labelKey: "tabRepro",       color: "#5F4B2C", bg: "#5F4B2C18" },
   { value: "cull",         labelKey: "tabCull",        color: "#DC2626", bg: "#DC262618" },
   { value: "piglet_death", labelKey: "tabPigletDeath", color: "#9D174D", bg: "#9D174D18" },
 ];
 
 const STATUS_BADGE: Record<SowStatus, string> = {
   GILT:      "bg-cyan-50 text-cyan-600 border-cyan-100",
-  OPEN:      "bg-blue-50 text-blue-600 border-blue-100",
-  PREGNANT:  "bg-purple-50 text-purple-600 border-purple-100",
+  OPEN:      "bg-green-soft text-success border-success/30",
+  PREGNANT:  "bg-green-soft text-success border-success/30",
   LACTATING: "bg-green-50 text-green-600 border-green-100",
   ACCIDENT:  "bg-orange-50 text-orange-600 border-orange-100",
   CULLED:    "bg-red-50 text-red-500 border-red-100",

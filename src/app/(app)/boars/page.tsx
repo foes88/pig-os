@@ -171,7 +171,7 @@ export default function BoarsPage() {
           </select>
           <button
             onClick={openCreate}
-            className="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3.5 py-1.5 rounded-lg hover:bg-blue-700 transition"
+            className="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3.5 py-1.5 rounded-lg hover:bg-success transition"
           >
             <Plus size={15} />
             {t("addBoar")}
@@ -380,7 +380,7 @@ export default function BoarsPage() {
                 <button
                   onClick={submit}
                   disabled={pending}
-                  className="flex-1 h-10 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+                  className="flex-1 h-10 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-success disabled:opacity-50 transition"
                 >
                   {pending ? t("saving") : modal === "create" ? t("create") : t("save")}
                 </button>

@@ -12,8 +12,8 @@ import type { UserRole } from "@/types/api.types";
 const ROLES: FarmRole[] = ["FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "VET", "VIEWER"];
 
 const ROLE_BADGE: Record<FarmRole, string> = {
-  FARM_OWNER: "bg-purple-50 text-purple-600",
-  FARM_MANAGER: "bg-blue-50 text-blue-600",
+  FARM_OWNER: "bg-green-soft text-success",
+  FARM_MANAGER: "bg-green-soft text-success",
   FARM_WORKER: "bg-slate-100 text-slate-600",
   VET: "bg-green-50 text-green-600",
   VIEWER: "bg-gray-100 text-gray-500",
@@ -75,7 +75,7 @@ export default function UsersPage() {
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3.5 py-2 rounded-lg hover:bg-blue-700 transition"
+            className="inline-flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3.5 py-2 rounded-lg hover:bg-success transition"
           >
             <Plus size={15} />
             {t("addMember")}

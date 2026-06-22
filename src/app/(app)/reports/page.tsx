@@ -10,8 +10,8 @@ import type { KpiTrend } from "@/types/api.types";
 
 // label/unit은 렌더 시 t()로 해석 (모듈 레벨이라 키만 보관)
 const KPI_LIST = [
-  { key: "psy",            label: "PSY",  unitKey: "unitPsy",     good: "high", color: "#2563EB" },
-  { key: "npd",            label: "NPD",  unitKey: "unitDays",    good: "low",  color: "#7C3AED" },
+  { key: "psy",            label: "PSY",  unitKey: "unitPsy",     good: "high", color: "#0F6342" },
+  { key: "npd",            label: "NPD",  unitKey: "unitDays",    good: "low",  color: "#5F4B2C" },
   { key: "farrowing_rate", labelKey: "kpiFarrowingRate", unitKey: "unitPercent", good: "high", color: "#059669" },
 ] as const;
 
