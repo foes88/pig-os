@@ -120,4 +120,8 @@ function _clearAuth() {
   } catch {
     localStorage.removeItem("pigos-auth");
   }
+  // 세션쿠키도 삭제 — 안 지우면 middleware가 /login→/ 로 되튕겨 무한 새로고침 루프 발생.
+  if (typeof document !== "undefined") {
+    document.cookie = "pigos_session=; path=/; max-age=0; SameSite=Lax";
+  }
 }
