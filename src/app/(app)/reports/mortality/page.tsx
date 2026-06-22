@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +14,7 @@ import type { MortalityCount } from "@/types/api.types";
 function isoDaysAgo(n: number): string {
   return new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 }
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localToday();
 const titleCase = (k: string) => k.charAt(0) + k.slice(1).toLowerCase();
 const PRESETS = [
   { label: "3M", days: 90 },

@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ReportsTabs } from "@/components/ReportsTabs";
@@ -11,7 +12,7 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { ComprehensiveDailyReport } from "@/types/api.types";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localToday();
 
 export default function ComprehensiveDailyPage() {
   const t = useTranslations("comprehensiveDaily");

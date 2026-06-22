@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ReportsTabs } from "@/components/ReportsTabs";
@@ -17,7 +18,7 @@ function monthsAgoISO(n: number): string {
   d.setMonth(d.getMonth() - n);
   return d.toISOString().slice(0, 10);
 }
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = localToday();
 
 const PRESETS = [
   { labelKey: "p3m", months: 3 },

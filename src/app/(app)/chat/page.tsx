@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation } from "@tanstack/react-query";
@@ -56,7 +57,7 @@ export default function ChatPage() {
             answer: t("errorAnswer"),
             findings: [],
             farm_id: farmId ?? "",
-            as_of: new Date().toISOString().slice(0, 10),
+            as_of: localToday(),
             renderer: "template",
           },
         },

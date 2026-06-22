@@ -896,7 +896,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  // 로컬 캘린더 날짜(YYYY-MM-DD). toISOString(UTC)는 KST 자정 경계에서 하루 밀림 → 로컬 기준 보정.
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
 function apiError(err: unknown, fallback: string): string {

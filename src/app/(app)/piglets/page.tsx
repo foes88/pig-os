@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -156,7 +157,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
   const t = useTranslations("piglets");
   const [form, setForm] = useState<CreatePigletGroupRequest>({
     group_code: "",
-    weaning_date: new Date().toISOString().slice(0, 10),
+    weaning_date: localToday(),
     head_count_in: 0,
   });
   const [error, setError] = useState<string | null>(null);
@@ -209,7 +210,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
 function TransferModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; groupId: string; onClose: () => void; onSuccess: () => void }) {
   const t = useTranslations("piglets");
   const [form, setForm] = useState<PigletGroupTransferOutRequest>({
-    transfer_date: new Date().toISOString().slice(0, 10),
+    transfer_date: localToday(),
     transfer_type: "FINISHER_TRANSFER",
     head_count_out: 0,
   });

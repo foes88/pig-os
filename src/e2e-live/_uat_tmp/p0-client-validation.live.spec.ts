@@ -5,7 +5,10 @@ import { test, expect, loginSeed, createSowViaUI, recordSelectSow, setPanelDate,
  * (기존 validation.live.spec.ts는 백엔드 422 경로. 여기선 제출 전 Zod 게이트 확인.)
  */
 function inDays(n: number): string {
-  return new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+  // 로컬 캘린더 기준 n일 후(YYYY-MM-DD). UTC toISOString은 KST 경계에서 하루 밀려 '미래'가 '오늘'이 됨.
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
 test.describe("live: P0 client-side validation (UAT gap)", () => {

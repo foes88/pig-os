@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +11,7 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return localToday();
 }
 
 export default function DailyReportPage() {

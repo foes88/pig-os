@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -77,10 +77,10 @@ async def list_sows(
 @router.post("", response_model=SowResponse, status_code=201,
              dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser):  # noqa: E501
-    from datetime import UTC, datetime
-
     # V4 정합성: 입식일 미래 금지 + 활성 귀표 중복 차단(깨끗한 422; DB unique는 500이라 사전 검사)
-    if body.entry_date > datetime.now(UTC).date():
+    # 서버 UTC vs 앞선 타임존(최대 UTC+14) 사용자 → 로컬 '오늘'이 UTC 날짜보다 하루 앞설 수 있음.
+    # +1일 유예로 타임존 스큐 허용(진짜 미래=내일+ 는 여전히 차단). 이상적으론 farm.timezone 기준.
+    if body.entry_date > datetime.now(UTC).date() + timedelta(days=1):
         raise ValidationError("entry_date cannot be in the future")
     dup = await db.scalar(
         select(Sow).where(
@@ -167,7 +167,7 @@ async def cull_sow(
     entry_d = sow.entry_date.date() if hasattr(sow.entry_date, "date") else sow.entry_date
     if entry_d and body.removal_date < entry_d:
         raise ValidationError("removal_date cannot be before the sow's entry_date")
-    if body.removal_date > datetime.now(UTC).date():
+    if body.removal_date > datetime.now(UTC).date() + timedelta(days=1):
         raise ValidationError("removal_date cannot be in the future")
 
     now = datetime.now(UTC)

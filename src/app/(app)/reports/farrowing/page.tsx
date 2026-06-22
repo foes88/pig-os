@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ReportsTabs } from "@/components/ReportsTabs";
@@ -13,7 +14,7 @@ import { useAuthStore } from "@/store/auth.store";
 function isoDaysAgo(n: number): string {
   return new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 }
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localToday();
 
 const PRESETS = [
   { label: "3M", days: 90 },

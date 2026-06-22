@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -208,7 +209,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
   const tv = useTranslations("validation");
   const [form, setForm] = useState<CreateFinisherGroupRequest>({
     group_code: "",
-    start_date: new Date().toISOString().slice(0, 10),
+    start_date: localToday(),
     head_count_in: 0,
   });
   const [error, setError] = useState<string | null>(null);
@@ -272,7 +273,7 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
   const t = useTranslations("finishers");
   const tv = useTranslations("validation");
   const [form, setForm] = useState<FinisherGroupShipRequest>({
-    end_date: new Date().toISOString().slice(0, 10),
+    end_date: localToday(),
     head_count_out: 0,
   });
   const [error, setError] = useState<string | null>(null);

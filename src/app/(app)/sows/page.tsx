@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -509,7 +510,7 @@ function CullSowModal({
   const tStatus = useTranslations("sowStatus");
   const [form, setForm] = useState<SowCullRequest>({
     removal_type: "CULLED",
-    removal_date: new Date().toISOString().slice(0, 10),
+    removal_date: localToday(),
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -651,7 +652,7 @@ function AddSowModal({
   const tv = useTranslations("validation");
   const [form, setForm] = useState<CreateSowRequest>({
     ear_tag: "",
-    entry_date: new Date().toISOString().slice(0, 10),
+    entry_date: localToday(),
     entry_type: "GILT",
     parity: 0,
     breed: "",

@@ -1,5 +1,6 @@
 "use client";
 
+import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -101,7 +102,7 @@ export default function BoarsPage() {
   });
 
   const openCreate = () => {
-    setForm({ ...EMPTY_FORM, entry_date: new Date().toISOString().slice(0, 10) });
+    setForm({ ...EMPTY_FORM, entry_date: localToday() });
     setModal("create");
   };
 
