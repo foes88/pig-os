@@ -73,6 +73,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
       { href: "/kpi",                  icon: BarChart3, label: { en: "KPI Summary",       ko: "KPI 현황",    zh: "指标概览", es: "Resumen KPI",       vi: "Tổng quan KPI" } },
       { href: "/reports/sow-status",   icon: PiggyBank, label: { en: "Sow Status",        ko: "모돈 현황",   zh: "母猪状态", es: "Estado cerdas",     vi: "Trạng thái nái" } },
       { href: "/reports/daily",        icon: FileText,  label: { en: "Daily Report",      ko: "일일 현황",   zh: "每日现状", es: "Informe diario",    vi: "Báo cáo ngày" } },
+      { href: "/reports/comprehensive-daily", icon: FileText, label: { en: "Daily (Full)", ko: "종합일보", zh: "综合日报", es: "Diario integral", vi: "BC tổng hợp ngày" } },
       { href: "/reports/farrowing",    icon: Baby,      label: { en: "Farrow & Wean",     ko: "분만·이유",   zh: "分娩断奶", es: "Parto y destete",   vi: "Đẻ & cai sữa" } },
       { href: "/reports/mortality",    icon: TrendingDown, label: { en: "Mortality",      ko: "도폐사·폐사", zh: "淘汰死亡", es: "Mortalidad",        vi: "Loại thải & chết" } },
       { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản" } },

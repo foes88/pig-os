@@ -123,6 +123,9 @@
   `{ group_code, start_date, end_date, head_in, head_out, avg_entry_weight_kg, avg_exit_weight_kg, adg_g, fcr, mortality_rate }`
 - **모돈 이력**: `GET /reports/sows/{sow_id}/history` → `SowHistoryCycle[]`:
   `{ parity, mating_date, boar_ids[], farrowing_date, tb, ba, sb, mum, weaned, weaning_date, lactation_days, status }`
+- **종합일보 (2026-06-19, PigPlan .mrd 6섹션)**: `GET /reports/comprehensive-daily?date=YYYY-MM-DD` → `ComprehensiveDailyReport`:
+  `{ date, herd:{gilt,open,pregnant,lactating,accident,sows_total,boars,nursing_piglets,finishers}, mating:{day,month}, accidents:{day,month}, production:{day,month}, inout:{day,month} }`.
+  mating={total,gilt,sow,rebreed} · accidents={total,rts,abortion,empty,infertile} · production={farrowings,total_born,born_alive,stillborn,mummified,avg_birth_weight,weanings,weaned,avg_weaning_weight,avg_weaning_age,piglet_deaths} · inout={gilt_in,sow_in,dead,culled,sold,transfer,boar_in}. 일계(당일)+월계(당월). ⑦⑧ 사료·도축 제외(모듈 없음).
 - **모돈 현재 상태표 (2026-06-19, MVP #1)**: `GET /reports/sow-status` → `SowStatusReport`:
   `{ total, by_status:{GILT,OPEN,PREGNANT,LACTATING,ACCIDENT}, sows:[{sow_id,ear_tag,status,parity,entry_date}] }`. 활성 모돈만.
 - **분만·포유·이유 성적표 (2026-06-19, MVP #3)**: `GET /reports/farrowing?start_date&end_date` → `FarrowingPerfRow[]` (산차별):

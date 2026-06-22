@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import type {
+  ComprehensiveDailyReport,
   DailyReport,
   DataQualityIssue,
   FarrowingPerfRow,
@@ -16,6 +17,9 @@ const base = (farmId: string) => `/api/v1/farms/${farmId}/reports`;
 export const reportsApi = {
   daily: (farmId: string, date: string) =>
     apiClient.get<DailyReport>(`${base(farmId)}/daily`, { params: { date } }).then((r) => r.data),
+
+  comprehensiveDaily: (farmId: string, date: string) =>
+    apiClient.get<ComprehensiveDailyReport>(`${base(farmId)}/comprehensive-daily`, { params: { date } }).then((r) => r.data),
 
   reproduction: (
     farmId: string,

@@ -863,6 +863,28 @@ export interface DailyReport {
   removals: number;
 }
 
+export interface ComprehensiveDailyReport {
+  date: string;
+  herd: {
+    gilt: number; open: number; pregnant: number; lactating: number; accident: number;
+    sows_total: number; boars: number; nursing_piglets: number; finishers: number;
+  };
+  mating: { day: CdMating; month: CdMating };
+  accidents: { day: CdAccident; month: CdAccident };
+  production: { day: CdProduction; month: CdProduction };
+  inout: { day: CdInout; month: CdInout };
+}
+export interface CdMating { total: number; gilt: number; sow: number; rebreed: number }
+export interface CdAccident { total: number; rts: number; abortion: number; empty: number; infertile: number }
+export interface CdProduction {
+  farrowings: number; total_born: number; born_alive: number; stillborn: number; mummified: number;
+  avg_birth_weight: number | null; weanings: number; weaned: number;
+  avg_weaning_weight: number | null; avg_weaning_age: number | null; piglet_deaths: number;
+}
+export interface CdInout {
+  gilt_in: number; sow_in: number; dead: number; culled: number; sold: number; transfer: number; boar_in: number;
+}
+
 export interface SowStatusRow {
   sow_id: string;
   ear_tag: string;

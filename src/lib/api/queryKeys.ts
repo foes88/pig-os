@@ -16,6 +16,7 @@ export const queryKeys = {
 
   reports: {
     daily: (farmId: string, date: string) => ["reports", "daily", farmId, date] as const,
+    comprehensiveDaily: (farmId: string, date: string) => ["reports", "comprehensive-daily", farmId, date] as const,
     reproduction: (farmId: string, start: string, end: string, period: string, groupBy = "period") =>
       ["reports", "reproduction", farmId, start, end, period, groupBy] as const,
     productionSummary: (farmId: string, start: string, end: string, period: string, groupBy = "period") =>
