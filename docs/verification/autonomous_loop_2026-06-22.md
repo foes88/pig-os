@@ -9,3 +9,6 @@
 
 - R2 (사용자 복귀·풀 회귀 베이스라인): 사용자 중간 점검. 오늘 저녁 커밋 전체 대상 새 풀 회귀 실행 → pytest 395 · live E2E 33 · tsc 0 · build 44/44 **전부 green, 0 회귀**. Codex 독립검증 프롬프트 작성(docs/CODEX_VERIFY_2026-06-22.md). 사용자 지시: 밤새 다음 스텝 단계별 완료 + 최종 QA/QC. → 루프 계속.
 - R3+ 예정: 관리자 Phase 1(회원목록/가입승인·반려) → Phase 2(공지/문의 백오피스) → 각 단계 기능작동 E2E → 최종 QA/QC 종합.
+
+- R3 (운영자 콘솔 Phase 1): 회원/가입승인 + 베타가입 승인. User.approval_status(Alembic a9b3c1d7e2f4, revision-id 충돌 버그 1건 수정) + AuditLog 정정(changes→old/new_value) + Org.country VARCHAR(2) 코드화. admin/users.py + schemas/admin_user.py + 프론트 /admin/users(회원·베타 탭) + 확장형 메뉴 레지스트리(lib/admin/nav.ts). 검증: pytest 400·tsc 0·build 45/45·라이브(회원22·베타200·게이트). 커밋 c35095f.
+- R4 예정: Phase 2 공지/문의 백오피스(Alembic announcement·support_ticket/reply + admin/content.py + 화면) 또는 기능작동 E2E(어드민 비SUPER_ADMIN 차단 live).
