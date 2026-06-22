@@ -13,7 +13,7 @@ import { Topbar } from "@/components/Topbar";
 import { BottomNav } from "@/components/BottomNav";
 import { QuickInputDrawer } from "@/components/QuickInputDrawer";
 import { AskAiDrawer } from "@/components/AskAiDrawer";
-import { locales, type Locale } from "@/i18n/config";
+import { locales, isPlatformAdmin, type Locale } from "@/i18n/config";
 
 function readLocaleCookie(): Locale {
   if (typeof document === "undefined") return "en";
@@ -28,14 +28,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [askAiOpen, setAskAiOpen] = useState(false);
   const [quickInputOpen, setQuickInputOpen] = useState(false);
   const router = useRouter();
+  const role = useAuthStore((s) => s.user?.role);
 
-  // chrome 언어를 next-intl 쿠키와 동기화 (메뉴=내용 언어 일치)
+  // chrome 언어를 next-intl 쿠키와 동기화. 비관리자가 ko 쿠키를 갖고 있으면 en으로 강제(한국어=관리자 전용).
   useEffect(() => {
-    setLang(readLocaleCookie());
-  }, []);
+    let l = readLocaleCookie();
+    if (l === "ko" && !isPlatformAdmin(role)) {
+      l = "en";
+      document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000; SameSite=Lax`;
+      try { localStorage.setItem("pigos_lang", "en"); } catch { /* ignore */ }
+      router.refresh();
+    }
+    setLang(l);
+  }, [role, router]);
 
   // 언어 변경: 쿠키 set(서버 next-intl) + localStorage + 새로고침(페이지 재렌더) + chrome 즉시 갱신
   const changeLang = (l: Locale) => {
+    // 한국어는 플랫폼 관리자만 — 비관리자 시도는 무시(방어)
+    if (l === "ko" && !isPlatformAdmin(role)) return;
     document.cookie = `NEXT_LOCALE=${l}; path=/; max-age=31536000; SameSite=Lax`;
     try { localStorage.setItem("pigos_lang", l); } catch { /* ignore */ }
     setLang(l);

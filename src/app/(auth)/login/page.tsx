@@ -14,6 +14,9 @@ import { useAuthStore } from "@/store/auth.store";
 const LANGS = ["en", "ko", "zh", "es", "vi"] as const;
 type Lang = (typeof LANGS)[number];
 
+// 한국어는 로그인 전 화면에 노출하지 않음(해외 출시). admin 로그인 후 Topbar에서만 선택 가능.
+const SELECTABLE_LANGS: Lang[] = LANGS.filter((l) => l !== "ko");
+
 const LANG_LABELS: Record<Lang, string> = {
   en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt",
 };
@@ -138,7 +141,7 @@ function LanguageSelector({ lang, onChange }: { lang: Lang; onChange: (l: Lang) 
       {open && (
         <div className="absolute right-0 mt-1.5 w-40 rounded-xl border border-slate-200
           bg-white shadow-lg py-1 z-50">
-          {LANGS.map((l) => (
+          {SELECTABLE_LANGS.map((l) => (
             <button key={l} type="button"
               data-testid={`language-option-${l}`}
               onClick={() => { onChange(l); setOpen(false); }}
@@ -217,15 +220,16 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const [lang, setLang] = useState<Lang>("ko");
+  const [lang, setLang] = useState<Lang>("en");
   const [serverError, setServerError] = useState<string | null>(null);
 
   useEffect(() => {
-    // NEXT_LOCALE 쿠키 우선(앱과 동일 소스), 없으면 localStorage
+    // NEXT_LOCALE 쿠키 우선(앱과 동일 소스), 없으면 localStorage.
+    // 단, 로그인 전엔 한국어 노출 안 함 → ko 저장값은 무시(en 유지).
     const m = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
     const cookieLang = m?.[1] as Lang | undefined;
     const stored = (cookieLang ?? localStorage.getItem("pigos_lang")) as Lang | null;
-    if (stored && LANGS.includes(stored)) setLang(stored);
+    if (stored && SELECTABLE_LANGS.includes(stored)) setLang(stored);
   }, []);
 
   const switchLang = (l: Lang) => {

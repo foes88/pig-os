@@ -1,6 +1,8 @@
 "use client";
 
 import { Bell, Search } from "lucide-react";
+import { useAuthStore } from "@/store/auth.store";
+import { visibleLocales } from "@/i18n/config";
 
 import type { Locale } from "@/i18n/config";
 
@@ -32,6 +34,10 @@ export function Topbar({
   alertCount = 0,
 }: TopbarProps) {
   const t = LABELS[lang] ?? LABELS.en;
+  const role = useAuthStore((s) => s.user?.role);
+  // 한국어는 플랫폼 관리자만. 현재 lang이 목록에 없으면(엣지) 깨지지 않게 포함.
+  const localeOpts = visibleLocales(role);
+  const langOpts = localeOpts.includes(lang) ? localeOpts : [lang, ...localeOpts];
 
   return (
     <header className="h-14 flex-shrink-0 bg-bg border-b border-border flex items-center px-5 gap-3">
@@ -55,7 +61,7 @@ export function Topbar({
           onChange={(e) => onLangToggle?.(e.target.value as Locale)}
           className="bg-surface border border-border text-text text-[11px] font-bold px-2 py-1.5 rounded-md outline-none focus:border-primary cursor-pointer"
         >
-          {(Object.keys(LANG_LABELS) as Locale[]).map((l) => (
+          {langOpts.map((l) => (
             <option key={l} value={l}>{LANG_LABELS[l]}</option>
           ))}
         </select>
