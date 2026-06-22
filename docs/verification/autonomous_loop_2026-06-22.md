@@ -12,3 +12,10 @@
 
 - R3 (운영자 콘솔 Phase 1): 회원/가입승인 + 베타가입 승인. User.approval_status(Alembic a9b3c1d7e2f4, revision-id 충돌 버그 1건 수정) + AuditLog 정정(changes→old/new_value) + Org.country VARCHAR(2) 코드화. admin/users.py + schemas/admin_user.py + 프론트 /admin/users(회원·베타 탭) + 확장형 메뉴 레지스트리(lib/admin/nav.ts). 검증: pytest 400·tsc 0·build 45/45·라이브(회원22·베타200·게이트). 커밋 c35095f.
 - R4 예정: Phase 2 공지/문의 백오피스(Alembic announcement·support_ticket/reply + admin/content.py + 화면) 또는 기능작동 E2E(어드민 비SUPER_ADMIN 차단 live).
+
+## 2026-06-23 (재부팅 복구 후 이어서)
+- R4 (Phase 2 공지/문의): content 모델3+마이그레이션 + admin/content + 고객 announcements/support + 프론트. ★commit 버그 발견(admin 쓰기 flush만→롤백) 8곳 db.commit() 수정. 커밋 8bcb908.
+- R5 (Phase 3 AI규칙 DB화): rule_configs + build_rule_context 주입 + evaluate enabled필터 + reproduction 임계 오버라이드 + /admin/rules. 커밋 5994a8c.
+- R6 (Phase 4 활동로그): /admin/audit-log + 뷰어. 커밋 77af916.
+- ★실버그2(타임존): today()/기본날짜가 UTC toISOString → KST 오전 '어제'. localToday()로 통일 + 서버 미래검증 +1일 유예(UTC vs 앞선 타임존). live 실패 3종(cull/sow-crud/p0-client-validation) 전부 해소. 커밋 5f5ee11.
+- 최종 QA/QC: pytest 409 · tsc 0 · build 49/49 · live E2E 33/33 green. 운영자 콘솔 Phase 0~4 완성(회원·가입승인·공지·문의·AI규칙·활동로그).
