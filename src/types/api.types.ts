@@ -1069,3 +1069,9 @@ export interface AuditRow {
   old_value: Record<string, unknown> | null; new_value: Record<string, unknown> | null;
   created_at: string | null;
 }
+
+export interface AdminOrgRow {
+  id: string; name: string; org_type: string; org_level: number;
+  parent_org_id: string | null; country: string; farm_count: number; user_count: number;
+}
+export interface AdminOrgFarm { id: string; name: string; farm_code: string; country: string; active: boolean; }

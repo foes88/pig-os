@@ -1542,6 +1542,18 @@
     "auditColActor": "작업자",
     "auditColAction": "작업",
     "auditColEntity": "대상",
-    "auditColChange": "변경"
+    "auditColChange": "변경",
+    "navOrgs": "조직",
+    "orgsTitle": "조직 트리",
+    "orgsSubtitle": "업체 → 총판 → 대리점 → 농장 계층",
+    "orgsEmpty": "조직 없음",
+    "orgVendor": "업체",
+    "orgDistributor": "총판",
+    "orgDealer": "대리점",
+    "orgIndependent": "독립",
+    "orgFarmCount": "농장 {n}",
+    "orgUserCount": "사용자 {n}",
+    "orgShowFarms": "농장 {n}개 보기",
+    "orgHideFarms": "농장 숨기기"
   }
 }

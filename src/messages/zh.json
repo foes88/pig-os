@@ -1542,6 +1542,18 @@
     "auditColActor": "操作者",
     "auditColAction": "操作",
     "auditColEntity": "对象",
-    "auditColChange": "变更"
+    "auditColChange": "变更",
+    "navOrgs": "组织",
+    "orgsTitle": "组织树",
+    "orgsSubtitle": "厂商 → 总代 → 经销 → 农场 层级",
+    "orgsEmpty": "暂无组织",
+    "orgVendor": "厂商",
+    "orgDistributor": "总代",
+    "orgDealer": "经销",
+    "orgIndependent": "独立",
+    "orgFarmCount": "{n} 农场",
+    "orgUserCount": "{n} 用户",
+    "orgShowFarms": "显示 {n} 个农场",
+    "orgHideFarms": "隐藏农场"
   }
 }

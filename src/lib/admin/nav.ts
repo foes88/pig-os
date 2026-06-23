@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Users,
+  Network,
   Megaphone,
   LifeBuoy,
   SlidersHorizontal,
@@ -22,6 +23,7 @@ export interface AdminNavItem {
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", labelKey: "navOverview", icon: LayoutDashboard, status: "ready" },
   { href: "/admin/users", labelKey: "navMembers", icon: Users, status: "ready" },
+  { href: "/admin/orgs", labelKey: "navOrgs", icon: Network, status: "ready" },
   { href: "/admin/announcements", labelKey: "navAnnouncements", icon: Megaphone, status: "ready" },
   { href: "/admin/support", labelKey: "navSupport", icon: LifeBuoy, status: "ready" },
   { href: "/admin/rules", labelKey: "navRules", icon: SlidersHorizontal, status: "ready" },

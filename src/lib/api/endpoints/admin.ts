@@ -4,6 +4,8 @@ import type {
   AdminMemberRow,
   AdminOverview,
   AdminPaged,
+  AdminOrgFarm,
+  AdminOrgRow,
   AdminRuleRow,
   AnnouncementOut,
   AuditRow,
@@ -89,4 +91,8 @@ export const adminApi = {
   // 활동 로그
   auditLog: (params: { action?: string; entity_type?: string; page?: number; per_page?: number } = {}) =>
     apiClient.get<AdminPaged<AuditRow>>(`${BASE}/audit-log`, { params }).then((r) => r.data),
+
+  // 조직 트리 (업체→총판→대리점→농장)
+  orgs: () => apiClient.get<AdminOrgRow[]>(`${BASE}/orgs`).then((r) => r.data),
+  orgFarms: (orgId: string) => apiClient.get<AdminOrgFarm[]>(`${BASE}/orgs/${orgId}/farms`).then((r) => r.data),
 };

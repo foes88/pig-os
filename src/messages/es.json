@@ -1542,6 +1542,18 @@
     "auditColActor": "Actor",
     "auditColAction": "Acción",
     "auditColEntity": "Entidad",
-    "auditColChange": "Cambio"
+    "auditColChange": "Cambio",
+    "navOrgs": "Organizaciones",
+    "orgsTitle": "Árbol de organización",
+    "orgsSubtitle": "Proveedor → distribuidor → concesionario → granja",
+    "orgsEmpty": "Sin organizaciones",
+    "orgVendor": "Proveedor",
+    "orgDistributor": "Distribuidor",
+    "orgDealer": "Concesionario",
+    "orgIndependent": "Independiente",
+    "orgFarmCount": "{n} granjas",
+    "orgUserCount": "{n} usuarios",
+    "orgShowFarms": "Ver {n} granjas",
+    "orgHideFarms": "Ocultar granjas"
   }
 }

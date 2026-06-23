@@ -1542,6 +1542,18 @@
     "auditColActor": "Actor",
     "auditColAction": "Action",
     "auditColEntity": "Entity",
-    "auditColChange": "Change"
+    "auditColChange": "Change",
+    "navOrgs": "Organizations",
+    "orgsTitle": "Organization tree",
+    "orgsSubtitle": "Vendor → distributor → dealer → farm hierarchy",
+    "orgsEmpty": "No organizations",
+    "orgVendor": "Vendor",
+    "orgDistributor": "Distributor",
+    "orgDealer": "Dealer",
+    "orgIndependent": "Independent",
+    "orgFarmCount": "{n} farms",
+    "orgUserCount": "{n} users",
+    "orgShowFarms": "Show {n} farms",
+    "orgHideFarms": "Hide farms"
   }
 }

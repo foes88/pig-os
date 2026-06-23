@@ -1542,6 +1542,18 @@
     "auditColActor": "Người thực hiện",
     "auditColAction": "Hành động",
     "auditColEntity": "Đối tượng",
-    "auditColChange": "Thay đổi"
+    "auditColChange": "Thay đổi",
+    "navOrgs": "Tổ chức",
+    "orgsTitle": "Cây tổ chức",
+    "orgsSubtitle": "Nhà cung cấp → tổng đại lý → đại lý → trại",
+    "orgsEmpty": "Chưa có tổ chức",
+    "orgVendor": "Nhà cung cấp",
+    "orgDistributor": "Tổng đại lý",
+    "orgDealer": "Đại lý",
+    "orgIndependent": "Độc lập",
+    "orgFarmCount": "{n} trại",
+    "orgUserCount": "{n} người dùng",
+    "orgShowFarms": "Xem {n} trại",
+    "orgHideFarms": "Ẩn trại"
   }
 }
