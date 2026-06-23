@@ -164,18 +164,41 @@ async def _recent_notifiable_diseases(db: AsyncSession, farm_id: UUID) -> list[d
     ]
 
 
-async def _bench_with_default(
-    db: AsyncSession, code: str, farm: Farm, dw: float, dc: float, direction: str
-) -> dict:
-    """DB 벤치마크 + 코드 기본 임계 폴백(국가 행 없으면 글로벌 기본값으로 규칙 작동)."""
-    b = await _get_benchmark(db, code, farm)
-    if b.get("warning") is None:
-        b["warning"] = dw
-    if b.get("critical") is None:
-        b["critical"] = dc
-    if not b.get("direction"):
-        b["direction"] = direction
-    return b
+async def _all_benchmarks(db: AsyncSession, farm: Farm) -> dict[str, dict]:
+    """
+    effective_metric_values()의 모든 metric_code를 한 번에 dict로 로드 → ctx.benchmarks.
+    국가(region) 행이 있으면 그 값, 없으면 system 기본. 규칙은 resolve()로 코드기본까지 폴백.
+    """
+    rows = await db.execute(
+        text(
+            "SELECT * FROM effective_metric_values"
+            "(:farm_code, :region_code, :market_code)"
+        ),
+        {"farm_code": str(farm.id), "region_code": farm.country, "market_code": "SYSTEM"},
+    )
+    out: dict[str, dict] = {}
+    for row in rows:
+        out[row.metric_code] = {
+            "avg":       float(row.benchmark_avg)      if row.benchmark_avg      else None,
+            "top25":     float(row.benchmark_top25)    if row.benchmark_top25    else None,
+            "target":    float(row.target_value)       if row.target_value       else None,
+            "warning":   float(row.warning_threshold)  if row.warning_threshold  else None,
+            "critical":  float(row.critical_threshold) if row.critical_threshold else None,
+            "direction": str(row.alert_direction)      if row.alert_direction     else "below",
+            "unit":      row.unit_code or "",
+        }
+    # PWMR 규칙은 키 "PWMR"를 읽지만 시드는 PRE_WEANING_MORTALITY → 별칭으로 국가값 연결
+    if "PRE_WEANING_MORTALITY" in out and "PWMR" not in out:
+        out["PWMR"] = out["PRE_WEANING_MORTALITY"]
+    # FARROWING_RATE 국가행 없으면 코드 기본 임계로 farrowing.low_rate 작동 보장
+    fr = out.setdefault("FARROWING_RATE", {"direction": "below"})
+    if fr.get("warning") is None:
+        fr["warning"] = 85.0
+    if fr.get("critical") is None:
+        fr["critical"] = 80.0
+    if not fr.get("direction"):
+        fr["direction"] = "below"
+    return out
 
 
 async def build_herd_kpis(
@@ -243,23 +266,26 @@ async def build_herd_kpis(
     def _rate(num: float, den: float) -> float | None:
         return round(num / den * 100, 1) if den else None
 
+    pwmr = _rate(deaths, wsum + deaths)
     return {
-        "FARROWING_RATE":    _rate(float(far.c), float(matings)),
-        "RTS_RATE":          _rate(float(rts), float(matings)),
-        "ABORTION_RATE":     _rate(float(abo), float(matings)),
-        "STILLBORN_RATE":    _rate(float(far.sb) if far.sb else 0.0, tb),
-        "MUMMIFIED_RATE":    _rate(float(far.mum) if far.mum else 0.0, tb),
-        "PWMR":              _rate(deaths, wsum + deaths),
-        "WSI":               round(float(wsi_avg), 1) if wsi_avg is not None else None,
-        "AVG_TOTAL_BORN":    round(_f(far.atb), 1) if far.atb is not None else None,
-        "AVG_BORN_ALIVE":    round(_f(far.aba), 1) if far.aba is not None else None,
-        "AVG_WEANED":        round(_f(wea.aw), 1) if wea.aw is not None else None,
-        "AVG_BIRTH_WEIGHT":  round(_f(far.abw), 2) if far.abw is not None else None,
-        "AVG_WEANING_WEIGHT": round(_f(wea.aww), 2) if wea.aww is not None else None,
-        "AVG_WEANING_AGE":   round(_f(wea.aage), 1) if wea.aage is not None else None,
-        "ADG":               round(gain / pigdays * 1000, 1) if pigdays else None,
-        "FCR":               round(float(feed) / gain, 3) if gain else None,
-        "FINISH_MORTALITY":  _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
+        # 캐논 metric_code(default_metric_values 시드와 정합 → 국가별 benchmark 자동 적용)
+        "FARROWING_RATE":      _rate(float(far.c), float(matings)),
+        "RTS_RATE":            _rate(float(rts), float(matings)),
+        "ABORTION_RATE":       _rate(float(abo), float(matings)),
+        "STILLBORN_RATE":      _rate(float(far.sb) if far.sb else 0.0, tb),
+        "MUMMIFIED_RATE":      _rate(float(far.mum) if far.mum else 0.0, tb),
+        "PRE_WEANING_MORTALITY": pwmr,
+        "PWMR":                pwmr,   # 기존 pwmr.high 규칙 호환(별칭)
+        "WSI":                 round(float(wsi_avg), 1) if wsi_avg is not None else None,
+        "TOTAL_BORN":          round(_f(far.atb), 1) if far.atb is not None else None,
+        "BORN_ALIVE":          round(_f(far.aba), 1) if far.aba is not None else None,
+        "WEANED_COUNT":        round(_f(wea.aw), 1) if wea.aw is not None else None,
+        "BIRTH_WEIGHT":        round(_f(far.abw), 2) if far.abw is not None else None,
+        "WEANING_WEIGHT":      round(_f(wea.aww), 2) if wea.aww is not None else None,
+        "WEANING_AGE":         round(_f(wea.aage), 1) if wea.aage is not None else None,
+        "ADG":                 round(gain / pigdays * 1000, 1) if pigdays else None,
+        "FCR":                 round(float(feed) / gain, 3) if gain else None,
+        "FINISH_MORTALITY":    _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
     }
 
 
@@ -278,10 +304,8 @@ async def build_rule_context(
     # Sow counts
     counts = await _sow_counts(db, farm.id)
 
-    # Resolve benchmarks
-    psy_bench = await _get_benchmark(db, "PSY", farm)
-    npd_bench = await _get_benchmark(db, "NPD", farm)
-    fr_bench = await _bench_with_default(db, "FARROWING_RATE", farm, 85.0, 80.0, "below")
+    # Resolve benchmarks — 전체 metric_code를 국가행 우선으로 한 번에 로드
+    benchmarks = await _all_benchmarks(db, farm)
 
     # KPI values — herd 집계(번식·자돈·비육) + PSY/NPD. explicit가 herd 위에 우선.
     herd = await build_herd_kpis(db, farm)
@@ -308,11 +332,7 @@ async def build_rule_context(
         farm_id=farm.id,
         country=farm.country or "default",
         kpi=kpi,
-        benchmarks={
-            "PSY": psy_bench,
-            "NPD": npd_bench,
-            "FARROWING_RATE": fr_bench,
-        },
+        benchmarks=benchmarks,
         sow_counts=counts,
         as_of=today,
         extra={"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs},
@@ -478,13 +498,13 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     # Rule Engine — base tier only (no addon subscriptions needed)
     # herd 집계(번식·자돈·비육) 주입 → 대시보드 알림도 확장 규칙 노출. explicit FR 우선.
     herd = await build_herd_kpis(db, farm)
-    fr_bench = await _bench_with_default(db, "FARROWING_RATE", farm, 85.0, 80.0, "below")
+    benchmarks = await _all_benchmarks(db, farm)
     rule_configs = await load_rule_configs(db)
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
         kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
-        benchmarks={"PSY": psy_bench, "NPD": npd_bench, "FARROWING_RATE": fr_bench},
+        benchmarks=benchmarks,
         sow_counts=counts,
         extra={"rule_configs": rule_configs},
     )

@@ -77,22 +77,22 @@ class TestLitterRules:
         assert f and f[0].severity == Severity.CRITICAL
 
     def test_born_alive_low_below(self):
-        f = run(_born_alive_low(ctx({"AVG_BORN_ALIVE": 9.5})))
+        f = run(_born_alive_low(ctx({"BORN_ALIVE": 9.5})))
         assert f and f[0].severity == Severity.CRITICAL
 
     def test_born_alive_ok(self):
-        assert run(_born_alive_low(ctx({"AVG_BORN_ALIVE": 12.0}))) == []
+        assert run(_born_alive_low(ctx({"BORN_ALIVE": 12.0}))) == []
 
     def test_weaned_low_warning(self):
-        f = run(_weaned_low(ctx({"AVG_WEANED": 9.5})))
+        f = run(_weaned_low(ctx({"WEANED_COUNT": 9.5})))
         assert f and f[0].severity == Severity.WARNING
 
     def test_lactation_short(self):
-        f = run(_lactation_short(ctx({"AVG_WEANING_AGE": 17.0})))
+        f = run(_lactation_short(ctx({"WEANING_AGE": 17.0})))
         assert f and f[0].severity == Severity.WARNING
 
     def test_lactation_long(self):
-        f = run(_lactation_long(ctx({"AVG_WEANING_AGE": 30.0})))
+        f = run(_lactation_long(ctx({"WEANING_AGE": 30.0})))
         assert f and f[0].severity == Severity.WARNING
 
     def test_missing_kpi_no_finding(self):
