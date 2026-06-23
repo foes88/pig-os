@@ -1,0 +1,4962 @@
+# PigPlan AI Rule Engine — 전체 룰셋 레퍼런스 (KR 원본)
+
+> 출처: 운영 DB `TS_INS_AI_RULES` (Single Source of Truth) · 추출 ruleengine3.json
+> 총 136개 룰 / 17개 그룹 · inspig-ai `rules-loader.ts`가 USE_YN=Y만 15분 캐시로 로딩
+
+PigOS 핸드오프용 — 이 룰 본문이 곧 KR 기준 지식. 구현은 PigOS 네이티브로, 임계값은 default_metric_values seed로 흡수.
+
+## 목차
+
+- [DOMAIN — 도메인 규칙 (절대 준수) (25)](#domain)
+- [INTERPRET — KPI 해석 기준 (29)](#interpret)
+- [DIAGNOSIS — 진단 추론 경로 (12)](#diagnosis)
+- [GRADING — KPI 등급 기준 (2)](#grading)
+- [BENCHMARK — 산출농장 선정·벤치마크 (14)](#benchmark)
+- [LOSS_CALC — 손실 계산식 (7)](#loss_calc)
+- [FORECAST — 예측 모델 설정 (5)](#forecast)
+- [OUTPUT_STYLE — 출력 스타일 규칙 (10)](#output_style)
+- [ANALYSIS — 분석 기준 규칙 (7)](#analysis)
+- [MONTHLY — 월간 전용 규칙 (11)](#monthly)
+- [BATCH_CYCLE — 배치 주기 (1)](#batch_cycle)
+- [CRAWLING — 질병 크롤링 (3)](#crawling)
+- [NURSING_PIGLET — 포유자돈 (5)](#nursing_piglet)
+- [PARITY — 산차 (2)](#parity)
+- [PREG_ACCIDENT — 임신사고 (1)](#preg_accident)
+- [PREG_LOSS — 임신손실 (1)](#preg_loss)
+- [SOW_OUT — 모돈 도폐 (1)](#sow_out)
+
+---
+
+## DOMAIN
+**도메인 규칙 (절대 준수)** · 25개 룰
+
+### 일괄작업(올인올아웃) 원칙  
+`DOMAIN/BATCH_MGMT` · type=`MD` · ✅ · seq=1 · upd 2026-04-13
+
+> v3: AIAO 3조건 판정기준 + 전국현황 + 1W/2~4W 유형 구분
+
+```
+교배/분만/이유는 일괄작업(Batch Management, AIAO)이 선진 양돈의 핵심 원칙.
+특정 요일에 집중 처리되는 것이 올바른 주간관리 체계.
+
+## AIAO 판정 기준 (v3, 피그플랜 591농장 데이터 기반)
+- ① 최근 6개월 교배에서 **특정 1개 요일 집중률 50% 이상** → AIAO
+- ② 또는 **연속 2일(예: 월+화) 집중률 70% 이상** → AIAO (발정 시차 12~48시간 반영)
+- ③ 또는 최근 16주 교배·분만·이유 패턴에서 **2~4주 주기 감지** (fitness ≥ 0.70) → AIAO
+- 위 3조건 중 하나라도 충족하면 AIAO 농장으로 판정
+
+## 배치 유형
+- 1W(주간 배치): 매주 특정 요일에 집중 교배 — 국내 AIAO의 80% 이상
+- 2W: 격주 집중 — 소규모 농장
+- 3W: 3주 주기 — 유럽 표준 (21일 발정주기와 일치)
+- 4W: 4주 주기 — 프랑스, 한국 선진농장
+
+## 전국 현황 (피그플랜 2026 기준)
+- 전국 AIAO 비율: 약 66% (상시모돈 ≥ 20두 기준)
+- PSY 상위 10% 농장의 AIAO 비율: 약 84%
+- 비AIAO(연속류): 약 34% — 요일 무관 매일 교배
+
+## 국제 현황
+- 덴마크: 95%+ AIAO (대규모 1주 배치)
+- 미국: 80%+ AIAO (대규모 1주, 중규모 3주)
+- 유럽: 3주(21일) 배치가 표준
+- 다주기 전환: PRRS/PED 이후 질병 차단 목적으로 전환 증가
+
+## 평가 원칙
+YES 일괄작업 주기 유지 긍정 평가
+YES 이유-교배 간격 단축 긍정 평가
+YES 올인올아웃 준수, 특정요일 집중 교배 긍정 평가
+NO "작업 분산 권장" 절대 금지 — 분산은 AIAO 위반
+NO AIAO 아닌 농장에 "쉬는주", "쉬는 주차" 표현 절대 금지
+```
+
+### 모돈 산차구성 목표 분포 (herd 5-band)  
+`DOMAIN/PARITY_DISTRIBUTION` · type=`JSON` · ✅ · seq=447
+
+```json
+{
+  "description": "모돈 산차구성(herd parity structure) 5구간 분포 표준 + 경영 권장경계. 농장 실측 산차구성을 본 표준과 비교(전국평균/상위10% 비교값은 데이터에서 별도).",
+  "distribution_5band": {
+    "P0":      { "label": "후보(0산)",       "typical_pct": 22 },
+    "P1":      { "label": "초산(1산)",       "typical_pct": 26 },
+    "P2":      { "label": "2산",             "typical_pct": 22 },
+    "P3_5":    { "label": "경제산차(3~5산)", "typical_pct": 25, "recommended_min_pct": 35 },
+    "P6_plus": { "label": "노령(6산+)",      "typical_pct": 5,  "recommended_max_pct": 10 }
+  },
+  "interpretation": {
+    "economic_parity_note": "P3-5(경제산차) 비중이 높을수록 번식효율 우수 — JP 기술표준은 25%이나 경영 권장은 35% 이상",
+    "aging_warning": "P6+ 노령 비중 10% 초과 시 노령화(사산율·폐사 상승 위험)",
+    "new_farm_note": "0~2산 80% 초과는 신규농장/유입후보 안정화 단계(6~9개월 후 상승) — 경고 아님"
+  },
+  "standard_source": "JP PigINFO · Iida & Koketsu 2024 5-band 표준",
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly sec-sow-inventory-parity-mix(산차 5-band 스택바)",
+      "monthly-ai-service 산차구조 진단(신설 예정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 herd 산차구성 전용 — 주간 미사용. 기존 PREG_LOSS/PARITY_DIST(임신사고)와 별개 코드",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4 L152-155",
+      "JP PigINFO national herd database",
+      "Iida & Koketsu 2024 parity distribution standard"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 모돈 생애 이유두수(PWSL) 벤치마크  
+`DOMAIN/PWSL_BENCHMARK` · type=`JSON` · ✅ · seq=448
+
+```json
+{
+  "description": "모돈 생애 이유두수(PWSL) 국내외 벤치마크. PWSL은 모돈 생애 생산성 종합지수(PSY·도태산차·분만간격 반영).",
+  "formula": "PWSL = PSY × 평균 도태산차 / 분만간격 환산",
+  "unit": "두 (생애당)",
+  "benchmarks": {
+    "KR_avg":   { "label": "한국 평균",        "value": 38 },
+    "intl_top": { "label": "덴마크·네덜란드",  "range_min": 60, "range_max": 65, "note": "선진국 5.5~6산 + 높은 PSY" }
+  },
+  "interpretation": {
+    "kr_gap": "한국 38 vs DK·NL 60~65 = 도태산차(KR 3.2 vs DK 6)·PSY 차이가 주원인",
+    "improvement": "PWSL↑ 경로 = PSY 개선 + 도태산차 연장(후보입식·폐사 관리)"
+  },
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly popup-kpi-pwsl(생애 이유두수 벤치마크)",
+      "monthly-ai-service 모돈 생애생산성 진단(신설 예정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 모돈군 생산성 전용 — 주간 미사용",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4 L150",
+      "한국 평균 38·DK·NL 60~65 (카탈로그 §4 실재)"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 출하일령 표준·평가 정책 (도체중 동반)  
+`DOMAIN/SHIP_AGE_STANDARD` · type=`JSON` · ✅ · seq=449
+
+```json
+{
+  "description": "출하일령 표준(참조선) + 평가 정책. 출하일령 단독 우열/지연 판정 금지 — 반드시 도체중 동반 판정.",
+  "standard_days": {
+    "birth_to_finish": 180,
+    "wean_to_finish": 158,
+    "basis": "분만→출하 180일(출하체중 약 110kg) / 이유→출하 158일(=180−포유22)",
+    "source": "대한한돈협회 종합DB · NIAS (2026-06-12 검증)",
+    "note": "구 프로토타입 210일은 오류 — 180 정정. 표준은 비교 참조선이며 농가 목표/달성기준 아님"
+  },
+  "carcass_weight_required": true,
+  "judgment_matrix": {
+    "fast_adequate": { "ship_age": "표준 이하(빠름)", "carcass": "적정 85~95kg", "verdict": "효율 우수(회전율·사료효율↑)", "forbid": "지연 라벨 금지" },
+    "slow_over":     { "ship_age": "표준 초과(예 215일)", "carcass": "과다 94kg+", "verdict": "과출하·over-finishing", "action": "단축 검토(도체중 과다 근거 명시)" },
+    "fast_under":    { "ship_age": "표준 이하(빠름)", "carcass": "미달 <85kg", "verdict": "조기·저체중 출하 우려", "action": "비육 환경·사료·유전 진단", "forbid": "일령 연장 권고 금지" }
+  },
+  "ship_day_policy": {
+    "config_code": "TC_FARM_CONFIG 140005",
+    "role": "농가 출하관행 반영 cohort 역산 입력값(서술적 파라미터)",
+    "forbid": "표준값으로 강제·변경 유도 금지. 실측 출하일령 가용 시 평가는 실측 기준, 설정값은 역산 내부용"
+  },
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly panel-revenue 출하일령 평가",
+      "weekly tab-shipment 출하일령(공용 표준)",
+      "monthly-ai-service / report 출하 판정(도체중 동반)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "출하일령 표준은 개념상 주월 공용이나 현재 월간 전용 로딩(주간 tab-shipment 미로딩 — 무회귀). 주간 도입 시 RULE_GROUP을 COMMON/으로 승격 + shared_with_weekly=true 전환 (B플랜 F1: DOMAIN group↔scope 정합 위해 scope=domain·shared=false로 현실 반영)",
+    "sources": [
+      "CLAUDE.md § 출하일령 평가 SSOT(2026-06-12, 5-agent + 한돈협회 출처검증)",
+      "대한한돈협회 종합DB · NIAS"
+    ],
+    "spec_doc": "CLAUDE.md § 출하일령 평가 SSOT / inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §6",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 모돈 도태산차·수명 기준 (국내외)  
+`DOMAIN/SOW_LONGEVITY` · type=`JSON` · ✅ · seq=450
+
+```json
+{
+  "description": "모돈 평균 *실제* 도태산차(수명) 국내외 벤치마크 + 경제적 손익분기 산차. ⚠ 도태산차 = 도태된 모돈들의 산차 평균(실측)이지 도태유도 산차가 아님. 높을수록 모돈을 오래 유지=우수(생애생산성↑), 낮을수록 조기도태 문제.",
+  "metric_meaning": "도태된 모돈들의 평균 산차. KR 3.2 = 한국 모돈 평균 3.2산에 도태(조기도태 — 손익분기 3.5 미달, 후보 육성비 회수 전). 목표는 높이는 것(DK 6산 지향).",
+  "avg_cull_parity": {
+    "KR": { "label": "한국 평균", "value": 3.2, "flag": "kr" },
+    "JP": { "label": "일본",     "value": 4.5, "flag": "jp" },
+    "NL": { "label": "네덜란드", "value": 5.5, "flag": "nl" },
+    "DK": { "label": "덴마크",   "value": 6.0, "flag": "dk", "note": "최우수 표준" }
+  },
+  "breakeven_parity": {
+    "value": 3.5,
+    "label": "경제적 손익분기 도태산차",
+    "context": "이 산차 이전 도태 시 후보육성비 대비 투자회수 미달",
+    "source": "Stalder ROI 경제분석"
+  },
+  "interpretation": {
+    "low_cull_parity": "평균 도태산차 < 3.5(손익분기) = 조기도태 과다 → 후보 육성비 회수 전 도태(경제 손실)·갱신율↑·생애생산성↓. 번식성적·도태 기준 진단",
+    "high_cull_parity": "평균 도태산차 높음(DK 6산 등) = 모돈 장수·생애생산성 우수(단, 과노령 7산+ 사산 위험은 별도)",
+    "target": "≥3.5산(손익분기 이상) 권장, 선진농장(DK 6산) 지향 — 도태산차를 높이는 방향"
+  },
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly popup-kpi-pwsl(Sow Longevity Index)",
+      "monthly-ai-service 도태산차 진단(신설 예정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 모돈군 구조 전용 — 주간 미사용",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4 L157-159",
+      "Stalder ROI 경제분석(손익분기 3.5산)",
+      "국제 도태산차 KR/JP/NL/DK (카탈로그 §4 실재)"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### P1 초산 재귀발정일(WSI) 5구간 분포  
+`DOMAIN/WSI_P1_BENCHMARK` · type=`JSON` · ✅ · seq=451
+
+```json
+{
+  "description": "P1(1산) 초산모돈 재귀발정일(이유→초회교배 경과일) 5구간 분포. P1 재귀일은 평생 생산성 예측인자(Koketsu). 구간별 비율은 데이터에서 산출, 본 룰은 구간경계+해석.",
+  "metric": "WSI(재귀발정일) = 이유일 → 초회교배일 경과일 (낮을수록 우수)",
+  "segments_p1": {
+    "optimal":  { "range_days": "0-3",  "tier": "S", "label": "최적(초조)" },
+    "good":     { "range_days": "4-5",  "tier": "A", "label": "양호(국제 권장)" },
+    "normal":   { "range_days": "6-7",  "tier": "B", "label": "정상범위(한국 평균대)" },
+    "delayed":  { "range_days": "7-20", "tier": "C", "label": "지연(BCS·영양·관리 복합)" },
+    "failure":  { "range_days": "21+",  "tier": "F", "label": "심각지연(불임·무발정)" }
+  },
+  "quality_guard": {
+    "wsi_max_valid": 100,
+    "note": "100일 초과 극단값은 INTERPRET/DATA_QUALITY_GUARD 에서 제외(PigCHAMP·Hoving 2011)"
+  },
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly popup-kpi-wsi(P1 5구간 분포)",
+      "monthly-ai-service 재귀일 진단(신설 예정)",
+      "TS_INS_AI_DATASET WSI_COHORT_M(구간별 비율 데이터)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 P1 WSI 분포 전용. 국제 벤치마크는 별도 WSI_INTERNATIONAL_BENCHMARK(WP6)",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §7 L203-208",
+      "Koketsu 1996~2021 P1 lifetime productivity"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §7",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 여름 고온 스트레스 + 시차 효과  
+`DOMAIN/SEASON_SUMMER` · type=`MD` · ✅ · seq=2
+
+> 13_DOMAIN_KNOWLEDGE.md §2.1
+
+```
+28°C 이상 3일 → 웅돈 정액 품질 저하 (5~6주 후 발현)
+30°C 이상 → 모돈 수태 실패, 재발정률 15~25% 증가
+10~11월 분만율 저하 → 7~8월 고온 영향 (3~4개월 전)
+✅ 시차 설명 필수: "7~8월 고온 스트레스의 지연 영향"
+❌ "이번 달 교배 관리 개선하세요" 금지 (원인은 3~4개월 전)
+```
+
+### 겨울 한랭 스트레스 + PED  
+`DOMAIN/SEASON_WINTER` · type=`MD` · ✅ · seq=3
+
+> 13_DOMAIN_KNOWLEDGE.md §2.2
+
+```
+자돈 저체온/압사 = 겨울 포유 중 폐사 1위 원인
+분만사 권장: 모돈 20~22°C, 자돈 보온구역 32~35°C
+PED 발생 시즌 = 겨울 (12~3월)
+포유 중 폐사 급증 → PED 증상(수양성 설사, 구토) 먼저 의심
+```
+
+### 환절기 관리 (3~5월, 9~11월)  
+`DOMAIN/SEASON_TRANSITION` · type=`MD` · ✅ · seq=16
+
+> 13_DOMAIN_KNOWLEDGE.md §2.3
+
+```
+일교차 15°C 이상 → 호흡기 질병 발생 위험
+환기 관리 핵심: 부족=암모니아, 과다=외풍
+호흡기 폐사 급증 → 환기 시스템 점검 먼저 권장
+```
+
+### 번식 관리 원칙  
+`DOMAIN/REPRODUCTION` · type=`MD` · ✅ · seq=13
+
+> 13_DOMAIN_KNOWLEDGE.md §4
+
+```
+임신기간 114일(고정), 정자형성 5~6주, 배아착상 교배후 12~14일
+후보돈 첫교배: 체중 135kg AND 220~240일령 AND 2번째 발정
+❌ 1번째 발정 교배 금지
+산차 분포: 3~5산 최고성과, 7산 이상 >15% 시 경고
+포유중 사료 1kg 감소 ≈ WSI +1일 증가
+❌ 이유일령 21일 미만 단축 금지 (1일 단축 ≈ 수태율 하락)
+```
+
+### ASF(아프리카돼지열병) 질병 규칙  
+`DOMAIN/DISEASE_ASF` · type=`MD` · ✅ · seq=21 · upd 2026-04-29
+
+> 13_DOMAIN_KNOWLEDGE.md §3.1 + TS_INS_ASF_OUTBREAK 연동
+
+```
+## ASF (아프리카돼지열병)
+
+### 질병 특성
+- 치사율 100%, 백신 없음, 확진 시 농장 전체 살처분
+- 야생멧돼지 매개 — 산간 지역 위험도 높음
+
+### 경보 기준 (BENCHMARK/DISEASE_IMPACT 정합)
+- 권고 반경: 20km
+- 경보 기간: 30일
+- 3단계 판정 (INTERPRET/DISEASE_ALERT_LEVEL 참조)
+
+### 데이터
+- 질병 발생이력 데이터 (질병 유형=ASF) + 농장별 ASF 경보 데이터
+- 수집: KAHIS 공식 1차 + 한돈인닷넷 섹션 + 축산신문 2차
+
+### 용도
+1. 근접 경보 → 주간 리포트 STEP 6 3단계 경보 (🔴/🟡/🟢)
+2. 과거 발생 → 출하두수·가격 영향 분석 (예측 모델 feature)
+
+### 금지 원칙
+- 농장 인근 발생 시 → 차단방역 우선, 모든 권장사항보다 상위
+- ASF 경보 중 후보돈 도입 절대 금지
+- 차단방역 약화 행동 권장 금지
+```
+
+### 출하 등급 관리  
+`DOMAIN/SHIPMENT_GRADE` · type=`MD` · ✅ · seq=14
+
+> 13_DOMAIN_KNOWLEDGE.md §5
+
+```
+1+ 최적: 도체중 85~95kg, 등지방 17~24mm
+등외위험: <73kg/>103kg, <13mm/>30mm
+등지방이 가장 통제 가능한 등급 결정 요인
+❌ 체중 범위 이탈+FCR 악화 고려 없이 출하 지연 권장 금지
+❌ 등급개선=사료만 아님 (유전,성별,건강 동등)
+시세 계절: 추석전 +10~20%, 설전 +5~15%, 명절후 -10~15%
+❌ 구체적 가격 예측 금지 → 추세만 언급
+```
+
+### PED/PRRS 질병 규칙 (통합)  
+`DOMAIN/DISEASE_PED_PRRS` · type=`MD` · ✅ · seq=22
+
+> 13_DOMAIN_KNOWLEDGE.md §3.2~3.3
+
+```
+## PED (돼지유행성설사)
+
+### 질병 특성
+- 한국 양돈 경제적 피해 1위 질병
+- 12~3월 발생 피크, 신생자돈 폐사율 최대 100%
+- 포유중 폐사 급증(겨울) → PED를 가장 먼저 의심
+
+### 경보 기준
+- 권고 반경 5km · 경보 14일 (DISEASE_IMPACT 참조)
+- 법정 대상 외(KAHIS 미수집) → 축산신문·pigpeople 섹션 SECONDARY 커버
+
+## PRRS (돼지생식기호흡기증후군)
+
+### 질병 특성
+- 한국 농장 대부분 상재(endemic)
+- 유산 + 호흡기 폐사 동시 증가 → PRRS 가능성
+- KAHIS 법정 5종 중 하나 — OFFICIAL 공시 수집
+
+### 경보 기준
+- 권고 반경 5km · 경보 14일
+
+## 공통 금지 원칙
+- 특정 약품명·항생제 절대 추천 금지 → "수의사 상담"
+- 특정 백신 브랜드 추천 금지
+- 패턴 기반 의심 알림만 허용 (갑작스런 폐사 급증, 계절적 패턴)
+```
+
+### 농장 규모별 코멘트 조정  
+`DOMAIN/FARM_SIZE` · type=`MD` · ⛔비활성 · seq=15 · upd 2026-04-29
+
+> 13_DOMAIN_KNOWLEDGE.md §7
+
+```
+<100(소농): 저비용 간단 개선안, 기술투자 자제
+100~300(중농): ROI 높은 항목 우선
+300~500(중대농): 체계적 관리, 일괄작업 권장
+500+(대농): 상세 손실 분석 + 벤치마킹
+```
+
+### AI 분석 흔한 실수 방지  
+`DOMAIN/COMMON_MISTAKES` · type=`MD` · ✅ · seq=23 · upd 2026-04-24
+
+> 13_DOMAIN_KNOWLEDGE.md §6
+
+```
+데이터 해석 오류:
+- 주간 PSY 단독 비교 금지 → PSY는 연환산, 4주 이동평균으로 비교
+- 1주 폐사 급등에 경보 금지 → 소규모 변동 크다, 2주 연속 시 경고
+- 0건 = 문제없음 금지 → "기록 없음"과 "0건" 구분
+- 현재 NPD로 현재 관리 평가 금지 → NPD는 과거 관리의 결과
+- 이번 주 교배 결과를 이번 주 관리로 평가 금지 → 수태결과는 3~4개월 후
+- 값이 0인 지표(이유전폐사율(기간중) 0% 등) 칭찬 금지 → 데이터 미입력 가능성 높음, 언급 생략 또는 "데이터 확인 필요"
+권장사항 오류:
+- "실산 두수를 높이세요" 금지 → 직접 통제 불가, "사산 감소, 자돈 생존 관리"
+- "폐사율을 0%로" 금지 → 생물학적 불가능, "12%→8% 단계적 개선"
+- "노산 모돈 즉시 전부 도태" 금지 → 대체 없이 도태=생산급락, "3~6개월 계획적 갱신"
+- "관리를 개선하세요" (막연) 금지 → 구체적 행동 제안 필수
+- "더 많이 교배하세요" 금지 → 분만사 수용능력 무시, 분만사 가용 스톨 대비 교배 목표
+코멘트 작성 오류:
+- PSY/NPD/MSY/LSY를 불릿 주제(첫 볼드)로 사용 금지 → 주간 실적(교배/분만/이유/출하)이 주제, 연간 지표는 "(참고: PSY(년) 27.5)" 부기만
+- 연간 환산 지표 언급 시 반드시 (년) 표기: PSY(년), NPD(년), MSY(년), LSY(년)
+- 관리대상 모돈 상세 나열 금지 → 이유미교배·사고미교배 두수 + 재교배 촉구만 강조 (NPD 직접 원인), 후보돈·분만지연 등 생략
+- 프롬프트에 없는 숫자를 추론/추정하여 언급 금지 (할루시네이션)
+- comment 섹션에서 SCHEDULE_FORECAST(예정/달성율) 참조 금지 → plan 섹션 전용
+```
+
+### AI 절대 금지 규칙  
+`DOMAIN/PROHIBIT_LIST` · type=`MD` · ✅ · seq=4 · upd 2026-04-10
+
+> 13_DOMAIN_KNOWLEDGE.md §10
+
+```
+1. PSY/NPD/MSY/LSY는 **연간 환산 지표** — comment 불릿의 주제(첫 볼드)로 절대 사용 금지
+   - ❌ "• **NPD(년) 50.2일** — 전국평균 대비 양호하나..." (연간 지표가 주제 = 금지)
+   - ❌ "• **PSY(년) 27.5** — 상위10% 대비..." (연간 지표가 주제 = 금지)
+   - ✅ "• **교배 {N}복, 분만 {N}복** — 분만율 {pct}% 양호 (참고: PSY(년) {N})" (예시 숫자는 형식 시연용 플레이스홀더 — 그 자리 숫자 복사 금지, 프롬프트 제공 수치로 치환)
+   - ✅ 연간 지표는 괄호 안 참고값으로만: "(참고: NPD(년) 50.2일)"
+2. 주간 실적(교배복수/분만복수/이유복수/출하두수/임신사고 등)만 불릿 주제로 사용
+3. 프롬프트에 **제공되지 않은 수치·기준·벤치마크를 임의 생성 절대 금지**
+   - ❌ "벤치마크 {N}% 이상", "업계 평균 XX" 등 출처 없는 기준 사용 금지
+   - ✅ 제공된 데이터(전국평균, PSY상위10%, 실적 수치)만 인용
+   - ✅ 기준이 없으면 수치만 서술: "1등급+ 합격률 {pct}%"
+4. DB 테이블명·컬럼명을 리포트/코멘트에 절대 노출 금지
+5. 같은 지표를 다른 라벨로 표기 금지 (용어 통일)
+6. 작업 분산 권장 절대 금지 (올인올아웃이 정상)
+7. "건"은 양돈에서 사용하지 않는 단위 — "두"로 표기
+8. 극단값(PSY 40 이상, 이유일령 0일 등)에는 분류 규칙 미적용
+9. off-week 실적 0~소수를 비정상으로 판단 금지
+10. 연간 지표(PSY/NPD/MSY/LSY)의 주간 변동을 과잉 해석 금지
+- off-week, on-week, CV(변동계수) 등 개발자/통계 전문 용어 사용 금지 (단, PSY/NPD/MSY/LSY 등 양돈 통계지표는 허용)
+- 코드값(050008, 080001 등) 직접 노출 금지 — 반드시 한글명(재발, 도태 등)으로 표기
+- 격차를 백분율(%)로 표현 금지 — 수치값으로 표현 (예: "PSY 격차 {pct}%" → "PSY 내 농장 {N} vs 상위10% {N}, 격차 {N}")
+- "이번 주" 표현 금지 → "지난주"로 표현 (AI 리포트는 지난주 실적 분석)
+- 배치 주기(올인올아웃) 농장이 아닌 경우(= [배치 주기 농장] 섹션이 프롬프트에 없는 경우), "쉬는주/쉬는 주차" 표현 사용 금지. 분만·이유 0복은 "해당 주 분만(이유) 실적 없음"으로 표현하고, 원인 분석(분만예정 대비 지연/이월 등) 수행
+- 후보돈 투입율 0%를 1주 데이터만으로 "돈군 갱신 지연 우려"로 판단 금지. 후보돈은 도태/폐사 발생 시 보충하므로 특정 주 0%는 자연스러움. 최소 분기(13주) 이상 추세로 평가
+```
+
+### 전국 집계 산출농장 선정 기준  
+`DOMAIN/FARM_ELIGIBILITY` · type=`JSON` · ✅ · seq=281 · upd 2026-04-29
+
+> F1/F2 + Q1~Q5 적용 · Q6~Q7 보류 · 2026-04-24 v4
+
+```json
+{
+  "version": "2026-04-24-v4",
+  "source": "어드민 룰 관리 화면 SSOT (사용자/AI 노출 차단)",
+  "apply_order": "F1 -> F2 -> Q1~Q5 (적용) -> 통과농장 = 산출농장",
+  "basic_filter": {
+    "F1": {
+      "cond": "활성 농가 (사용 플래그 Y)",
+      "desc": "활성 농가",
+      "applied": true
+    },
+    "F2": {
+      "cond": "12개월 연속 모돈 작업기록 (>=20 이벤트)",
+      "desc": "데이터 완전성",
+      "applied": true
+    }
+  },
+  "quality_filter": {
+    "Q1": {
+      "cond": "상시모돈 >= 20",
+      "desc": "소규모 취미농 제외",
+      "applied": true
+    },
+    "Q2": {
+      "cond": "NPD <= 150",
+      "desc": "운영중단 수준 제외",
+      "applied": true
+    },
+    "Q3": {
+      "cond": "PSY >= 14",
+      "desc": "정상운영 불가 제외",
+      "applied": true
+    },
+    "Q4": {
+      "cond": "LSY <= 2.6",
+      "desc": "생물학적 상한 근접 제외",
+      "applied": true
+    },
+    "Q5": {
+      "cond": "실산 <= 총산",
+      "desc": "데이터 입력오류 제외",
+      "applied": true,
+      "formula": "실산 = 살아있는 산자수 / 총산 = 실산+미라+사산",
+      "source": "분만 작업기록"
+    },
+    "Q6": {
+      "cond": "임신기간 110~120일",
+      "desc": "정상범위 벗어남 제외",
+      "applied": false,
+      "reason": "교배-분만 SEQ 관계 재확인 필요"
+    },
+    "Q7": {
+      "cond": "포유기간 14~50일",
+      "desc": "정상범위 벗어남 제외",
+      "applied": false,
+      "reason": "분만-이유 SEQ 관계 재확인 필요"
+    }
+  },
+  "constraints": {
+    "delay_upper_cap_days": 90,
+    "d10_threshold_days": 60,
+    "d10_fallback_days": 50
+  },
+  "applied_to": [
+    "입력지연 트렌드 수집기 농장 스냅샷",
+    "모달 전국 필터"
+  ],
+  "_internal_meta": {
+    "ssot_screen": "protoHtml/inspig/ai-report/ai-rules-admin.html",
+    "F1_source": "TA_FARM.USE_YN=Y",
+    "F2_source": "TB_MODON_WK 12개월 연속 (>=20 이벤트)",
+    "Q5_source_table": "TB_BUNMAN",
+    "Q5_formula": "SILSAN / NVL(SILSAN,0)+NVL(MILA,0)+NVL(SASAN,0)",
+    "Q6_relation": "TB_GYOBAE-TB_BUNMAN SEQ",
+    "Q7_relation": "TB_BUNMAN-TB_EU SEQ",
+    "applied_to_collectors": [
+      "dataset_input_delay_trend.QUERY_FARM_SNAPSHOT",
+      "buildModalNationalFilter"
+    ]
+  }
+}
+```
+
+### 농장 규모별 조정 + 벤치마크 기준값  
+`DOMAIN/FARM_SIZE_BENCHMARK` · type=`JSON` · ✅ · seq=24
+
+> 13_DOMAIN_KNOWLEDGE.md §7+§8 통합
+
+```json
+{
+  "size_adjust": {
+    "small":  {"range": "<100", "desc": "대표자 직접관리. 저비용·간단한 개선안. 기술투자 자제"},
+    "medium": {"range": "100~300", "desc": "직원1~2명. 중간수준. ROI 높은 항목 우선"},
+    "large":  {"range": "300~500", "desc": "체계적 관리. 일괄작업 체계 적극 권장"},
+    "xlarge": {"range": "500+", "desc": "전문관리팀. 상세 손실분석+벤치마킹 가장 유용"}
+  },
+  "benchmark": {
+    "PSY":       {"P25": "<20", "AVG": "22~24", "P75": "25~27", "P90": ">28"},
+    "MSY":       {"P25": "<17", "AVG": "18~20", "P75": "21~23", "P90": ">24"},
+    "NPD":       {"P25": ">30", "AVG": "22~28", "P75": "15~20", "P90": "<14"},
+    "FARROW_RATE":{"P25": "<80", "AVG": "82~86", "P75": "87~91", "P90": ">92"},
+    "SILSAN":    {"P25": "<11", "AVG": "12~13", "P75": "13~14", "P90": ">14.5"},
+    "WEAN_CNT":  {"P25": "<10", "AVG": "10.5~11.5", "P75": "11.5~12.5", "P90": ">12.5"},
+    "DEATH_RATE":{"P25": ">12", "AVG": "8~10", "P75": "6~8", "P90": "<5"}
+  }
+}
+```
+
+### PSY 개선 경로 (AI 진단용)  
+`DOMAIN/PSY_IMPROVEMENT` · type=`MD` · ✅ · seq=25
+
+> 13_DOMAIN_KNOWLEDGE.md §9
+
+```
+PSY = 365 / (114 + 포유기간 + NPD) × 이유두수
+개선 잠재력:
+- NPD 28→14일 = PSY +3.2 (가장 큰 효과)
+- 이유두수 11→12두 = PSY +2.3
+- 포유기간 25→21일 = PSY +0.8 (부작용 주의)
+NPD 구성요소 (ALERT_STATUS 5종):
+① eu_mi(이유후미교배) → WSI 개선이 핵심
+② sg_mi(사고후미교배) → 임신사고 감소가 근본
+③ hubo(미교배후보돈) → 초교배일령 관리
+④ bm_delay(분만지연) → 분만유도 적시
+⑤ eu_delay(이유지연) → 포유기간 준수
+✅ 한국 농장 PSY 개선은 NPD 단축이 가장 효과적
+```
+
+### NPD 용어 정의 및 국제 기준  
+`DOMAIN/NPD_DEFINITION` · type=`MD` · ✅ · seq=37 · upd 2026-04-29
+
+> PigCHAMP/SEGES/NIAS 기준
+
+```
+NPD (Non-Productive Days) = 모돈이 임신도 수유도 하지 않은 일수.
+
+§1 산출 공식 (피그플랜 생산성 통계 기준)
+총비생산일수 = 총모돈사육일수(후보 포함) - 후보돈사육일수 - 임신일수 - 포유일수
+
+§2 inspig NPD — 생산 가능 시점 이후 (Phase 11 재정의)
+- 후보돈 NPD 시작일: MAX(전입일 + 1, 출생일 + 초교배일령 + 1)
+  → 입식이 늦으면 전입일 기준, 조기 입식이면 성숙일(출생일 + 240일) 기준
+  → 미성숙 기간은 사육 대기이며 생산 손실 아님 (경제적 정확성)
+- 자바 생산성 통계와의 차이: 자바는 전입일 기준만 사용 (국제 관행)
+  inspig Phase 11은 경제적 정확성 우선하여 성숙일 기준 추가
+
+§3 NPD 구성 (NPD 포함 vs 제외)
+포함 (3종):
+  ① 이유(E)→교배(G) 지연 (WEI 초과)
+  ② 사고(F)→교배(G) 지연
+  ③ 전입(후보돈)→초교배 지연 (생산 가능 시점 이후)
+제외:
+  ④ 재발확인/임진검사 지연 → 관찰 작업 (모돈 상태 무관)
+  ⑤ 분만 지연 (임신일수 초과) → productive state (임신 중)
+  ⑥ 이유 지연 (수유 연장) → productive state (포유 중) + 이유→교배 이중 계산 위험
+  ⑦ 입력 지연 (작업일↔등록일) → 데이터 품질 문제 (입력지연 영향도 별도)
+
+§4 벤치마크
+- 덴마크 15~18일, 네덜란드 18~22일, 미국(MFNPD) 41.4일, 한국 50~65일
+- inspig 034019 = 후보돈 제외 (MFNPD 기준)
+
+§5 사용 원칙
+- NPD는 과거 관리 결과 → 현재 NPD로 현재 관리 평가 금지
+- NPD 28→14일 개선 = PSY +3.2 효과
+- 손실 산출 단위 = 모돈일
+```
+
+### NPD와 입력지연 완전 분리 원칙 (AI 혼동 방지)  
+`DOMAIN/NPD_INPUT_DELAY_SEPARATION` · type=`MD` · ✅ · seq=245 · upd 2026-04-29
+
+> Phase 11 T17: AI 분석 시 NPD 손실과 입력지연 숨은 손실을 완전 분리하여 표현하도록 강제
+
+```
+NPD(비생산일수)와 데이터 입력지연의 완전 분리 원칙 — AI 분석 시 혼동 절대 금지.
+
+§1 두 지표의 의미 차이
+NPD (비생산일수):
+- 정의: 모돈이 임신도 수유도 하지 않는 날 수 (공밥 기간)
+- 성격: 생산성 지표 (경제 손실)
+- 원인: 예정일 대비 작업 지연 (이유→교배·사고→교배·전입→초교배)
+  ※ 농가 설정 예정일보다 다음 작업이 늦게 등록된 모돈의 누적 지연
+- 데이터: 주간 비생산일수 데이터셋 · 생산성 실적 (034 항목 17·19)
+
+데이터 입력지연 (Data Input Delay):
+- 정의: 작업 실제 발생일과 시스템 등록일의 차이
+- 성격: 데이터 품질 지표 (간접 손실)
+- 원인: 농장주의 시스템 입력 습관 (관리대상 모돈은 현재 시점 데이터 미등록 상태)
+- 데이터: 입력지연 영향도 데이터셋
+
+§2 손실 산정 공식 (완전 분리)
+NPD 손실 = 모돈일 합 × (PSY × 육성률 × 두당가격 ÷ 365)
+  · 손실 산출 룰 의 NPD 항목 참조
+  · 손실 데이터의 NPD 손실 / NPD 모돈일 컬럼에 저장
+
+데이터 입력지연 "숨은 손실" = 시뮬레이션 (별도 계산)
+  · 손실 표시 원칙 §3 참조
+  · 메인 총 손실에 합산 금지 (중복 방지)
+
+§3 AI 코멘트·리포트 작성 규칙
+표현 가이드:
+⚠ 위 표현 가이드의 {amount}는 형식 예시일 뿐 — 예시 숫자를 그대로 복사하지 말고 반드시 실제 산출된 손실액만 기재한다.
+✅ "NPD 손실 {amount}만원 · 데이터 입력지연 숨은 손실 약 {amount}만원" (별도 명시)
+✅ "교배 지연 NPD 132일 (모돈·일) + 데이터 입력지연 평균 6.1일" (각 단위 다름)
+❌ "NPD 손실 {amount}만원 (입력지연 포함)" 절대 금지
+❌ "NPD 50일 (입력지연 포함)" — 절대 금지
+❌ "생리학적 NPD" / "순수 생리학적" — 농장주 이해 어려움, 사용 금지 (v4)
+
+섹션별 용도:
+- STEP 0 (s0-breakdown, s0-action): 데이터 입력지연 전용 · NPD 언급 금지
+- STEP 2 (c-ref 3종): NPD 예정일 작업 지연 원인 설명 · 데이터 입력지연은 별도 문구
+- 손실 탭 (tabLossAiSummary + m-loss-calc): NPD 손실 (예정일 지연) · 숨은 손실은 별도 카드
+- sections.loss_ai_note: "NPD 손실 ~만원 외에 데이터 입력지연 숨은 손실 ~만원" 형식
+
+§4 구독 농가 관점 우선순위
+1. NPD 개선 (즉시 교배 · 발정 확인) → 경제 손실 즉시 회수
+2. 데이터 입력지연 개선 (당일 입력 습관) → 장기 데이터 품질 · 간접 생산성
+
+§5 참조 룰
+- NPD 정의·국제 기준 룰
+- NPD 벤치마크 룰
+- NPD 손실 산출 룰 §1~§8 (예정일 지연만)
+- 손실 표시 원칙 룰 §9 (NPD-입력지연 분리)
+- 데이터 입력지연 영향도 분석 룰 (별도)
+- 전국 데이터 입력지연 벤치마크 룰
+
+§6 용어 변경 이력 (v4 · 2026-04-23)
+- 이전: "순수 생리학적 NPD 3종" / "이유 후 미교배" / "사고 후 미교배" / "미교배 후보돈"
+- 현재: "예정일 작업 지연 3종" / "이유 후 교배 지연" / "사고 후 교배 지연" / "후보돈 초교배 지연"
+- 근거: "생리학적"은 농장주 이해 어려움 · "미교배"는 관리대상(데이터 미입력)과 혼동 우려
+- "미교배" 예외: 관리대상 알림 배지(현재 시점 미등록 상태)에서는 현재 용어 유지
+```
+
+### 출하일령×도체중 판정행렬 룰  
+`DOMAIN/SHIP_AGE` · type=`JSON` · ✅ · seq=463
+
+> 출하일령×도체중 2차원 판정행렬. 표준 180일(분만→출하)·158(이유→출하), 출처 대한한돈협회/NIAS. 출하일령 단독 우열판정 금지·도체중 동반 필수.
+
+```json
+{
+  "version": "1.0",
+  "updated": "2026-06-18",
+  "standard_ship_age": {
+    "birth_to_finish_days": 180,
+    "wean_to_finish_days": 158,
+    "wean_period_days": 22,
+    "note": "표준 비교 참조선 — 농가별 목표/유도 아님. 분만→출하 180일(출하체중 약 110kg, 도체중 약 86kg). 이유→출하 = 180 − 포유 22 = 158일.",
+    "base_options": ["birth_to_finish", "wean_to_finish"],
+    "base_default": "birth_to_finish"
+  },
+  "carcass_weight_band": {
+    "under_min": 85,
+    "optimal_min": 85,
+    "optimal_max": 95,
+    "over_max": 95,
+    "unit": "kg",
+    "note": "도체중 적정 구간(살코기 기준). INTERPRET/SHIPMENT_RANGE.carcass_weight 와 동일 경계 — 변경 시 동기화."
+  },
+  "age_tolerance_days": 15,
+  "judgment_matrix": [
+    {
+      "id": "FAST_OPTIMAL",
+      "condition": "출하일령 표준(180) 이하·빠름 AND 도체중 적정(85~95)",
+      "label": "효율 우수",
+      "severity": "green",
+      "diagnosis": "표준보다 빠른 일령에 적정 도체중을 달성했습니다. 사료효율·돈사 회전율이 우수한 신호입니다.",
+      "action": "현 비육 관리(사료 프로그램·환경)를 유지하세요. 출하일령이 빠른 것 자체는 결함이 아닙니다.",
+      "forbidden_label": ["지연", "일령 연장 권고"]
+    },
+    {
+      "id": "FAST_UNDERWEIGHT",
+      "condition": "출하일령 표준 이하·빠름 AND 도체중 미달(<85)",
+      "label": "조기·저체중 출하 우려",
+      "severity": "orange",
+      "diagnosis": "빠른 일령에 출하되었으나 도체중이 적정 구간에 미달합니다. 조기 출하 또는 비육 부진이 의심됩니다.",
+      "action": "비육 환경·사료 급이량·유전(품종) 측면을 진단하세요. 출하일령 연장 권고는 도체중 원인 확인 후 판단합니다.",
+      "forbidden_label": ["효율 우수"]
+    },
+    {
+      "id": "LONG_OVERWEIGHT",
+      "condition": "출하일령 표준 초과·김(+허용 15일 초과) AND 도체중 과다(>95)",
+      "label": "과출하·단축 검토",
+      "severity": "orange",
+      "diagnosis": "표준 대비 출하일령이 길고 도체중이 과다합니다. 과비육(over-finishing)으로 사료효율·등급(과중 감점)이 불리할 수 있습니다.",
+      "action": "출하 시점 단축을 검토하세요(도체중 과다 근거 동반). 단축 폭은 농가 출하관행·등급 정산 기준과 함께 판단합니다.",
+      "forbidden_label": []
+    },
+    {
+      "id": "LONG_OPTIMAL",
+      "condition": "출하일령 표준 초과·김 AND 도체중 적정(85~95)",
+      "label": "성장 속도 점검",
+      "severity": "yellow",
+      "diagnosis": "도체중은 적정하나 도달 일령이 표준보다 깁니다. 일당증체(ADG) 측면에서 비육 속도를 점검할 여지가 있습니다.",
+      "action": "사료효율·환경(온도/밀도)·건강(소모성 질병) 측면을 점검하세요. 도체중이 적정하므로 단정적 결함은 아닙니다.",
+      "forbidden_label": ["지연(단독)"]
+    },
+    {
+      "id": "STANDARD_OPTIMAL",
+      "condition": "출하일령 표준 근처(±15일) AND 도체중 적정(85~95)",
+      "label": "표준 수준",
+      "severity": "green",
+      "diagnosis": "출하일령·도체중 모두 표준 비교 참조선과 부합합니다.",
+      "action": "현 수준을 유지하세요.",
+      "forbidden_label": []
+    }
+  ],
+  "labels": {
+    "comparison_only": true,
+    "neutral_compare": ["전년 동월", "전국 P50", "동일 규모 그룹"],
+    "note": "표준값은 비교 참조선으로만 표기. 목표/달성기준/유도 라벨 금지. 도체중 미동반 출하일령 라벨 금지."
+  },
+  "measurement_priority": {
+    "rule": "농가 실측 출하일령(출하일−분만일, ship-grade) 가용 시 *평가는 실측* 기준. 설정값(ship_day, 140005)은 cohort 역산 내부용. 둘 혼동 금지.",
+    "weekly": "주간 = 실측 미수집 → 설정값+표준 참조선만",
+    "monthly": "월간 = ship-grade 실측 가용 → 실측 우선"
+  },
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly_report.tab-shipment.popup-ship.age_carcass_judgment",
+      "monthly_ai_prompt.shipment_section.ship_age_judgment",
+      "inspig-ai.tab-shipment.ts (월간 출하일령 판정 — 향후 배선)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "주간 출하일령 실측 수집 시 COMMON/ 승격 검토(임계 동일). 현재 주간 미수집 → DOMAIN/ 유지.",
+    "sources": [
+      "대한한돈협회 종합DB — 비육돈 출하 약 180일(분만→출하, 출하체중 약 110kg)",
+      "NIAS 국립축산과학원 — 출하 표준 일령/도체중",
+      "CLAUDE.md § 출하일령 평가 SSOT (2026-06-12 5-agent 검토 + 한돈협회 출처검증 확정)",
+      "HANDOFF_20260612_monthly_shipage_SSOT.md"
+    ],
+    "spec_doc": "inspig-web/month/popup-ship.md § 9.1",
+    "session_ref": "CHANGES_SYNC_20260618.md § monthly WP5 A6",
+    "db_identifiers": {
+      "ship_age_measured": "TM_LPD_DATA.DOCHUK_DT − TB_MODON_WK[B].WK_DATE",
+      "carcass_weight": "TM_LPD_DATA.NET_KG (avg_net_kg)",
+      "ship_day_config": "TC_FARM_CONFIG code 140005 (서술적 역산 파라미터)",
+      "wean_period_config": "TC_FARM_CONFIG wean_period"
+    },
+    "created_dt": "2026-06-18",
+    "applied_dt": null
+  }
+}
+```
+
+### 비육 FCR 해석기준 룰 (준비중)  
+`DOMAIN/FCR_FINISHING` · type=`JSON` · ✅ · seq=464
+
+> 비육 FCR 해석기준(이유~출하/자돈/육성비육 3단계). ⚠ 사료량(kg) 수집 부재 → data_status=pending, 소비측 준비중 렌더. 수치 날조 금지.
+
+```json
+{
+  "version": "1.0",
+  "updated": "2026-06-18",
+  "data_status": "pending",
+  "data_status_reason": "사료 사용량(kg) 수집 부재 — dataset_revenue.py 는 사료 '비용(원)'만 집계(코드 410002), 물리 사료량 미수집. FCR(사료요구율=사료kg/증체kg) 산출 불가. 데이터 수집 구축 전까지 해석기준만 정의.",
+  "render_when_unavailable": "준비중",
+  "interpretation": {
+    "stages": [
+      {"stage": "weaning_to_finish", "label": "이유~출하(비육 전구간)", "fcr_excellent": 2.5, "fcr_good": 2.7, "fcr_warning": 3.0, "fcr_poor": 3.2},
+      {"stage": "nursery",          "label": "자돈(이유~30kg)",       "fcr_excellent": 1.5, "fcr_good": 1.7, "fcr_warning": 1.9, "fcr_poor": 2.1},
+      {"stage": "growing_finishing","label": "육성비육(30~출하)",      "fcr_excellent": 2.6, "fcr_good": 2.8, "fcr_warning": 3.1, "fcr_poor": 3.3}
+    ],
+    "direction": "lower_better",
+    "note": "값↓ 우수. 등지방·도체중·환경(온도/밀도)·건강 상태에 따라 해석. 단일 수치로 우열 단정 금지."
+  },
+  "fallback_default_fcr": 2.7,
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "monthly_report.tab-shipment.fcr_interpretation (데이터 수집 후)",
+      "monthly_ai_prompt.efficiency_section (데이터 수집 후)"
+    ],
+    "shared_with_weekly": false,
+    "sources": [
+      "NIAS 양돈 사료효율 표준",
+      "한돈자조금 비육 FCR 참고치"
+    ],
+    "spec_doc": "etl/month/MONTHLY_ETL_BUILD_PLAN_20260616.md § WP5",
+    "session_ref": "CHANGES_SYNC_20260618.md § monthly WP5 A6",
+    "data_gate": "DEFERRED — 사료량 수집 collector 신설 후 data_status='active' 전환. 그 전까지 소비측은 data_status 확인 후 '준비중' 렌더.",
+    "created_dt": "2026-06-18",
+    "applied_dt": null
+  }
+}
+```
+
+### 출하 전망 cohort 투영 파라미터 룰  
+`DOMAIN/SHIP_FORECAST_PARAMS` · type=`JSON` · ✅ · seq=465
+
+> 출하 전망(SHIP_FORECAST_M) cohort 투영 사육일수·육성률 기본값(포유22 SSOT). 농가 실측 우선·미설정 fallback. 통계예측 아님.
+
+```json
+{
+  "version": "1.0",
+  "updated": "2026-06-18",
+  "gestation_days": 115,
+  "wean_period_days": 22,
+  "ship_day_days": 180,
+  "rearing_rate_default_pct": 90.0,
+  "pre_wean_rate_default_pct": 90.0,
+  "farrow_rate_default_pct": 80.0,
+  "horizon_months": 9,
+  "born_live_avg_default": 11.0,
+  "note": "결정적 cohort roll-forward 투영 기본값. 농가 실측(TC_FARM_CONFIG 140002 임신기간·140003 포유기간·140005 출하일령·901003 비육육성률) 우선 — 본 값은 미설정 fallback. 통계예측 아님(EWMA/Prophet=Phase2).",
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "etl.dataset_ship_forecast_monthly (DEFAULT_* fallback → 룰 로딩)",
+      "monthly_report.sec-shipout-planforecast (9개월 출하전망)"
+    ],
+    "shared_with_weekly": false,
+    "sources": [
+      "대한한돈협회 종합DB(비육돈 ~180일)",
+      "NIAS 표준(임신115·포유22)",
+      "CLAUDE.md § 출하일령 평가 SSOT(180/158/포유22, 2026-06-12)"
+    ],
+    "spec_doc": "etl/month/MONTHLY_ETL_BUILD_PLAN_20260616.md",
+    "session_ref": "CHANGES_SYNC_20260618.md § monthly v13 (A3 + B플랜 HI-2)",
+    "code_hardcode_ref": "dataset_ship_forecast_monthly.py DEFAULT_GESTATION_DAYS/WEAN_PERIOD/SHIP_DAY/REARING_RATE/PRE_WEAN_RATE/FARROW_RATE/HORIZON_MONTHS/BORN_LIVE_AVG → 본 룰 로딩으로 단일화. 코드는 fallback 만.",
+    "created_dt": "2026-06-18",
+    "applied_dt": null
+  }
+}
+```
+
+### 산차별 보유모돈 구성 벤치마크  
+`DOMAIN/PARITY_BENCHMARK` · type=`JSON` · ✅ · seq=81
+
+```json
+{"source":"Koketsu et al. 2024 (Porcine Health Mgmt, 282농장 실측) + PIC 2021 + NIAS 이일석 2020 + Topigs Norsvin 2025","avg_parity":{"optimal":[3.2,3.8],"warning":[3.8,4.2],"critical_above":4.2,"unit":"산","note":"NIAS 국내 3.8, 유럽 3.2, PIC 3.5, Stalder 3.85"},"parity_target_pct":{"0":{"target":19,"zone":"young","note":"Koketsu 19.4%"},"1":{"target":16,"zone":"young","note":"Koketsu 15.6%"},"2":{"target":13,"zone":"golden","note":"Koketsu 13.0%"},"3":{"target":11,"zone":"golden","note":"Koketsu 10.5%, PSY 최고 구간"},"4":{"target":8,"zone":"golden","note":"Koketsu 8.4%"},"5":{"target":6,"zone":"golden","note":"Koketsu 6.2%"},"6":{"target":4,"zone":"aging","note":"선별 보유"},"7":{"target":2,"zone":"aging","note":"적극 도태"},"hubo":{"target":12,"range":[10,15],"zone":"replacement","note":"후보돈(미교배 대기) — PIC 10-15%, 국내 8-12%, target 12%"},"8+":{"target":1,"zone":"cull","note":"NIAS 4%, 유럽 3% — 즉시 도태"}},"zone_pct":{"young_0_1":{"range":[30,40],"note":"0~1산 (Koketsu 40.1%)"},"golden_2_5":{"optimal":[35,45],"warning_below":30,"note":"생산최적구간 2~5산 (Koketsu 최우수 45.5%)"},"aging_6_plus":{"optimal":[5,12],"warning_above":15,"note":"6산 이상 (Koketsu 12.3%, Topigs 5-10%)"},"cull_8_plus":{"optimal":[0,5],"warning_above":6,"note":"8산 이상 (NIAS 4%, Koketsu 6.1%)"}},"replacement_rate":{"korea_avg":35,"optimal":[40,50],"europe_top":60,"unit":"%","note":"NIAS 이일석: 국내 35%, PIC: 45% 목표, 유럽: 50-60%"},"hubo_pct":{"optimal":[10,15],"warning_below":8,"warning_above":18},"peak_productivity":"P3~P5 (Stalder NSIF: P4-P5 mature equivalent, 전 출처 동의)","cull_recommendation":{"mandatory":"8산 이상","strong":"7산","evaluate":"6산 (실산 감소/폐사율 상승 시)"}}
+```
+
+---
+
+## INTERPRET
+**KPI 해석 기준** · 29개 룰
+
+### 모돈 교체(갱신/도폐사) 벤치마크  
+`INTERPRET/REPLACEMENT_BENCHMARK` · type=`JSON` · ✅ · seq=466
+
+> Tier-C 등재 2026-06-22 (코드 fallback DB화)
+
+```json
+{"over_renewal_warn": 50, "low_renewal_warn": 20, "_internal_meta": {"scope": "common", "applies_to": ["monthly-report buildSowReplBalance/CurrentTab"], "sources": ["한돈자조금"], "created_dt": "2026-06-22", "note": "값=코드 fallback 동일(행동변화 0)"}}
+```
+
+### 평균 산차 벤치마크(경제산차)  
+`INTERPRET/PARITY_BENCHMARK` · type=`JSON` · ✅ · seq=467
+
+> Tier-C 등재 2026-06-22 (코드 fallback DB화)
+
+```json
+{"economic_parity": 3.5, "warn_parity": 2.5, "_internal_meta": {"scope": "monthly", "applies_to": ["monthly-report buildHerdInfoCards"], "sources": ["Stalder 손익"], "created_dt": "2026-06-22", "note": "값=코드 fallback 동일"}}
+```
+
+### 웅돈 성적 벤치마크(분만율·WSI)  
+`INTERPRET/BOAR_BENCHMARK` · type=`JSON` · ✅ · seq=470
+
+> Tier-C 잔여 2026-06-22 (코드 fallback DB화·명시승인)
+
+```json
+{"bm_rate_ok": 80, "bm_rate_warn": 65, "wsi_ok": 7, "_internal_meta": {"scope": "monthly", "applies_to": ["monthly-report modals.ts buildBoarPerfPopup"], "sources": ["PigCHAMP/관행 분만율·WSI 임계"], "created_dt": "2026-06-22", "note": "값=코드 fallback 동일(행동변화 0). 웅돈 분만율 신호등(ok>=80·warn>=65)·재귀일(WSI<=7)"}}
+```
+
+### KPI 해석 + RED/YELLOW/GREEN 분류  
+`INTERPRET/KPI_CLASSIFY` · type=`MD` · ⛔비활성 · seq=17 · upd 2026-04-29
+
+> 11_KPI_INTERPRET.md — MD파일 직접 로딩 병행
+
+```
+11_KPI_INTERPRET.md 전문 참조
+농가 분류 기준 + 핵심 KPI별 해석 기준
+rules-loader.ts에서 MD 파일 직접 로딩 중
+```
+
+### 농가분류 RED/YELLOW/GREEN 조건  
+`INTERPRET/RED_YELLOW_GREEN` · type=`JSON` · ✅ · seq=26 · upd 2026-04-24
+
+> 11_KPI_INTERPRET.md §1
+
+```json
+{
+  "_comment": "주간 AI 분류 룰 — RED/YELLOW/GREEN 3단계. Phase 11에서 R9/Y9 입력 지연 임계 재조정 + NPD 관련 룰 독립성 명시.",
+
+  "RED": {
+    "description": "1개 이상 해당 시 RED (긴급) 분류",
+    "rules": {
+      "R1":  "PSY(년) < 20",
+      "R2":  "PSY(년) 전주 대비 -2.0 이상 하락",
+      "R3":  "NPD(년) > 60일 (순수 NPD 기준 — 입력 지연 제외)",
+      "R4":  "분만율(주) < 70%",
+      "R5":  "모돈폐사율(주) > 0.5%",
+      "R6":  "이유전폐사율(기간중·주) > 15%",
+      "R7":  "관리대상 모돈 비율 > 25%",
+      "R9":  "입력 지연 평균 > 7일 (이전 14일 → Phase 11에서 7일로 강화)",
+      "R10": "7일내재귀율 < 70%"
+    }
+  },
+
+  "YELLOW": {
+    "description": "RED 미해당 + 1개 이상 해당 시 YELLOW (주의) 분류",
+    "rules": {
+      "Y1": "PSY(년) 전주 대비 -0.5 이상 하락",
+      "Y2": "NPD(년) 전주 대비 +5일 이상 상승 (순수 NPD 기준)",
+      "Y3": "분만율(주) < 85%",
+      "Y4": "1등급+ 합격률 < 70%",
+      "Y5": "이유전폐사율(기간중·주) > 10%",
+      "Y6": "7일내재귀율 < 80%",
+      "Y7": "관리대상 모돈 비율 > 15%",
+      "Y8": "예정 달성률 < 70%",
+      "Y9": "입력 지연 평균 3~7일 (이전 7~14일 → Phase 11에서 3~7일로 강화)"
+    }
+  },
+
+  "GREEN": "RED·YELLOW 모두 미해당",
+
+  "phase11_changes": {
+    "r9_threshold": "14일 → 7일 강화",
+    "y9_threshold": "7~14일 → 3~7일 강화",
+    "npd_independence": "R3/Y2의 NPD 임계는 순수 NPD(입력 지연 제외) 기준. 과거 대비 감소 가능성 있음. 해석 시 혼동 방지 필요",
+    "input_delay_independence": "R9/Y9 입력 지연 임계는 NPD와 완전 독립 — 두 조건이 동시 트리거 될 수 있음"
+  },
+
+  "off_week_handling": {
+    "applies_to": "다주기 배치관리(AIAO) 농장",
+    "rules_suspended_on_off_week": ["R4", "Y3", "Y8", "R10", "Y6"],
+    "reason": "쉬는 주에는 분만/교배/이유 작업이 없어 해당 비율이 무의미"
+  },
+
+  "priority_when_multiple": {
+    "description": "여러 RED 룰 동시 트리거 시 AI 해석 우선순위",
+    "order": ["R1", "R3", "R6", "R5", "R4", "R10", "R7", "R2", "R9"]
+  }
+}
+```
+
+### 출하 품질 해석 기준  
+`INTERPRET/SHIPMENT_QUALITY` · type=`JSON` · ✅ · seq=28 · upd 2026-04-20
+
+> 11_KPI_INTERPRET.md §3 + 14_BENCHMARK_FILTER.md §7
+
+```json
+{"grade1_rate": {"최우수": ">=85%", "우수": "75~84%", "보통": "65~74%", "개선필요": "50~64%", "위험": "<50%"}, "carcass_weight": {"미달": "<85kg", "적정": "85~95kg", "초과": ">95kg"}, "spec_grade": {"A": {"weight": "83~93kg", "backfat": "17~25mm"}, "B": {"weight": "78~98kg", "backfat": "15~28mm"}, "C": {"weight": "73~103kg", "backfat": "13~30mm"}, "D": "범위 벗어남"}, "ai_optimal": {"weight": "85~95kg", "backfat": "17~24mm"}, "male_min_ratio": 0.02, "_note_male_min_ratio": "수컷 비율 이 값 미만 → 거의 전량 거세 출하"}
+```
+
+### KPI 7등급 해석 기준  
+`INTERPRET/KPI_7GRADE` · type=`JSON` · ✅ · seq=41 · upd 2026-04-29
+
+> KPI 7등급 통일 기준 (국내 현실 기준). 2026-04-02
+
+```json
+{
+  "PSY": {
+    "S": ">=30",
+    "A": "28~29.9",
+    "B+": "26~27.9",
+    "B": "24~25.9",
+    "C": "22~23.9",
+    "D": "20~21.9",
+    "F": "<20"
+  },
+  "NPD": {
+    "S": "<=20",
+    "A": "21~30",
+    "B+": "31~40",
+    "B": "41~50",
+    "C": "51~60",
+    "D": "61~70",
+    "F": ">70"
+  },
+  "분만율": {
+    "S": ">=92",
+    "A": "88~91",
+    "B+": "85~87",
+    "B": "80~84",
+    "C": "75~79",
+    "D": "70~74",
+    "F": "<70"
+  },
+  "이유전폐사율(기간중)": {
+    "S": "<=5",
+    "A": "5.1~8",
+    "B+": "8.1~10",
+    "B": "10.1~12",
+    "C": "12.1~15",
+    "D": "15.1~20",
+    "F": ">20"
+  },
+  "7일내재귀율": {
+    "S": ">=95",
+    "A": "90~94",
+    "B+": "85~89",
+    "B": "80~84",
+    "C": "75~79",
+    "D": "70~74",
+    "F": "<70"
+  },
+  "1등급합격율": {
+    "S": ">=90",
+    "A": "80~89",
+    "B+": "70~79",
+    "B": "60~69",
+    "C": "50~59",
+    "D": "40~49",
+    "F": "<40"
+  },
+  "MSY": {
+    "S": ">=27",
+    "A": "25~26.9",
+    "B+": "23~24.9",
+    "B": "21~22.9",
+    "C": "19~20.9",
+    "D": "17~18.9",
+    "F": "<17"
+  },
+  "_meta": {
+    "NPD": {
+      "국제비교": {
+        "덴마크": {
+          "평균": "15~18",
+          "상위10%": "10~14"
+        },
+        "네덜란드": {
+          "평균": "18~22",
+          "상위10%": "14~18"
+        },
+        "미국": {
+          "평균": 41.4,
+          "상위10%": "30~38"
+        },
+        "한국": {
+          "평균": "50~65",
+          "상위10%": "40~43"
+        }
+      },
+      "단위": "일/모돈",
+      "레버리지": "비생산일수 28→14일 단축 시 PSY +3.2두/년"
+    }
+  }
+}
+```
+
+### 산차별 도태 기준 해석  
+`INTERPRET/PARITY_RETIREMENT` · type=`MD` · ✅ · seq=29
+
+> 11_KPI_INTERPRET.md §5 + 035009
+
+```
+1~3산: 성과 상승기 — 도태 시 잔여가치 손실 극대화
+4~5산: 성과 정점 — 실산수·이유두수 최대 구간
+6~7산: 성과 유지~하락 시작 — 도태 검토 구간
+8산+: 성과 하락 — 도태 적기 (잔여가치 ≈ 0)
+판단: FARROWING_PERF에서 avg_nursing_loss가 산차 증가에 따라 급증하는 시점 = 도태 적기
+도태율 적정: 35~45%/년. >50%=과다도태(후보돈점검), <30%=과소도태(고산차성과점검)
+```
+
+### 월별 질병 위험 카렌다  
+`INTERPRET/DISEASE_CALENDAR` · type=`JSON` · ✅ · seq=163 · upd 2026-04-20
+
+> 계절별 주요 질병 위험도. AI 프롬프트에 환경 컨텍스트로 주입.
+
+```json
+{"1": {"high": ["PED"], "medium": ["호흡기"]}, "2": {"high": ["PED"], "medium": ["호흡기"]}, "3": {"medium": ["호흡기"]}, "4": {}, "5": {"medium": ["일본뇌염"]}, "6": {"medium": ["일본뇌염", "열사병 주의"]}, "7": {"high": ["열사병", "계절성불임"], "medium": ["일본뇌염"]}, "8": {"high": ["열사병", "계절성불임"]}, "9": {"medium": ["계절성불임 후유증"]}, "10": {"medium": ["PRRS", "호흡기"]}, "11": {"medium": ["PED 주의", "호흡기"]}, "12": {"high": ["PED"], "medium": ["호흡기"]}}
+```
+
+### 분류 제외 범위 (유효성 가드)  
+`INTERPRET/CLASSIFY_EXCLUDE_RANGES` · type=`JSON` · ✅ · seq=366
+
+> 분류(RED/YELLOW/GREEN) 판정 시 KPI가 허용 범위 밖이면 해당 규칙을 건너뜀 (잘못된 경보 방지)
+
+```json
+{
+    "PSY": {"min": 0, "max": 45, "desc": "0 이하 또는 45 초과 시 PSY 관련 규칙 제외"},
+    "NPD": {"min": 0, "max": 200, "desc": "0 미만 또는 200 초과 시 NPD 규칙 제외"},
+    "bunmanRate": {"min": 0, "max": 100, "desc": "0 이하면 해당 주 분만 없음 → 제외"},
+    "deathRate": {"min": 0, "max": 99, "desc": "100%면 이유두수 0 → 데이터 이상"},
+    "returnRate7d": {"min": 0, "max": 100, "desc": "100 초과 시 데이터 이상"},
+    "sangsiModon": {"min": 20, "max": 99999, "desc": "20 미만이면 BENCHMARK 대상 아님"}
+  }
+```
+
+### NPD 국내외 벤치마크  
+`INTERPRET/NPD_BENCHMARK` · type=`JSON` · ⛔비활성 · seq=38 · upd 2026-04-29
+
+> PigCHAMP/SEGES/TOPIGS/NIAS 기반
+
+```json
+{"metric": "NPD", "source": "034019", "unit": "일/모돈", "direction": "lower_is_better", "terminology": {"use": "NPD", "do_not_use": ["NPSD"]}, "inspig_grade": {"최우수": "<=30", "우수": "31~40", "보통": "41~55", "주의": "56~65", "위험": ">65"}, "international": {"denmark": {"avg": "15~18", "top10": "10~14"}, "netherlands": {"avg": "18~22", "top10": "14~18"}, "usa_mfnpd": {"avg": 41.4, "top10": "30~38"}, "korea": {"avg": "50~65", "top10": "40~43"}}, "loss": {"kpi_unit": "일/모돈", "loss_unit": "sow-days", "leverage": "NPD 28to14 = PSY +3.2"}}
+```
+
+### 핵심 모니터링 지표 (농장주 관심 26개)  
+`INTERPRET/KEY_MONITOR_KPI` · type=`MD` · ✅ · seq=47 · upd 2026-04-24
+
+```
+농장주가 가장 중요하게 모니터링하는 핵심 지표 (피그플랜 생산성적 보고서 기준)
+
+[주간 리포트 — 주간(W) 실적 지표 중심 (18개)]
+주간에서는 아래 W(주간 원시값) 지표 변동을 우선 감지하고 코멘트에 반영:
+
+모돈현황 (035):
+- 상시모돈수 (035001) — 농장 규모 기준
+- 모돈폐사두수 (035010) — 긴급 경보
+
+교배 (031):
+- 교배복수 (031001) — 주간 핵심
+- 7일내재귀율 (031037) — 번식효율 핵심
+- 4~6일재귀율 (031038)
+- 재발교배비율 (031039)
+
+분만 (032):
+- 분만복수 (032011) — 주간 핵심
+- 분만율 (032012) — 주간 핵심
+- 평균실산 (032026) — 분만당 생산성
+- 생시자돈사고율 (032031)
+- 수태율(46일) (032036)
+
+이유 (033):
+- 이유복수 (033002)
+- 평균이유두수 (033005) — 주간 핵심
+- 이유전폐사율(기간중) (033015)
+- 총이유자돈수 (033020)
+
+주간 지표 코멘트 원칙:
+- 전주 대비 변화량 중심 (절대값보다 변화가 중요)
+- PSY/NPD 등 WY 지표는 "참고" 수준으로만 언급
+- 선행 지표 악화 시 -> 연간 KPI 영향 경고 연결 (KPI_DRIVER_MAP 참조)
+
+[월간 리포트 — 연간 환산(WY) + 주간(W) 종합 (26개)]
+월간에서는 WY(연간 환산) 지표 추세 변화가 유의미하므로 전체 26개 지표 분석:
+
+모돈현황 (035):
+- 상시모돈수 (035001) — 농장 규모 기준
+- 모돈도태율 (035009) — 갱신 상태
+- 모돈폐사두수 (035010) — 긴급 경보
+- 모돈폐사율 (035012) — 긴급 경보
+
+교배 (031):
+- 교배복수 (031001) — 주간 핵심
+- 평균초교배일령 (031025) — 후보돈 관리
+- 4~6일재귀복수 (031030~032) — 핵심 재귀 구간
+- 7일내재귀율 (031037) — 번식효율 핵심
+- 4~6일재귀율 (031038)
+
+분만 (032):
+- 분만율 (032012) — 주간 핵심
+- 총산/실산 (032019/032020) — 합계
+- 평균총산/평균실산 (032025/032026) — 복당 평균
+
+이유 (033):
+- 평균이유두수 (033005) — 주간 핵심
+- 총이유자돈수 (033020)
+
+번식종합 (034, 연간 환산 WY):
+- 평균임신기간 (034002)
+- 평균복당포유기간 (034004)
+- 평균비생산일수 NPD (034019) — 월간 핵심 (주간에서는 참고)
+- 모돈회전율 LSY (034021) — 월간 핵심 (주간에서는 참고)
+- PSY (034023) — 월간 핵심 (주간에서는 참고)
+- 평균출하체중 (034028)
+- MSY (034029/034030) — 월간 핵심 (주간에서는 참고)
+- 총출하두수 (034032)
+
+월간 지표 코멘트 원칙:
+- 4주 평균/합계 기반 추세 분석
+- WY 지표 전월 대비 변화 직접 분석 (PSY, NPD, MSY 등)
+- 전국 분위수 포지션 언급 가능
+- 구조적 원인 분석 포함 (PSY_DRILLDOWN 연계)
+```
+
+### KPI 카드 색상 임계값 (리포트 UI)  
+`INTERPRET/KPI_COLOR_THRESHOLD` · type=`JSON` · ✅ · seq=101 · upd 2026-04-06
+
+> report-generator.ts 하드코딩(PSY>=25, 분만율>=85 등) → DB 전환
+
+```json
+{"PSY": {"green": ">=25", "orange": ">=20", "red": "<20"}, "bunmanRate": {"green": ">=85", "orange": ">=75", "red": "<75", "msg_warning": "<80", "_note": "80% 미만 시 분만율 저조 메시지"}, "returnRate7d": {"green": ">=85", "orange": ">=70", "red": "<70"}, "avgEuCnt": {"green": ">=11", "orange": ">=9", "red": "<9"}, "avgSilsan": {"green": ">=12", "_note": "12두 이상 시 초록색 표시"}, "grade1Rate": {"green": ">=80", "orange": ">=60", "red": "<60"}, "grade1Quality": {"excellent": ">=90", "adequate": ">=70", "poor": "<70"}, "cullingRate": {"good_min": 30, "good_max": 50, "_note": "30% 미만=과소, 30~50%=적정, 50% 초과=과다"}, "_note": "리포트 카드/불릿 색상 분기용"}
+```
+
+### 포유자돈 폐사/생존 색상 임계값  
+`INTERPRET/PIGLET_THRESHOLD` · type=`JSON` · ✅ · seq=121 · upd 2026-06-11
+
+> 포유자돈 폐사 상세 (buildPigletDeath) 색상 기준 — #74
+
+```json
+{"death_rate":{"warning":10,"danger":15,"desc":"이유전폐사율(기간중)(%) — warning 초과 주황, danger 초과 빨강"},"survival_rate":{"good":90,"warning":80,"desc":"포유 생존율(%) — good 이상 녹색, warning 이상 주황, 미만 빨강"},"nursing_rate":{"good":2,"warning":4,"danger":7,"desc":"포유중 폐사율(실산대비,%) [C]day1+ — 2이하 녹색/4이하 주황/7초과 빨강 (구 코드 fallback 4·7 → DB 승격, 행동 무변경)"},"_internal_meta":{"scope":"domain","perinatal_loss_classification":{"policy":"권고 B (2026-06-10 11-agent 학술검수 + Codex R1~R4). 분모·시점·사인이 다른 3 모집단 → 단일 생시사고 합산 절대 금지. born-dead vs born-alive 판별 gold-standard=폐 부유검사","A_born_dead":{"label":"분만 시 사고(사산+미라)/생시자돈사고율","denominator":"총산","source":"TS_PRODUCTIVITY P032 C031생시자돈사고율·C032사산율·C033미라율·C022사산두수·C021미라두수·C019총산","threshold_key":null,"note":"색상임계 미사용(전국비교 diff)·엑셀 정합"},"B_born_alive_day0":{"label":"분만당일 폐사","denominator":"실산","source":"TB_MODON_JADON_TRANS V2 STILLBORN(BUN_DT NOT NULL AND TRUNC(WK_DT)=TRUNC(분만일B))","threshold_key":null,"note":"두수 표시"},"C_born_alive_day1plus":{"label":"포유중 폐사","denominator":"실산","source":"자돈폐사작업 V2 NURSING(day1+)","threshold_key":"nursing_rate"},"PWM_death_rate":{"label":"이유전폐사율(PWM)","formula":"([B]+[C])/실산=born alive 폐사","denominator":"실산","threshold_key":"death_rate","note":"[A](총산 분모)와 합산 금지"},"verified_columns_848W23":"C019총산154·C020실산145·C021미라2·C022사산7·C031=5.8%·C032=4.5%·C033=1.3% (2026-06-11 DB실값 대조)","ssot":"CLAUDE.md 주산기손실3분류 · CODEX_REVIEW_20260610_perinatal_loss_B.md"},"session_ref":"CHANGES_SYNC_20260611.md 0610-29-RULE","created_dt":"2026-06-11","applied_dt":"2026-06-11"}}
+```
+
+### THI 열 스트레스 지수 임계값  
+`INTERPRET/THI_THRESHOLD` · type=`JSON` · ✅ · seq=162 · upd 2026-04-20
+
+> THI(Temperature-Humidity Index) 구간별 스트레스 판정 기준
+
+```json
+{"severe": 82, "moderate": 78, "mild": 72, "comfort_max": 72, "labels": {"severe": "심각 스트레스", "moderate": "중등 스트레스", "mild": "경미 스트레스", "comfort": "쾌적"}, "_note": "THI 78+ 시 수태율 5~15%p 하락, 산자수 0.5~1.0두 감소 (Koketsu 2017)"}
+```
+
+### 임신사고 벤치마크 임계값  
+`INTERPRET/ACCIDENT_BENCHMARK` · type=`JSON` · ✅ · seq=225 · upd 2026-04-20
+
+```json
+{"accident_rate": {"warning": 10, "danger": 15, "national_avg": [8, 10]}, "rebreed_rate": {"warning": 8, "danger": 12, "national_avg": [5, 8]}, "conception_rate_46": {"warning_below": 85, "national_avg": [85, 90]}, "preg_day_threshold": {"rebreed_range": [21, 35], "early_abort_range": [36, 45], "mid_abort_above": 46}, "streak_threshold": 3, "top10_comparison": {"items": ["수태율(46일)", "7일내재귀율", "재발교배비율"], "note": "내농장 vs 전국평균 vs 상위10% 3단 비교 표시"}, "reason_actions": {"재발": "교배 후 재발정 집중 → 수정란 착상 실패 가능성. 정액 품질·교배 타이밍·모돈 BCS 확인.", "유산": "PRRS·PCV2 등 감염성 질환 가능성 검토. 임신돈사 환경(온도·환기) 점검.", "공태": "수태 실패 — 교배 타이밍·정액 품질·자궁 건강 점검.", "불임": "반복 교배 실패 모돈 조기 선별. 번식장애 정밀 검사.", "도태": "사고후 도태 — 사유별 원인 분석(지제·번식·질병) 및 후속 조치.", "폐사": "모돈 폐사는 관리 불량 지표. 원인(질병·외상·열스트레스) 정밀 조사, 부검 의뢰 권장.", "임돈전출": "전출 사유 확인 — 계획된 이동인지 문제성 격리인지 구분.", "임돈판매": "판매 사유 확인 — 고산차 정리 or 문제 모돈 매각 구분."}}
+```
+
+### 출하 도체중/등지방 적정 범위  
+`INTERPRET/SHIPMENT_RANGE` · type=`JSON` · ✅ · seq=102 · upd 2026-06-22
+
+> report-generator.ts + dataset_shipment.py 하드코딩(85/95, 18~22mm 등) → DB 전환
+
+```json
+{"carcass_weight": {"optimal_min": 85, "optimal_max": 95, "detail_optimal_min": 88, "detail_optimal_max": 93, "grade1plus_min": 83, "grade1plus_max": 93, "display_min": 82, "display_max": 98, "_unit": "kg", "_note": "optimal=ETL분류, detail_optimal=리포트적정표시, display=리포트범위, physical=이상치 sanity 물리범위(0612 P-01)", "physical_min": 55, "physical_max": 130}, "backfat": {"optimal_min": 17, "optimal_max": 25, "display_min": 18, "display_max": 22, "warning_above": 25, "_unit": "mm"}, "grade_boundary": {"1+": {"wt_min": 83, "wt_max": 93, "bf_min": 17, "bf_max": 25}, "1": {"wt_min": 80, "wt_max": 97, "bf_min": 15, "bf_max": 27}}, "scatter_area": {"weight_min": 83, "weight_max": 93, "backfat_min": 17, "backfat_max": 25}, "grade1plus_low_pct": "~20%", "grade1plus_mid_pct": "50~60%", "grade1plus_high_pct": "~30%", "grade1plus_note": "KAPE 1+등급 레퍼런스(참조선) — 농장 목표 아님. 소비: monthly-report buildShipGradeWindow(출하구간 표). 도체중밴드=carcass_weight.optimal_min/max·등지방=backfat.warning_above 재사용"}
+```
+
+### 도태/폐사 벤치마크 임계값  
+`INTERPRET/CULLING_BENCHMARK` · type=`JSON` · ✅ · seq=226 · upd 2026-06-22
+
+```json
+{"weekly_rate": {"warning": 1.5, "danger": 2.5, "optimal": [0.5, 1]}, "annual_rate": {"optimal": [35, 45], "warning_above": 50, "warning_below": 30}, "death_rate": {"warning": 10, "national_avg": [8, 10]}, "involuntary_pct": {"warning": 15}, "top_reason_warning_pct": 40, "planned_reasons": ["고령", "노령", "노산"], "reason_actions": {"고령": "계획 도태 — 6~7산 기준 세대교체. 정상.", "노령": "계획 도태 — 6~7산 기준 세대교체. 정상.", "노산": "계획 도태 — 산차별 잔여가치 감소. 정상.", "번식장애": "수태율·재발 연계 점검. 반복재발 모돈 조기 선별 필요.", "무발정": "발정 관찰 강화. BCS·조명·호르몬 검토.", "불수태": "정액 품질·교배 타이밍·자궁염 검사.", "재발": "정액 품질·교배 타이밍·모돈 BCS 확인.", "유산": "PRRS·PCV2 감염성 질환 검사. 임신돈사 환경(온도·환기) 점검.", "유사산": "PRRS·PCV2 검사. 임신 중·후기 관리.", "산자수저하": "영양·정액·유전 관리. 고산차 모돈 선별.", "저유량": "유방 건강·영양 점검.", "지제": "바닥재·사육밀도·발굽 관리 점검 (PigCHAMP 기준 세계 도태원인 2위).", "지질": "바닥재·발굽 관리·사육밀도 점검.", "후지": "후지 파행 — 바닥 미끄럼·발굽 관리.", "관절": "지제 관리 — 바닥재·칼슘 영양.", "허리": "지제 관리 — 사료 칼슘·과체중 관리.", "기립": "기립불능 — 바닥 미끄럼·외상 점검. 조기 도태 결정.", "골절": "외상·바닥 안전 점검.", "발굽": "발굽 절삭·바닥재 관리.", "유방염": "포유 환경 위생 점검. 분만사 바닥·급수기 관리.", "수유불능": "분만 합병증 관리. 유방 건강 점검.", "질탈": "분만 합병증 — BCS·분만 간격 관리.", "자궁탈": "분만 합병증 — BCS·분만 간격 관리.", "저포유": "포유 환경·영양 점검.", "호흡기": "PRRS·마이코플라즈마 검사. 환기·밀도 점검.", "폐질환": "호흡기 검사. 환기 개선.", "소화기": "사료 품질·위생 관리.", "외상": "시설물·바닥 미끄럼·밀사 개선. 공격성 관리(그룹 구성).", "사고": "시설 안전 점검. 사고 원인 분석.", "압사": "분만사 설비 점검. 밀도·공격성 개선.", "체형": "체형 불량 — 영양·사육 관리.", "피부": "피부병 — 위생·환경 관리.", "비뇨": "비뇨기 감염 검사.", "탈장": "수술·도태 검토."}, "top10_comparison": {"items": ["모돈도태율", "모돈폐사율"], "note": "내농장 vs 전국평균 vs 상위10% 3단 비교 표시"}, "monthly_ok_min": 0.5, "monthly_ok_max": 1.0, "monthly_warn": 1.5, "monthly_danger": 2.5}
+```
+
+### 데이터 극단값 가드 (분류 제외 범위)  
+`INTERPRET/DATA_QUALITY_GUARD` · type=`JSON` · ✅ · seq=104
+
+> kpi-rules.ts 극단값 가드 — PSY>45, NPD>200 등 DB 전환
+
+```json
+{"PSY_max": 45, "NPD_max": 200, "returnRate7d_max": 100, "deathRate_max": 100, "sangsiModon_min": 20, "_note": "kpi-rules.ts sanitizeMetrics() 하드코딩 대체. 범위 밖 데이터는 분류에서 제외"}
+```
+
+### 시스템 기본값 (TC_FARM_CONFIG 미설정 시 fallback)  
+`INTERPRET/SYSTEM_DEFAULTS` · type=`JSON` · ✅ · seq=106 · upd 2026-04-29
+
+> farm_config 미설정 농장 fallback. 농장설정이 있으면 반드시 농장설정 우선
+
+```json
+{
+  "preg_period": 115,
+  "wean_period": 21,
+  "avg_return": 7,
+  "rearing_rate": 90,
+  "first_gb_day": 240,
+  "ship_age": 180,
+  "avg_net_kg": 95,
+  "price_base_kg": 5200,
+  "psy_target": 28,
+  "_priority": "농장설정 > 시스템 기본값. 농장설정 존재 시 기본값 사용 금지",
+  "_note": "psy_target: 개선 시뮬레이션 목표 PSY (한국 상위 농장 수준)",
+  "_internal_meta": {
+    "farm_config_table": "TC_FARM_CONFIG"
+  }
+}
+```
+
+### 계절 보정 기대치  
+`INTERPRET/SEASONAL_BENCHMARK` · type=`JSON` · ✅ · seq=161
+
+> 월별 KPI 보정계수 — 고온기 기대치 하향, 한냉기 상향
+
+```json
+{"bunmanRate":{"1":0,"2":0,"3":0,"4":0,"5":-2,"6":-3,"7":-5,"8":-5,"9":-3,"10":0,"11":2,"12":1},"returnRate7d":{"1":0,"2":0,"3":0,"4":0,"5":-1,"6":-2,"7":-3,"8":-3,"9":-2,"10":0,"11":1,"12":0},"avgSilsan":{"1":0,"2":0,"3":0,"4":0,"5":0,"6":-0.3,"7":-0.5,"8":-0.5,"9":-0.3,"10":0,"11":0,"12":0},"_note":"양수=기대치 상향, 음수=기대치 하향"}
+```
+
+### 산차분포 자동진단 기준  
+`INTERPRET/PARITY_STRUCTURE` · type=`JSON` · ✅ · seq=181
+
+> 산차분포 5개 규칙 자동진단 (후보돈비율/생산최적/고산차/8산+/평균산차)
+
+```json
+{"replacement_pct":{"optimal_min":10,"optimal_max":15,"_low":"보충 부족 — 향후 모돈두수 감소 우려","_high":"과잉 보충 — 비생산 두일 증가"},"golden_pct":{"optimal_min":50,"optimal_max":60,"_note":"생산최적구간(2~5산) 비율","_low":"생산적 모돈 부족 — PSY 하락 예상"},"aging_pct":{"warning":20,"_note":"고산차(6산 이상) 비율","_high":"고산차 과다 — 도태 지연"},"over8_pct":{"warning":5,"_note":"8산 이상 즉시 도태 대상","_high":"즉시 도태 대상 적체"},"avg_parity":{"optimal_min":3,"optimal_max":3.5,"_high":"고령화 진행 — 갱신 가속 필요","_low":"초산/2산 과다 — 최고 생산기 부족"}}
+```
+
+### 인근 질병 경보 반경 룰  
+`INTERPRET/DISEASE_RADIUS` · type=`JSON` · ✅ · seq=462
+
+> 인근 질병 경보 반경 단일화. 상세/경보=30km·요약카운트=50km. 코드 50km vs 프로토 30km 불일치 해소(빌드플랜 §9.0/H2).
+
+```json
+{
+  "version": "1.0",
+  "updated": "2026-06-18",
+  "radius_km": 30,
+  "nearby_radius_km": 30,
+  "detail_radius_km": 30,
+  "summary_radius_km": 50,
+  "window_days": 90,
+  "disease_scope": ["ASF", "PED", "PRRS", "FMD"],
+  "alert_tiers": {
+    "RED": {"max_km": 10, "label": "초근접"},
+    "ORANGE": {"max_km": 20, "label": "근접"},
+    "YELLOW": {"max_km": 30, "label": "경계"}
+  },
+  "note": "차단방역 경보 반경 단일화. 상세 노출/경보 = 30km(detail_radius_km), 요약 카운트 집계 = 50km(summary_radius_km). 기존 코드 NEARBY_RADIUS_KM=50 → detail 30 으로 정합(프로토타입 30km 기준 채택).",
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": [
+      "etl.dataset_disease_nearby (NEARBY_RADIUS_KM fallback → 룰 로딩)",
+      "monthly_report.sec-summary-biosec.nearby_alert",
+      "monthly_ai_prompt.biosecurity_section"
+    ],
+    "shared_with_weekly": false,
+    "sources": [
+      "농림축산검역본부 가축전염병 발생정보",
+      "빌드플랜 §9.0 / H2 — 코드 50km vs 프로토 30km 불일치 해소"
+    ],
+    "spec_doc": "etl/07_ASF_CRAWLER.md",
+    "session_ref": "CHANGES_SYNC_20260618.md § monthly WP5 A6",
+    "code_hardcode_ref": "dataset_disease_nearby.py NEARBY_RADIUS_KM=50.0 → 본 룰 detail_radius_km(30)·summary_radius_km(50) 로딩으로 단일화. 코드 fallback 만 유지.",
+    "created_dt": "2026-06-18",
+    "applied_dt": null
+  }
+}
+```
+
+### 배치 집중도(HHI) 판정 기준  
+`INTERPRET/BATCH_CONCENTRATION` · type=`JSON` · ✅ · seq=182 · upd 2026-04-13
+
+> v3: AIAO 판정 임계값 + 전국통계 포함
+
+```json
+{
+  "excellent": {
+    "min": 0.6,
+    "label": "우수"
+  },
+  "normal": {
+    "min": 0.3,
+    "max": 0.6,
+    "label": "보통"
+  },
+  "poor": {
+    "max": 0.3,
+    "label": "미흡"
+  },
+  "_note": "HHI = 허핀달-허쉬만 지수. 교배 요일 집중도 판정. 높을수록 일괄작업 양호",
+  "aiao_criteria": {
+    "top1_threshold": 0.5,
+    "consec2_threshold": 0.7,
+    "note": "Top-1 요일 >=50% 또는 연속2일 >=70% → AIAO 판정"
+  },
+  "aiao_farm_note": "AIAO 농장의 쉬는 주에는 HHI 판정을 생략합니다.",
+  "national_stats": {
+    "aiao_pct": 66.0,
+    "top10_aiao_pct": 84.2,
+    "note": "피그플랜 2026 기준, 상시모돈>=20두"
+  }
+}
+```
+
+### 배치 주기 감지 설정  
+`INTERPRET/BATCH_CYCLE_CONFIG` · type=`JSON` · ✅ · seq=201 · upd 2026-04-13
+
+> v3: AIAO 2단계 — 1)Top1>=50% or 연속2일>=70% + 2)주기 fitness>=0.70
+
+```json
+{
+  "min_analysis_weeks": 16,
+  "cycle_candidates": [
+    2,
+    3,
+    4
+  ],
+  "on_week_min_ratio": 0.05,
+  "off_week_exception_max_ratio_sangsi": 0.05,
+  "off_week_exception_ratio": 0.15,
+  "fitness_threshold": 0.7,
+  "min_on_week_observations": 3,
+  "exception_week_max_ratio": 0.5,
+  "dow_top1_threshold": 0.5,
+  "dow_consec2_threshold": 0.7,
+  "dow_min_total": 20,
+  "dow_analysis_weeks": 26
+}
+```
+
+### 농장 차등화 분석 기준  
+`INTERPRET/FARM_DIFFERENTIATION` · type=`MD` · ✅ · seq=183 · upd 2026-04-10
+
+> 농장별 차등 분석 5개 요소: 생산일관성(CV), 후보돈투입율, 계절회복탄력성, 개선궤적, 지역질병압력
+
+```
+[농장 차등화 분석 요소] 제공 시, 아래 원칙에 따라 농장 특성에 맞는 분석 수행:
+
+- **생산 일관성(CV)**: CV>10%는 불안정 농장 — 단기 변동 해석 시 주의. CV<5%는 안정 — 미세 변화도 의미 있음
+- **개선 궤적**: 현재 등급보다 방향이 중요. 악화 추세면 현재 양호해도 경고, 개선 추세면 현재 미흡해도 격려
+- **후보돈 투입율**: 12~20% 적정. 부족 시 "돈군 고령화 → 향후 PSY 하락" 경고. 과다 시 "비생산일 증가" 주의
+- **지역 질병 압력**: ASF 10km 이내 시 차단방역 강조. 계절 질병(PED/열사병)과 중첩 시 이중 경보
+- **계절 회복탄력성**: 여름 편차 -2 이상이면 "고온 취약 농장" — 시설 개선/환기 강화 제안. 편차 미미하면 언급 생략
+- ❌ 모든 요소를 기계적으로 나열 금지 → ✅ 해당 농장에 의미 있는 요소만 선별하여 자연스럽게 반영
+```
+
+### 주변 질병 3단계 경보 판정 기준  
+`INTERPRET/DISEASE_ALERT_LEVEL` · type=`JSON` · ✅ · seq=262
+
+> 주변 질병 3단계 경보 판정 기준
+
+```json
+{"RED": {"label": "🔴 즉시 경보", "condition": "반경 이내 + 7일 이내 발생", "color": "var(--red)"}, "YELLOW": {"label": "🟡 주의", "condition": "반경 이내 + alertDays 이내 · 또는 반경 외곽 7일 이내", "color": "var(--orange)"}, "GREEN": {"label": "🟢 평시", "condition": "반경 외 alertDays 초과 또는 발생 없음", "color": "var(--green)"}}
+```
+
+### AI 코멘트 통합 임계값 (5 탭 산발 하드코딩 통합)  
+`INTERPRET/AI_COMMENT_THRESHOLDS` · type=`JSON` · ✅ · seq=282 · upd 2026-06-09
+
+> [2026-04-24 세션 Z] 5 agent 검수에서 산발 하드코딩 8건 발견 → 통합 단일 룰 신설. 코드 fallback과 동일 값으로 회귀 0.
+
+```json
+{"weather": {"high_temp_warning_c": 30}, "piglet_age": {"day0_concentration_critical_pct": 60}, "national_compare": {"deathrate_excess_pct": 2, "deathrate_good_pct": -1, "saengsi_excess_pct": 2}, "batch_cycle": {"deathrate_formula_gap_threshold_pct": 10, "dow_top_concentration_pct": 50, "dow_consec2_concentration_pct": 70}, "shipment": {"grade1_green_threshold_pct": 80}, "loss_calc": {"piglet_growth_rate_pct": 85}}
+```
+
+### 경락가격 표준 산출 기준  
+`INTERPRET/MARKET_PRICE_STD` · type=`MD` · ✅ · seq=39 · upd 2026-04-29
+
+```
+전국 탕박 등외제외 두수 가중평균 (레거시 cardPrice 동일)
+시세 상세 데이터 조회 조건: 도축장=전국합산(057016), 등급=등외제외(ST), 탕박여부=Y, 등급판정성별 무관
+평균 = SUM(거래두수 × 거래가격) ÷ SUM(거래두수) (두수 가중평균)
+최저/최고도 함께 표시
+```
+
+---
+
+## DIAGNOSIS
+**진단 추론 경로** · 12개 룰
+
+### PSY 진단 + 손실 원인 추론 경로  
+`DIAGNOSIS/PSY_DRILLDOWN` · type=`MD` · ✅ · seq=18 · upd 2026-06-08
+
+> 12_DIAGNOSIS_LOGIC.md — MD파일 직접 로딩 병행
+
+```
+PSY(모돈당 연간 이유두수) 구성요소 자동 분해 및 기여도 산출.
+
+§1 PSY 공식
+PSY = 분만율 × (임신사고 이상 없는 모돈 비율) × 평균 실산수 × (1 - 이유전폐사율(기간중)) × 모돈회전수
+     ≈ (365 / PSY_cycle_days) × avg_piglets_weaned_per_litter
+
+여기서 PSY_cycle_days = 임신일수(114) + 포유일수(설정값) + WEI + NPD_버퍼
+
+§2 NPD 버퍼 계산 — **순수 NPD만 사용** (Phase 11 변경)
+- 입력 지연은 NPD 버퍼 계산에서 **제외**
+- 미입력 의심 모돈은 PSY 모수에서 **제외** (과소/과대 평가 방지)
+- 계산 데이터: LOSS_CALC/S9_NPD에서 제공하는 breakdown 사용
+
+§3 6-Component 분해
+1. 분만율           (32012) — target 88%+
+2. 수태율 (재발률)   — 재귀 패턴 역산
+3. 임신사고율        (유산·사산·미이라)
+4. 평균 실산수       (32026)
+5. 이유전폐사율(기간중) (033015)
+6. **NPD 순수 지연** (위 §2, 입력 지연 제외)
+
+§4 기여도 산출 (정량화)
+- 내 농장 PSY vs 상위10% PSY 격차를 6-component 각각에 % 기여도로 분해
+- ⚠ 아래 예시의 숫자({N}·{a}% 등)는 형식 설명용 자리표시일 뿐이다. 절대 복사하지 말고 반드시 실제 데이터셋 PSY_DRILLDOWN 산출값으로 대체할 것.
+- 예시 형식: "내 농장 PSY {N1} vs 상위10% {N2} (격차 {N3})
+       → 분만율 기여 {a}%, 재발 {b}%, NPD {c}%, 실산 {d}%, 사고 {e}%, 폐사 {f}%"
+  (기여도 6개 합 = 100%)
+
+§5 AI 프롬프트 주입 방식
+- datasets.PSY_DRILLDOWN 결과를 AI 분석 프롬프트 §2 "취약점 진단" 섹션에 주입
+- 기여도 상위 2개 component를 집중 진단 대상으로 제안
+- 입력 지연이 상위 기여일 경우 별도 DIAGNOSIS/INPUT_DELAY_IMPACT 룰로 분기 안내
+
+§6 해석 템플릿
+- 분만율 기여 ≥ 30%: "분만율 저하가 PSY 격차의 주원인"
+- NPD 순수 기여 ≥ 25%: "생리학적 지연 (WEI·사고후·전입후)이 PSY 제약"
+- 재발/사고 기여 ≥ 20%: "수태 품질 이슈가 PSY 저하 기여"
+- 모든 기여 < 20% 고루: "전반적 저성적 — 다차원 관리 필요"
+```
+
+### 출하 품질 진단 경로  
+`DIAGNOSIS/SHIPMENT_DIAGNOSIS` · type=`MD` · ✅ · seq=30
+
+> 12_DIAGNOSIS_LOGIC.md §2
+
+```
+1등급이상 합격율 < 60% 시 등급 진단:
+- 도체중 이탈?
+  under_85 비율 높음 -> 조기출하, 85~95kg 미달 -> 육성율/성장지연 확인
+  over_95 비율 높음 -> 과비출하, 등지방 상승 등급하락 -> 사료급여 조절
+- 등지방 과다? avg_back_depth > 25mm -> 출하 2~3주 전 사료 제한
+- 경락가 vs 출하농장 평균 차이 >500원/kg -> 출하 시장/경로 점검
+
+일별 상세 진단 (daily 데이터):
+- 특정일 1등급이상비율이 주간 평균의 70% 미만 -> 해당일 출하분 배치 점검
+- 등지방 후반부 > 전반부 + 1mm -> 후반부 등지방 증가 추세, 사료 조절
+- 특정일 출하두수 > 전체 50% -> 올인올아웃 일괄출하 확인 (의도적이면 정상)
+
+성별 분포 진단 (by_sex 데이터):
+- 수컷(male) 비율 > 3% -> 거세 미흡, 수컷 잔존율 점검
+- 거세(castrated) 비율 < 40% 또는 > 70% -> 성별 편향, 입식 균형 확인
+
+산점도 진단 (scatter 데이터):
+- 1+ 영역(83~93kg, 17~25mm) 포함 비율 < 30% -> 등급 적정영역 진입율 저조
+- 영역 밖 비율 > 50% -> 도체중/등지방 분산 과다, 균일 출하 관리
+```
+
+### 계절성 진단 경로  
+`DIAGNOSIS/SEASONAL_DIAGNOSIS` · type=`MD` · ✅ · seq=31 · upd 2026-04-29
+
+> 12_DIAGNOSIS_LOGIC.md §4
+
+```
+여름(6~9월) 일최고기온 > 30°C 지속:
+- 교배복수 감소 → "고온 수태율 저하"
+- 재발교배비율 상승 → "열스트레스 배아사 증가"
+- 사산 증가 → "분만시 고온 영향"
+- 제안: 쿨링시스템, 교배시간대 조절(새벽/야간), 급수량 확인
+겨울(12~2월) 일최저기온 < -10°C:
+- 포유자돈 폐사 증가 → 동사 비율 확인
+- 제안: 보온등/히팅패드 점검, 분만사 20~25°C 유지
+환절기 일교차 > 15°C:
+- 호흡기 질환 리스크 → 환기량 조절
+```
+
+### 입력지연 + 예정달성율 + 산차도태 진단  
+`DIAGNOSIS/INPUT_DELAY_DIAG` · type=`MD` · ✅ · seq=32
+
+> 12_DIAGNOSIS_LOGIC.md §5+§6+§7 통합
+
+```
+입력지연 > 3일 시:
+- 작업구분별: 교배(G)지연>5일=재귀율부정확, 분만(B)=이유예정부정확, 이유(E)=교배예정부정확
+- 당일입력율 < 50% → AI 리포트에 경고배지
+- 지연 > 7일 → RED 분류(R9), 면책 표시
+예정대비 달성율:
+- 교배: BREEDING.total / SCHEDULE_FORECAST.mating × 100, <70%=계획미달
+- 분만: 실제분만 / 예정분만, <70%=분만지연/임신사고 가능
+- 이유: 실제이유 / 예정이유, <70%=포유기간 초과
+산차별 도태적기:
+- FARROWING_PERF.by_parity에서 avg_silsan 정점 산차 특정 (보통 3~5산)
+- 정점 대비 20%+ 하락 산차 = 도태 검토 시점
+- avg_nursing_loss 급증 산차 특정
+- 현재 도태산차 < 최적 → "조기도태, 잔여가치 손실"
+- 현재 도태산차 > 최적+2 → "과다유지, 생산성 저하"
+```
+
+### 손실 원인 진단 경로  
+`DIAGNOSIS/LOSS_DIAGNOSIS` · type=`MD` · ✅ · seq=33 · upd 2026-06-08
+
+> 12_DIAGNOSIS_LOGIC.md §3+§8 통합
+
+```
+손실 원인 진단 (손실 산출 룰 계산 결과 기반):
+
+총 손실은 손실 산출 룰의 계산식으로 농장별 산출된 값(단위: 원).
+DIAGNOSIS는 산출된 결과를 어떻게 해석할지를 정의.
+
+[주간 리포트 — 핵심 손실 요약]
+- 비중 최대 1~2개 항목만 표시 + 전주 대비 변화율
+- 급증(+50%) 시 경고 배지
+- 간결한 행동 제안 1줄
+- 예시 형식(아래 숫자는 형식 예시일 뿐 — 실제 농장 계산값으로 치환, 예시 숫자 그대로 복사 금지): "임신사고 손실 {amount}만원(비중 {pct}%) — 전주 대비 {±N}%, 공태/재발 점검 필요"
+
+[월간 리포트 — 전체 구조 분석]
+전체 항목별 기여도 분석 + 전국 P75 비교 + NPD 시뮬레이션 포함:
+
+--- 진단 대상 판정 (상대 비교, 절대값 없음) ---
+1) 모돈당 환산: 모돈당 손실 = 총 손실 ÷ 상시모돈수
+2) 전국 비교: 해당 주차 전체 농장 분포에서 P75 산출
+   - 모돈당 손실 > 전국 P75 -> 손실 진단 (상위 25% 고손실 농장)
+   - P75 미산출 시: 전주 대비 +50% 증가 여부로 판정
+3) 전주 대비 변화율 = (금주-전주)÷전주 × 100
+   - +50% -> 급증 경고, +100% -> 긴급
+
+--- 도폐사 손실 산정 원칙 (핵심) ---
+대상: 도태(080001) + 폐사(080002)만. 전출(080003)/판매(080004) = 자산이동, 손실 아님.
+실제 산차 = 입식산차 + 분만 횟수 (분만 작업기록)
+
+산차별 손실 적용:
+- 0~2산 도태 -> 조기도태, 잔여가치 손실 극대 (도태 잔여가치 룰 적용)
+- 3~5산 도태 -> 생산기 도태, 잔여가치 손실
+- 6~7산 도태 -> 적정 도태시기(국내 기준), 손실 최소 (잔여가치 0~80만원)
+- 8산+ 도태 -> 정상 도태, 손실 = 0 (오히려 도태 권장)
+- 0~5산 폐사 -> 전량 손실 (잔존가치 0, 잔여생산가치 전액)
+- 6~7산 폐사 -> 소액 손실 (잔여가치 0~80만원 + 잔존가치 0)
+- 8산+ 폐사 -> 노령 폐사, 손실 = 0 (정상 생애 종료)
+
+--- 항목별 기여도 분석 ---
+각 항목 ÷ 총 손실 = 비중(%). 비중 최대 항목이 주원인:
+- 임신사고 비중 최대 -> PSY 분석 트리 3) 분만율 진단
+- 모돈 도폐사 비중 최대
+  -> 조기도태(0~5산) 비율 높으면: 도태 기준 재검토
+  -> 폐사 비율 높으면: 모돈 건강/질병 점검
+- 출하등급 비중 최대 -> 출하 분석 트리 연결
+- 자돈폐사 비중 최대 -> 자돈폐사 사유별 분석
+
+--- NPD 개선 시뮬레이션 ---
+NPD 1일 가치(원): 농장별 산출
+NPD 현재값 > 목표값 + 20 -> 개선 효과 금액 제시
+
+리포트 출력:
+- 손실분석: 모돈당 금액 + 비중 최대 항목 + 전주대비 변화율 + 전국 비교
+- 개선포인트: 비중 최대 항목의 진단 트리 결과 -> 구체적 행동 제안
+
+<!-- _internal_meta
+- 도폐사 출고구분: OUT_GUBUN_CD IN ('080001','080002')
+- 산차 산출: IN_SANCHA + COUNT(TB_MODON_WK WK_GUBUN='B')
+- 모돈수: TS_PRODUCTIVITY PCODE=035001 C001
+- 항목 약어: LOSS_TOTAL/LOSS_SG/LOSS_DOPE/LOSS_GRADE/LOSS_NURSERY
+- NPD 가치 컬럼: NPD_VAL_1DAY (TS_INS_AI_LOSS)
+-->
+```
+
+### 핵심 처방 보존 룰 (회귀 차단)  
+`DIAGNOSIS/CORE_PRESCRIPTION_PRESERVE` · type=`MD` · ✅ · seq=381 · upd 2026-06-08
+
+> 4301/1134 회귀 사건 후 신설
+
+```
+## 핵심 처방 보존 — 만성·고위험 농가 액션 누락 금지
+
+본 룰은 AI 가 응답 토큰 절약을 위해 핵심 처방을 일반화/축약/누락하는 회귀를 차단합니다.
+**이전 주차 분석에서 등장했던 "구체 두수·시점·KPI 임계 명시 액션"은 신규 분석에서도 보존**해야 하며,
+새로운 더 시급한 이슈가 등장한 경우에도 step5_todo_extras 또는 sections 안에 반드시 흔적을 남겨야 합니다.
+
+⚠ 아래 예시의 N 은 형식 자리표시자 — 반드시 입력으로 제공된 실측 KPI 값으로만 채우고,
+   입력에 없는 비교 기준(예: 5년 최고/최저 대비 격차 등 미제공 지표)은 임의로 만들어 쓰지 마십시오.
+
+### 보존 의무 액션 (체크리스트)
+
+다음 데이터 조건이 활성이면 해당 처방을 plan/sections 내 명시적으로 작성:
+
+1. **재발교배비율 5% 이상** (입력으로 제공된 재발교배비율 절대값 기준)
+   - "재발교배 N% 발정탐지 강화 (24시간 발정 관찰·웅돈 자극·인공조명 16시간)"
+   - 5주 연속 1위 취약점이면 "5주 추적 사유 구조적 점검" 액션 추가
+
+2. **이유전폐사율 15% 이상 이고 체중미달 N두 이상 발생**
+   - "체중미달 N두 대리 수유모 24시간 내 배정"
+   - "모돈 임신 후기 사료 +0.5kg/일 · BCS 3.0~3.5 유지" 동시 명시
+
+3. **분만지연 N두 (예정일 +3일 이상 지연 모돈) 존재**
+   - "분만지연 N두 분만유도제 검토 + 분만 입회 모니터링"
+   - 누락 시 비생산일수 손실 누적 — 매주 재분석에도 동일 액션 보존
+
+4. **사고후미교배 N두 (재발/유산/공태 후 30일+ 미교배 모돈) 존재**
+   - "사고후미교배 N두 평균 N일 — 임신진단 + 도태 검토"
+   - 처방 텍스트는 두 수와 평균 일 수 모두 명시
+
+5. **농장 ASF 근접 경보 (RED/ORANGE) 활성 농가**
+   - "ASF 발생지 N km 차단방역 강화 (외부인 출입 통제·차량 소독·사료반입 분리)"
+   - 농장 좌표·발생지 거리 데이터 활용한 농장 고유 액션 작성
+
+### 액션 우선순위 변경 시 처리
+
+신규 분석에서 더 시급한 이슈가 등장하면:
+- plan 의 1순위는 신규 시급 이슈
+- 단, 직전 분석 핵심 처방은 step5_todo_extras 의 보조 액션으로 반드시 존치
+- step2_cause_refs.weakness 에서 만성 KPI 추세 언급으로 흔적 보존
+
+### 위반 사례 (보존 실패 = 추적 약화 · 숫자는 형식 예시일 뿐 복사 금지)
+
+- 직전 weakness 에 취약 KPI(예: 재발교배 N%)를 명시했으나 plan 액션에 발정탐지/대리수유모를 누락한 경우 — 추적 약화
+- 직전 plan 의 분만지연 N두 · 사고후미교배 N두 · ASF N km 차단방역 처방이 신규 plan 에서 모두 사라진 경우 — 농장주 신뢰 훼손
+```
+
+### 경영진단 KPI 인과 매핑 + 리포트 가이드  
+`DIAGNOSIS/KPI_DRIVER_MAP` · type=`JSON` · ✅ · seq=122 · upd 2026-04-24
+
+> 경영진단 탭 — 연간 취약 KPI→주간 선행 지표 인과 매핑 + 주간/월간 리포트 가이드 — #74
+
+```json
+{"kpi_drivers": {"PSY(년)": {"formula": "365 / (임신기간 + 포유기간 + NPD) x 평균이유두수", "drivers": [{"field": "avgEuCnt", "label": "평균이유두수", "unit": "두", "higher_is_better": true}, {"field": "avgPoyuPeriod", "label": "포유기간", "unit": "일", "higher_is_better": false}, {"field": "bunmanRate", "label": "분만율", "unit": "%", "higher_is_better": true}, {"field": "gyobaeCnt", "label": "교배복수", "unit": "복", "higher_is_better": true}, {"field": "returnRate7d", "label": "7일내재귀율", "unit": "%", "higher_is_better": true}], "weekly_focus": "교배복수/재귀율/분만율/이유두수 변화 추적", "monthly_focus": "PSY 공식 분해: NPD/이유두수/포유기간 각각의 기여도 분석"}, "NPD(년)": {"formula": "총모돈사육일수 - 임신일수 - 포유일수 (연환산)", "sub_components": ["이유~교배(일)", "교배~사고(일)", "사고~교배(일)", "이유~도폐(일)", "사고~도폐(일)", "도태기간"], "drivers": [{"field": "avgEuToGbPeriod", "label": "이유~교배(일)", "unit": "일", "higher_is_better": false}, {"field": "avgSgToGbPeriod", "label": "사고~교배(일)", "unit": "일", "higher_is_better": false}, {"field": "avgGyobaeHuPeriod", "label": "교배~사고(일)", "unit": "일", "higher_is_better": false}, {"field": "returnRate7d", "label": "7일내재귀율", "unit": "%", "higher_is_better": true}, {"field": "rebreedRate", "label": "재발교배비율", "unit": "%", "higher_is_better": false}], "weekly_focus": "이유~교배 간격(WSI) + 재발교배비율 추적", "monthly_focus": "NPD 6종 구간별 기여도 분석"}, "MSY(년)": {"formula": "출하두수 x 365 / (모돈사육일수 - 후보돈사육일수)", "drivers": [{"field": "deathRate", "label": "이유전폐사율(기간중)", "unit": "%", "higher_is_better": false}, {"field": "avgEuCnt", "label": "평균이유두수", "unit": "두", "higher_is_better": true}], "note": "육성율 = MSY/PSY. 한국 평균 85.7%", "weekly_focus": "포유자돈 폐사 추이 + 출하두수 모니터링", "monthly_focus": "육성율(MSY/PSY) 추이 + 전 구간 생존율 분석"}, "LSY(년)": {"formula": "분만복수 x 365 / (모돈사육일수 - 후보돈사육일수)", "drivers": [{"field": "bunmanRate", "label": "분만율", "unit": "%", "higher_is_better": true}, {"field": "avgPoyuPeriod", "label": "포유기간", "unit": "일", "higher_is_better": false}, {"field": "bunmanCnt", "label": "분만복수", "unit": "복", "higher_is_better": true}], "weekly_focus": "분만율/포유기간 변동 추적", "monthly_focus": "모돈 회전율 추세 + 분만간격 분석"}, "분만율": {"formula": "분만복수 / (분만복수 + 임신사고두수) x 100", "drivers": [{"field": "rebreedRate", "label": "재발교배비율", "unit": "%", "higher_is_better": false}, {"field": "suteRate46", "label": "수태율(46일)", "unit": "%", "higher_is_better": true}], "weekly_focus": "재발/유산 발생 여부 즉시 확인", "monthly_focus": "임신사고 유형별(재발/유산/공태/도태) 구성비 분석"}, "이유전폐사율(기간중)": {"formula": "100 - (총이유자돈수 / (총이유자돈수 + 총입력자돈폐사두수)) x 100", "drivers": [{"field": "saengsiAccidentRate", "label": "생시사고율", "unit": "%", "higher_is_better": false}, {"field": "avgSilsan", "label": "평균실산", "unit": "두", "higher_is_better": true}], "weekly_focus": "생시사고/포유중폐사 사유별 추적", "monthly_focus": "일령구간별 폐사 패턴 + 산차별 분만성과 연계"}, "평균실산": {"formula": "실산합계 / 분만복수", "drivers": [{"field": "avgChongsan", "label": "평균총산", "unit": "두", "higher_is_better": true}, {"field": "sasanRate", "label": "사산율", "unit": "%", "higher_is_better": false}, {"field": "miraRate", "label": "미라율", "unit": "%", "higher_is_better": false}], "weekly_focus": "사산/미라 발생 추이 확인", "monthly_focus": "산차별 실산수 추이 + 고산차 실산 저하 분석"}, "모돈도태율": {"formula": "도태모돈수 / 상시모돈수 x 100", "drivers": [{"field": "modonDeathCnt", "label": "모돈폐사두수", "unit": "두", "higher_is_better": false}], "weekly_focus": "폐사두수 급증 여부 경보", "monthly_focus": "산차별 도태 적기 분석 + 조기도태(0~5산) 비율"}, "재발교배비율": {"drivers": [{"field": "suteRate46", "label": "수태율(46일)", "unit": "%", "higher_is_better": true}], "weekly_focus": "수태율 변동 확인", "monthly_focus": "정규/비정규 재발 구분 + 정액품질 점검"}, "7일내재귀율": {"drivers": [{"field": "gyobaeCnt", "label": "교배복수", "unit": "복", "higher_is_better": true}, {"field": "euBoksu", "label": "이유복수", "unit": "복", "higher_is_better": true}], "weekly_focus": "이유후 교배 지연 모니터링", "monthly_focus": "WSI 분포 + 보어자극/광조절 효과 분석"}, "수태율(46일)": {"drivers": [{"field": "rebreedRate", "label": "재발교배비율", "unit": "%", "higher_is_better": false}], "weekly_focus": "재발교배 발생 추적", "monthly_focus": "교배방법별(AI/본교배) 수태율 차이 분석"}, "사산율": {"formula": "사산합계 / 총산합계 x 100", "drivers": [{"field": "avgChongsan", "label": "평균총산", "unit": "두", "higher_is_better": true}, {"field": "bunmanCnt", "label": "분만복수", "unit": "복", "higher_is_better": true}], "weekly_focus": "사산 발생 추이 확인", "monthly_focus": "산차별 사산율 + 분만입회율 연계 분석"}, "미라율": {"formula": "미라합계 / 총산합계 x 100", "drivers": [{"field": "avgChongsan", "label": "평균총산", "unit": "두", "higher_is_better": true}], "weekly_focus": "미라 발생 추이 확인", "monthly_focus": "임신중기 관리(환경/질병) 연계 분석"}, "모돈폐사율": {"drivers": [{"field": "modonDeathCnt", "label": "모돈폐사두수", "unit": "두", "higher_is_better": false}], "weekly_focus": "폐사두수 급증 여부 긴급 경보", "monthly_focus": "폐사 원인별(질병/사고/노령) 구성 분석"}, "평균이유두수": {"formula": "총이유자돈수 / 이유복수", "drivers": [{"field": "avgSilsan", "label": "평균실산", "unit": "두", "higher_is_better": true}, {"field": "deathRateVsSilsan", "label": "이유전폐사율(실산대비) — 보조 산식, 코호트 기준", "unit": "%", "higher_is_better": false}], "weekly_focus": "평균실산 변동 + 이유전폐사율(기간중) 추적", "monthly_focus": "산차별 이유두수 추이 + 양자 영향 분석"}}, "psy_formula": {"desc": "PSY = 365 / (임신기간 + 포유기간 + NPD) x 평균이유두수", "components": {"임신기간": {"pcode": "034", "ccode": "C002", "typical": "114일", "variability": "low"}, "포유기간": {"pcode": "034", "ccode": "C004", "typical": "21~28일", "variability": "medium"}, "NPD": {"pcode": "034", "ccode": "C019", "typical": "KR 50~65, DK 15~18", "variability": "high"}, "평균이유두수": {"pcode": "033", "ccode": "C005", "typical": "11~13두", "variability": "medium"}}, "improvement_priority": "NPD > 이유두수 > 포유기간"}, "npd_decomposition": {"desc": "NPD = 총모돈사육일수 - 임신일수 - 포유일수", "sub_intervals": {"이유~교배(일)": {"source": "TS_PRODUCTIVITY 034 C005", "field": "avgEuToGbPeriod", "collected": true}, "교배~사고(일)": {"source": "TS_PRODUCTIVITY 034 C003", "field": "avgGyobaeHuPeriod", "collected": true}, "사고~교배(일)": {"source": "TS_PRODUCTIVITY 034 C006", "field": "avgSgToGbPeriod", "collected": true}, "이유~도폐(일)": {"source": "TS_PRODUCTIVITY 034 C007", "field": "avgEuToDopePeriod", "collected": true}, "사고~도폐(일)": {"source": "TS_PRODUCTIVITY 034 C008", "field": "avgSgToDopePeriod", "collected": true}, "도태기간": {"source": "TS_PRODUCTIVITY 034 C009", "field": "avgCullingPeriod", "collected": true}}, "note": "TS_PRODUCTIVITY 034 C003~C010에서 전체 6종 수집 완료"}, "report_guide": {"weekly": {"title": "경영진단 AI 분석", "purpose": "취약 연간 KPI의 주간 선행 지표 변화를 추적", "note": "WY 절대값보다 W 선행 지표 변화에 집중"}, "monthly": {"title": "월간 경영진단", "purpose": "PSY 공식 분해 + NPD 구간별 분석 + 중장기 전략", "note": "WY값 추세 변화 직접 분석 가능"}}}
+```
+
+### 다축 경영진단 분석 지침  
+`DIAGNOSIS/MULTI_AXIS_GUIDE` · type=`MD` · ✅ · seq=205 · upd 2026-04-10
+
+> 전년동기/동류규모/환경/질병/분류이력 등 다축 데이터 활용 지침
+
+```
+아래 섹션이 프롬프트에 포함된 경우 반드시 comment/plan에 반영:
+
+- **[전년 동기 비교]**: 계절 효과를 제거한 순수 성적 변화 평가. 전년 대비 개선은 긍정적으로, 악화는 원인 추론.
+- **[동류 규모 비교]**: 전국평균보다 **동일 규모(소/중/대) 평균**을 우선 비교. 소규모 농장은 표본 변동 큰 점 고려.
+- **[환경 컨텍스트]**: THI 78 이상 시 번식 영향(수태율 5~15%p↓, 산자수 0.5~1.0두↓) 예상 코멘트. 계절 보정값 적용하여 고온기 과잉 경고 방지.
+  ※ 고온기(7~9월) 분만율/수태율 하락은 계절적 정상 범위일 수 있음 → 보정 후 판단
+- **[질병 카렌다]**: 해당 월 고위험 질병이 있고 관련 KPI가 변동하면 질병 가능성 언급.
+- **[분류 이력]**: 3주+ 동일 RED = "만성 문제"(구조적 원인 지적, 강력 액션), GREEN→RED = "급성 악화"(즉시 대응). 4주 GREEN = "안정 유지"(간략 코멘트).
+- 다축 데이터는 comment/plan의 보충 근거로 자연스럽게 녹여서 작성 — 기계적 나열 금지
+```
+
+### NPD 분해 분석 룰 (cause별)  
+`DIAGNOSIS/NPD_BREAKDOWN` · type=`PROMPT` · ✅ · seq=301 · upd 2026-04-29
+
+> WEEKLY_NPD.by_cause 데이터 분해·해석 기준
+
+```
+[NPD 분해 분석 룰] 주간 비생산일수 데이터의 원인별 분해·해석
+
+## 분해 카테고리 (3종 — Phase 11 v3 정의)
+- after_weaning: 이유 후 교배 지연 (이유→교배 NPD)
+- after_accident: 임신사고 후 교배 지연 (사고→교배 NPD)
+- first_mating: 후보돈 초교배 지연 (전입→초교배 NPD)
+
+## 분해 시 우선순위 (사용자 노출 시)
+1. 비중 큰 cause 우선 표시 (>=30% 비중)
+2. 동률 시: after_accident > after_weaning > first_mating 순
+
+## 임계값 (개선 효과 추정)
+- 정상 범위 (per cause):
+  - after_weaning: 평균 5~7일
+  - after_accident: 평균 7~14일
+  - first_mating: 평균 14~21일
+- 경고 임계 (cause별 1주차 평균 대비):
+  - after_weaning >= 14일 (정상 2배)
+  - after_accident >= 28일 (정상 2배)
+  - first_mating >= 42일 (정상 2배)
+
+## AI 코멘트 작성 규칙
+- 비중 최대 cause 명시
+- 정상 범위 초과 시 cause별 구체 권고
+- "예정일 작업 지연 N일" 표현 (입력지연과 분리)
+- NPD 손실 = 예정일 대비 작업 지연만 (입력지연 별도)
+
+## 데이터 소스 (한국어)
+- 주간 비생산일수 데이터셋의 원인별 분해 (after_weaning/after_accident/first_mating 각각의 모돈일·평균지연·건수)
+
+## 향후 확장 (Phase 11 Cohort 본 구현 시)
+- cause별 트렌드 (4주/13주 추이)
+- 동류 농가 cause 분포 비교
+- AI 룰 기반 cause별 자동 권고
+
+<!-- _internal_meta
+- source: TS_INS_AI_DATASET.WEEKLY_NPD.by_cause
+- by_cause: { after_weaning: {sow_days, avg_gap, cnt}, after_accident: {...}, first_mating: {...} }
+-->
+```
+
+### 동류 농가 매칭 룰 (3차 분류)  
+`DIAGNOSIS/PEER_MATCH` · type=`PROMPT` · ✅ · seq=302 · upd 2026-06-01
+
+> PEER 비교 시 농가 그룹 분류 기준 (모돈 규모 + 운영 유형 + 성적 등급)
+
+```
+[동류 농가 매칭 룰] PEER 비교 시 농가 그룹 분류 기준
+
+## 1차 분류 — 모돈 규모 (상시모돈) — V10 9구간 (2026-06-01 적용)
+- <100두 (R01, 약 23농가)
+- 100~200두 (R02, 약 100농가)
+- 200~300두 (R03, 약 140농가)
+- 300~400두 (R04, 약 93농가)
+- 400~500두 (R05, 약 78농가)
+- 500~750두 (R06, 약 98농가)
+- 750~1000두 (R07, 약 38농가)
+- 1000~1500두 (R08, 약 47농가)
+- 1500두+ (R09, 약 18농가, N<30 — 평균만 표기)
+
+## 2차 분류 — 운영 유형 (AIAO 배치 사이클) — 변경 없음
+- AIAO 1W (주간 일괄)
+- AIAO 2~5W (다주기)
+- 연속 생산형
+- 휴농 (분석 제외)
+
+## 3차 분류 — 성적 등급 — 변경 없음
+- S/A: PSY ≥ 28, NPD ≤ 50
+- B+: PSY 25~28, NPD 50~70
+- B: PSY 22~25, NPD 70~90
+- C 이하: 그 외
+
+## 매칭 우선순위
+1차 (필수) → 2차 (가중) → 3차 (가중)
+AIAO 다른 농가 매칭 제외 (예: 주간 농가 vs 4주 배치 농가)
+
+## 표기 정책 (R 코드 노출 금지)
+- AI 코멘트·UI: "100~200두 동류 79농가" 형식 사용
+- R01~R09 내부 코드는 사용자 노출 금지 (DB/코드에서만)
+- N<30 영역 (R09 1500두+): "동류 평균 비교만, 등수·분위 표시 금지"
+
+## min_farms_for_stats
+- 30 (S7 학술 권고 + 9구간 R09 stat_caveat)
+```
+
+### 배치 주기 농장 분석 지침 (올인올아웃)  
+`DIAGNOSIS/BATCH_CYCLE_ANALYSIS` · type=`MD` · ✅ · seq=206 · upd 2026-06-08
+
+> v3: 1W 배치 지침 추가 + AIAO 아닌 농장 쉬는주 금지
+
+```
+[배치 주기 농장 (올인올아웃)] 데이터가 제공된 경우:
+
+## 환각 방지 가드
+- 본 룰의 모든 예시 수치·비율·요일·농장식별자는 설명용 예시 — 실제 분석 대상 농장의 데이터로 복사·인용 절대 금지. 임계 조건만 적용하고 수치는 제공된 데이터에서만 산출할 것.
+
+## AIAO 농장 유형 (5분류)
+- **1W(주간 배치)**: 매주 특정 요일에 집중 교배. 쉬는 주 없음. 가장 일반적 AIAO 유형(80%+).
+  - 요일 집중도 Top-1 >= 50% 또는 연속 2일 >= 70%로 판정
+- **2~5W(다주기 배치)**: 교배/분만/이유를 N주 단위로 집중 수행. 쉬는 주 존재.
+  - 16주 시계열 주기 감지(fitness >= 0.70)로 판정
+- **연속 생산형 (NON-AIAO)**: 매주 작업하나 특정 요일/주기 집중 없음
+  - dow_top1 < 50% AND consec2 < 70% AND fitness < 0.70
+  - 쉬는주 표현 절대 금지, AIAO 아님 명시
+- **휴농/소규모 (NON-AIAO)**: 모돈 데이터 부재 [sangsi_modon=0] 또는 16주 미충족
+  - 분석 보류, 리포트 자동생성 시 안내 필요
+- **사이클 불안정형**: 1년 내 cycle_weeks 변동 5회 이상 (구조적 점검 필요)
+
+## 1W 배치 농장 분석 지침
+- 매주 작업이 있으므로 off-week 개념 없음
+- 요일 집중도(Top-1%)가 높을수록 관리 수준 우수
+- 주간 배치관리 농장으로 표현 (쉬는주 표현 금지)
+
+## 2~5W 배치 농장 분석 지침
+- 교배/분만/이유는 각각 독립된 주기 — 같은 주에 교배=off, 분만=on 가능
+- off-week 작업유형: 실적 0~소수는 비작업 주차의 정상 상태 — 경고/부정적 코멘트 절대 금지
+- on-week 작업유형: 정상 평가 적용
+- off-week 실적을 전주(on-week)와 비교 금지 — 직전 on-week과만 비교
+
+## off-week 소수 활동(1~3두) 허용 임계 — 사이클별 차등화 (5 Agent 1년 시계열 검증)
+| 사이클 | 임계 (1년 53주 대비) | 사용자 노출 표현 |
+|---|---|---|
+| 1W (주간) | 5%  (실측 부합)        | 임신사고/대리모 예외 대응 |
+| 2W       | 15% (실측 평균 약 10%)  | 사고/대리모 예외 + 일부 분산 |
+| 3W       | 20% (실측 평균 약 14%)  | 사고/대리모 예외 + 산발 교배 |
+| 4W       | 10% (실측 기준)         | 임신사고/대리모 예외 대응 |
+| 5W       | 10% (관측 데이터 적음)  | 임신사고/대리모 예외 대응 |
+
+- 임계 초과 시 분류 부적합 의심 — 사이클 분류 재검토 필요 보조 코멘트
+- 단순 사고로 설명 불가 시: 농장이 부분 AIAO 또는 산발 교배 농가일 가능성
+
+## NON-AIAO 분류 표현 (코멘트 작성 시 농가 유형 정확 인지)
+- 연속 생산형: 연속 생산 농장 [요일 분산형] — AIAO 농가 아님 명시
+- 휴농/소규모: 분석 보류 [모돈 데이터 부재] — KPI 평가 자동 생략
+- 사이클 불안정형: 사이클 변동 빈발 — 구조적 점검 권장 (약점 우선순위 2번)
+
+## 공통 원칙
+- AIAO 아닌 농장에 쉬는주/쉬는 주차 표현 절대 금지
+- AIAO 농장 = 체계적 선진 농장으로 긍정 평가
+- 전국 AIAO 비율(66%), 상위10% AIAO(84%) 참고하여 권장 가능
+
+## 이유전폐사율(기간중 033015) 시계열 혼합 효과
+- 2~5W 배치 농장은 분만/이유가 분리된 주차에 집중 -> 이유전폐사율(기간중) 분모(이유성공+폐사)가 작은 주에 폐사 집중 시 비율이 폭등 가능 (분모가 극히 작으면 비율이 비정상적으로 치솟는 현상 — 실제 폐사 급증으로 단정 금지)
+- 진단 전 검증: (1) 4주 추세 안정적인지 확인 (2) 이유전폐사율(실산대비 033022) 동시 확인 -> 실산대비가 정상 범위면 시계열 혼합 효과로 해석
+- 두 산식 격차 10%p 이상 시 배치 패턴 영향 가능성 보조 코멘트 권장 — 단순 폐사 급증 결론 자제
+- R6/Y5 룰 트리거 후에도 위 검증 통과 시 구조적 폐사 vs 시계열 효과 분리 표현
+
+## 활동별 독립 사이클 (5 Agent 검증)
+- 한국 양돈 농가의 약 33%가 활동별 독립 cycle (예: 한 농장에서 breeding=4주 vs weaning=2주처럼 활동별 주기가 다를 수 있음)
+- breeding/farrowing/weaning 각 활동의 cycle_weeks/is_off_week 독립 평가 필수
+- 한 활동이라도 off-week면 부분 사이클 모드 (any-off 패턴)
+
+## 5 Agent 1년 시계열 검증 결과 (2026-04-27)
+- 717농가 중 684 분석: 주간 51%, 2주 5.6%, 3주 7.9%, 4주 0.3%, NON-AIAO 35.1%
+- AIAO 농가 91.7%에서 off-week 소수 활동 발생 (사용자 가설 확정)
+- 사이클 길수록 소수 비율 단조 증가: 1주 4.1% < 2주 8~13% < 3주 14% (임계 차등화 근거)
+```
+
+### 입력 지연 ↔ KPI 상관분석 및 개선 시뮬레이션  
+`DIAGNOSIS/INPUT_DELAY_IMPACT` · type=`MD` · ✅ · seq=241 · upd 2026-04-29
+
+```
+입력 지연 영향도 — 농장별 입력 지연 ↔ KPI 상관분석 + 시뮬레이션
+
+§1 입력 지연 산출 (Phase 11 v5 — 사용자 확정)
+
+리포트 생성일 = 매주 월요일 새벽 (주간 리포트 생성 시점)
+
+(a) 입력된 건 지연 = Σ MAX(등록일 - 작업일, 0)
+    대상: 이번주 모돈 작업기록 (등록일 존재)
+    의미: 작업은 완료되었으나 시스템 등록이 늦음
+
+(b) 미입력 건 경과일 = Σ MAX(리포트 생성일 - 예정일, 0)
+    대상: 관리대상 모돈 (card-alerts) — 예정일 경과 but 후속 작업 미입력
+    3 원인:
+      - 이유 후 교배 예정 (이유일 + 평균재발일, 농장설정 기본 7일)
+      - 사고 후 교배 예정 (사고일 + 평균재발일)
+      - 전입 후 초교배 예정 (MAX(전입일, 출생일 + 초교배일령), 농장설정 기본 240일)
+    상한: 90일 (outlier 제외)
+
+(c) 합산 평균 = ((a) + (b)) ÷ (입력 회수 + 미입력 두수)
+
+§2 상관분석 (최근 52주)
+- 상관도(피어슨 r): 지연일 vs 주요 KPI (PSY, MSY, NPD, 분만율, 7일재귀율)
+- 1일당 영향: 지연 1일당 KPI 변화량 (회귀 기울기)
+- 최소 표본 = 20 (52주 중 유효 샘플)
+
+§3 시뮬레이션
+- 전국 평균(1.8일)까지 개선 시 PSY/MSY 회복분
+- 상위10%(0.5일)까지 개선 시
+
+§4 출력 JSON (v5 확장)
+{
+  "current_delay_days": 30.55,        // (a)+(b) 합산 평균
+  "current_delay_rate_pct": 95.5,     // 1일 초과 비율
+  "input_delay_days": 0.0,            // (a) 입력건 평균
+  "input_count": 1,                   // (a) 회수
+  "unentered_delay_days": 32.0,       // (b) 미입력 평균
+  "unentered_count": 21,              // (b) 두수
+  "unentered_by_cause": {
+    "after_weaning":  {"cnt": 10, "avg_gap": 28.5, "sum_gap": 285},
+    "after_accident": {"cnt": 6,  "avg_gap": 35.2, "sum_gap": 211.2},
+    "first_mating":   {"cnt": 5,  "avg_gap": 33.6, "sum_gap": 168}
+  },
+  "by_work_type": {
+    "mating":   {"delay_days": 0.6, "cnt": 30, "within_1day_pct": 95, "source": "input"},
+    "unentered_after_weaning": {"delay_days": 28.5, "cnt": 10, "source": "unentered"}
+  },
+  "correlations_52w": [...],
+  "simulation": {...},
+  "report_date": "20260420",
+  "farm_config": {"avg_return": 7, "first_gb_day": 240}
+}
+
+<!-- _internal_meta
+- (a) 산출식 원본: Σ GREATEST(TRUNC(LOG_INS_DT) - WK_DATE, 0) on TB_MODON_WK
+- (b) 산출식 원본: Σ GREATEST(REPORT_DATE - 예정일, 0)
+- 예정일 컬럼: 이유일 + avg_return(TC_140008) / 사고일 + avg_return / GREATEST(IN_DT, BIRTH_DT + first_gb_day TC_140007)
+- 농장설정 코드: 140007 (first_gb_day, 240일), 140008 (avg_return, 7일)
+- MIN_SAMPLE_N = 20
+-->
+```
+
+---
+
+## GRADING
+**KPI 등급 기준** · 2개 룰
+
+### AI_CLASS(RED/YELLOW/GREEN) 연계 조건  
+`GRADING/AI_CLASS_RULE` · type=`JSON` · ✅ · seq=7
+
+> 15_KPI_GRADING.md §5
+
+```json
+{"RED":{"condition":"7개 KPI 중 4개 이상 등급 8~10","ai_model":"Gemini+Claude"},"YELLOW":{"condition":"1~3개 등급 8~10 또는 전주 대비 2등급 이상 하락","ai_model":"Gemini"},"GREEN":{"condition":"전부 등급 7 이하 + 변동 미미","ai_model":"룰 기반"}}
+```
+
+### 산출농장 선정 기준 (7개 필터)  
+`GRADING/BENCHMARK_FILTER` · type=`JSON` · ✅ · seq=19
+
+> 14_BENCHMARK_FILTER.md
+
+```json
+{"F1":"USE_YN=Y","F2":"12개월 연속 데이터","Q1":"상시모돈>=20","Q2":"NPD<=150","Q3":"PSY>=14","Q4":"LSY<=2.6","Q5":"실산<=총산","Q6":"임신기간 110~120일","Q7":"포유기간 14~50일"}
+```
+
+---
+
+## BENCHMARK
+**산출농장 선정·벤치마크** · 14개 룰
+
+### 산출농장 선정 필터 (F1-F2, Q1-Q7)  
+`BENCHMARK/FARM_FILTER` · type=`JSON` · ✅ · seq=34 · upd 2026-06-01
+
+> 14_BENCHMARK_FILTER.md §1~§6
+
+```json
+{
+  "basic_filter": {
+    "F1": {
+      "condition": "활성 농가 (사용 플래그 Y)",
+      "desc": "활성 농가"
+    },
+    "F2": {
+      "condition": "12개월 연속 모돈 작업기록 데이터 존재",
+      "desc": "데이터 완전성"
+    }
+  },
+  "quality_filter": {
+    "Q1": {
+      "condition": "상시모돈 >= 20",
+      "desc": "소규모 취미농 제외"
+    },
+    "Q2": {
+      "condition": "NPD <= 150",
+      "desc": "운영중단 수준 제외"
+    },
+    "Q3": {
+      "condition": "PSY >= 14",
+      "desc": "정상운영 불가 제외"
+    },
+    "Q4": {
+      "condition": "LSY <= 2.6",
+      "desc": "생물학적 상한 근접 제외"
+    },
+    "Q5": {
+      "condition": "실산 <= 총산",
+      "desc": "데이터 입력오류 제외"
+    },
+    "Q6": {
+      "condition": "임신기간 110~120일",
+      "desc": "정상범위 벗어남 제외"
+    },
+    "Q7": {
+      "condition": "포유기간 14~50일",
+      "desc": "정상범위 벗어남 제외"
+    }
+  },
+  "apply_order": "F1 → F2 → Q1~Q7 → 통과농장 = 산출농장(전국집계 대상)",
+  "display": "산출농장 {n}개 기준",
+  "_internal_meta": {
+    "F1_source": "TA_FARM.USE_YN='Y'",
+    "F2_source": "TB_MODON_WK 12개월 연속 데이터 존재"
+  }
+}
+```
+
+### 데이터 허용 범위 (이상치 판정)  
+`BENCHMARK/VALID_RANGES` · type=`JSON` · ✅ · seq=35
+
+> 14_BENCHMARK_FILTER.md §3+§7
+
+```json
+{
+  "gestation": {"normal":"110~120일","suspect_low":"100~109","suspect_high":"121~125","invalid":"<100 or >125","standard":"114일"},
+  "lactation": {"normal":"14~50일","suspect_low":"7~13","suspect_high":"51~60","invalid":"<7 or >60","korea":"21~25일","eu":"28+일"},
+  "lsy": {"normal":"1.5~2.6","suspect":"2.6~2.8","invalid":">2.8","bio_max":"2.66"},
+  "ship_ranking": "ORDER BY (1+등급+1등급)/총출하 DESC"
+}
+```
+
+### 농장 규모별 분류 기준 (상시모돈수)  
+`BENCHMARK/FARM_SIZE_GROUP` · type=`JSON` · ✅ · seq=105 · upd 2026-06-01
+
+> national-stats 규모분류(200/500) + 최소농장수(100) DB 전환
+
+```json
+{"version":"v10","bins":[{"code":"R01","min":0,"max":100},{"code":"R02","min":100,"max":200},{"code":"R03","min":200,"max":300},{"code":"R04","min":300,"max":400},{"code":"R05","min":400,"max":500},{"code":"R06","min":500,"max":750},{"code":"R07","min":750,"max":1000},{"code":"R08","min":1000,"max":1500},{"code":"R09","min":1500,"max":99999}],"min_farms_for_stats":30,"stat_caveat_threshold":30,"_backward_compat":{"small_max":200,"mid_max":499,"large_min":500,"min_farms_for_stats":100,"_note":"V10 안정화 후 제거"},"_internal_meta":{"scope":"common","applies_to":["national-stats SQL GRP_R##_AVG/CNT","loadPeerGroupAvg"],"session_ref":"CHANGES_SYNC_20260601 § 0601-21-OPS Phase 4","applied_dt":"2026-06-01"}}
+```
+
+### 리포트 탭/배치 매직넘버 SSOT  
+`BENCHMARK/TAB_THRESHOLDS` · type=`JSON` · ✅ · seq=382 · upd 2026-04-30
+
+> tab-loss/shipment/diagnosis + weekly-ai-batch 매직넘버 9건 통합
+
+```json
+{
+  "_comment": "tab-* / weekly-ai-batch / 프롬프트 매직넘버 SSOT 외부화 (2026-04-30 QQQ-11, 04-29 F7 backfat_trend_delta_mm 추가)",
+  "loss_tab": {
+    "ideal_eu_count": 13,
+    "bunman_rate_target_pct": 85,
+    "bunman_rate_max_gain_pct": 10
+  },
+  "shipment_tab": {
+    "grade1_plus_green_pct": 80,
+    "backfat_trend_delta_mm": 0.3
+  },
+  "diagnosis_tab": {
+    "stallion_sute_excellent_pct": 85,
+    "stallion_sute_warn_pct": 70,
+    "stallion_rebreed_safe_max_pct": 5,
+    "stallion_rebreed_warn_max_pct": 12
+  },
+  "prompt_thresholds": {
+    "thi_severe": 82,
+    "thi_moderate": 78,
+    "thi_mild": 72,
+    "cv_excellent_max_pct": 5,
+    "cv_normal_max_pct": 10,
+    "gilt_ratio_min_pct": 10,
+    "gilt_ratio_max_pct": 15,
+    "summer_drop_normal_pct": 1,
+    "summer_drop_warn_pct": 2,
+    "piglet_trend_significant_diff_pct": 0.5
+  },
+  "batch": {
+    "npd_target_days": 14
+  }
+}
+```
+
+### 전국비교 기준 정의  
+`BENCHMARK/COMPARE_METHOD` · type=`JSON` · ✅ · seq=61 · upd 2026-04-24
+
+```json
+{"top10_basis":"PSY","top10_description":"PSY 기준 상위 10% 농장을 선정하고, 해당 농장들의 각 지표 평균값을 비교 기준으로 사용","default_compare":"top10","kpi_compare_type":{"PSY":"top10","NPD":"top10","MSY":"top10","분만율":"top10","평균산자수":"top10","평균실산자수":"top10","평균이유두수":"top10","이유전폐사율(기간중)":"top10","모돈도태율":"top10","모돈폐사율":"top10","교배복수":"top10","분만복수":"top10","7일내재귀율":"top10"},"note":"기본은 상위10% 비교. average로 변경하면 전국평균과 비교","percentile_threshold":0.1,"min_farm_count":100}
+```
+
+### 출하탭 비교 분석 기준  
+`BENCHMARK/SHIP_COMPARE` · type=`JSON` · ✅ · seq=62 · upd 2026-04-29
+
+```json
+{
+  "source": "출하 개체 실적 데이터",
+  "description": "출하탭 분석은 개체별 출하실적 데이터 기반으로 주간/월간/연간 구분하여 비교 분석",
+  "periods": {
+    "weekly": "해당 주간 출하 실적 (출하일 범위)",
+    "monthly": "해당 월 출하 실적",
+    "yearly": "해당 연도 누적 출하 실적"
+  },
+  "compare_items": [
+    "출하두수",
+    "도체중",
+    "등지방",
+    "1+등급율",
+    "경락가격"
+  ],
+  "note": "생산탭 KPI(생산성 실적 기반)와 달리, 출하탭은 개체별 실적 데이터 기반",
+  "_internal_meta": {
+    "source_table": "TM_LPD_DATA",
+    "date_column": "DOCHUK_DT",
+    "production_table": "TS_PRODUCTIVITY"
+  }
+}
+```
+
+### 질병별 영향도 파라미터 (반경·경보일·KPI 영향)  
+`BENCHMARK/DISEASE_IMPACT` · type=`JSON` · ✅ · seq=261 · upd 2026-04-24
+
+> 질병별 영향도 파라미터 (반경·경보일·KPI 영향)
+
+```json
+{
+  "ASF": {
+    "nameKo": "아프리카돼지열병",
+    "risk": "CRITICAL",
+    "radiusKm": 20,
+    "alertDays": 30,
+    "kpiImpact": "전두 살처분 · 출하 전면 차단 · 연간 PSY 5~10두 손실",
+    "action": "즉시 차단방역 · 농장 출입 통제 · 사료 급수 라인 소독"
+  },
+  "FMD": {
+    "nameKo": "구제역",
+    "risk": "CRITICAL",
+    "radiusKm": 10,
+    "alertDays": 21,
+    "kpiImpact": "출하 이동제한 · 백신 강화 · 분만율 단기 -5~-10%p",
+    "action": "백신 접종 확인 · 이동 제한 준수 · 우제류 접촉 차단"
+  },
+  "CSF": {
+    "nameKo": "돼지열병",
+    "risk": "CRITICAL",
+    "radiusKm": 10,
+    "alertDays": 21,
+    "kpiImpact": "자돈 폐사율 급증 · 연간 실산 1~2두 손실",
+    "action": "백신 주기 점검 · 야생멧돼지 접근 차단 · 분만사 소독 강화"
+  },
+  "PED": {
+    "nameKo": "돼지유행성설사",
+    "risk": "HIGH",
+    "radiusKm": 5,
+    "alertDays": 14,
+    "kpiImpact": "이유전폐사율(기간중) +30~50%p · 겨울철 자돈 손실 집중",
+    "action": "분만사 차단방역 · 자돈 구역 출입 제한 · 모돈 경구 면역"
+  },
+  "PRRS": {
+    "nameKo": "돼지생식기호흡기증후군",
+    "risk": "HIGH",
+    "radiusKm": 5,
+    "alertDays": 14,
+    "kpiImpact": "유산율 +5~8%p · 분만율 -3~-5%p · 만성 번식장애",
+    "action": "후보돈 격리 · 웅돈 정액 교차오염 차단 · PRRS 백신 재접종"
+  },
+  "PCV": {
+    "nameKo": "돼지써코바이러스",
+    "risk": "HIGH",
+    "radiusKm": 3,
+    "alertDays": 14,
+    "kpiImpact": "이유후 성장지연 · 비육 출하일령 +10~20일 지연 · 만성 폐사",
+    "action": "PCV2 백신 접종 확인 · 자돈기 체크 · 사료 단백질 보강"
+  },
+  "ILE": {
+    "nameKo": "돼지회장염",
+    "risk": "MODERATE",
+    "radiusKm": 3,
+    "alertDays": 14,
+    "kpiImpact": "육성 폐사율 +3~5%p · 출하 편차 확대",
+    "action": "사료 항생제 주기 점검 · 비육사 환경 개선 · 급수량 모니터링"
+  },
+  "SIV": {
+    "nameKo": "돼지인플루엔자",
+    "risk": "MODERATE",
+    "radiusKm": 3,
+    "alertDays": 14,
+    "kpiImpact": "일시적 호흡기 증상 · 출하 체중 -1~-2kg",
+    "action": "돈사 환기 강화 · 온습도 관리 · 감기 유사증상 개체 격리"
+  },
+  "AD": {
+    "nameKo": "오제스키",
+    "risk": "MODERATE",
+    "radiusKm": 5,
+    "alertDays": 14,
+    "kpiImpact": "신경증상·운동마비 · 자돈 폐사 급증 가능",
+    "action": "격리 · 수의사 진료 · 후보돈 접촉 제한"
+  },
+  "DEFAULT": {
+    "nameKo": "기타 질병",
+    "risk": "MEDIUM",
+    "radiusKm": 5,
+    "alertDays": 14,
+    "kpiImpact": "개체 손실 발생 가능",
+    "action": "수의사 진료 · 차단방역 점검"
+  }
+}
+```
+
+### 발정 감지 카드 임계값  
+`BENCHMARK/HEAT_DETECTION_THRESHOLD` · type=`JSON` · ✅ · seq=269
+
+> STEP 6 발정 감지(HEAT_DETECTION) 카드 임계값. collectors/dataset_heat_detection.py + report/tab-diagnosis.ts 1265·1272·1279 SSOT.
+
+```json
+{
+  "window_days": 180,
+  "min_heads": 10,
+  "min_cycles": 5,
+  "normal_day_range": [18, 24],
+  "bcs_target_range": [17, 20],
+  "normal_pct_good": 80,
+  "normal_pct_warn": 60,
+  "bcs_target_pct_good": 60,
+  "bcs_target_pct_warn": 30,
+  "input_delay_immediate_good": 70,
+  "input_delay_immediate_warn": 40,
+  "desc": "min_heads·min_cycles = meets_threshold 판정. normal_day_range = 1→2차 간격 정상범위(일). bcs_target_range = 1차 등지방 정상범위(mm). *_good/_warn = 색상 분기(이상 녹색 / 이상 주황 / 미만 빨강)."
+}
+```
+
+### KPI 시간 단위 매핑 룰 (WY 1주 + 13주 롤링)  
+`BENCHMARK/KPI_TIMEFRAME` · type=`PROMPT` · ✅ · seq=321 · upd 2026-04-29
+
+> WY KPI 1주 + 단발 KPI 13주 롤링 평균 비교 기준
+
+```
+[KPI 시간 단위 매핑 룰] 섹션·KPI별 비교 기준 시간 단위
+
+## 원칙
+- 연환산(연간) KPI는 그 자체가 평탄화돼 1주 스냅샷이라도 의미 있음
+- 단발 1주 KPI는 1주 노이즈가 커 13주 롤링 평균으로 비교
+- 시간 단위는 "내 농장 = 비교 대상" 동일해야 함
+
+## KPI별 시간 단위 (BENCHMARK 비교 시)
+{
+  "WY_1WEEK": ["PSY", "NPD", "MSY", "LSY"],
+  "ROLLING_13W": [
+    "분만율", "수태율(46일)", "평균실산", "평균이유두수", "평균총산",
+    "이유전폐사율", "사산율", "미라율", "재발교배비율",
+    "7일내재귀율", "모돈도태율", "모돈폐사율"
+  ]
+}
+
+## 섹션별 적용
+- STEP1 (진단탭 sw-row, sum-pos): KPI별 위 매핑 적용
+- STEP4 (유사 농가 매칭): 연환산 1주 (PSY 기준)
+- 추세탭 (분기 추이): 분기 시계열 (현 그대로)
+- STEP2 (격차 추이): 분기 시계열 (현 그대로)
+- STEP3 (13주+4주): 1주 시계열 (현 그대로)
+- 개요탭 verdict-card: 연환산 KPI는 1주, 단발 KPI는 13주 평균 (STEP1과 동일)
+
+## UI 라벨 표기 규칙
+- 연환산 KPI: "연환산(주간)" 표기
+- 단발 KPI: "13주 평균" 표기
+- 데이터 출처 시점: "{statYear}년 {periodNo}주차 기준"
+
+## AI 코멘트 작성 규칙
+- 비교 시 시간 단위 명시 ("최근 13주 평균 분만율 X% — 전국 13주 평균 Y% 대비 ...")
+- 연환산과 단발 KPI 혼재 비교 금지
+- 단발 KPI 1주 스냅샷 비교 금지 (단주 노이즈 왜곡)
+
+## 데이터 소스 (한국어)
+- 연환산 1주: 생산성 실적 034 항목 (연환산)
+- 13주 롤링: 생산성 실적 031~035 항목 (1주, 직전 13주차)
+- 평균은 0주 제외 (활동 0주 제외)
+
+<!-- _internal_meta
+- WY_source: TS_PRODUCTIVITY PCODE=034 PERIOD=WY
+- W13_source: TS_PRODUCTIVITY PCODE=031~035 PERIOD=W (PERIOD_NO BETWEEN periodNo-12 AND periodNo)
+- AVG_NULLIF: AVG with NULLIF(0)
+-->
+```
+
+### 치료 이력 카드 임계값  
+`BENCHMARK/TREATMENT_THRESHOLD` · type=`JSON` · ✅ · seq=270
+
+> STEP 6 치료 이력(TREATMENT) 카드 임계값. collectors/dataset_treatment.py + report/tab-diagnosis.ts 1227·1232 SSOT.
+
+```json
+{
+  "window_days": 180,
+  "min_events": 20,
+  "min_pigs": 5,
+  "repeat_warn_pct": 20,
+  "repeat_red_pct": 30,
+  "input_delay_immediate_good": 70,
+  "input_delay_immediate_warn": 40,
+  "desc": "min_events·min_pigs = meets_threshold. repeat_warn_pct/repeat_red_pct = 반복치료율 색상 분기(>=red 빨강 / >=warn 주황 / 미만 녹색). input_delay_* = 즉시입력 비율 색상."
+}
+```
+
+### 모돈 BCS·체중 카드 임계값  
+`BENCHMARK/BCS_THRESHOLD` · type=`JSON` · ✅ · seq=271
+
+> STEP 6 BCS(BCS) 카드 임계값. collectors/dataset_bcs.py + report/tab-diagnosis.ts 1198·1202·1206 SSOT.
+
+```json
+{
+  "window_days": 180,
+  "min_events": 50,
+  "min_pigs": 10,
+  "target_range": [17, 20],
+  "low_max": 13,
+  "high_min": 22,
+  "target_good_pct": 60,
+  "target_warn_pct": 40,
+  "low_warn_pct": 15,
+  "low_danger_pct": 30,
+  "high_warn_pct": 15,
+  "high_danger_pct": 30,
+  "input_delay_immediate_good": 70,
+  "input_delay_immediate_warn": 40,
+  "desc": "min_events·min_pigs = meets_threshold. target/low/high_range = 등지방 mm 분포 구간. target_*_pct = 정상범위 비율 색상(>=good 녹색 / >=warn 주황 / 미만 빨강). low/high_*_pct = 저체중·과비 비율 색상(<=warn 녹색 / <=danger 주황 / 초과 빨강)."
+}
+```
+
+### 작업일보 카드 임계값  
+`BENCHMARK/DAILY_LOG_THRESHOLD` · type=`JSON` · ✅ · seq=272
+
+> STEP 6 작업일보(DAILY_LOG) 카드 임계값. collectors/dataset_daily_log.py + report/tab-diagnosis.ts 1299·1304·1310 SSOT.
+
+```json
+{
+  "window_days": 180,
+  "min_memo_days": 30,
+  "coverage_good_pct": 70,
+  "coverage_warn_pct": 40,
+  "input_delay_immediate_good": 70,
+  "input_delay_immediate_warn": 40,
+  "text_coverage_good_pct": 70,
+  "desc": "min_memo_days = meets_threshold(180일 중 최소 작성일수). coverage_*_pct = 작성 커버리지 색상(>=good 녹색 / >=warn 주황 / 미만 빨강). text_coverage_good_pct = 본문 텍스트 입력 비율 정상 기준."
+}
+```
+
+### 농장 규모 경계값  
+`BENCHMARK/FARM_SIZE_CLASS` · type=`JSON` · ✅ · seq=229 · upd 2026-06-01
+
+> 동류농장 규모 분류 — 상시모돈 기준
+
+```json
+{"version":"v10","classification_method":"fixed_bins_9","matching_strategy":"3_tier","bins":[{"code":"R01","label":"<100두","min":0,"max":100,"farms":23},{"code":"R02","label":"100~200두","min":100,"max":200,"farms":100},{"code":"R03","label":"200~300두","min":200,"max":300,"farms":140},{"code":"R04","label":"300~400두","min":300,"max":400,"farms":93},{"code":"R05","label":"400~500두","min":400,"max":500,"farms":78},{"code":"R06","label":"500~750두","min":500,"max":750,"farms":98},{"code":"R07","label":"750~1000두","min":750,"max":1000,"farms":38},{"code":"R08","label":"1000~1500두","min":1000,"max":1500,"farms":47},{"code":"R09","label":"1500두+","min":1500,"max":99999,"farms":18,"stat_caveat":"N<30, average only"}],"tiers":{"tier1_default":{"method":"fixed_bins_9","label":"동규모"},"tier2_supplementary":{"method":"region_cross_size","label":"동지역 보조","min_n":30},"tier3_optional":{"method":"sliding_window_pct","label":"±20% 유사","default":false,"note":"호기심 옵션"}},"_backward_compat":{"small":200,"large":500,"_note":"V10 안정화 후 제거"},"_internal_meta":{"scope":"common","applies_to":["주간 m-peer","월간 sec-cohort-ranking","national-stats SQL","weekly-ai-prompt"],"shared_with_weekly":true,"sources":["TS_PRODUCTIVITY PCODE=035 C001 (2026-04 실측)","11-agent S1~S11 종합","Fixed Bins 통계학 18/20","농장주 인지 5/5"],"spec_doc":"AI/plan/18_farm_size_class_v10_unification.md","session_ref":"CHANGES_SYNC_20260601 § 0601-21-OPS Phase 4","created_dt":"2026-06-01","applied_dt":"2026-06-01"}}
+```
+
+### 전국 입력 지연 기준값 및 과거 5년 트렌드  
+`BENCHMARK/INPUT_DELAY_NATIONAL` · type=`JSON` · ✅ · seq=242 · upd 2026-04-29
+
+```json
+{
+  "_comment": "전국 농장 대상 입력 지연 벤치마크 및 5년 트렌드. 월 1회 갱신. 입력지연 트렌드 데이터셋(전국 0번)에서 실데이터를 참조하며, 아래 값들은 fallback 기준값. Phase 11 v2: 10분위 추가 (D1 고정 ≤1일 + D2~D10 분포 기반).",
+  "current_benchmark": {
+    "national_avg_days": 1.8,
+    "national_top10_days": 0.5,
+    "national_bottom10_days": 7.2,
+    "d1_threshold_days": 1.0,
+    "farm_count_total": 572,
+    "snapshot_year": 2026
+  },
+  "decile_schema": {
+    "d1_fixed": "평균 지연 ≤ 1일 (생산 가능 입력 품질 기준)",
+    "d2_to_d10_distribution": "평균 지연 > 1일 농가를 9분위로 분포 분할",
+    "json_key": "decile_stats (List of 10 entries)",
+    "backward_compat": "quintile_stats (List of 5) 병행 유지"
+  },
+  "yearly_trend_fallback": [
+    {
+      "year": 2022,
+      "avg_delay_days": 2.5,
+      "national_avg_psy": 21.8,
+      "farm_cnt": 683
+    },
+    {
+      "year": 2023,
+      "avg_delay_days": 2.2,
+      "national_avg_psy": 22.4,
+      "farm_cnt": 695
+    },
+    {
+      "year": 2024,
+      "avg_delay_days": 2.0,
+      "national_avg_psy": 22.9,
+      "farm_cnt": 708
+    },
+    {
+      "year": 2025,
+      "avg_delay_days": 1.9,
+      "national_avg_psy": 23.4,
+      "farm_cnt": 715
+    },
+    {
+      "year": 2026,
+      "avg_delay_days": 1.8,
+      "national_avg_psy": 24.0,
+      "farm_cnt": 570
+    }
+  ],
+  "d1_observed_psy": 26.81,
+  "d9_observed_psy": 21.92,
+  "decile_psy_gap": 4.89,
+  "refresh_policy": "매월 1일 입력지연 트렌드 수집기 실행하여 전국 데이터셋 갱신",
+  "_internal_meta": {
+    "collector": "dataset_input_delay_trend.py",
+    "table": "TS_INS_AI_DATASET",
+    "data_type": "INPUT_DELAY_TREND",
+    "farm_no_for_national": 0
+  }
+}
+```
+
+---
+
+## LOSS_CALC
+**손실 계산식** · 7개 룰
+
+### 임신사고 손실 계산식  
+`LOSS_CALC/S1_PREGNANCY` · type=`MD` · ✅ · seq=8 · upd 2026-06-08
+
+> 04_loss_calc.md §1
+
+```
+손실 = 건수 × 지연일수 × (PSY÷365) × 통합육성율 × 출하단가
+지연일수 = 전체사이클(142) - 남은기간(남은임신+포유)
+  전체사이클 = 재귀(7) + 재임신(114) + 포유(21) = 142일
+  남은기간 = (114-경과일) + 21
+  예: 142 - (114-{경과일}+21) = {지연일수}일
+건당 손실 ≈ {지연일수}일 × (PSY÷365) × {육성율}% × {단가}원 ≈ {손실}만원
+※ 위 숫자({경과일}/{지연일수}/{육성율}/{단가}/{손실})는 형식 예시일 뿐, 실제 입력 데이터로 계산하라. 예시 숫자를 그대로 복사하지 말 것.
+※ 재임신(114)+포유(21)는 정상 생산기간 → 손실에서 제외
+※ 한국 표준(NIAS/DoctorSwine) NPD 기반 기회비용과 일치
+```
+
+### 포유자돈 폐사 손실 계산식  
+`LOSS_CALC/S_PW_PIGLET` · type=`MD` · ✅ · seq=9 · upd 2026-06-08
+
+> 04_loss_calc.md §3-1
+
+```
+손실 = 포유중 폐사두수(일령 1일 이상) × 이유후육성율 × 출하단가
+이유후육성율 = 농장별 역추적 계산:
+  ship_offset = 기준출하일령(farm_config) - 포유기간(farm_config)
+  예: {기준출하일령}일 - {포유기간}일 = {ship_offset}일
+  이유시점 + {ship_offset}일 = 예상출하시점
+  육성율 = 실출하두수 / 이유두수 × 100 (6개월 롤링)
+⚠ 아래 예시의 숫자({폐사두수}·{육성율}% 등)는 형식 설명용 자리표시일 뿐이다. 절대 복사하지 말고 반드시 실제 데이터셋 산출값으로 대체할 것.
+예: {폐사두수}두 × {육성율}%(농장 역추적 산출) × {출하단가}원 ≈ {손실}만원
+※ 기본값 90%가 아닌 농장별 실제 육성율 사용
+```
+
+### 출하 등급 손실 계산식  
+`LOSS_CALC/S3_GRADE` · type=`JSON` · ✅ · seq=10
+
+> 04_loss_calc.md §3
+
+```json
+{"formula": "Σ(두수 × 도체중 × 등급차단가)", "base_grade": "1+", "grade_diff_per_kg": {"1": 120, "2": 350, "D": 800, "등외": 800}, "note": "1+ 등급 대비 차액. 단위: 원/kg"}
+```
+
+### NPD 손실 산출 (순수 생리학적 지연만)  
+`LOSS_CALC/S9_NPD` · type=`MD` · ✅ · seq=11 · upd 2026-06-08
+
+> 04_loss_calc.md §4
+
+```
+주간 NPD 손실 산출 — 예정일 대비 작업 지연 3종만 반영 (Phase 11 v4 · 2026-04-23 용어 정정).
+
+§1 산출 범위 (NPD 대상 = 임신도 수유도 하지 않은 기간)
+- ① 이유→교배 지연 (WEI):
+    산출 시작 = MAX(시작일, 이유일 + 1)
+    산출 종료 = MIN(종료일, NVL(교배일, 종료일))
+    조건: (시작일 - 이유일) >= 평균재발일 (기본 7일, 농가설정)
+- ② 사고→교배 지연:
+    산출 시작 = MAX(시작일, 사고일 + 1)
+    산출 종료 = MIN(종료일, NVL(교배일, 종료일))
+- ③ 전입→초교배 지연 (Phase 11 v3 개정):
+    산출 시작 = MAX(시작일, 전입일 + 1, 출생일 + 초교배일령 + 1)
+      ※ "생산 가능 시점 이후" = 입식일·성숙일 중 늦은 것 다음날
+      ※ 미성숙 기간(~240일령)은 NPD 아님 (경제적 정확성)
+    산출 종료 = MIN(종료일, NVL(첫교배일, 종료일))
+    조건: 입식산차 = 0 (후보돈) AND (시작일 - 출생일) >= 초교배일령
+
+§1-a NPD 제외 사유 (국내·국제 표준 공통)
+- 재발확인/임진검사 지연 → 관찰 작업, 모돈 상태 무관 (데이터 품질 지표)
+- 분만 지연 → 임신일수 연장 = 생산 상태
+- 이유 지연 → 수유 = 생산 상태 + 이유→교배 이중 계산 위험
+
+§2 계산식
+모돈일 손실 = PSY × 육성률 × 두당가격 ÷ 365
+NPD 손실 = Σ(지연일 × 모돈일 손실) across all 모돈
+
+§3 미입력 의심 제외 (중요)
+임계: 예정 작업 입력 상한 = 90일 (JSON 필드 참조)
+다음 조건 충족 시 해당 모돈의 NPD 누적을 계산에서 스킵:
+- 최근 작업 후 예정 작업 입력 상한 이상 다음 작업 입력 없음 (다음 작업일 NULL)
+- 동일 배치 사이클 인접 모돈은 정상 진행
+- 직전 사이클 패턴(WEI·재귀율)상 예정일 지남
+- 도태/폐사/전출 기록도 없음
+→ "미입력 의심" 플래그 후 미입력 의심 두수에 카운트, NPD 제외
+
+§4 반영 제거 (입력 지연)
+작업일 vs 시스템 등록일 간극 자체는 NPD에 반영하지 않는다.
+- 이유: 입력 지연은 데이터 품질 문제이며 순수 생산성 저하와 무관
+- 입력 지연 영향은 입력지연 영향도 룰에서 별도 분석
+
+§5 임계 파라미터 (JSON)
+{
+  "max_expected_gap_days": 90,
+  "max_unentered_gap_days": 99999,
+  "avg_return_fallback": 7,
+  "first_gb_day_fallback": 240,
+  "wean_period_fallback": 21
+}
+- max_expected_gap_days: 후속 작업 입력 없으면 "미입력 의심" 플래그 (NPD 제외)
+- max_unentered_gap_days: 입력 지연 영향도 측 미입력 경과일 상한 (무제한 = 99999). NPD와 별개 지표
+
+§6 출력 JSON (손실 데이터 저장)
+※ 아래 숫자는 모두 0/<num> 더미 — 구조·키 예시일 뿐 실제 출력에 복사 금지. 반드시 실데이터로 계산해 채울 것.
+{
+  "loss_npd_sowdays":  0,             // <num> 예시값, 실제 출력에 복사 금지 — 순수 NPD 모돈일 합계 (3 원인)
+  "loss_npd_amount":   0,             // <num> 예시값, 실제 출력에 복사 금지 — 원 단위 손실
+  "breakdown": {
+    "eu_to_gb":     {"total_days": 0, "sow_cnt": 0,  "label": "이유→교배"},
+    "sg_to_gb":     {"total_days": 0, "sow_cnt": 0,  "label": "사고→교배"},
+    "entry_to_gb":  {"total_days": 0, "sow_cnt": 0,  "label": "전입→초교배"}
+  },
+  "unentered_suspect_cnt": 0,         // <num> 예시값, 실제 출력에 복사 금지 — 참고용. 손실 미계상
+  "suspect_threshold_days": 90,       // §5 max_expected_gap_days 반영
+  "suspect_detail_data_type": "WEEKLY_NPD.suspect_list"
+}
+
+§7 손실탭 표시 원칙
+- 표시 라벨: "비생산일수 손실 (순수)"
+- 미입력 의심 모돈 수는 별도 "데이터 품질 경고" 섹션에 표시
+- 입력 지연 추정 손실은 "숨은 손실" 별도 카드로 표시 (손실 표시 원칙 룰 참조)
+
+§8 비고
+- Phase 11 v3 기준으로 NPD 손실 수치는 Phase 10 이전 대비 감소 가능
+  → ④⑤⑥⑦ NPD 제외 + 미입력 의심 제외 + 조기 전입 미성숙 기간 제외
+- 감소분은 "숨은 손실" 카드의 입력 지연 추정 손실로 일부 이동 (간접 반영)
+- 자바 생산성 통계는 입식일 기준만 사용 — inspig Phase 11 v3와 차이 있음 (PIG3.1 팀 영역)
+
+<!-- _internal_meta
+- ① 시작일 산식 원본: GREATEST(dt_from, 이유일+1), 종료 LEAST(dt_to, NVL(교배일, dt_to))
+- ② 시작일 산식 원본: GREATEST(dt_from, 사고일+1)
+- ③ 시작일 산식 원본: GREATEST(dt_from, IN_DT+1, BIRTH_DT+first_gb_day+1)
+- 농장설정 코드: 140007 (first_gb_day), 140008 (avg_return)
+- 후보돈 조건: IN_SANCHA=0
+- 입력지연 컬럼: WK_DT(작업일) ↔ LOG_INS_DT(등록일)
+- 의심 컬럼: NEXT_DATE NULL (다음 작업 미입력)
+- 손실 저장: TS_INS_AI_LOSS.LOSS_NPD / LOSS_NPD_SOWDAYS
+- 카테고리 키: eu_to_gb / sg_to_gb / entry_to_gb (출력 JSON 키 — 보존)
+- 자바 산출: realtime_statistics 모듈, IN_DT 기준만
+-->
+```
+
+### 모돈 도태/폐사 잔여가치 손실  
+`LOSS_CALC/S2_SOW_CULL` · type=`MD` · ✅ · seq=20 · upd 2026-04-29
+
+> 04_loss_calc.md §2
+
+```
+대상: 도태(080001) + 폐사(080002)만 (전출/판매 제외)
+실제 산차 = 입식산차 + 분만 횟수 (분만 작업기록)
+
+손실 = SUM(산차별 잔여가치) - 산차별 잔존가치
+  잔여가치(도태 잔여가치 룰의 산차별 값 참조):
+    0산=840만, 1산=710만, 2산=580만, 3산=450만, 4산=330만, 5산=195만, 6산=80만, 7산+=0
+  잔존가치: 도태(080001)=30만원(도태돈 판매), 폐사(080002)=0원
+
+적용 제외:
+- 전출(080003)/판매(080004) = 자산이동, 손실 아님
+- 실제산차 8산+ 도태 = 적정 이상 도태, 잔여가치=0 -> 손실 아님
+- 실제산차 8산+ 폐사 = 노령 폐사, 잔여가치=0 -> 손실 아님
+- 정상도태(080001, 6~7산) = 할인 적용 (정상도태 할인=0.5)
+
+한국 기준: 적정 도태산차 6~7산 (국립축산과학원/피그플랜)
+3산이하 조기도태 방지가 핵심 (잔여가치 450만~840만원 손실)
+
+<!-- _internal_meta
+- 출고 구분 컬럼: OUT_GUBUN_CD
+- 산차 산출: IN_SANCHA + COUNT(TB_MODON_WK WK_GUBUN='B')
+- 잔여가치 룰 코드: S2_SOW_RETIREMENT.residual_by_parity
+- 정상도태 할인 키: normalCullDiscount
+-->
+```
+
+### 모돈 도태/폐사 손실 계산식  
+`LOSS_CALC/S2_SOW_RETIREMENT` · type=`JSON` · ✅ · seq=36 · upd 2026-06-22
+
+> 04_loss_calc.md §2
+
+```json
+{"formula": "잔여생산가치 + 교체비 - 잔존가치", "replacement_cost": 1500000, "salvage_value": {"cull": 300000, "death": 0}, "residual_by_parity": {"0": 8400000, "1": 7100000, "2": 5800000, "3": 4500000, "4": 3300000, "5": 1950000, "6": 800000, "7+": 0}, "avg_residual": 2000000, "normal_cull_discount": 0.5, "planned_cull_reasons": ["031038","031002","031020","031174","031037","031183","031019","031031","031032","031190","031173","031095"], "planned_cull_note": "정상도태(관리양호)=고령/노산+판매/정리 잔여가치0. 실손실(번식장애,질병,사고) 미포함. 출처 TC_CODE_JOHAP PCODE 031", "_internal_meta": {"scope": "common", "applies_to": ["loss-calc.ts S2"], "created_dt": "2026-06-22"}, "note": "조기도태(3산이하) 방지가 핵심. 한국 적정 도태 6~7산"}
+```
+
+### 개선 시뮬레이션 산출 기준  
+`LOSS_CALC/IMPROVEMENT_SIM` · type=`JSON` · ✅ · seq=141 · upd 2026-04-29
+
+> 주간 실적 기반 6개 개선 항목 시뮬레이션 산출 공식 — #86
+
+```json
+{
+  "desc": "주간 실적 기반 개선 시뮬레이션 산출 기준 (연간 환산)",
+  "items": {
+    "NPD": {
+      "formula": "NPD 손실(주간) × 52주",
+      "basis": "손실 데이터의 NPD 손실 컬럼",
+      "sowday_cost_formula": "PSY × 육성률 × 두당가격 ÷ 365 (농장별 산출)",
+      "note": "이전 31,000원 하드코딩은 평균 가정치였으나 농장별 PSY·출하단가 반영하지 못해 부정확 → 손실 데이터의 NPD 손실 사용으로 일관성 확보"
+    },
+    "임신사고": {
+      "formula": "임신사고 손실(주간) × 52주",
+      "basis": "손실 데이터의 임신사고 손실 컬럼"
+    },
+    "등급": {
+      "formula": "등급 손실(주간) × 52주",
+      "basis": "손실 데이터의 등급 손실 컬럼"
+    },
+    "도폐사": {
+      "formula": "도폐사 손실(주간) × 52주",
+      "basis": "손실 데이터의 도폐사 손실 컬럼"
+    },
+    "자돈폐사": {
+      "formula": "자돈폐사 손실(주간) × 52주",
+      "basis": "손실 데이터의 자돈폐사 손실 컬럼"
+    },
+    "이유두수": {
+      "formula": "상시모돈 × LSY × 두당가격 × 0.85 (이유두수 +1 가정)",
+      "basis": "생산성 KPI 평균 이유두수"
+    },
+    "분만율": {
+      "formula": "분만율 gap × 상시모돈 × LSY × 이유두수 × 두당가격 × 0.85"
+    }
+  },
+  "history": [
+    "2026-04-20: NPD 31000/모돈일 하드코딩 제거 → 손실 데이터의 NPD 손실 × 52 방식 전환 (단일 소스)"
+  ],
+  "_internal_meta": {
+    "loss_table": "TS_INS_AI_LOSS",
+    "loss_columns": "LOSS_NPD/LOSS_SG/LOSS_GRADE/LOSS_DOPE/LOSS_NURSERY",
+    "kpi_obj": "productivityKpi.avgEuCnt"
+  }
+}
+```
+
+---
+
+## FORECAST
+**예측 모델 설정** · 5개 룰
+
+### Prophet 시계열 예측 모델 설정  
+`FORECAST/PROPHET_CONFIG` · type=`JSON` · ✅ · seq=363
+
+> Prophet 시계열 예측 모델 파라미터. lookback=과거 데이터 범위(주), forecast=예측 범위(주), changepoint=추세변화 민감도(낮을수록 보수적)
+
+```json
+{
+    "lookback_weeks": 156,
+    "forecast_weeks": 4,
+    "min_data_weeks": 52,
+    "min_data_weeks_stats": 26,
+    "changepoint_prior_scale": 0.05,
+    "seasonality_mode": "multiplicative",
+    "yearly_seasonality": true,
+    "weekly_seasonality": false,
+    "target_kpis": [
+      {"key": "breeding",   "pcode": "031", "col": "C001", "period": "W", "label": "교배"},
+      {"key": "farrowing",  "pcode": "032", "col": "C011", "period": "W", "label": "분만"},
+      {"key": "weaning",    "pcode": "033", "col": "C005", "period": "W", "label": "이유두수"},
+      {"key": "accident",   "pcode": "031", "col": "C039", "period": "W", "label": "재발비율"},
+      {"key": "death_rate", "pcode": "033", "col": "C015", "period": "W", "label": "폐사율"}
+    ]
+  }
+```
+
+### 예측 vs 실적 차이 경고 기준  
+`FORECAST/ALERT_THRESHOLD` · type=`JSON` · ✅ · seq=364
+
+> 주간 실적이 Prophet 예측 대비 크게 벗어날 때 AI가 경고 메시지 생성. yellow=주의, red=긴급
+
+```json
+{
+    "breeding": {
+      "yellow_pct": 20,
+      "red_pct": 40,
+      "desc": "교배 건수가 예측 대비 20% 이상 부족 시 경고"
+    },
+    "farrowing": {
+      "yellow_pct": 15,
+      "red_pct": 30,
+      "desc": "분만 건수가 예측 대비 15% 이상 부족 시 경고"
+    },
+    "weaning": {
+      "yellow_pct": 15,
+      "red_pct": 30,
+      "desc": "이유두수가 예측 대비 15% 이상 부족 시 경고"
+    },
+    "death_rate": {
+      "yellow_abs": 3,
+      "red_abs": 5,
+      "desc": "폐사율이 예측 대비 3%p 이상 증가 시 경고"
+    }
+  }
+```
+
+### 기상 경보 임계값  
+`FORECAST/WEATHER_THRESHOLD` · type=`JSON` · ✅ · seq=103 · upd 2026-04-06
+
+> 기상 경보 임계값 — 33/35도, -3/-5도, 일교차15도, 강수50/60%
+
+```json
+{"heat_alert": 33, "heat_severe": 35, "cold_alert": -3, "cold_severe": -5, "temp_diff_warning": 15, "rain_prob_alert": 50, "rain_prob_high": 60, "rain_days_warning": 3, "_unit": "temp=C, prob=%, days=일", "_note": "rain_days_warning: 주간 강수 예보 N일 이상 시 방역 경고"}
+```
+
+### 계절 패턴 분석 설정  
+`FORECAST/SEASON_CONFIG` · type=`JSON` · ✅ · seq=365
+
+> 계절별 분석 설정. compare_years=과거 비교 년수, temp_thresholds=온도 경고 기준
+
+```json
+{
+    "compare_years": 3,
+    "seasons": {
+      "spring": {"months": [3,4,5], "risk": "일교차 심화, 호흡기 질환, 발정 불안정"},
+      "summer": {"months": [6,7,8], "risk": "고온 스트레스, 수태율 저하, 사료 섭취 감소"},
+      "fall":   {"months": [9,10,11], "risk": "번식 성수기, 구제역/ASF 방역"},
+      "winter": {"months": [12,1,2], "risk": "저온 자돈 폐사, PED 발생"}
+    },
+    "temp_thresholds": {
+      "heat_stress": 28,
+      "cold_stress": 5,
+      "temp_diff_alert": 15
+    }
+  }
+```
+
+### AI 모델 전략 (1차/2차 자동 전환)  
+`FORECAST/AI_MODEL_STRATEGY` · type=`JSON` · ✅ · seq=367
+
+> 1차=Gemini Flash(전체), 2차=구독농가 수에 따라 자동 전환. RED 농가만 2차 심층분석 수행
+
+```json
+{
+    "1st_pass": {
+      "model": "gemini-flash",
+      "target": "ALL",
+      "desc": "전체 구독농가 배치 분석"
+    },
+    "2nd_pass": {
+      "target": "RED",
+      "rules": [
+        {"min_subscribers": 0,  "model": "gemini-pro",    "desc": "구독 50 미만: Gemini Pro"},
+        {"min_subscribers": 50, "model": "claude-sonnet",  "desc": "구독 50 이상: Claude Sonnet"}
+      ],
+      "additional_data": [
+        "1차 분석 결과 (comment/loss/plan)",
+        "최근 4주 연속 KPI 추이",
+        "ALERT_STATUS 관리대상 상세",
+        "FARROWING_PERF 산차별 성과",
+        "농장 규모별 맞춤 (FARM_SIZE_BENCHMARK)"
+      ],
+      "output_fields": ["deepComment", "rootCause", "improvementRoadmap"]
+    }
+  }
+```
+
+---
+
+## OUTPUT_STYLE
+**출력 스타일 규칙** · 10개 룰
+
+### 지난주 핵심 (comment) 작성 규칙  
+`OUTPUT_STYLE/COMMENT_FORMAT` · type=`MD` · ✅ · seq=42 · upd 2026-06-08
+
+```
+[주간 리포트 — comment 작성 규칙]
+3~4개 불릿, 각 1~2줄 서술형으로 간결하게 작성
+
+[중요] 아래 예시·모범답안 속 숫자는 형식 참고용 — 실제 출력에 그대로 복사 금지, 반드시 입력 실측값으로만 대체할 것
+
+첫 번째 불릿 규칙 (절대 준수):
+- 첫 번째 불릿은 반드시 주간 실적(교배복수/분만복수/이유복수 중 하나)으로 시작
+- PSY/NPD/MSY/LSY 등 연간 환산 지표로 시작하면 안 됨
+- 금지: "PSY(년) {N}, MSY(년) {N} — ..."
+- 올바른: "교배복수 {N}복, 분만복수 {N}복 — 분만율 {pct}% 양호 (참고: PSY(년) {N})"
+
+형식: "불릿 **핵심사실** — 1~2줄 서술"
+
+예시:
+- **교배복수 {N}복, 분만복수 {N}복** — 분만율 {pct}%로 전주 대비 +{pct}p 상승
+- **임신사고 {N}복 (공태 {N}, 재발 {N})** — 사고후미교배 {N}복 즉시 재교배 필요
+- **출하 {N}두, 1등급+ 합격률 {pct}%** — 벤치마크 70% 미달
+
+주간 실적 중심: 교배복수, 분만복수/분만율, 이유복수, 임신사고, 출하 등
+전주 대비 변화를 언급할 때 반드시 [지지난주 대비 변화] 데이터 사용
+임신사고 원인은 반드시 type_nm(한글명) 사용: 공태/재발/유산/불임
+관리대상 모돈은 이유후미교배·사고후미교배 두수 + 재교배 촉구만 간결하게
+
+[월간 리포트 — comment 작성 규칙]
+5~7개 불릿, 구조적 분석 + 중장기 관점 포함
+
+[중요] 아래 예시·모범답안 속 숫자는 형식 참고용 — 실제 출력에 그대로 복사 금지, 반드시 입력 실측값으로만 대체할 것
+
+첫 번째 불릿 규칙:
+- 월간 핵심 실적 요약 (4주 합계/평균 기준)으로 시작
+- 연간 환산 지표(WY) 추세 변화 언급 가능 (월간에서는 의미 있음)
+
+추가 포함 사항 (주간에 없는 항목):
+- 전월 대비 KPI 추세 변화 (WY값 직접 비교 가능)
+- 취약 KPI 구조적 원인 1~2줄 (PSY_DRILLDOWN 깊은 단계)
+- 손실 누적 합계 + 비중 분석
+- 3개월 개선 목표 또는 방향 제안 1줄
+
+톤: 주간보다 분석적, 전략적. 단 여전히 간결하게.
+형식: "불릿 **핵심사실** — 2~3줄 서술 (원인/대응 포함)"
+
+예시:
+- **월간 PSY(년) {N} -> {N} (+{N})** — NPD {N}일 단축이 주효인. 이유후미교배 감소({N}->{N}두/주)가 핵심 기여
+- **임신사고 누적 {N}복 (공태 {N}, 재발 {N})** — 공태 비중 {pct}%로 발정탐지 정확도 점검 필요
+- **출하등급 1등급+ 합격률 월평균 {pct}%** — 과비돈 비율 {pct}%가 병목
+```
+
+### 주차 정의 (절대 혼동 금지)  
+`OUTPUT_STYLE/WEEK_DEFINITION` · type=`MD` · ✅ · seq=204 · upd 2026-04-10
+
+> 지지난주/지난주/금주 정의 — AI 분석 시 시점 혼동 방지
+
+```
+- **지지난주**: 전전주 실적 — 비교 기준값 (변화 계산용)
+- **지난주**: 이번 분석의 실적 대상 주 — comment/loss의 모든 분석은 이 주 기준
+- **금주**: [금주 예정] 섹션의 SCHEDULE_FORECAST 데이터 대상 주
+```
+
+### 연간 환산 지표(WY) 표기 규칙  
+`OUTPUT_STYLE/ANNUAL_KPI_RULE` · type=`MD` · ✅ · seq=43 · upd 2026-06-08
+
+```
+PSY/NPD/MSY/LSY는 연간 환산 지표 — 불릿의 주제(첫 볼드)로 절대 사용 금지
+주간 실적 불릿 끝에 "(참고: PSY(년) {N})" 형태로만 부기
+연간 지표 언급 시 반드시 (년) 표기: PSY(년), NPD(년), MSY(년), LSY(년)
+
+❌ "**PSY(년) {N}** — 전국 상위…" (연간 지표가 주제 = 금지)
+✅ "**교배 {N}복** — 전주 대비 +{N}복. (참고: PSY(년) {N})" (주간 실적이 주제)
+
+※ 위 예시의 숫자는 형식 참고용 — 실제 출력에 복사 금지, 반드시 입력 실측값으로만 대체할 것
+```
+
+### 데이터 신뢰성 규칙  
+`OUTPUT_STYLE/DATA_TRUST_RULE` · type=`MD` · ✅ · seq=44 · upd 2026-04-24
+
+```
+값이 0인 지표는 신뢰성 의심:
+- 이유전폐사율(기간중) 0%, 7일내재귀율 0% 등 0%는 데이터 미입력 가능성이 높음
+- 0% 지표를 "우수" "뛰어난 성과"로 칭찬 절대 금지
+- 언급을 생략하거나 "데이터 확인 필요"로 표현
+
+관리대상 모돈은 핵심 액션만:
+- 항목별 두수를 일일이 나열 금지 (하단 관리대상 섹션에 상세 있음)
+- 이유후미교배·사고후미교배 두수 + 즉시 재교배 촉구만 강조 (NPD 직접 원인)
+
+⛔ 실적 데이터 vs 추론 구분 (절대 준수):
+- 실적 수치(교배복수, 분만율, 임신사고두수, 출하두수, 등급비율 등)는 반드시 프롬프트에 제공된 데이터만 사용
+- 프롬프트에 없는 실적 수치를 생성하면 안 됨 (예: 산차별 실산두수, 월별 추이 등)
+- AI의 분석 의견/권장사항은 허용 (예: "해당 구간 관리가 중요합니다")
+- ❌ "3산차가 13.4두로 최고 성적" (프롬프트에 산차별 데이터 없음 = 할루시네이션)
+- ✅ "산차별 실산 추이를 확인하여 고산차 모돈 관리를 검토해 보세요" (권장사항)
+```
+
+### 섹션별 작성 규칙 (loss/plan/forecast/summary)  
+`OUTPUT_STYLE/SECTION_RULE` · type=`MD` · ✅ · seq=45 · upd 2026-06-08
+
+```
+[주간 리포트 — 섹션별 규칙]
+
+손실 분석 (RED/YELLOW만):
+- 비중 최대 1~2개 항목만 표시 + 전주 대비 변화율
+- 계산 근거 간략 표시
+- [중요] 아래 예시 속 숫자는 형식 참고용 — 실제 출력에 그대로 복사 금지, 반드시 입력 실측값으로만 대체할 것
+- 예: "임신사고 손실 {amount}만원(비중 {pct}%) — 전주 대비 {±N}%"
+
+금주 계획 — 2~4개 불릿 (SCHEDULE_FORECAST 기반):
+- 예정 작업 건수 포함 (교배/분만/이유/출하 예정 두수)
+- 구체적 행동 제안 (무엇을, 어떻게)
+- 예정 건수가 0인 항목은 언급하지 마세요
+- "지난주 실적"과 혼용 금지 — 오직 금주 예정 계획만
+
+경영진단 ai-box — 취약 연간 KPI -> 주간 선행 지표 연결:
+- 취약 지표 종합 (심각/주의/경미 분류)
+- 상위 3개 취약 KPI별 금주 선행 지표 변화 (전주 대비)
+- 연간 환산 지표(WY) 절대값 변화는 주 단위로 미미하므로 언급하지 않음
+- 개선 추세 KPI 긍정 언급
+
+향후 전망 — 2~3개 불릿 (TREND_FORECAST 데이터가 있을 때만)
+
+한줄 요약 — 1문장 (카카오 알림톡용, 50자 이내)
+
+톤: 존댓말, 간결, 실용적. 금지: 논문/보고서 스타일의 긴 서술문.
+
+[월간 리포트 — 섹션별 규칙]
+
+손실 분석:
+- 전체 항목별 기여도 분석 (LOSS_SG/LOSS_DOPE/LOSS_GRADE/LOSS_NURSERY)
+- 4주 누적 합계 + 모돈당 환산 + 전국 P75 비교
+- 비중 최대 항목의 원인 드릴다운 (PSY_DRILLDOWN 연계)
+- NPD 개선 시뮬레이션 금액 포함
+- [중요] 아래 예시 속 숫자는 형식 참고용 — 실제 출력에 그대로 복사 금지, 반드시 입력 실측값으로만 대체할 것
+- 예: "월간 손실 합계 {amount}만원 (모돈당 {amount}만원, 전국 P75: {amount}만원)"
+
+경영진단 — 구조적 취약점 진단:
+- 취약 KPI 심각도 변화 (전월 대비)
+- 상위 취약 KPI별 원인 드릴다운 (PSY_DRILLDOWN 2~5단계 포함)
+- NPD 5종 구성비 분석 (ALERT_STATUS)
+- 산차별 도태/폐사 구조 분석
+- 분기 추이 테이블 (최근 8분기)
+- 3개월/6개월 개선 목표 제시
+
+월간 실적 총괄 — 4~6개 불릿:
+- 4주 합계/평균 기준 핵심 실적
+- 연간 환산 지표(WY) 추세 변화 직접 분석 (월간에서는 유의미)
+- 전국 비교 포지션 (분위수)
+
+개선 전략 — 2~3개 불릿:
+- 비중 최대 손실 항목 기반 구체적 전략
+- 중장기 목표 (3개월 단위)
+
+한줄 요약 — 1문장 (월간 종합, 60자 이내)
+```
+
+### 섹션 경계 규칙 (혼용 금지)  
+`OUTPUT_STYLE/SECTION_BOUNDARY` · type=`MD` · ✅ · seq=46 · upd 2026-06-08
+
+```
+comment/loss 섹션 금지:
+- SCHEDULE_FORECAST(금주 예정) 데이터 참조 절대 금지
+- "예정", "달성율", "예정 대비", "계획 대비" 등 금주 계획 관련 표현 절대 금지
+- 프롬프트에 없는 숫자를 추론·계산·추정하여 언급 절대 금지 (할루시네이션)
+- 예정/달성율 관련 내용은 반드시 plan 섹션에만 작성
+
+단위 규칙 (양돈 업계 표준):
+- 아래 예시의 숫자는 단위 표기 형식 설명용일 뿐이며 실제 값으로 복사·인용 절대 금지 (반드시 프롬프트 실측치 사용)
+- 교배·분만·이유 → 복 (예: 교배 {N}복, 분만 {N}복)
+- 자돈·육성·출하돈·관리대상 모돈 → 두 (예: 출하 {N}두, 관리대상 {N}두)
+- 임신사고 → 두 (예: 임신사고 {N}두)
+- "건"은 양돈에서 사용하지 않는 단위 — 절대 사용 금지
+```
+
+### STEP 6 진단 카드 공통 색상 분기  
+`OUTPUT_STYLE/STEP6_COLOR_RULES` · type=`JSON` · ✅ · seq=273
+
+> STEP 6 카드 공통 색상 분기 방향성 정의. 정상범위 비율(높을수록 좋음), 이상치 비율(낮을수록 좋음), 반복률(높을수록 나쁨) 3분류.
+
+```json
+{
+  "green_var": "var(--green)",
+  "orange_var": "var(--orange)",
+  "red_var": "var(--red)",
+  "mode": {
+    "higher_is_better": {
+      "logic": "pct >= good → green, pct >= warn → orange, else red",
+      "used_by": ["HEAT.cycle_stats.normal_pct", "HEAT.bcs1_stats.target_pct", "BCS.target_pct", "DAILY_LOG.coverage_pct", "*.input_delay_stats.immediate_pct"]
+    },
+    "lower_is_better": {
+      "logic": "pct <= warn → green, pct <= danger → orange, else red",
+      "used_by": ["BCS.low_pct", "BCS.high_pct"]
+    },
+    "higher_is_worse": {
+      "logic": "pct >= red → red, pct >= warn → orange, else green",
+      "used_by": ["TREATMENT.repeat_pct"]
+    }
+  },
+  "desc": "STEP 6 카드 4종의 색상 분기 공통 규칙. 실제 good/warn/red 임계값은 BENCHMARK 그룹의 *_THRESHOLD 룰에 담겨 있음. mode.*.used_by는 어느 지표가 어느 방향성에 해당하는지 명시."
+}
+```
+
+### 출력 JSON 형식 규칙  
+`OUTPUT_STYLE/OUTPUT_FORMAT` · type=`MD` · ✅ · seq=209 · upd 2026-04-10
+
+> AI 분석 결과 JSON 출력 포맷
+
+```
+출력 형식 (반드시 JSON):
+
+{
+  "comment": "지난주 핵심 (줄바꿈 \n, 각 불릿 • )",
+  "loss": "손실 분석 (RED/YELLOW만, GREEN은 빈 문자열)",
+  "plan": "금주 계획 (줄바꿈 \n, 각 불릿 • )",
+  "forecast": "향후 전망 (TREND_FORECAST 기반, 없으면 빈 문자열)",
+  "summary": "한줄 요약 (50자 이내)",
+  "classReason": "분류 사유 (RED/YELLOW인 경우 해당 조건 설명)"
+}
+- 종합 AI 분석 요약(comment 필드): bullet(•) 3~6개 작성. 각 bullet 내 텍스트는 3줄 이하로 간결하게. RED는 5~6개, GREEN은 3~4개 권장.
+```
+
+### v9 진단탭 입력 지연 강조 노출 원칙  
+`OUTPUT_STYLE/INPUT_DELAY_EMPHASIS` · type=`MD` · ✅ · seq=243 · upd 2026-04-29
+
+```
+사용자가 리포트 스크롤 중 "입력 지연 → 성적 저하" 인식을 반복 노출받도록 설계.
+주간 리포트: 경량 분산 노출 (Layer 1/2/3) + STEP 0 🚨 시급 관리 전용 섹션.
+월간 리포트: 독립 "📝 입력 지연 심층 분석" 섹션 (plan/03 §9 참조).
+
+§1 입력 지연 정의 (Phase 11 v5 — 사용자 확정 2026-04-21)
+
+** 입력 지연 = 매주 월요일 새벽 리포트 생성 시점(리포트 생성일) 기준 **
+(a) 입력된 건: 작업일 → 등록일 차이 (작업은 했으나 등록이 늦음)
+(b) 미입력 건: 예정일 → 리포트 생성일 경과일 (card-alerts 관리대상 모돈, 등록 안 됨)
+
+두 대상 합산 평균이 "현재 입력 지연일":
+  현재 지연일 = (Σ입력_지연 + Σ미입력_경과) ÷ (입력 회수 + 미입력 두수)
+
+예정일 기준 (농장설정 참조):
+- 이유후 교배 예정일 = 이유일 + 평균재발일(농장설정, 기본 7일)
+- 사고후 교배 예정일 = 사고일 + 평균재발일
+- 전입후 초교배 예정일 = MAX(전입일, 출생일 + 초교배일령(농장설정, 기본 240일))
+
+상한: 미입력 경과일 상한 = 90일 (outlier 제외, 주간 비생산일수와 일치)
+
+§2 주간 비생산일수 vs 입력 지연 영향도 역할 분담 (중복 없음)
+
+| 지표 | 측정값 | 측정 대상 |
+|:-:|---|---|
+| 주간 비생산일수 | 모돈일 합 | 입력된 작업 기반 생리적 지연 |
+| 입력 지연 영향도 | 평균 지연일 (품질) | 입력 + 미입력 모두 (품질) |
+
+동일 모돈이 두 지표에 기여 가능하지만 측정치가 다름 (카운트 vs 일수).
+
+§3 주간 Layer 노출 전략 (Phase 11 v5 확정)
+
+| Layer | 위치 | 상태 |
+|:-:|---|:-:|
+| 0 | STEP 0 🚨 시급 관리 (최상단 경고색, 기본 펼침) | ✅ 구현 |
+| 1 | cb-one AI 한줄 요약 | ✅ 구현 |
+| 2 | status-strip 4번째 row 🧾 입력 지연 | ✅ 구현 |
+| 3 | STEP 1 sum-pos 7번째 바 | ✅ 구현 |
+| 6 | ~~STEP 7 최상단 배너~~ | ❌ 월간 이관 |
+
+§4 STEP 0 🚨 시급 관리 — 구조 (주간 신규)
+1. 현황 박스: 입력된 N회 + 미입력 관리대상 M두 (평균 X일 경과)
+2. ⚡ 즉시 조치 박스: "미입력 M두 즉시 입력" 최우선
+3. 🔮 미래 PSY 전망 SVG (과거 52주 + 유지/악화 2 시나리오)
+4. 🌏 전국 10분위 × PSY 바 + 내 농장 ★ 위치 (D1 고정 ≤1일)
+5. 상세 체크리스트 → STEP 5 "📝 데이터 입력 품질 체크" 링크
+
+STEP 0 섹션 카드 색상 (내 농장 분위 기반):
+- D1 → safe (녹색, 양호)
+- D2~D3 → mild (노랑)
+- D4~D6 → warn (오렌지)
+- D7~D9 → danger (연빨강)
+- D10 → critical (진빨강)
+
+§5 자연어 변환 템플릿 (상관도 → 농장주 표현)
+| 상관도 절대값 | 강도 | 농장주 표현 |
+|:-:|:-:|---|
+| ≥ 0.8 | 매우 뚜렷 | "10번 중 9번 꼴로 함께 움직임 (매우 뚜렷)" |
+| 0.5~0.8 | 뚜렷 | "10번 중 7-8번 꼴 (뚜렷)" |
+| 0.3~0.5 | 어느 정도 | "10번 중 6-7번 꼴 (어느 정도 뚜렷)" |
+| < 0.3 | 약함 | "일부 연관성 있으나 약함" |
+
+§6 통계 용어 노출 금지
+- "상관도 -0.78", "통계 모형명", "상관계수" 등 직접 노출 금지
+- 1% 영향 → "지연 1일 단축 시 PSY N두 회복 기대"
+
+§7 지연 수준별 강조 수위 (v5 통합 기준)
+| 현재 지연일 | 분위 | 조치 | 적용 Layer |
+|:-:|:-:|---|---|
+| ≤ 1일 | D1 | 정보 표시 (우수) | Layer 2 |
+| 1~5일 | D2~D3 | 경미 경고 | Layer 0/1/2/3 |
+| 5~15일 | D4~D6 | 표준 경고 + 액션 | 모든 Layer + STEP 0 |
+| 15~30일 | D7~D9 | 강한 경고 + 즉시 조치 | 모든 Layer + 긴급 표시 |
+| > 30일 | D10 | 최강 경고 + 미입력 대량 | RED 분류 트리거 검토 |
+
+§8 STEP 7 섹션 명칭 (Phase 11 v5)
+- "확장 진단 — 환경·관리 상세"
+- 서브: "웅돈·주변질병·BCS·치료·발정·작업일보 · 데이터 있을 시 AI 분석 / 없을 시 입력 유도"
+
+§9 AI 작성 의무 규칙
+- cb-one (Layer 1)에 입력 지연 상태 언급 의무
+- 포맷: "입력 <b>X일 지연 (입력 완료 N회 + 미입력 관리대상 M두)</b>."
+- "망했다" 등 부정 표현 금지, "미입력 M두 즉시 입력", "관리 유지 핵심" 등 권장
+```
+
+### 손실탭 NPD/입력지연 분리 표시 + 숨은 손실 카드 원칙  
+`OUTPUT_STYLE/LOSS_PRESENTATION` · type=`MD` · ✅ · seq=244 · upd 2026-04-29
+
+```
+손실탭 및 리포트 내 손실 정보 표시 원칙. Phase 11에서 NPD와 입력 지연 추정 손실을 분리 표시하여 사용자 인식 명확화.
+
+§1 손실 5 + 1 항목 (Phase 11)
+기존 5종 손실:
+1. 임신사고 손실 (S1)
+2. 도태폐사 손실 (S2)
+3. 출하 등급 손실 (S3)
+4. 자돈 폐사 손실 (S_PW)
+5. NPD 손실 (S9) — **순수 NPD만** (Phase 11 변경)
+
+신규 추가:
+6. **입력 지연 추정 손실 (S9_INPUT)** — 숨은 손실
+
+§2 S9 NPD 섹션 표시 변경
+이전: "비생산일수(NPD) 손실 — XXX만원"
+신규:
+  "비생산일수(NPD) 손실 (예정일 지연) — XXX만원"
+  └ 설명: "예정일 대비 다음 작업이 지연된 모돈에 기반한 금액. 미입력 의심 {N}두는 제외."
+
+§3 S9_INPUT 신규 "숨은 손실" 카드
+- 위치: 손실탭 기존 5종 손실 **아래** (시각적으로 구분)
+- 레이블: "🧾 입력 지연 추정 손실"
+- 색상: 주황색 계열 배지 "숨은 손실" 표시
+- 금액 계산:
+    추정 손실 = ΔPSY 시뮬값 × 상시모돈 × 두당가격 × (365 ÷ PSY)
+    여기서 ΔPSY 시뮬값 = 입력지연 영향도 룰의 시뮬레이션(전국 평균 1.8일 회복 시 PSY 회복분)
+- 월간 환산: 추정 손실 ÷ 12
+- 표시: "약 -{amount}만원 (지연 {current}일 → 전국 평균 {target}일 개선 시 회수 가능)"
+
+§4 총 손실 합계 표시
+- 총 손실 = Σ(S1 + S2 + S3 + S_PW + S9) — **S9_INPUT 제외** (중복 계상 방지)
+- S9_INPUT은 별도 "개선 가능 영역"으로 표시
+- 하단 힌트: "💡 입력 지연 {current}일 → {target}일 개선 시 월 ~{amount}만원 회수 가능"
+
+§5 AI 코멘트 작성 지침
+- 손실탭 서두 AI 요약에 지연율 ≥ 2% 농가는 "숨은 손실" 존재 언급 의무
+- 표현: "예정일 대비 작업 지연에 따른 NPD 손실 {A}만원 외에, 데이터 입력 지연으로 인한 성적 저하로 월 약 {B}만원 추가 손실 추정"
+- "생리학적" 표현 사용 금지 (농장주 이해 어려움)
+- "미교배"는 관리대상 알림 맥락에서만 허용 · NPD 손실 맥락에서는 "교배 지연"으로 표기
+- 과신 단정 금지 ("확실히 {N}만원 회수")
+
+§6 진단탭 (v9) 연계
+- 입력지연 강조 룰의 Layer 7 "숨은 손실" 카드와 일관 표시
+- STEP 7 경고 배너의 시뮬레이션 수치와 손실탭 S9_INPUT 금액은 **동일 공식** 사용
+
+§7 월간 리포트에서의 확장
+- 월간 리포트에서는 S9_INPUT 을 전국 5년 트렌드와 결합:
+  "내 농장 구간 Q{N} 평균 수익 손실 {X}억원 / 연 — Q{N-1} 이동 시 {Y}만원 회수 가능"
+- 입력지연 전국 분위 기준의 분위별 통계 참조
+
+§8 표현 통일 원칙
+- "손실" = 이미 발생한 금액 (S1~S9)
+- "숨은 손실" = 개선 시 회수 가능한 추정 금액 (S9_INPUT)
+- "시뮬레이션" = 지연 개선 시나리오별 예상 효과
+- 혼용 금지 (사용자 혼란 방지)
+
+§9 NPD-입력지연 분리 원칙 (T17 재확인 · v4 용어 정정)
+- NPD 손실 = 예정일 대비 작업 지연 3원인만 (이유 후 교배 지연·사고 후 교배 지연·후보돈 초교배 지연)
+  ※ "등록은 되었으나 농가 설정 예정일보다 다음 작업이 늦게 등록된 모돈"
+  포함 금지 항목: 데이터 입력지연(작업일↔등록일) · 재발확인 · 임진검사 · 분만지연 · 이유지연 · 미입력 의심 모돈
+- 데이터 입력지연 영향 = 입력지연 영향도 별도 데이터셋 + "숨은 손실" 카드로만 표시
+- m-loss-calc 모달 · m-improvement 모달 · STEP 0 s0-breakdown은 각기 다른 지표를 다루므로 상호 합산 금지
+- 리포트 내 NPD 관련 모든 표기에 "(예정일 작업 지연 · 데이터 입력지연 제외)" 명시
+- 용어 금지: "생리학적", "순수 생리학적"
+- 용어 권장: "예정일 작업 지연", "교배 지연", "예정일 대비 지연"
+- "미교배" 용어는 관리대상 모돈(현재 시점 데이터 미입력 의심) 맥락에서만 허용
+```
+
+---
+
+## ANALYSIS
+**분석 기준 규칙** · 7개 룰
+
+### W/WY/M/MY 기간 구분 규칙  
+`ANALYSIS/PERIOD_DISTINCTION` · type=`MD` · ✅ · seq=202 · upd 2026-04-10
+
+> W(주간실적)/WY(연환산)/M(월간합산)/MY(월간연환산) 기간별 데이터 성격과 비교 규칙
+
+```
+제공되는 KPI 데이터는 산출 기간에 따라 성격이 완전히 다르므로, 분석 시 반드시 구분하여 해석:
+
+| PERIOD | 대상 | 의미 | 특성 |
+|--------|------|------|------|
+| **W** | 교배/분만/이유/모돈 | 해당 주(월~일) 7일간 실측치 | 단기 변동 큼, AIAO off-week 시 0~소수 |
+| **WY** | PSY/NPD/MSY/LSY | 해당 주 시점 기준 과거 1년 rolling 환산 | 장기 추세 반영, 1주 변동 미미 |
+| **M** | 교배/분만/이유/모돈 | 해당 월 1일~말일 합산 기반 | off-week 왜곡 없음, W보다 안정적 |
+| **MY** | PSY/NPD/MSY/LSY | 월말 기준 과거 1년 rolling 환산 | WY와 유사, 기준일만 다름 |
+
+**분석 원칙**:
+- W/M 지표: **전주 대비 변화가 의미 있음** — 주간 실적 비교
+- WY 지표: **전주 대비 변화량이 매우 작음** — 장기 추세만 참고, 주간 변동 과잉 해석 금지
+- 취약점 분석의 "분기평균"은 W의 13주 평균, "월간"은 M의 직접값
+- 전국/상위10%도 동일 PERIOD 기준: WY 지표는 전국 WY와, W 지표는 전국 W 분기평균과 비교
+```
+
+### 전국 대비 격차 추이 분석 규칙  
+`ANALYSIS/GAP_TREND` · type=`JSON` · ✅ · seq=203 · upd 2026-04-29
+
+> 내 농장 vs 전국/상위10% 다년간 격차 변화 분석 (Phase 8-1)
+
+```json
+{
+  "description": "내 농장 vs 전국/상위10% 다년간 격차 변화 분석",
+  "data_source": {
+    "farm": "농장 다년 추세 데이터 (5년 분기/월간)",
+    "national": "전국 분위 집계 분기 (연환산은 마지막주값, 단발은 13주 평균)"
+  },
+  "period_matching": {
+    "WY_indicators": "PSY/NPD/MSY — 전국 연환산 분기 마지막주 대표값과 비교",
+    "W_indicators": "분만율/폐사율/재귀율/실산/이유두수 — 전국 단발 분기 13주 평균과 비교",
+    "M_farm_data": "내농장 월간은 전국 단발 분기평균과 비교 가능 (성격 유사)"
+  },
+  "gap_calculation": {
+    "higher_is_better": "(top10 - farm) / top10 * 100 (양수 = 뒤처짐)",
+    "lower_is_better": "(farm - top10) / top10 * 100 (양수 = 뒤처짐)"
+  },
+  "threshold": {
+    "widening": "gapSlope > 0.3 (%p/분기) — 격차 확대",
+    "narrowing": "gapSlope < -0.3 — 격차 축소",
+    "stable": "-0.3 ~ 0.3 — 유지"
+  },
+  "ai_guideline": {
+    "widening": "전국과의 격차 확대 경고, 우선 개선 KPI로 강조",
+    "narrowing": "전국 수준 근접, 긍정적 평가",
+    "stable": "현 수준 유지 언급"
+  },
+  "analysis_period": "최근 2년(8분기) 선형회귀 기울기 기반",
+  "phase": "Phase 8-1",
+  "_internal_meta": {
+    "farm_loader": "loadMultiYearTrend",
+    "national_table": "TS_INS_AI_NATIONAL"
+  }
+}
+```
+
+### 격차 추이 AI 분석 지침  
+`ANALYSIS/GAP_TREND_GUIDE` · type=`MD` · ✅ · seq=207 · upd 2026-04-10
+
+> 전국 대비 격차 추이 데이터 해석 방법 — AI 코멘트 작성용
+
+```
+[전국 대비 격차 추이] 데이터가 제공되면 반드시 comment에 반영:
+
+- **격차확대(widening)**: 전국 상위 농장은 개선되는데 내 농장은 정체/하락 → "전국과의 격차가 벌어지고 있습니다" 경고
+- **격차축소(narrowing)**: 내 농장의 개선 속도가 전국보다 빠름 → "전국 수준에 근접하고 있습니다" 긍정
+- **유지(stable)**: 격차가 일정 → 현 수준 유지 언급
+- 격차확대 KPI가 취약점과 겹치면: "N년간 전국과의 격차가 확대되고 있어 우선 개선이 필요합니다" 강조
+- ⚠ 아래 예시의 숫자({N}%p·{M}%p 등)는 인용 형식 설명용 placeholder임. 절대 그대로 복사하지 말고 반드시 제공된 실제 데이터 값으로 치환할 것.
+- ❌ "격차 추이 분석에 의하면" 같은 기계적 인용 금지 → ✅ "최근 2년간 전국 상위 농장과의 PSY 격차가 {N}%p에서 {M}%p로 벌어지고 있습니다"
+```
+
+### 취약점 분석 AI 지침 (10년 추이)  
+`ANALYSIS/WEAKNESS_GUIDE` · type=`MD` · ✅ · seq=208 · upd 2026-04-10
+
+> 취약점/개선점 데이터 해석 방법 — AI 코멘트 작성용
+
+```
+[취약점 분석] 데이터가 제공되면 반드시 comment에 반영:
+
+- **만성 취약 KPI**: 최고점 대비 GAP이 크고 악화 추세인 지표 → "지속적 약점" 명시
+- **상위농장 대비 GAP**: 전국 상위10% 대비 차이가 큰 지표 → 개선 우선순위 제안
+- **최근 악화**: 추세가 worsening인 지표가 이번 주에도 하락이면 → "연속 악화" 경고
+- **개선 추세 KPI**: improving인 지표는 긍정적으로 "꾸준한 개선" 언급
+- 단, 취약점 데이터는 comment의 보충 근거로 활용 — 주간 실적 불릿 안에서 자연스럽게 녹여서 작성
+- ❌ "취약점 분석에 의하면" 같은 기계적 인용 금지 → ✅ "최근 2년간 분만율이 지속 하락하고 있어 주의가 필요합니다"
+```
+
+### 선행지표 인과분석 AI 지침  
+`ANALYSIS/CAUSAL_ANALYSIS` · type=`MD` · ✅ · seq=210 · upd 2026-04-10
+
+> 후행지표(PSY/MSY 등) 악화 원인을 선행지표에서 추적하여 코멘트 작성 (Phase 8-2)
+
+```
+[선행지표 인과분석] 데이터가 제공되면 반드시 comment에 반영:
+
+- **악화 후행지표의 선행 원인**: "PSY 하락의 원인은 3개월 전 수태율 하락에서 시작됨" 형태로 인과 경로 설명
+- **선행지표 개선 시 전망**: "수태율이 최근 반등 중이므로 분만율은 4~5개월 후 개선 예상" 긍정적 전망
+- **복수 원인 존재 시**: 상관계수가 높은 순서로 우선 원인 제시 (최대 2~3개)
+- **양돈 생산 흐름 기반**: 교배→(114일 임신)→분만→(21일 포유)→이유→재교배
+- ❌ "인과분석 결과에 의하면" 같은 기계적 인용 금지
+- ✅ "수태율이 3개월 전부터 하락하면서 현재 분만율 하락으로 이어지고 있습니다"
+- ✅ "모돈도태율이 높아져 후보돈 비율 증가 → 6개월 후 PSY 영향 우려"
+```
+
+### 유사농장 벤치마킹 AI 지침  
+`ANALYSIS/SIMILAR_FARM` · type=`MD` · ✅ · seq=211 · upd 2026-06-08
+
+> 유사 규모·성적 농장의 개선/하락 패턴 분석 — AI 코멘트 활용 (Phase 8-3)
+
+```
+[유사농장 벤치마킹] 데이터가 제공되면 plan 섹션에 반드시 반영:
+
+- **개선 농장 패턴**: "유사 규모 농장 N개 중 M개가 개선 성공 — 핵심 차이는 OO" 근거 제공
+- **하락 농장 대비**: 개선 농장이 하락 농장과 달리 어떤 KPI를 우선 개선했는지 설명
+- **처방 근거**: plan의 우선 개선 KPI 선정 시 유사농장 데이터를 근거로 인용
+- ❌ "유사농장 분석 결과" 같은 기계적 인용 금지
+- ✅ "비슷한 규모의 농장에서 분만율을 먼저 개선한 곳이 PSY를 평균 +{N} 올렸습니다" (※ {N} 은 형식 예시 자리표시자 — 유사농장 실측 통계가 입력으로 제공될 때만 그 실측값으로 채워 인용)
+- ⚠ 위 예시의 {N}·N·M 등 숫자를 그대로 복사 금지 — 입력으로 제공된 유사농장 실측 통계가 있을 때만 그 값을 인용하고, 근거 데이터가 없으면 수치를 생성하지 마십시오.
+- ※ 개별 농장 정보는 포함되지 않으며 통계적 패턴만 참조
+```
+
+### 구체적 처방 작성 지침 (Phase 8-4)  
+`ANALYSIS/PRESCRIPTION_GUIDE` · type=`MD` · ✅ · seq=212 · upd 2026-04-10
+
+> 인과분석+유사농장 기반 구체적 행동 처방 — plan 섹션 작성 규칙
+
+```
+plan 섹션 작성 시 아래 형식의 구체적 처방을 포함:
+
+1. **우선 개선 KPI** — 선행지표 인과분석에서 가장 영향 큰 지표
+2. **구체적 행동** — "교배 후 30일 초음파 재확인", "분만사 환기 개선" 등 실행 가능한 행동
+3. **기대효과** — "PSY +1.5~2.0 예상 (3~6개월)", 유사농장 근거 있으면 인용
+4. **근거** — "유사 규모 농장 N개 중 개선 성공 농장의 공통 패턴"
+- ❌ 추상적 제안("관리를 강화하세요") 금지
+- ✅ 구체적 행동 + 수치 기반 기대효과 + 인과/유사농장 근거
+- 인과분석·유사농장·격차추이 데이터가 모두 제공되면 종합하여 가장 효과적인 처방 도출
+```
+
+---
+
+## MONTHLY
+**월간 전용 규칙** · 11개 룰
+
+### 월간 리포트 가장 시급한 KPI 자동 결정 룰  
+`MONTHLY/WEAKEST_PRIORITY` · type=`JSON` · ✅ · seq=401
+
+```json
+{
+  "step1_filter_thresholds": {
+    "psy":                {"gap_vs_national": -1.0, "grade_threshold": "C", "direction": "low",  "unit": "두"},
+    "npd":                {"gap_vs_national":  1.0, "grade_threshold": "C", "direction": "high", "unit": "일"},
+    "farrowing_rate":     {"gap_vs_national": -2.0, "grade_threshold": "C", "direction": "low",  "unit": "%"},
+    "wean_count":         {"gap_vs_national": -0.5, "grade_threshold": "C", "direction": "low",  "unit": "두"},
+    "msy":                {"gap_vs_national": -1.0, "grade_threshold": "C", "direction": "low",  "unit": "두"},
+    "post_wean_survival": {"gap_vs_national": -1.5, "grade_threshold": "C", "direction": "low",  "unit": "%"}
+  },
+  "step2_priority": [
+    {"kpi_id": "npd",                "rank": 1, "reason": "PSY·MSY 입력 인자 (원인 지표) — NPD 1일 단축 = PSY +0.3두 (Stalder 2009)"},
+    {"kpi_id": "farrowing_rate",     "rank": 2, "reason": "수태 실패 직격 — 분만율 -1%p = 모돈당 -0.13두 PSY"},
+    {"kpi_id": "wean_count",         "rank": 3, "reason": "이유 단계 손실 — 복당 +0.5두 = PSY +1.1두"},
+    {"kpi_id": "post_wean_survival", "rank": 4, "reason": "이유 후 손실 — 1%p 개선 = 출하 +0.18두/모돈"},
+    {"kpi_id": "psy",                "rank": 5, "reason": "결과 지표 — 원인 지표 우선 후 잔여"},
+    {"kpi_id": "msy",                "rank": 6, "reason": "결과 지표 — PSY × 이유후육성률 합산"}
+  ],
+  "step3_branches": {
+    "no_weakness":  {"weakest_kpi_id": "none",    "message": "성과 유지 권장"},
+    "single":       {"weakest_kpi_id": "<단일 후보>"},
+    "multiple":     {"weakest_kpi_id": "<step2 priority 가장 높은 후보>"}
+  },
+  "_internal_meta": {
+    "scope": "monthly",
+    "applies_to": [
+      "monthly_report.panel-summary.sec-month-scorecard.weakest-slot",
+      "monthly_ai_prompt.weakest_kpi_section",
+      "etl.dataset_monthly_summary.weakest_kpi_id"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "주간 도입 시 별도 룰 WEEKLY/WEAKEST_PRIORITY 작성 권장 (임계값 다름)",
+    "sources": [
+      "한돈자조금 2025 KPI 표준",
+      "피그플랜 532농장 등급 분포 (인사이트 자체)",
+      "Stalder K.J. 2009 Sow ROI breakeven 3.5산",
+      "Koketsu Y. 1996~2021 PSY·NPD 연관 시리즈"
+    ],
+    "spec_doc": "AI/plan/17_monthly_weakest_kpi_rule.md",
+    "session_ref": "CHANGES_SYNC_20260527.md",
+    "created_dt": "2026-05-27",
+    "applied_dt": null,
+    "version": "v1"
+  }
+}
+```
+
+### 이유율 cohort 매칭 정책 (옵션1 이유도래)  
+`MONTHLY/COHORT_FARROW_WEAN` · type=`JSON` · ✅ · seq=452
+
+```json
+{
+  "description": "이유율 cohort 매칭 정책. 옵션1(이유 도래 cohort) 채택(2026-05-21). 이유율 = 이유 도래 모집단 中 실제 이유 도달 비율.",
+  "cohort_policy": "v1_weaning_arrival",
+  "matching": {
+    "cohort_target": "분만일 + 포유일이 report month 도래하는 모돈(BUN_DT + nursing_days 의 월 = report month)",
+    "numerator": "cohort 中 EU_DT가 실제 report month 발생한 모돈",
+    "denominator": "cohort 전체(이유 도달 + 분만~이유 사이 폐사·양자 처분)",
+    "note": "단순 전월 분만수 분모 금지 — 이유 도래 cohort(전월 후반 + 당월 초중 분만 혼합)"
+  },
+  "nursing_days": {
+    "default": 22,
+    "fallback_code": 21,
+    "config_code": "140003",
+    "priority": "TC_FARM_CONFIG.140003(농장설정) > 본 룰 default(22, 한국평균) > 코드 fallback(21, 안전최소)"
+  },
+  "_internal_meta": {
+    "scope": "monthly",
+    "version": "v1",
+    "applies_to": [
+      "inspig-etl dataset_farrow_wean_cohort.py 이유율 산출",
+      "FARROW_WEAN_COHORT_M.weaning_rate_pct / denominator_litters"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 cohort 전용",
+    "sources": [
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9 COHORT_FARROW_WEAN/v1",
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9.4 옵션1 확정(2026-05-21)"
+    ],
+    "spec_doc": "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9.4",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-18",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 분만율 보정 cohort 매칭 정책  
+`MONTHLY/COHORT_MATING_FARROW` · type=`JSON` · ✅ · seq=453
+
+```json
+{
+  "description": "분만율 보정 cohort. report month 분만 모돈을 교배 시점으로 역추적(분만일 − 임신일수 ± tolerance). 분만율 = 분만 도달 / 교배 cohort.",
+  "gestation_days": 115,
+  "tolerance_days": 7,
+  "cohort_definition": {
+    "mating_cohort": "분만월 기준 −3~−4개월 교배 모돈(예: 4월 분만 = 12~1월 교배)",
+    "farrow_rate": "분만 도달 모돈 / 교배 cohort 모돈",
+    "preg_loss": "교배 cohort 中 재발·유산·공태(분만 미도달)"
+  },
+  "realtime_pcode_ref": "TS_PRODUCTIVITY PCODE 032013(보정 분만율)과 5% 이내 일치 검증(etl/10 §8.3)",
+  "_internal_meta": {
+    "scope": "monthly",
+    "version": "v1",
+    "applies_to": [
+      "신규 MATING_FARROW_COHORT_M collector(attended)",
+      "card-repro-farrow 분만율(보정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 cohort 전용",
+    "sources": [
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9 COHORT_MATING_FARROW/v1",
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.3"
+    ],
+    "spec_doc": "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.3",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-18",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 이유전폐사율(PWM) cohort 매칭 정책  
+`MONTHLY/COHORT_PWM` · type=`JSON` · ✅ · seq=454
+
+```json
+{
+  "description": "이유전폐사율(PWM, Pre-Wean Mortality) cohort. 분만월 cohort 실산 대비 이유까지 누적 폐사.",
+  "denominator": "born_alive (분만월 cohort 실산 누계)",
+  "numerator": "loss_head (분만~이유 사이 누적 폐사 = BORN_ALIVE − WEANED_HEAD + FOSTER_IN − FOSTER_OUT)",
+  "formula": "PWM% = SUM(loss_head) / SUM(born_alive) * 100",
+  "loss_reasons": ["압사(crushed)", "질병(disease)", "아사·약자(starve)", "기타(other)"],
+  "perinatal_classification_note": "PWM = born alive day1+ 포유중폐사([C] 권고B). 실산 분모. born dead([A] 사산·미라, 총산분모)와 합산 금지(CLAUDE.md 주산기손실 3분류)",
+  "_internal_meta": {
+    "scope": "monthly",
+    "version": "v1",
+    "applies_to": [
+      "dataset_farrow_wean_cohort.py PWM / LITTER_DETAIL(attended)",
+      "card-piglet-pwm / popup-piglet-pwm"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 cohort 전용",
+    "sources": [
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9 COHORT_PWM/v1",
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.1·§3.2",
+      "CLAUDE.md § 주산기 손실 3분류(권고B [C] 포유중폐사)"
+    ],
+    "spec_doc": "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-18",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 재귀일(WSI) cohort 매칭 정책  
+`MONTHLY/COHORT_WSI` · type=`JSON` · ✅ · seq=455
+
+```json
+{
+  "description": "재귀발정일(WSI) cohort. report month 이유 모돈의 다음 교배까지 일수. 극단값 제외.",
+  "cohort_basis": "이유월(EU 발생월) 기준 모돈",
+  "next_mating_match": "이유 후 최초 교배 = MIN(G.WK_DATE) WHERE G.PIG_NO=E.PIG_NO AND G.WK_GUBUN=G코드 AND G.WK_DATE > E.WK_DATE. 교배 SSOT=TB_MODON_WK[G].WK_DATE (TB_GYOBAE.GYOBAE_DT 컬럼 부재 확인). PARITY+1 아님 — TB_MODON_WK[G].SANCHA=직전 이유와 동일 산차임을 2026-06-18 probe 실증(SANCHA+1 매칭 시 0행)",
+  "outlier_threshold_days": 100,
+  "outlier_note": "다음교배 − 이유 > 100일은 무발정·질병 표지로 제외(WSI_P1_BENCHMARK quality_guard와 정합)",
+  "within_7d_pct": "재귀일 <= 7 비율(7일내재귀율)",
+  "distribution_bins": ["0-3", "4", "5", "6", "7", "8", "9plus"],
+  "_internal_meta": {
+    "scope": "monthly",
+    "version": "v1",
+    "applies_to": [
+      "신규 WSI_COHORT_M collector(attended)",
+      "card-repro-mating 재귀일 / popup-kpi-wsi 분포"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 cohort 전용",
+    "sources": [
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9 COHORT_WSI/v1",
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.4·§5.3"
+    ],
+    "spec_doc": "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.4",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-18",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 임신사고 분모(risk-population) 정책  
+`MONTHLY/PREG_ACCIDENT_DENOM` · type=`JSON` · ✅ · seq=456
+
+```json
+{
+  "description": "임신사고율 분모 = risk-population(사고 위험 모돈). 단순 월 신규교배가 아닌 월초 활성임신 + 월간 신규교배.",
+  "denominator_policy": "risk_population_v1",
+  "risk_population": {
+    "active_pregnancy": "월초(1일) 시점 임신 진행 중 모돈",
+    "new_mating": "월간 신규 교배 모돈",
+    "total_risk": "active_pregnancy + new_mating"
+  },
+  "accidents": ["재발정(recurrence, 21·42일 cohort)", "유산(abortion)", "공태(barren)", "불임(infertility)"],
+  "formula": "사고율% = SUM(accidents) / total_risk * 100",
+  "note": "분모를 단순 당월 교배수로 쓰면 과대평가 — 진행 중 임신 모돈도 사고 위험 모집단에 포함",
+  "_internal_meta": {
+    "scope": "monthly",
+    "version": "v1",
+    "applies_to": [
+      "신규 PREGNANCY_ACCIDENT_RISK_M collector(attended)",
+      "card-repro-loss 사고율 / popup-kpi-loss 유형별"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 cohort 전용. 기존 PREGNANCY_ACCIDENT_M(단순 월집계)와 분모정책 보완",
+    "sources": [
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §9 PREG_ACCIDENT_DENOM/v1",
+      "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.5"
+    ],
+    "spec_doc": "inspig-docs/etl/10_AI_DATASET_DESIGN.md §3.5",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-18",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 모돈 갱신율 국내 권장 기준  
+`MONTHLY/SOW_REPLACEMENT` · type=`JSON` · ✅ · seq=457
+
+```json
+{
+  "description": "모돈 갱신율(연간) 국내 권장 기준. 농가 실측 갱신율을 본 권장과 비교. 갱신율과 평균산차는 역상관.",
+  "formula": "갱신율(%/년) = (후보돈 입식복수 + 도태복수) ÷ 평균 상시모돈수 × 12",
+  "kr_recommended_pct": 40,
+  "kr_example_pct": 38,
+  "interpretation": {
+    "high": "갱신율 > 50% = 과도한 도태/입식(번식성적 저하·질병·후보비용↑) → 번식성적 진단",
+    "low": "갱신율 < 30% = 노령화(평균산차↑·PSY 하락·사산↑) → 후보 도입계획 수립",
+    "linked": "평균산차·도태산차(SOW_LONGEVITY)와 역상관 — 병행 모니터링"
+  },
+  "_internal_meta": {
+    "scope": "monthly",
+    "applies_to": [
+      "monthly popup-kpi-sow-replacement(갱신율 카드)",
+      "monthly-ai-service 후보 도입페이스 진단(신설 예정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 모돈군 관리 전용 — 주간 미사용. (카탈로그 표기 INTERPRET/ → DOMAIN/로 월간격리, 복귀 후 scope 확정)",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4 L148 (한국 권장 40%)"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §4",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### MSY 손익분기점(BEP)  
+`MONTHLY/MSY_BEP` · type=`JSON` · ✅ · seq=458
+
+```json
+{
+  "description": "모돈당 연간 출하두수(MSY) 손익분기점. MSY가 BEP 미만이면 경영 적자 구간(사료·약품비 > 출하수입).",
+  "bep_value": 17.0,
+  "unit": "두/모돈/년",
+  "interpretation": {
+    "below_bep": "MSY < 17.0 = 손익분기 미달(적자 위험) → PSY·폐사율 진단",
+    "at_above_bep": "MSY >= 17.0 = 손익분기 이상. 상위농가 지향(국내 우수 19+)"
+  },
+  "source_note": "BEP 17.0은 한돈자조금(2025) 평균 경영지표 — 농가별·시기별 돈가 변동 큼(참조선)",
+  "_internal_meta": {
+    "scope": "monthly",
+    "applies_to": [
+      "monthly panel-national MSY 카드(BEP 라인)",
+      "monthly-ai-service 경제성 진단(신설 예정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 경제성 전용 — 주간 미사용. (카탈로그 INTERPRET → 복귀 후 scope 확정)",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §6 L196-198 (BEP 17.0)",
+      "한돈자조금(2025) 양돈경제분석"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §6",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 계절성 불임 — 여름 분만율 저하(SID)  
+`MONTHLY/SEASONAL_INFERTILITY` · type=`JSON` · ✅ · seq=459
+
+```json
+{
+  "description": "계절성 불임(SID, Summer Infertility Dip) — 여름 고온기 교배 후 분만율 저하. 분기별 분만율 비교로 감지.",
+  "quarter_farrow_rate_pct": {
+    "Q1": { "months": "1~3월", "typical_pct": 86, "label": "동절기 참조기준(고온영향 최소)" },
+    "Q2": { "months": "4~6월", "typical_pct": 85 },
+    "Q3": { "months": "7~9월", "typical_pct": 80, "label": "SID 고온기(여름 교배 후 분만)" },
+    "Q4": { "months": "10~12월", "typical_pct": 88, "label": "회복기" }
+  },
+  "sid_detection": {
+    "metric": "Q3 분만율 vs Q1(또는 예년 동월) baseline 저하폭(percentage point)",
+    "note": "여름 고온스트레스 → 배아사멸·임신유지율 저하. 절대값 아닌 상대 저하폭으로 판정",
+    "typical_q3_drop_pp": 6
+  },
+  "_internal_meta": {
+    "scope": "monthly",
+    "applies_to": [
+      "monthly panel-production sec-seasonal-farrow(분기 분만율)",
+      "monthly-ai-service 계절 경보(신설 예정)"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "월간 계절성 분석 전용 — 주간 미사용. (카탈로그 INTERPRET → 복귀 후 INTERPRET vs MONTHLY scope 확정)",
+    "sources": [
+      "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §3 L134-138 (Q1~Q4 86/85/80/88)"
+    ],
+    "spec_doc": "inspig-docs/AI/month/15_v7_monthly_kpi_catalog.md §3",
+    "session_ref": "CHANGES_SYNC_20260617.md 0617-08-GATE6",
+    "created_dt": "2026-06-17",
+    "applied_dt": "2026-06-18"
+  }
+}
+```
+
+### 월간 리포트 약점 KPI 인과체인·시각카드 매핑  
+`MONTHLY/CAUSAL_CHAIN_MAP` · type=`JSON` · ✅ · seq=402 · upd 2026-06-22
+
+```json
+{"causal_chain_map": {"npd": {"icon": "📅", "name": "비생산일수(NPD)", "unit": "일", "downstream": [{"label": "PSY 손실", "value_template": "−{psy_loss}두", "sub_template": "{psy_current} ↔ {psy_target}", "icon": "🐷", "color": "orange"}, {"label": "연 기회손실", "value_template": "−{annual_loss}", "sub": "개선 시 회복", "icon": "💸", "color": "red"}], "action_template": "이유 후 다시 교배까지 걸리는 일수를 <b>{improve_days}일 줄이면</b> 연간 약 <b>+{recover_amount}</b> 회복 가능합니다.", "summary": "이유 후 교배까지 일수를 줄이면 모돈당 새끼가 늘고, 그만큼 수익이 회복됩니다.", "popup": "popup-causal", "popup_title": "비생산일수(NPD) 통합 분석", "popup_tab": "trend", "improvement_formula": {"psy_per_day": 0.3, "amount_per_psy_per_year": 5300000, "source": "Stalder 2009 + 한돈자조금 2025 두당 수익"}}, "farrowing_rate": {"icon": "🤰", "name": "분만율", "unit": "%", "downstream": [{"label": "PSY 손실", "icon": "🐷", "color": "orange"}, {"label": "연 기회손실", "icon": "💸", "color": "red"}], "action_template": "수태 점검 + 발정 정확도 + 도움분만 SOP 강화로 분만율 +{improve_points}%p 회복 가능.", "popup": "popup-kpi-farrow", "popup_title": "분만율 통합 분석", "improvement_formula": {"psy_per_point": 0.13, "source": "한돈자조금 2025"}}, "wean_count": {"icon": "🐷", "name": "복당 이유두수", "unit": "두", "downstream": [{"label": "PSY 손실", "icon": "🐖", "color": "orange"}, {"label": "연 기회손실", "icon": "💸", "color": "red"}], "action_template": "포유 환경·초유 250g/24h + 약자 split-suckling + 이유전 폐사 감소 (Feldpausch 2019).", "popup": "popup-kpi-weaned", "popup_title": "이유두수 통합 분석", "improvement_formula": {"psy_per_count": 2.2, "source": "Quesnel 2012 / Feldpausch 2019"}, "detailed_actions": [{"tone": "cyan", "title": "① 포유 환경 점검 (1~7일)", "text": "초유 250g/24h 확보 · 보온판(32℃) · 약자 자돈 Split-suckling 분리 수유 (Feldpausch 2019)"}, {"tone": "cyan", "title": "② 이유 시점 관리", "text": "이유일령 21±1일 준수 · 이유체중 ≥6.5kg 확인 · 이유전 폐사 모니터링 (Quesnel 2012)"}, {"tone": "orange", "title": "③ 폐사 사유 분석", "text": "이유전폐사 기록 사유 확인 → 상위 2사유 집중 개선. 상세 → <a href=\"#\" onclick=\"showPopup('popup-kpi-sow-mortality')\" class=\"fs-base\" style=\"color:var(--cyan)\">모돈 도태·폐사 팝업</a>"}]}, "post_wean_survival": {"icon": "💔", "name": "이유후 육성률", "unit": "%", "downstream": [{"label": "출하 손실", "icon": "📦", "color": "orange"}, {"label": "연 기회손실", "icon": "💸", "color": "red"}], "action_template": "이유 후 환기·온도 SOP + 사료 전환 단계 점검 + 폐사 사유 분석.", "popup": "popup-kpi-gap", "popup_title": "이유후 육성률 통합 분석", "improvement_formula": {"msy_per_point": 0.18, "source": "한돈자조금 2025"}}, "psy": {"icon": "📈", "name": "PSY", "unit": "두", "downstream": [{"label": "연 기회손실", "icon": "💸", "color": "red"}], "action_template": "원인 지표 (NPD·분만율·이유두수) 모두 통과한 상태 — 측정 오차·계절 변동 검토 권장.", "popup": "popup-kpi-psy", "popup_title": "PSY 통합 분석"}, "msy": {"icon": "📦", "name": "모돈당 출하두수", "unit": "두", "downstream": [{"label": "연 매출 손실", "icon": "💸", "color": "red"}], "action_template": "PSY × 이유후 육성률 합산 결과 — 두 지표 개선이 선행.", "popup": "popup-kpi-msy", "popup_title": "모돈당 출하두수 통합 분석"}, "none": {"icon": "📊", "name": "성과 유지 권장", "summary": "6 KPI 모두 전국 평균 이상 — 현재 SOP 유지하며 12개월 추이 관찰 권장.", "downstream": [], "action_template": "현 분만율·이유두수·NPD 관리 SOP 유지 + 산차 분포 (1·2산 비중 ↓ → 3·5산 ↑) 점진 개선 + 차단방역 SOP 강화."}}, "_internal_meta": {"scope": "monthly", "applies_to": ["monthly_report.panel-summary.sec-month-scorecard.weakest-slot.causal_chain", "monthly_ai_prompt.weakest_kpi_section.downstream"], "shared_with_weekly": false, "promotion_path": "6 KPI 매핑 자체는 시간 단위 무관 → 주간 도입 시 COMMON/CAUSAL_CHAIN_MAP 으로 승격 권장 (단 popup 필드는 주간/월간 popup ID 가 다르면 분리 필요)", "paired_rule": "MONTHLY/WEAKEST_PRIORITY", "sources": ["Stalder K.J. 2009 Sow ROI", "Koketsu Y. 1996~2021", "Feldpausch 2019 Birth weight", "Quesnel 2012 Colostrum", "한돈자조금 2025"], "spec_doc": "AI/plan/17_monthly_weakest_kpi_rule.md", "session_ref": "CHANGES_SYNC_20260527.md", "created_dt": "2026-05-27", "applied_dt": null, "version": "v1"}}
+```
+
+### 월간 종합등급 KPI 가중치·7밴드 룰  
+`MONTHLY/GRADE_WEIGHTS_V1` · type=`JSON` · ✅ · seq=461
+
+> 월간 종합등급 KPI 가중치(합=1.0 보수적 기본·비준 대기)+7밴드 매핑. 개별 KPI 등급은 INTERPRET/KPI_7GRADE 로딩(중복 금지).
+
+```json
+{
+  "version": "1.1",
+  "updated": "2026-06-18",
+  "max_score": 7,
+  "grade_band_ref": {
+    "per_kpi_grade_rule": "INTERPRET/KPI_7GRADE",
+    "note": "개별 KPI 등급(S~F)은 INTERPRET/KPI_7GRADE 로딩. 본 룰은 종합등급 가중·합산·7밴드 매핑만 정의(중복 금지)."
+  },
+  "kpis": [
+    {"natKey": "PSY",        "farmField": "psy",         "weight": 0.20},
+    {"natKey": "MSY",        "farmField": "msy",         "weight": 0.20},
+    {"natKey": "분만율",      "farmField": "bunmanRate",  "weight": 0.15},
+    {"natKey": "NPD",        "farmField": "npd",         "weight": 0.15, "lowerBetter": true},
+    {"natKey": "이유전폐사율", "farmField": "deathRate",   "weight": 0.15, "lowerBetter": true},
+    {"natKey": "7일내재귀율",  "farmField": "returnRate7d","weight": 0.075},
+    {"natKey": "평균이유두수", "farmField": "avgEuCnt",    "weight": 0.075}
+  ],
+  "weights_sum_check": 1.0,
+  "score_anchors": {"top10": 7, "top25": 5.5, "median": 4, "below": 2},
+  "grade_bands": [
+    {"grade": "F",  "min": 0.0, "max": 1.7, "label": "위험"},
+    {"grade": "D",  "min": 1.7, "max": 2.7, "label": "주의"},
+    {"grade": "C",  "min": 2.7, "max": 3.7, "label": "개선필요"},
+    {"grade": "B",  "min": 3.7, "max": 4.7, "label": "보통"},
+    {"grade": "B+", "min": 4.7, "max": 5.5, "label": "양호"},
+    {"grade": "A",  "min": 5.5, "max": 6.5, "label": "우수"},
+    {"grade": "S",  "min": 6.5, "max": 99.0, "label": "최우수"}
+  ],
+  "min_kpi_for_overall": 4,
+  "missing_data_policy": "산출 가능한 KPI 가 min_kpi_for_overall 미만이면 종합등급 '미산출'. 결측 KPI 는 가중 분모에서 제외 후 재정규화(가용 가중 합으로 나눔).",
+  "_internal_meta": {
+    "scope": "monthly",
+    "applies_to": [
+      "monthly_report.panel-summary.sec-month-scorecard.overall-grade",
+      "monthly-ai-service.classifyFarm.overall_grade",
+      "monthly_ai_prompt.summary_section.overall_grade"
+    ],
+    "shared_with_weekly": false,
+    "promotion_path": "주간 종합등급 도입 시 임계 동일 검토 후 COMMON/ 승격 가능. 현재 월간 4주누적 안정화 데이터 기준 → MONTHLY/ 유지.",
+    "sources": [
+      "INTERPRET/KPI_7GRADE (개별 KPI 등급 경계 — 국내 현실 기준)",
+      "한돈자조금 KPI 표준",
+      "피그플랜 등급 분포 (인사이트 자체)"
+    ],
+    "spec_doc": "AI/plan/17_monthly_weakest_kpi_rule.md",
+    "session_ref": "CHANGES_SYNC_20260618.md § monthly WP5 A6",
+    "weights_approval": "PENDING_USER — 가중치(weights)는 균등 가까운 보수적 기본값. 사용자/도메인 전문가 비준 필요. 비준 전 운영 종합등급 노출은 '참고' 표기 권장.",
+    "created_dt": "2026-06-18",
+    "applied_dt": null
+  }
+}
+```
+
+---
+
+## BATCH_CYCLE
+**배치 주기** · 1개 룰
+
+### 오프위크 신뢰도 임계값  
+`BATCH_CYCLE/OFF_WEEK_THRESHOLD` · type=`JSON` · ✅ · seq=368
+
+```json
+{"confidence_min": 0.8}
+```
+
+---
+
+## CRAWLING
+**질병 크롤링** · 3개 룰
+
+### 질병 크롤링 검증 규칙 (확진만 허용, 검사·예측·정책·학술 제외)  
+`CRAWLING/DISEASE_VALIDATION` · type=`JSON` · ✅ · seq=227
+
+> 질병 발생 뉴스 크롤링 시 false positive 방지
+
+```json
+{
+  "require_confirm_date": true,
+  "reject_future_date": true,
+  "reject_wild_boar": true,
+  "date_estimation_from_article": false,
+  "reject_non_confirmed_stage": true,
+  "reject_stage_keywords": ["의심", "검사중", "정밀검사", "재검", "예찰중", "모니터링"],
+  "reject_prediction_keywords": ["예측", "모델링", "전망", "시나리오"],
+  "reject_policy_keywords": ["위기단계", "하향", "상향", "격상", "완화", "보상금", "대책회의", "예방접종", "백신개발", "백신수출"],
+  "reject_academic_keywords": ["초록", "논문", "학술", "세미나", "심포지엄", "간담회", "토론회", "공청회"],
+  "reject_promo_keywords": ["박람회", "캠페인", "홍보", "소비촉진", "자조금", "면담", "구독서비스"],
+  "note": "확정/확진/양성으로 확인된 실질 발생만 허용. 검사/예측/정책/학술/홍보 기사는 자동 제외."
+}
+```
+
+### 질병 리포트 표시 설정 (초기 4건 · 더보기 최대 6건 · 질병별 탭)  
+`CRAWLING/DISEASE_DISPLAY` · type=`JSON` · ✅ · seq=228
+
+> 리포트 질병 탭 질병유형별 배지 표시 설정
+
+```json
+{
+  "display_types": {
+    "ASF":  {"badge": "ASF"},
+    "FMD":  {"badge": "구제역"},
+    "CSF":  {"badge": "돼지열병"},
+    "PED":  {"badge": "PED"},
+    "PRRS": {"badge": "PRRS"},
+    "PCV":  {"badge": "PCV"},
+    "ILE":  {"badge": "회장염"},
+    "SIV":  {"badge": "SIV"},
+    "AD":   {"badge": "오제스키"}
+  },
+  "page_size": 4,
+  "max_items_per_disease": 6,
+  "more_toggle": true,
+  "query_window_days": 90,
+  "note": "리포트 종합탭 sub-disease 탭 UI. page_size=초기 노출(4), max_items_per_disease=더보기 후 최대(6)."
+}
+```
+
+### 질병 크롤러 필터·중복방지·소스 티어 정책  
+`CRAWLING/DISEASE_CRAWLER_FILTER` · type=`JSON` · ✅ · seq=263
+
+> SSOT — 질병 크롤러 확진 키워드·제외 키워드·중복방지·소스 티어 정책 선언
+
+```json
+{"outbreak_must_keywords": ["확진", "발생", "양성", "확정"], "exclude_keywords": ["의심", "검사중", "정밀검사", "재검", "예찰중", "모니터링", "예측", "모델링", "전망", "시나리오", "위기단계", "하향", "상향", "격상", "완화", "보상금", "대책회의", "예방접종", "백신개발", "백신수출", "국제학술", "세미나", "토론회", "간담회", "공청회", "예산", "법안", "개정", "자조금", "캠페인", "홍보", "소비촉진", "구독서비스", "면담", "초록", "논문", "학술", "심포지엄", "박람회"], "source_tiers": {"PRIMARY": {"examples": ["pigpeople.net ASF"], "promote_policy": "즉시 (1회 관측)"}, "OFFICIAL": {"examples": ["KAHIS"], "promote_policy": "즉시 (1회 관측)"}, "SECONDARY": {"examples": ["축산신문", "pigpeople 섹션", "Google News"], "promote_policy": "VERIFY_CNT >= 2 OR PRIMARY 동일키 존재"}}, "dedup_policy": {"unique_key": ["disease_type", "province", "city", "town", "confirm_date"], "outbreak_precheck": true, "town_soft_match": true, "city_normalization": "시/군/구 접미사 제거 (서천군 → 서천)", "note": "OUTBREAK 기확정 → STG skip · STG UK 일치 → VERIFY_CNT++ · town 한쪽 빈값 → 동일사건 간주 + town 병합"}, "staging_lifecycle": {"pending_max_days": 15, "auto_reject_status": "REJECTED", "note": "15일 경과 PENDING·SECONDARY는 자동 REJECTED"}, "note": "SSOT — Python 크롤러(base_disease.py, sources/*.py, disease_crawler.py)와 항상 동기화 유지. 2026-04-23 사용자 규칙 반영."}
+```
+
+---
+
+## NURSING_PIGLET
+**포유자돈** · 5개 룰
+
+### 포유자돈 폐사 사유별 원인·조치 컨텍스트  
+`NURSING_PIGLET/REASON_CONTEXT` · type=`JSON` · ⛔비활성 · seq=222 · upd 2026-05-06
+
+> 포유자돈 폐사 사유별 AI 프롬프트 컨텍스트
+
+```json
+{"stillborn": {"desc": "분만중 자돈사고 — 분만당일(일령 0일) 사망, 사산·약체·압사 등", "reasons": {"체중미달": {"cause": "임신3기 모돈 영양 부족, 과산자복(실산 14두 초과) 복내 경쟁, 초교배 어미 비율 과다, 모돈 BCS 저하", "action": "임신돈 BCS 3.0~3.5 유지 점검, 실산 13두 초과복 조기 양자 배치, 임신3기 사료 급여량 확인", "prevention": "임신기간별 사료 급여 체계(임신1~3기 구분), 임신돈 체중·체형 주기 측정", "threshold_pct": 40}, "기형": {"cause": "유전적 결함, 임신초기 고온 스트레스, 마이코톡신 오염 사료, 특정 바이러스 감염(PPV 등)", "action": "종돈 계통·혈통 점검, 사료 곰팡이독소 검사, 임신돈 고온 노출 방지", "prevention": "종돈 도입 시 유전능력·결함 이력 확인, 사료 보관 환경 관리", "threshold_pct": 15}, "압사": {"cause": "분만틀 구조 불량, 보온등 위치 부적절, 분만 감시 부재, 초산모 모성 부족", "action": "분만 후 12시간 집중 감시, 보온등 측면 배치, 분만틀 바닥 점검", "prevention": "분만 전 시설 점검, 분만 당일 야간 순찰 강화", "threshold_pct": 20}, "허약": {"cause": "초유 미급여(분만 후 2시간 내 미흡), 저혈당, 저체온, 과산자복 내 경쟁 패배", "action": "초유 급여 확인(분만 후 2시간 이내), 분만실 보온(자돈 생활구역 32~34도), 허약자돈 별도 관리구 분리", "prevention": "초유 대용유 비치, 대리모 즉시 배정 체계", "threshold_pct": 15}, "사산": {"cause": "분만 지연(5시간 초과), 탯줄 조기 단절, 태아 위치 이상, 모돈 과비", "action": "분만 4시간 초과 시 옥시토신 투여 검토(수의사 처방), 분만 진행 중 지속 모니터링", "prevention": "분만예정일 관리 강화, 임신말기 모돈 운동 공간 확보, 모돈 BCS 4.0 이하 유지", "threshold_pct": 25}}}, "nursing": {"desc": "포유중 폐사 — 분만 후 ~ 이유 전(일령 1일 이상) 사망", "reasons": {"압사": {"cause": "모돈 기립·횡와 시 자돈 미회피, 자돈 보온 부족으로 모돈 복부에 밀집", "action": "보온등 위치 조정, 분만틀 자돈 전용 공간 확보, 1~3일령 집중 감시", "prevention": "분만실 온도 구배(모돈 20도, 자돈 32도)", "threshold_pct": 30}, "설사": {"cause": "PED(돼지유행성설사, 겨울~봄 주의), Rotavirus, 대장균성 설사, 위생 불량", "action": "즉시 분변 채취 PCR/세균배양, PED 의심 시 방역당국 신고 검토, 구강 전해질 공급", "prevention": "분만실 청소·소독 철저, 모돈 PED 백신 관리, 동절기 차단방역 강화", "threshold_pct": 20, "seasonal_note": "겨울(12~3월) 집중 발생이면 PED 최우선 의심"}, "저체중": {"cause": "생시 저체중(700g 미만) 자돈의 지속 성장 저하, 대리모 배정 실패", "action": "생시 700g 미만 자돈 별도 구획 관리, 인공포유 또는 분유 보조", "prevention": "분만복당 포유두수 조정(12두 초과 시 양자 분산)", "threshold_pct": 25}, "관절염": {"cause": "황색포도상구균·Streptococcus 등 세균성, 분만실 바닥 손상으로 인한 관절 외상", "action": "항생제 치료(수의사 처방), 분만실 바닥 매트 점검·교체", "prevention": "철저한 제대 처리(분만 직후 요오드 처리), 분만실 바닥 상태 주 1회 점검", "threshold_pct": 10}}}, "age_group": {"0d": {"focus": "분만 관리 — 분만 감시, 보온, 초유 급여"}, "1_3d": {"focus": "초유 면역 + 보온 — 1~3일 집중 폐사 = 초유 문제 또는 압사"}, "4_7d": {"focus": "설사·감염 — PED/Rotavirus 발병 초기"}, "8_14d": {"focus": "성장 부진 + 감염 — 허약자돈 관리 + 항생제 처방 검토"}, "15d_plus": {"focus": "사양관리 — 포유기간 과다, 경쟁 패배, 이유 준비 미흡"}}, "prompt_instruction": "위 컨텍스트를 참조하여 실제 폐사 두수·비율·일령 데이터와 결합해 농장 맞춤 분석을 작성하라. 사유별 두수가 threshold_pct 이상이면 해당 원인을 우선 언급하라. 계절을 고려하여 PED·PRRS 등 계절성 질병 위험도를 판단하라."}
+```
+
+### 포유자돈 폐사 7개 핵심 KPI v1 (산식·임계값·근거)  
+`NURSING_PIGLET/PIGLET_DEATH_KPI_V1` · type=`JSON` · ✅ · seq=342 · upd 2026-04-29
+
+> TC_CODE_JOHAP PCODE=032 23사유 중 7개 핵심 KPI 산식·임계값·근거 (REASON_CONTEXT_V2 와 짝)
+
+```json
+{
+  "version": "1.0",
+  "effective_from": "2026-04-29",
+  "kpi": {
+    "crushing_rate": {
+      "name": "압사율",
+      "reason_codes": [
+        "032001"
+      ],
+      "numerator": "압사 두수 (생시+포유중 합산, 단 사유=032001 만)",
+      "denominator": "산자수 (총산)",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 3,
+        "watch": 6,
+        "warn": 10
+      },
+      "narrative": "압사율 ≥10% 시 분만틀 자돈가드레일·리프트틀·산차 7+ 도태 즉시 점검",
+      "ref": [
+        "KilBride 2012 PMID 22197175 (UK 압사 54.8%)",
+        "Topigs Norsvin <8%",
+        "Pork Checkoff 2019 lift crate 50%↓"
+      ]
+    },
+    "lbw_rate": {
+      "name": "체중미달율",
+      "reason_codes": [
+        "032012"
+      ],
+      "numerator": "체중미달 두수 (생시+포유중 합산)",
+      "denominator": "산자수",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 5,
+        "watch": 10,
+        "warn": 18
+      },
+      "narrative": "체중미달율 ≥18% 시 모돈 임신 후기 +0.5kg/일·BCS 3.0~3.5·VitE 100IU/d·Se 0.3ppm 점검",
+      "ref": [
+        "Feldpausch 2019 (BW 1.11kg 임계)",
+        "De Vos 2014 JAPAN",
+        "AHDB Small Piglet Mgmt"
+      ]
+    },
+    "stillborn_rate": {
+      "name": "사산율",
+      "reason_codes": [
+        "any (분만 화면 등록 + 작업일=분만일)"
+      ],
+      "numerator": "STILLBORN 분류 두수 (전 사유 합산)",
+      "denominator": "총산 (실산 + 사산 + 미라)",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 5,
+        "watch": 8,
+        "warn": 12
+      },
+      "narrative": "사산율 ≥8% 시 분만 입회·옥시토신 8두 후만·산차 7+ 모돈 분만시간 모니터링",
+      "ref": [
+        "EFSA 2022 EU 평균 PWM 12.9%",
+        "Mota-Rojas 2022 oxytocin meta",
+        "Cassar 2014 induction"
+      ]
+    },
+    "coccidia_incidence": {
+      "name": "콕시듐 발생률",
+      "reason_codes": [
+        "032009"
+      ],
+      "numerator": "콕시듐 폐사 두수",
+      "denominator": "포유중 폐사 (NURSING) 두수",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 5,
+        "watch": 15,
+        "warn": 30
+      },
+      "age_window_days": [
+        7,
+        14
+      ],
+      "narrative": "7~14일 황색 크림변 + 항생제 무반응 시 즉시 의심. Toltrazuril 3~5일령 일괄 투여 + 분만사 화염소독·고온건조",
+      "ref": [
+        "Frontiers Vet 2020 Coccidia EU",
+        "Toltrazuril resistance Parasites Vectors 2017"
+      ]
+    },
+    "diarrhea_rate": {
+      "name": "설사 발생률",
+      "reason_codes": [
+        "032002",
+        "032007"
+      ],
+      "numerator": "설사+질병(PED/TGE) 폐사 두수 합산",
+      "denominator": "포유중 폐사 (NURSING) 두수",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 10,
+        "watch": 25,
+        "warn": 50
+      },
+      "season_alert": "겨울(12~3월) 집중 발생 시 PED 우선 의심 → 즉시 분변 PCR + 검역본부 신고",
+      "narrative": "설사율 ≥25% 시 모돈 PED+E.coli K88/F18+Cl.perfr 분만 5·2주전 2회 백신, AIAO 입식 5~7일 전 세척·소독·건조·공실 점검",
+      "ref": [
+        "AASV PED White Paper 2024",
+        "농림축산검역본부 PED",
+        "Yamauchi 2019 일본 PED"
+      ]
+    },
+    "mma_impact_rate": {
+      "name": "MMA 영향 폐사율 (1주내 기아)",
+      "reason_codes": [
+        "032003"
+      ],
+      "numerator": "출생 1~7일 기아(032003) 폐사 두수",
+      "denominator": "분만 복수",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 2,
+        "watch": 5,
+        "warn": 10
+      },
+      "narrative": "기아 ≥5% 시 모돈 유방염·자궁염·무유증 의심 — 분만 12·24·48시간 직장체온(>39.5°C) + 옥시토신·항생제·소염진통제 + 대리 수유모 즉시 배정 + 모돈 변비 예방(식이섬유)",
+      "ref": [
+        "AHDB MMA in Sows",
+        "Quesnel 2012 colostrum",
+        "Topigs SOP MMA 2021"
+      ]
+    },
+    "congenital_defect_rate": {
+      "name": "선천기형률",
+      "reason_codes": [
+        "032004",
+        "032017",
+        "032019"
+      ],
+      "numerator": "기형+쇄항+탈장 두수 합산 (분만 화면 입력 한정)",
+      "denominator": "산자수",
+      "formula_unit": "%",
+      "thresholds": {
+        "safe": 1,
+        "watch": 2,
+        "warn": 3
+      },
+      "narrative": "선천기형률 ≥2% 시 종돈 계통·혈통 점검 + 사료 마이코톡신(Zearalenone <100ppb) 분기 검사 + 보인자 모돈/부돈 종부 배제. 쇄항(032017)·심한 다지증·VSD 청진 양성은 출생 직후 안락사",
+      "ref": [
+        "BMC Genomics 2018 GWAS hernia (h=0.25-0.31)",
+        "Pig333 Atresia ani",
+        "Merck Vet Congenital"
+      ]
+    }
+  },
+  "compute_pipeline": {
+    "stillborn_classification": "분만 화면 등록 + 분만일 SSOT 존재 + 작업일 = 분만일 (당일 0일)",
+    "data_source": "자돈폐사 데이터셋 (3년 백필 완료)",
+    "rule_group_dependency": "23사유 처방 룰의 사유코드와 일치"
+  },
+  "international_benchmarks": {
+    "preweaning_mortality_pct": {
+      "kr_avg": [
+        12,
+        15
+      ],
+      "advanced": [
+        8,
+        10
+      ]
+    },
+    "crushing_pct_of_pwm": {
+      "kr_typical": [
+        30,
+        50
+      ],
+      "denmark_target": [
+        20,
+        30
+      ]
+    },
+    "lbw_under_1_11kg_pct": {
+      "kr_typical": [
+        15,
+        25
+      ],
+      "advanced": [
+        10,
+        15
+      ]
+    },
+    "stillborn_rate_pct": {
+      "global_avg": [
+        6,
+        10
+      ],
+      "high_parity_warn": 12
+    }
+  },
+  "ui_render_priority": {
+    "always_show": [
+      "crushing_rate",
+      "lbw_rate",
+      "stillborn_rate"
+    ],
+    "show_when_warn": [
+      "coccidia_incidence",
+      "diarrhea_rate",
+      "mma_impact_rate",
+      "congenital_defect_rate"
+    ]
+  },
+  "_internal_meta": {
+    "stillborn_sql": "TB_MODON_JADON_TRANS.BUN_DT IS NOT NULL AND TB_MODON_WK[B].WK_DATE IS NOT NULL AND TRUNC(WK_DT) = TRUNC(B.WK_DATE)",
+    "dataset_table": "TS_INS_AI_DATASET",
+    "data_type": "NURSING_PIGLET",
+    "rule_dep_code": "NURSING_PIGLET/REASON_CONTEXT_V2"
+  }
+}
+```
+
+### 포유자돈 폐사 23사유 통합 컨텍스트 v2 (TC_CODE_JOHAP PCODE=032 전수)  
+`NURSING_PIGLET/REASON_CONTEXT_V2` · type=`JSON` · ✅ · seq=362 · upd 2026-04-29
+
+> TC_CODE_JOHAP PCODE=032 23 사유 통합 + 시점·카테고리·임계값·근거 + 한국 격차 정량 + AI 일령 분포 자동 진단
+
+```json
+{
+  "version": "2.0",
+  "effective_from": "2026-04-29",
+  "classification_policy": {
+    "stillborn_rule": "분만 화면 등록 + 작업일 = 분만일 (당일 0일)",
+    "nursing_rule": "위 2조건 중 하나라도 미충족 시 분만 후 별도 작업으로 발생",
+    "rationale": "분만 화면 등록되어 있어도 작업일이 분만일과 다르면 분만 후 사고로 분류. 예: 분만 다음날 압사 → 포유중 폐사",
+    "ssot": "분만일 = 분만 작업기록(분만 구분, 사용 플래그 Y)의 작업일자",
+    "note": "동일 사유 코드라도 분류는 위 2조건으로 결정. 처방(action)은 사유 기준이며 분류와 독립적으로 매핑."
+  },
+  "global_thresholds": {
+    "preweaning_mortality_good_pct": 8,
+    "preweaning_mortality_warn_pct": 12,
+    "preweaning_mortality_danger_pct": 18,
+    "stillborn_rate_warn_pct": 8,
+    "low_birth_weight_kg": 1.11,
+    "colostrum_intake_min_g": 200,
+    "colostrum_intake_target_g": 250,
+    "colostrum_brix_min_pct": 20.05,
+    "gut_closure_hr": 24,
+    "piglet_creep_temp_w1_c": [
+      32,
+      35
+    ],
+    "sow_farrowing_temp_c": [
+      18,
+      22
+    ],
+    "ventilation_ach_min": 8,
+    "nh3_ppm_max": 25,
+    "co2_ppm_max": 3000,
+    "farrowing_duration_h_warn": 5,
+    "oxytocin_after_n_piglets": 8,
+    "cross_foster_window_h": 24,
+    "cross_foster_bw_diff_g": 200,
+    "functional_teats_min": 14
+  },
+  "causes": {
+    "032001": {
+      "name": "압사",
+      "category": "crushing_overlay",
+      "timing_days": [
+        0,
+        7
+      ],
+      "timing_peak": "0~3일 (분만 24~72h)",
+      "freq_pct_of_pwm": [
+        25,
+        50
+      ],
+      "cause": "모돈 자세 전환(눕기·앉기) 시 자돈 깔림. 위험인자: 모돈 산차 7+, BCS 4+, 분만시간 5h 초과, 자돈 저체중·저체온으로 모돈 복부 파고듦, 분만틀 자돈보호바 부재·간격 부적절, 보온등 위치 오류(모돈 등 위 → 자돈 모임)",
+      "action": "분만틀 자돈보호바 점검(바닥 15-20cm), 보온등을 모돈 옆구리 측면 배치(자돈이 모돈 등 쪽 모이지 않도록), 분만 후 24~72h 집중 입회(20~25분 간격), 산차 7+ 모돈 도태 검토, BCS 3.0~3.5 유지(과비 4.0+ 회피), 리프트 분만틀(분만 직후 24~48h crate 위로 들어올림) 도입 시 압사 50% 감소 보고",
+      "prevention": "분만틀 표준 치수(2.4m × 0.65m) 확인, 가온매트 35°C + IR 보온등 측면, 분만 5일 전 모돈 입식·적응, 1산 모돈 별도 분만방·24h 감시",
+      "threshold_pct": 20,
+      "threshold_desc": "전체 폐사의 20% 이상 시 분만시설·감시체계 즉시 점검",
+      "refs": [
+        "KilBride 2012 PMID 22197175 (UK 112농가 압사 54.8%)",
+        "Pork Checkoff Heat Lamp vs Heat Mat 2019",
+        "PMC8944724 Lift Crate 2022",
+        "이성대 한돈인닷넷 17625"
+      ]
+    },
+    "032002": {
+      "name": "설사",
+      "category": "infection_enteric",
+      "timing_days": [
+        1,
+        14
+      ],
+      "timing_peak": "1~7일(E.coli/Cl.perfr) / 7~14일(Rota/Coccidia)",
+      "freq_pct_of_pwm": [
+        8,
+        15
+      ],
+      "cause": "ETEC(F4/K88, F18, F5/K99), Rotavirus A/B/C, Cystoisospora suis(콕시듐), Cl.perfringens Type A/C(출혈성). PED·TGE는 별도 코드 032007. 환경 위생 불량·모돈 백신 누락이 1차 원인",
+      "action": "분변 채취 → PCR + 항생제 감수성, 즉시 구강 전해질, 환경 32°C 보온, 자돈 격리. 콕시듐 의심(7~14일·황색변) 시 Toltrazuril 3~5일령 일괄 투여",
+      "prevention": "모돈 E.coli K88/F18 + Cl.perfr Type C toxoid 분만 5·2주 전 2회, AIAO 입식 5~7일 전 세척·소독·건조·공실, 분만사 보온·드라이 유지(콕시듐 oocyst 저항성)",
+      "threshold_pct": 20,
+      "threshold_desc": "20% 이상 + 겨울(12~3월) 집중 발생 시 PED(032007) 우선 감별",
+      "refs": [
+        "AASV PED Plan",
+        "Frontiers Vet 2020 Coccidia",
+        "Springer Porcine Health Mgmt 2017 ETEC AMR"
+      ]
+    },
+    "032003": {
+      "name": "기아",
+      "category": "starvation_colostrum",
+      "timing_days": [
+        1,
+        7
+      ],
+      "timing_peak": "1~5일",
+      "freq_pct_of_pwm": [
+        10,
+        20
+      ],
+      "cause": "초유 250g 미만 섭취(자돈 10~30%가 해당), 모돈 무유증(MMA), agalactia, 과산자복(실산 14+) 유두 경쟁 패배, 약체 자돈 흡유 실패",
+      "action": "초유 강제 급여(분만 후 12h 내 4회 분할포유: 큰 자돈 30분 격리 → 약체 우선 흡유), 대용 초유(IgG ≥20mg/mL, BRIX ≥20.05%) 비치, 대리모 즉시 배정, 자돈 위관급여",
+      "prevention": "산자수 ≤ functional teats 14~16개 일치, 분만 1주 전 lactating ration 전환, 모돈 변비 예방(식이섬유 +), 모돈 직장체온 분만 12·24·48h 측정(>39.5°C MMA 의심)",
+      "threshold_pct": 15,
+      "refs": [
+        "Quesnel 2012 PMID 22440352",
+        "O'Brien 2025 BRIX 20.05% Vet Record",
+        "Devillers 2011",
+        "Topigs Norsvin StrongStart"
+      ]
+    },
+    "032004": {
+      "name": "기형",
+      "category": "congenital_defect",
+      "timing_days": [
+        0,
+        0
+      ],
+      "timing_peak": "0일 (분만 시 식별)",
+      "freq_pct_of_pwm": [
+        1,
+        3
+      ],
+      "cause": "유전적 결함(VSD·구개열·다지증·hernia 등), 임신 0~30일 모돈 고온 스트레스, 사료 마이코톡신(Zearalenone >250ppb), 임신초기 비타민A·요오드·choline 결핍",
+      "action": "기형 종류별 분류: VSD 청진 양성·구개열·심한 다지증은 안락사 검토(생존 불가). 경증 hernia(<5cm)는 7일 관찰. splay-leg는 별도 코드 032018",
+      "prevention": "종돈 계통·혈통 점검, 사료 ZEN 분기 검사, 임신초기 28°C 미만 유지, 비타민·미네랄 프리믹스 검증",
+      "threshold_pct": 5,
+      "refs": [
+        "Merck Vet Manual Congenital",
+        "Pig Progress Splay Leg",
+        "Pork Information Gateway"
+      ]
+    },
+    "032005": {
+      "name": "허약(저활력)",
+      "category": "weakness_low_viability",
+      "timing_days": [
+        0,
+        3
+      ],
+      "timing_peak": "0~3일",
+      "freq_pct_of_pwm": [
+        12,
+        18
+      ],
+      "cause": "초유 미급여(분만 후 2시간 내 흡유 실패), 저혈당, 저체온(<34°C), 출생 직후 건조 미흡, 과산자복 내 경쟁 패배. Koketsu(Meiji) 일본 PMR=80.4% 외상+저활력 합산",
+      "action": "출생 즉시 건조(타올·건조분말), 보온등 직하 30분 가열, 5% 포도당 경구, 초유 강제 급여 200g/12h, 분할포유로 약체 우선 흡유, 대리모 12h 내 양자",
+      "prevention": "분만 12h 전 분만사 가온 점검, 자돈 nest 32~35°C 첫주, 모돈 임신 3기 +0.5kg/일 사료 증량, BCS 3.0~3.5 유지",
+      "threshold_pct": 15,
+      "refs": [
+        "Quesnel 2012",
+        "Feldpausch 2019 (1.11kg threshold)",
+        "AHDB Small Piglet Mgmt",
+        "Koketsu 2006 PMID 16953082"
+      ]
+    },
+    "032006": {
+      "name": "원인불명(미상)",
+      "category": "unknown",
+      "timing_days": [
+        0,
+        21
+      ],
+      "timing_peak": "—",
+      "freq_pct_of_pwm": [
+        5,
+        10
+      ],
+      "cause": "농장 입력 시 사유 미식별. 실제로는 압사·기아·저체온·질식의 복합 후유증 또는 분만지연 합병증인 경우 多",
+      "action": "부검 권장(폐 부유시험: 부유=분만중질식 type2, 침수=분만전사망 type1), 24h CCTV 분만 감시 도입, 분만 라운드 2시간 간격 기록. 농장에 사유 정확 입력 안내(특히 압사·체중미달 구분)",
+      "prevention": "농장 직원 사유 분류 교육, 분만일지 표준화, 의심 사례 사진 기록",
+      "threshold_pct": 30,
+      "threshold_desc": "30% 이상이면 농장 입력 품질 점검 필요",
+      "refs": [
+        "Edwards 2002 Livestock Production Sci",
+        "Holyoake 2013 PMID 23798524"
+      ]
+    },
+    "032007": {
+      "name": "질병(PED·TGE)",
+      "category": "infection_viral",
+      "timing_days": [
+        0,
+        21
+      ],
+      "timing_peak": "PED: 7일 미만 100% 폐사",
+      "freq_pct_of_pwm": [
+        5,
+        100
+      ],
+      "cause": "Coronavirus(PEDV·TGEV). 분변-구강 전파, 차량·사료 동선·외부 분변 유입. 일본 2013 대유행 250농가 자돈 폐사 93,650두 / 손실 12억엔",
+      "action": "AASV 도입중단·전체노출·격리: 후보돈 도입 중단 + 전 모돈 동시 노출(모돈 사전노출: 임상자돈 소장·분변 슬러리 경구) → 3~4주 후 신생자돈 생존 정상화. 모돈 분만 5주·1주 전 2회 백신, 차량·사료 동선 봉쇄, AIAO + 페리미터(perimeter) 차단방역. 법정 신고 의무(가축전염병예방법 PED 3종/TGE 2종)",
+      "prevention": "모돈 PED 사독 분만 4·2주 전 2회, 모돈 사전노출(자연감염 모돈 5주 전 1회), 덴마크식 출입통제 + 부츠 교체, 사료 열처리·저장 후 살균 대기, 신규 후보돈 격리 60일 + 순응 기간",
+      "threshold_pct": 10,
+      "threshold_desc": "10% 이상 또는 7일 미만 자돈 100% 폐사 시 즉시 PCR + 검역본부 신고",
+      "refs": [
+        "AASV PED White Paper 2024",
+        "Yamauchi 2019 일본 PED 경제손실",
+        "농림축산검역본부 PED",
+        "한돈인닷넷 18663"
+      ]
+    },
+    "032008": {
+      "name": "동사",
+      "category": "hypothermia_chilling",
+      "timing_days": [
+        0,
+        5
+      ],
+      "timing_peak": "0~48시간",
+      "freq_pct_of_pwm": [
+        5,
+        15
+      ],
+      "cause": "분만사 온도 부족, 외풍·드래프트, 젖은 자돈 미건조, 초유 지연. 출생 직후 36~37°C → 30분 내 32°C 하락, <34°C 저체온 시 흡유 능력 상실",
+      "action": "직장체온 <35°C 즉시 보온구 격리, 5% 포도당 경구, heat lamp 직하 30분 + 매트 35°C, 출생 후 즉시 건조분말·타올로 건조. AHDB: 풍속 <0.2 m/s 자돈 영역",
+      "prevention": "자돈 nest 1주 32~35°C → 주당 -2°C, 모돈존 18~20°C, 보온등 175~250W IR + 가온매트 35°C 병행. 한국 격차 大: 한국 보온등 단독 의존 vs 선진국 mat+lamp 이중구간",
+      "threshold_pct": 10,
+      "refs": [
+        "AHDB Temperature Requirements",
+        "EFSA Welfare 2022",
+        "NIAS 이성대 분만사 환경"
+      ]
+    },
+    "032009": {
+      "name": "콕시듐",
+      "category": "parasite",
+      "timing_days": [
+        7,
+        14
+      ],
+      "timing_peak": "7~14일",
+      "freq_pct_of_pwm": [
+        2,
+        5
+      ],
+      "cause": "Cystoisospora suis 원충. 황색 크림변, 항생제 무반응. 6일 미만 발생 안 함(감별 진단 핵심). 분만사 oocyst 환경 잔존(고온·건조 저항성)",
+      "action": "분변 oocyst 부유법 또는 PCR, Toltrazuril 20mg/kg 경구 1회 3~5일령 일괄 투여(국내 Baycox), 보온 강화. 항생제 무반응 시 콕시듐 강력 의심",
+      "prevention": "분만사 화염소독·고온건조(oocyst 저항성), AIAO 공실 5~7일, 분만 5일 전 입식 + 적응 + 세척",
+      "threshold_pct": 15,
+      "threshold_desc": "7~14일 폐사 비중 + 황색 크림변 동시 시 즉시 의심",
+      "refs": [
+        "Frontiers Vet Sci 2020 Coccidia Control EU",
+        "Toltrazuril resistance Parasites Vectors 2017"
+      ]
+    },
+    "032010": {
+      "name": "포유중도태(임의)",
+      "category": "elective_culling",
+      "timing_days": [
+        0,
+        21
+      ],
+      "timing_peak": "0~3일 (관리자 판단)",
+      "freq_pct_of_pwm": [
+        2,
+        5
+      ],
+      "cause": "관리자가 양자 실패·약체 누적·기형 발견 시 임의 도태. 정상 운영 일부",
+      "action": "임의 도태는 사고 폐사 아님 — AI 진단·처방 대상 외. 단, 비중 과다(>10%) 시 농장 양자 시스템 또는 약체 자돈 양자 배정 미작동 가능성 점검",
+      "prevention": "양자 24h 룰(BW 차이 ≤200g) 표준화, 대리모 운영 체계, 분할포유 도입으로 임의 도태 감소",
+      "threshold_pct": 10,
+      "threshold_desc": "10% 초과 시 양자·양자 배정 시스템 점검",
+      "refs": [
+        "—"
+      ]
+    },
+    "032011": {
+      "name": "식자(Savaging)",
+      "category": "sow_savaging",
+      "timing_days": [
+        0,
+        1
+      ],
+      "timing_peak": "0~6시간",
+      "freq_pct_of_pwm": [
+        1,
+        3
+      ],
+      "cause": "모돈 자돈 공격(물어죽임). 초산 모돈 3.4%(경산 1.2%), 분만 직전 입실 스트레스, estradiol 과잉, 분만 통증",
+      "action": "공격성 의심 시 azaperone(Stresnil) 1mL/12kg IM 진정, 분만 중 첫 자돈 격리 후 합류, snout muzzle 적용, 24h 격리 후 대리모 양자",
+      "prevention": "분만 1주 전 입실(스트레스 적응), 짚·건초 등 nesting material 제공, 분만사 조용함 유지, 시야 차단. 재발 모돈(다음 산차 14% 반복) 도태 검토",
+      "threshold_pct": 5,
+      "refs": [
+        "NADIS Savaging",
+        "Nielsen 1995",
+        "Harris & Gonyou 2003"
+      ]
+    },
+    "032012": {
+      "name": "체중미달",
+      "category": "low_birth_weight",
+      "timing_days": [
+        0,
+        3
+      ],
+      "timing_peak": "0~3일",
+      "freq_pct_of_pwm": [
+        12,
+        18
+      ],
+      "cause": "출생체중 1.11kg 미만(Feldpausch 2019 임계값). 자궁내 발육지연(자궁내 발육지연), 모돈 영양 부족, 산차 1·6+, 과산자복(실산 14+) 자궁 내 경쟁",
+      "action": "출생 후 30분 내 체중 측정, <1.11kg 자돈 별도 대리모 배정, 인공 대용유, 분할포유로 약체 우선 흡유. 이유 시 5kg 미만 별도 사육",
+      "prevention": "임신 후기(110~114일) 사료 +0.5kg/일, BCS 3.0~3.5 유지, 모돈 P2 등지방 17~20mm. 한국 농가 0.9kg 관행 정정 필요",
+      "threshold_pct": 25,
+      "threshold_desc": "25% 이상이면 모돈 영양 관리 + 양자 시스템 점검",
+      "refs": [
+        "Feldpausch 2019 Translational Animal Sci 3(2):633 (1.11kg)",
+        "De Vos 2014 JAPAN",
+        "AHDB Small Piglet Mgmt"
+      ]
+    },
+    "032013": {
+      "name": "관절이상",
+      "category": "infection_arthritis",
+      "timing_days": [
+        3,
+        21
+      ],
+      "timing_peak": "5~14일",
+      "freq_pct_of_pwm": [
+        2,
+        5
+      ],
+      "cause": "Streptococcus suis(혈청형 1·2·1/2·7·9·14), Staphylococcus 제대·외상 침입. 분만실 바닥 거침, 거세·이빨갈이 도구 오염. Strep suis 2형 인수공통(작업자 감염)",
+      "action": "발병 즉시 무균 조직 배양 + 혈청형 분석(KASV·검역본부), 항생제 베타락탐 군(1차) → 2차 세팔로스포린·플루오로퀴놀론. 패혈성·뇌수막염 시 안락사. 작업자 마스크·장갑(혈청형 2 인수공통)",
+      "prevention": "출생 즉시 제대 7% 요오드 침적(분무 부적절, Robinson 2016), 거세·이빨갈이 도구 알코올·요오드 소독, 분만실 매트 주1회 점검·균열 즉시 보수. 모돈 자가백신(자가다가백신) 분만 4·2주 전",
+      "threshold_pct": 10,
+      "refs": [
+        "Robinson 2016 JSHAP umbilical iodine",
+        "NADIS Joint Ill",
+        "Vet Research 2024 자가백신 Strep suis"
+      ]
+    },
+    "032014": {
+      "name": "급사",
+      "category": "sudden_death",
+      "timing_days": [
+        0,
+        21
+      ],
+      "timing_peak": "—",
+      "freq_pct_of_pwm": [
+        1,
+        3
+      ],
+      "cause": "전형 증상 없이 돌연사. App(Actinobacillus pleuropneumoniae) 급성 12h 내 사망(청색증·코피·복식호흡), Strep suis 패혈증, 출혈성 Cl.perfringens type C, 심장기형, 외상",
+      "action": "즉시 부검·PCR: 폐 섬유소성 흉막폐렴 → App 의심, 출혈성 장염 → Cl.perfringens, 다발성 장막염 → Glässer. 항생제 베타락탐 군 즉시(원인 미식별 시), 다른 자돈 격리",
+      "prevention": "환기 8~10 ACH·NH3 <25ppm 점검, 사육밀도 적정(자돈 0.05~0.1 m²/두), AIAO 엄격, 모돈 App·Mhp 백신 분만 4주 전, 출입통제",
+      "threshold_pct": 5,
+      "threshold_desc": "5% 이상 시 App·Cl.perfr 검사 우선",
+      "refs": [
+        "MSD Vet Manual App",
+        "AASV J Swine Health Production"
+      ]
+    },
+    "032015": {
+      "name": "창상",
+      "category": "trauma",
+      "timing_days": [
+        0,
+        7
+      ],
+      "timing_peak": "분만 중·직후",
+      "freq_pct_of_pwm": [
+        1,
+        3
+      ],
+      "cause": "분만 중 산도 압박·갈비뼈 골절, 분만틀 바닥 균열·돌출부 끼임, 견치 교상, 모돈 자세 변화 시 외상. 옥시토신 조기 투여(8두 분만 전) 시 stillborn type2 동반 트라우마",
+      "action": "경미: 소독·항생제 연고. 갈비뼈 골절·다발성 외상·괴사 안락사. NSAID(Meloxicam) 통증 관리. 분만 4h 초과 시 산도 검사 + 인위 보조분만",
+      "prevention": "분만틀 바닥 매주 점검·균열 즉시 보수, slat 슬롯폭 ≤10mm, 자돈 영역 고무매트. 옥시토신은 8두 분만 후만 5~10IU IM(Mota-Rojas 2022 meta), 출생간격 40분 초과 시 산도검사",
+      "threshold_pct": 5,
+      "refs": [
+        "Mota-Rojas 2022 oxytocin meta PMC9311507",
+        "Cassar 2014 farrowing induction"
+      ]
+    },
+    "032016": {
+      "name": "위축(성장장애)",
+      "category": "chronic_runting",
+      "timing_days": [
+        7,
+        21
+      ],
+      "timing_peak": "7~21일",
+      "freq_pct_of_pwm": [
+        3,
+        5
+      ],
+      "cause": "PCV2(circovirus) 또는 PRRS 만성 감염, MMA 모돈 비유 부족, 만성 설사 후유증. 사료 적응 실패 누적",
+      "action": "PCV2/PRRS 검사(혈청 PCR), MMA 점검(모돈 직장체온 >39.5°C), 위축 자돈 별도 구획·자돈사료 24h 급이, 이유 시 5kg 미만 별도 사육",
+      "prevention": "모돈 PCV2 + Mhp 백신, 자돈 14일령 PCV2+Mhp 콤보, AIAO 엄격, 음수기 자돈 5~10cm 높이·유속 0.5L/min",
+      "threshold_pct": 8,
+      "refs": [
+        "MSD Vet Manual PCV2",
+        "AHDB MMA"
+      ]
+    },
+    "032017": {
+      "name": "쇄항(항문막힘 Atresia ani)",
+      "category": "congenital_defect_severe",
+      "timing_days": [
+        0,
+        0
+      ],
+      "timing_peak": "0일 (24h 내 복부팽만)",
+      "freq_pct_of_pwm": [
+        0.5,
+        1
+      ],
+      "cause": "선천 항문직장 형성부전, 유전(heritability 0.25), 종돈 계통 보인자",
+      "action": "출생 직후 안락사 권고(수술 성공률 <30%, 비경제적). 종돈장(GGP/GP)은 보인자 모돈·부돈 도태. 비육장 F1 상품돈도 즉시 안락사",
+      "prevention": "종돈 도입 시 결함 이력 확인, 보인자 모돈 차기 산차 종부 배제. 발생 빈도 농장별 트래킹",
+      "threshold_pct": 2,
+      "threshold_desc": "2% 이상이면 종돈 계통 즉시 점검",
+      "refs": [
+        "Pig333 Swine Disease Manual",
+        "PigSite Atresia ani",
+        "서울대병원 희귀질환센터"
+      ]
+    },
+    "032018": {
+      "name": "견좌(Splay-leg)",
+      "category": "congenital_environment",
+      "timing_days": [
+        0,
+        3
+      ],
+      "timing_peak": "0~24시간",
+      "freq_pct_of_pwm": [
+        2,
+        5
+      ],
+      "cause": "Myofibrillar hypoplasia(근원섬유 형성부전). 유전 + 환경 복합. 위험인자: 미끄러운 바닥(plastic slat), 사료 mycotoxin(Zearalenone >250ppb), 글루코코르티코이드, Choline·B vit 결핍",
+      "action": "후지·전지 외전 자돈 다리 묶기(테이프·고무밴드) 3~5일, 고무매트 또는 straw bedding 즉시 깔기, 보온등 직하·보조포유. 양측 후지 견좌는 7일 미회복 시 안락사 검토(편측 회복률 80% / 양측 30%)",
+      "prevention": "사료 ZEN <100~250ppb 분기 검사, 분만 후 1주 자돈 영역 고무매트·straw bedding 의무화(splayleg 5%→<1%), 모돈 임신 후기 Choline 1,250mg/kg 보강",
+      "threshold_pct": 5,
+      "refs": [
+        "Vasdal 2012 PMC7952305",
+        "PMC7952305 Splay Leg Frontiers",
+        "Pig Progress Splay Leg"
+      ]
+    },
+    "032019": {
+      "name": "탈장(Hernia)",
+      "category": "congenital_defect",
+      "timing_days": [
+        0,
+        14
+      ],
+      "timing_peak": "0~7일 발견",
+      "freq_pct_of_pwm": [
+        0.5,
+        2
+      ],
+      "cause": "제대탈장(umbilical h=0.25), 음낭탈장(scrotal h=0.31), 유전. 탯줄 절단 부주의·환경 오염 동반",
+      "action": "출생 시 명확하면 도태(상품성 상실). 작은 탈장(<5cm) 7일 관찰 후 외과 또는 비육말기 도태. 직경 >5cm 또는 양측 음낭탈장 즉시 도태, 보인자 모돈도 도태 검토. 직장탈출(rectal prolapse)은 별도 관리",
+      "prevention": "탯줄 절단 길이 2~3cm 표준화, 7% 요오드 침적, 종돈 계통 점검(보인자 모돈 차기 종부 배제)",
+      "threshold_pct": 3,
+      "refs": [
+        "BMC Genomics 2018 GWAS umbilical hernia",
+        "PLOS One 2020",
+        "Pig333 Swine Disease Manual"
+      ]
+    },
+    "032020": {
+      "name": "진전(떨림)",
+      "category": "congenital_viral",
+      "timing_days": [
+        0,
+        3
+      ],
+      "timing_peak": "0~3일",
+      "freq_pct_of_pwm": [
+        0.5,
+        1
+      ],
+      "cause": "Atypical Porcine Pestivirus(APPV) 또는 Classical Swine Fever(CSFV) 자궁내 감염, A형 진전(Pestivirus) vs B형(유전). 신생 진전증후군(Congenital tremor)",
+      "action": "APPV/CSFV PCR 검사(혈청·뇌·척수), 격리·보온·인공 흡유 보조. 경증은 자력 회복(수주~수개월), 중증은 안락사. CSF 양성 시 검역본부 즉시 신고",
+      "prevention": "모돈 CSF 백신 프로토콜 준수, APPV 감시(국내 보고 증가), 신규 후보돈 격리 60일",
+      "threshold_pct": 3,
+      "refs": [
+        "MSD Vet Manual Congenital Tremor",
+        "OIE CSF reference",
+        "농림축산검역본부 CSF"
+      ]
+    },
+    "032021": {
+      "name": "고창증",
+      "category": "feed_management",
+      "timing_days": [
+        7,
+        21
+      ],
+      "timing_peak": "7~21일",
+      "freq_pct_of_pwm": [
+        0.5,
+        1
+      ],
+      "cause": "사료 급변·과식, 자돈사료 적응 실패, 항생제 부작용(장내균총 교란), 콜리스틴 등",
+      "action": "사료 즉시 중단 + 죽 형태 점진 재급여, 보온 강화, 위 감압(수의사 처방 시), 다른 자돈 격리. 약물 사용 검토",
+      "prevention": "자돈사료 7일령부터 24h 자유 급이 점진 적응, 사료 급변 회피, 음수 충분(자돈 0.5L/min), 항생제 예방적 사용 최소화",
+      "threshold_pct": 3,
+      "refs": [
+        "MSD Vet Gastric Dilation",
+        "한돈뉴스 14028 자돈사료"
+      ]
+    },
+    "032022": {
+      "name": "피부병(Greasy pig)",
+      "category": "infection_skin",
+      "timing_days": [
+        7,
+        21
+      ],
+      "timing_peak": "7~21일",
+      "freq_pct_of_pwm": [
+        1,
+        3
+      ],
+      "cause": "Staphylococcus hyicus(Greasy pig disease, Exudative epidermitis). 외상·이빨갈이·거세 부위 침입. 패혈증 진행 시 폐사. 관절염 동시 발생 多",
+      "action": "Greasy pig 의심 부위 약욕(클로르헥시딘·아이오딘), 항생제 베타락탐 군 즉시, 통증 관리(NSAID), 격리. 패혈증 진행 시 안락사",
+      "prevention": "이빨갈이 그라인딩(절단 X — EFSA routine 금지), 거세·꼬리절단 도구 무균(요오드 침적), 모돈 백신, 거친 바닥·외상원 제거",
+      "threshold_pct": 5,
+      "refs": [
+        "Pork Information Gateway",
+        "EU Council Directive 2008/120/EC",
+        "MSD Vet Greasy Pig Disease"
+      ]
+    },
+    "032099": {
+      "name": "기타",
+      "category": "misc",
+      "timing_days": [
+        0,
+        21
+      ],
+      "timing_peak": "—",
+      "freq_pct_of_pwm": [
+        3,
+        8
+      ],
+      "cause": "위 22개 사유 외 농장 자유 기재. 빈혈사·의문사·압사 후 발견·MMA 합병 폐사 등",
+      "action": "사례별 부검 + 농장 입력 품질 점검. 비중 과다(>15%) 시 사유 분류 미흡 의심",
+      "prevention": "농장 직원 사유 분류 교육, 분만일지·폐사일지 표준화",
+      "threshold_pct": 15,
+      "threshold_desc": "15% 이상 시 농장 입력 품질 점검",
+      "refs": [
+        "—"
+      ]
+    }
+  },
+  "international_gap_kr": {
+    "preweaning_mortality_pct": {
+      "kr": [
+        12,
+        15
+      ],
+      "advanced": [
+        8,
+        10
+      ],
+      "gap_pct": [
+        4,
+        7
+      ]
+    },
+    "iron_protocol": {
+      "kr": "5일령 100mg 1회",
+      "advanced": "3일령 200mg + 8일 2차"
+    },
+    "brix_measurement_adoption_pct": {
+      "kr": "<5",
+      "advanced": "표준 보급"
+    },
+    "split_suckling_adoption_pct": {
+      "kr": "<5",
+      "advanced": "다산형 필수"
+    },
+    "aiao_downtime_days": {
+      "kr": "1~3 다수",
+      "advanced": "5~7 의무"
+    },
+    "castration_anesthesia": {
+      "kr": "무마취 관행",
+      "advanced": "EU 의무 마취 (2018-)"
+    },
+    "tail_docking_routine": {
+      "kr": "관행",
+      "advanced": "EU 2017 routine 금지"
+    },
+    "low_birthweight_threshold_kg": {
+      "kr": "0.9 (관행)",
+      "advanced": "1.11 (Feldpausch 2019)"
+    },
+    "labor_per_sow": {
+      "kr": "1인당 200~300두",
+      "advanced": "1인당 80~100두 (덴마크)"
+    }
+  },
+  "ai_diagnosis_priority": {
+    "day_0_concentration_pct_high": {
+      "threshold": 80,
+      "candidate_causes": [
+        "032001(압사)",
+        "032005(허약)",
+        "032012(체중미달)",
+        "032004(기형)",
+        "032017(쇄항)",
+        "032018(견좌)"
+      ],
+      "differential_dx": "부검 폐 부유시험 + 외관 검사로 압사(흉부 변형)·약체(공복·털 거침)·질식(양수 착색·폐 침수) 감별"
+    },
+    "day_1_3_concentration_pct_high": {
+      "threshold": 50,
+      "candidate_causes": [
+        "032001(압사)",
+        "032005(허약)",
+        "032003(기아)",
+        "032008(동사)"
+      ],
+      "differential_dx": "초유 섭취량(BRIX), 직장체온, 모돈 MMA 검사 우선"
+    },
+    "day_4_7_concentration_pct_high": {
+      "threshold": 25,
+      "candidate_causes": [
+        "032002(설사)",
+        "032007(질병)"
+      ],
+      "differential_dx": "분변 PCR + E.coli/Cl.perfr/Rotavirus 감별, 겨울 PED 우선"
+    },
+    "day_8_21_concentration_pct_high": {
+      "threshold": 25,
+      "candidate_causes": [
+        "032009(콕시듐)",
+        "032013(관절이상)",
+        "032016(위축)",
+        "032022(피부병)"
+      ],
+      "differential_dx": "Toltrazuril 무반응 시 콕시듐 비후보, Strep suis 자가백신 검토"
+    }
+  },
+  "_internal_meta": {
+    "stillborn_sql": "TB_MODON_JADON_TRANS.BUN_DT IS NOT NULL AND TRUNC(WK_DT) = TRUNC(TB_MODON_WK[WK_GUBUN=B].WK_DATE)",
+    "ssot_query": "분만일 SSOT = TB_MODON_WK WHERE WK_GUBUN=B AND USE_YN=Y 의 WK_DATE",
+    "rationale_orig": "BUN_DT 채워졌어도 WK_DT가 분만일과 다르면 분만 후 사고. 예: 분만 다음날 압사 (BUN_DT 있으나 WK_DT > B.WK_DATE) → NURSING"
+  }
+}
+```
+
+### 포유자돈 일령별 폐사 분포 자동 진단 룰  
+`NURSING_PIGLET/AGE_DEATH_ANALYSIS` · type=`JSON` · ✅ · seq=223 · upd 2026-04-20
+
+> 0~3일 비율>=80: 분만관리 의심, 4~7일 비율>=25: 감염 의심 룰
+
+```json
+{"early_critical_pct": 80, "early_warning_pct": 60, "mid_age_warning_pct": 25, "hints": {"early_critical": "생후 0~3일 폐사 집중 → 분만 시 관리·초유 섭취 불량 의심", "early_warning": "생후 0~3일 비율 높음 — 분만 직후 관리 주의", "mid_age_infection": "4~7일 비율 높음 → 감염성 질병 발생 가능성 확인"}, "actions": {"early_critical": "전 세계 자돈폐사의 50~80%가 0~3일 집중 (Koketsu 2021: 0~1일 37% + 2~8일 27%). 분만 관찰 강화, 24시간 내 초유 200~250g/두 섭취 확인 (Quesnel 2012 — gut closure 24h). 1.11kg 미만 저체중 자돈 보조포유·대리모 배정 (Feldpausch 2019: 폐사율 34.4%). 자돈 생활구역 30~35°C (국립축산과학원).", "early_warning": "자돈 생활구역 30~35°C 확인 (국립축산과학원). 생후 6시간 내 초유 IgG 흡수 정점 — 소형자돈 초유 보조 루틴 점검. 압사 개체의 30~82%가 이미 허약 상태 (Baxter 2013) — 저활력 자돈 분리 관리.", "mid_age_infection": "PED(12~3월 집중, 국내 역학)·Rotavirus(3~14일령)·대장균(0~5일령)·TGE·Streptococcus 감별 검사. 수양성 황색 설사 시 즉시 PCR 의뢰. (임계값 25%는 경험적 수치 — 출처 없음, 현장 관행)"}, "title_templates": {"early_critical": "생후 0~3일 폐사 집중 ({pct}%) — 분만관리·초유 의심", "early_warning": "생후 0~3일 비율 높음 ({pct}%) — 초유·보온 점검", "mid_age_infection": "4~7일 비율 높음 ({pct}%) — 감염성 질병 의심"}, "_citation": {"Koketsu2021": "Koketsu Y et al. Porcine Health Management 7:50, 2021", "Quesnel2012": "Quesnel H. Animal 6(10), 2012", "Feldpausch2019": "Feldpausch JA et al. Transl Anim Sci 3(2), 2019", "Baxter2013": "Baxter EM et al. Livestock Sci, 2013", "국립축산과학원": "농촌진흥청 국립축산과학원 공식 권고", "_note_25pct": "mid_age_warning_pct=25는 업계 공표 임계 미확인. 현장 경험적 수치."}}
+```
+
+### 포유자돈 사유별 추세 분석 룰 (연속1위·변동·급증)  
+`NURSING_PIGLET/REASON_TREND_ANALYSIS` · type=`JSON` · ✅ · seq=224 · upd 2026-04-20
+
+```json
+{"streak_threshold": 3, "surge_multiplier": 3, "surge_min_cnt": 5, "hints": {"streak": "동일 사유 {streak}주 이상 연속 1위 — 일시적 사고가 아닌 구조적 문제. 해당 사유 원인 정밀 분석 필요.", "change": "1위 사유 변동({prev} → {cur}) — 새로운 환경·질병 요인 발생 여부 점검.", "surge": "특정 사유 급증({prev_cnt}두→{cur_cnt}두) — 즉각 원인 파악 필요. 모돈 상태·분만 환경 변화 확인."}, "reason_actions": {"체중미달": "1.11kg 미만 자돈 폐사율 34.4% (Feldpausch 2019). 임신3기 모돈 BCS 3.0~3.5 유지, 실산 13두 초과복 조기 양자 배치, 임신3기 사료 급여량 확인.", "저체중": "생시 0.7~1.11kg 자돈 생존율 저하 구간 (Feldpausch 2019, Animals 2021). 별도 구획 관리·인공포유 또는 분유 보조, 12두 초과 복 양자 분산.", "허약": "초유 24시간 내 섭취 필수 — gut closure 24h에 IgG 이행 완료 (Quesnel 2012, Devillers 2011). 1시간 내 섭취 확인, 자돈 생활구역 30~35°C (국립축산과학원).", "압사": "압사 개체의 30~82%가 이미 허약(저체중·저초유) 상태 (Baxter 2013). 보온·초유 관리가 예방책. 분만틀·보온등 위치·야간 CCTV 모니터링 병행.", "견좌": "산도 문제 — 분만 보조 인력 배치, 30분 내 미출산 시 개입. 수의사 처방 옥시토신 검토.", "기형": "유전·영양 요인 — 교배 종돈 다양성 확인, 임신기 마이코톡신 검사, 고온 노출 방지. PPV 등 바이러스 감염 가능성 검토.", "저혈당": "초유 섭취 부족 — 생존 최소량 200~250g/두 (Quesnel 2012). 산자수 12두+ 시 소형자돈 대리모 배정 또는 Split-suckling(강한 자돈 1~2시간 격리 × 2회, PIC Day One).", "기아": "초유 부족 — 분만 후 24시간 내 200~250g 섭취 확인 (Quesnel 2012). Cross-foster는 초유 섭취 완료 후(6~12시간) 실시, 균일 체중 기준.", "설사": "계절·일령으로 감별: PED(12~3월 집중, 국내 역학), Rotavirus(3~14일령), 대장균(0~5일령), TGE. 즉시 분변 PCR/세균배양, 수양성 황색설사 시 PED 최우선 의심.", "소화": "위장관 질환 — 수양성 설사 시 PED/TGE PCR, 대장균성 의심 시 분만사 소독 주기 강화. 구강 전해질 공급.", "호흡": "PRRSv·PCV2d·M.hyopneumoniae 감별 — 환기 체계 점검, 부검 의뢰 권장. 4~7일 이후 발현 시 바이러스성 가능성 높음.", "폐렴": "PRRS·PCV2·M.hyorhinis(관절염 동반) 감별 — 환기·밀도 점검, 부검 의뢰.", "관절염": "황색포도상구균·Streptococcus 세균성 — 분만실 바닥 매트 점검·교체, 제대 처리(요오드) 철저.", "사산": "분만 지연(5시간 초과)·태아 위치 이상·모돈 과비 — 분만예정일 관리 강화, BCS 4.0 이하 유지, 임신말기 운동 공간 확보.", "유산": "PRRSv·PCV2·돈단독 감염 또는 온도 스트레스 — 임신돈사 환경 점검, 감염 검사.", "저혈": "저혈당 동반 — 초유·보온 동시 문제, 분만실 자돈 생활구역 30~35°C 확인 (국립축산과학원)."}, "_citation": {"Feldpausch2019": "Feldpausch JA et al. Translational Animal Science 3(2), 2019 — 1.11kg birth weight threshold", "Quesnel2012": "Quesnel H. Animal 6(10), 2012 — Colostrum intake 200~250g/두, gut closure 24h", "Devillers2011": "Devillers N et al. Animal 5(12), 2011 — IgG absorption kinetics", "Baxter2013": "Baxter EM et al. Livestock Science, 2013 — Crushing victims 30~82% already frail", "Koketsu2021": "Koketsu Y et al. Porcine Health Management 7:50, 2021 — Age-specific mortality", "국립축산과학원": "농촌진흥청 국립축산과학원 — 자돈 생활구역 30~35°C 공식 권고"}}
+```
+
+---
+
+## PARITY
+**산차** · 2개 룰
+
+### 2산차 슬럼프 가이드  
+`PARITY/SLUMP_GUIDE` · type=`JSON` · ✅ · seq=468
+
+> Tier-C 등재 2026-06-22 (코드 fallback DB화)
+
+```json
+{"silsan_delta_warn": -1.5, "symptom": "1산→2산 산자수 -1.5두 또는 재귀일(WSI) >=7일", "cause": "이유 후 체형점수(BCS)·사료량 부족 -> 발정 재귀 지연", "action": "이유 후 즉시 BCS 2.5+ 유지 + 사료량 10~15% 증량", "source": "덴마크·네덜란드·ES·KR 4국 합의 (피그앤포크한돈 2024)", "_internal_meta": {"scope": "monthly", "applies_to": ["buildParityDistDiagTabs/buildParitySlump"], "created_dt": "2026-06-22", "note": "값=코드 fallback 동일"}}
+```
+
+### 산차 분포 그룹 경계·권장  
+`PARITY/DIST_GUIDE` · type=`JSON` · ✅ · seq=469
+
+> Tier-C 등재 2026-06-22 (코드 fallback DB화)
+
+```json
+{"golden_parity_max": 2, "core_parity_max": 6, "reco_golden_pct": "30~35", "reco_core_pct": "45~50", "reco_old_pct": "15~20", "_internal_meta": {"scope": "monthly", "applies_to": ["buildParityDistDiagTabs"], "sources": ["한국 평균 참조"], "created_dt": "2026-06-22", "note": "값=코드 fallback 동일"}}
+```
+
+---
+
+## PREG_ACCIDENT
+**임신사고** · 1개 룰
+
+### 임신사고 사유별 처방 컨텍스트 (TB_SAGO 050 4유형)  
+`PREG_ACCIDENT/REASON_CONTEXT` · type=`JSON` · ✅ · seq=482
+
+> 임신사고 처방 — PREG_ACCIDENT/REASON_CONTEXT 4유형 (050xxx)
+
+```json
+{
+  "version": "1.0",
+  "effective_from": "2026-06-23",
+  "denominator_note": "임신사고율 = 임신사고복수 / 교배복수(임신실패 risk). 도태폐사(모돈제거)·자돈폐사(실산대비)와 분모 상이 — 합산 금지.",
+  "causes": {
+    "050008": {"name": "재발", "category": "recurrence", "cause": "교배 후 수태 실패 또는 조기 배아사멸로 재발정. 교배 적기 실패·정액 품질·자궁 환경·스트레스·이유 후 BCS 손실.", "action": "재발 원인 진단 — 발정 재확인·교배 적기(발정 후 12~24h) 교정·정액 품질 점검. 동일 모돈 3회 이상 반복 재발은 번식장애 정밀진단(자궁내막염·난소낭종) 후 도태 검토.", "prevention": "발정관찰 2회/일·교배 적기 준수·정액 보관/관리·임신감정 28일·이유 후 BCS 3.0 회복.", "refs": ["NIAS 번식장애 진단", "SEGES Reproduction", "RDA 양돈 번식관리"]},
+    "050002": {"name": "유산", "category": "abortion", "cause": "감염성(PRRS·파보바이러스·일본뇌염·렙토스피라)·곰팡이독소(제랄레논)·고온 스트레스·외상.", "action": "유산 원인 진단 — 군발 발생 시 혈청검사·병성감정 의뢰. 개체는 자궁 회복 후 재교배 또는 도태 판단. 발생 모돈 격리.", "prevention": "백신 프로그램(PPV·일본뇌염·렙토)·차단방역·사료 보관(곰팡이 차단)·여름철 냉방·임신사 환경 안정.", "refs": ["NIAS 번식장애 바이러스", "RDA 가축위생", "대한한돈협회 질병관리"]},
+    "050007": {"name": "공태", "category": "barren", "cause": "교배 후 임신 미성립(미수태). 배란 이상·수태 실패·임신감정 누락으로 빈 자궁 상태 지속.", "action": "공태 확인(임신감정 재실시) 후 재교배 또는 도태 판단. 발정 재유도(웅돈 자극·호르몬). 사료 낭비·비생산일 누적 차단.", "prevention": "임신감정 28~35일 정확 실시·발정관찰·교배 관리·비생산일(NPD) 모니터링.", "refs": ["NIAS 임신감정", "RDA 번식관리"]},
+    "050009": {"name": "불임", "category": "infertility", "cause": "반복적 번식 실패. 생식기 구조 이상·만성 감염·내분비 장애·노산.", "action": "불임 정밀진단(초음파·호르몬·감염검사). 치료 가능 원인은 처치, 회복 불가는 도태(비생산일 차단).", "prevention": "번식 관리·후보돈 선발 강화·정기 번식검진·적정 산차 도태.", "refs": ["NIAS 번식장애 진단", "RDA 양돈 번식관리"]}
+  },
+  "default_action": {"cause": "임신사고 사유 미상.", "action": "임신사고 유형을 정확히 기록하면 유형별 처방을 제공합니다. 재발·공태 반복 모돈은 번식장애 진단을 권장합니다.", "prevention": "사고 입력 정확도 관리."},
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": ["monthly-report 임신사고 builder(getPregReasonAction)", "weekly 임신사고 카드"],
+    "shared_with_weekly": false,
+    "promotion_path": "주간 임신사고 처방(현 INTERPRET/ACCIDENT_BENCHMARK 한글명 퍼지매칭)을 본 코드키 룰로 통합 시 COMMON/ 승격 검토(STEP3).",
+    "sources": ["NIAS(농촌진흥청 국립축산과학원)", "RDA", "대한한돈협회", "SEGES Reproduction"],
+    "spec_doc": "changes-sync/CHANGES_SYNC_20260623.md 0623-04",
+    "session_ref": "도태폐사 처방 아키텍처 검토(w0jiegguk) STEP2",
+    "created_dt": "2026-06-23",
+    "applied_dt": "2026-06-23",
+    "content_status": "draft — 4유형. 출처검증 후 정본화 권장."
+  }
+}
+```
+
+---
+
+## PREG_LOSS
+**임신손실** · 1개 룰
+
+### 임신사고 산차분포 진단  
+`PREG_LOSS/PARITY_DIST` · type=`MD` · ✅ · seq=383
+
+> PREG_LOSS PARITY_DIST 룰 (20260508)
+
+```
+{
+    "version": "1.0",
+    "updated": "2026-05-08",
+    "thresholds": {
+      "p1_alert_pct":       0.40,
+      "p1p2_combined_pct":  0.55,
+      "p6_senile_pct":      0.30,
+      "min_sample":         5
+    },
+    "buckets": {
+      "p1":      { "label": "1산",   "desc": "후보돈 첫 임신" },
+      "p2":      { "label": "2산",   "desc": "2산차 슬럼프 구간" },
+      "p3_5":    { "label": "3~5산", "desc": "황금 산차 (리스크 최저)" },
+      "p6_plus": { "label": "6산↑",  "desc": "노령 모돈" },
+      "unknown": { "label": "미상",   "desc": "산차 미입력" }
+    },
+    "patterns": {
+      "P1_ALERT": {
+        "label": "후보돈 집중 경보",
+        "condition": "p1 / total >= 0.40",
+        "severity": "red",
+        "diagnosis": "임신사고의 40% 이상이 1산 후보돈에서 발생합니다. 후보돈 적응 관리(격리 기간·사료 전환·스트레스 최소화)와 교배 타이밍을 점검하세요.",
+        "actions": [
+          "후보돈 격리 순치 기간 3~4주 확보 여부 확인",
+          "후보돈 초교배 일령 210일 이상, 2회 이상 발정 확인 후 교배",
+          "교배 후 이동·사회적 스트레스 최소화 (이동은 교배 30일 후 이후)",
+          "사료 에너지 밀도: 교배 전후 2주 플러싱(임신초기 사료량 급감 주의)"
+        ],
+        "refs": ["Tummaruk 2010 Livestock Science 134", "피그플랜 후보돈 관리 가이드"]
+      },
+      "P1P2_SLUMP": {
+        "label": "1·2산 집중 (2산 슬럼프)",
+        "condition": "(p1 + p2) / total >= 0.55",
+        "severity": "orange",
+        "diagnosis": "1·2산 합산 비율이 55% 이상입니다. 2산차 슬럼프(포유 중 체중 손실 → 2산 번식 저하)가 의심됩니다. 포유 기간 사료 섭취량과 이유 시 체형을 점검하세요.",
+        "actions": [
+          "1산 포유 중 일당 사료 섭취량 6~8kg 확보 (자유채식 권장)",
+          "이유 시 BCS 2.5 미만 모돈 별도 회복 관리 (급이량 증량)",
+          "이유→교배 간격: BCS 2.5 미만은 6일 이상 확보 후 교배",
+          "2산 교배 전 체중 검토 — 1산 분만체중 대비 -15kg 초과 손실 시 경보"
+        ],
+        "refs": ["Koketsu & Iida 2021 Livestock Science 249", "Frontiers Vet Sci 2025 meta"]
+      },
+      "P6_SENILE": {
+        "label": "고산차 집중 (노령 도태 시점)",
+        "condition": "p6_plus / total >= 0.30",
+        "severity": "orange",
+        "diagnosis": "임신사고의 30% 이상이 6산↑ 노령 모돈에서 발생합니다. 계획 도태 로드맵을 검토하고, 6산 이상 모돈 중 번식 성적 저하 개체를 우선 도태하세요.",
+        "actions": [
+          "6산↑ 모돈 임신감정 합격률 별도 모니터링",
+          "6산 이상 교배 시 임신감정 2회 실시 (30일·60일)",
+          "연간 도태 계획: 고산차 비율 15% 이하 목표 유지",
+          "후보돈 도입 시기 조정 — 고산차 도태 공백 선제 보완"
+        ],
+        "refs": ["Sasaki & Koketsu 2008 Theriogenology", "국내 도태율 기준 피그플랜 2024"]
+      },
+      "ALL_HIGH": {
+        "label": "전 산차 고른 분포 (감염 의심)",
+        "condition": "p1+p2 < 0.40 AND p6_plus < 0.25 AND total >= 5",
+        "severity": "red",
+        "diagnosis": "특정 산차에 집중되지 않고 전 산차에서 고르게 임신사고가 발생합니다. 감염성 원인(PRRS·파보바이러스·렙토스피라·브루셀라)을 우선 의심하고 수의사 진단을 받으세요.",
+        "actions": [
+          "최근 4주 내 새로운 돈군 도입 이력 확인",
+          "PRRS 모니터링 혈액검사 (임신 30~40일 유산 돈 우선)",
+          "파보바이러스 백신 접종 프로그램 점검 (후보돈·1산 갱신 여부)",
+          "음수·사료 오염 여부 확인 (렙토스피라·곰팡이독소)",
+          "수의사 상담 및 임신사고돈 부검 의뢰"
+        ],
+        "refs": ["Dee 2012 AASV", "김영화·이성대 2019 NIAS"]
+      }
+    },
+    "_internal_meta": {
+      "eval_order": ["P1_ALERT", "P1P2_SLUMP", "P6_SENILE", "ALL_HIGH"],
+      "multi_pattern": true,
+      "note": "P1_ALERT와 P1P2_SLUMP는 동시 해당 가능. eval_order 순으로 모두 평가 후 severity 높은 것 우선 표시."
+    }
+  }
+```
+
+---
+
+## SOW_OUT
+**모돈 도폐** · 1개 룰
+
+### 모돈 도태 사유별 처방 컨텍스트 (TC_CODE_JOHAP PCODE=031 26사유)  
+`SOW_OUT/REASON_CONTEXT` · type=`JSON` · ✅ · seq=484
+
+> Phase5 A1-01 도태 처방 — 26사유(실발생12종+계획12, cull-reasons.ts 정렬)
+
+```json
+{
+  "version": "1.0",
+  "effective_from": "2026-06-23",
+  "pcode": "031",
+  "classification_policy": {
+    "planned": "고령/노산(031038·031002·031020·031174)·검사도태(031037·031183)·판매(031019·031031·031032·031190)·종돈감축(031173)·시장정리(031095) = 노폐돈 매각·계획적 갱신·잔여가치 0·관리양호. cull-reasons.ts PLANNED_CULL_REASONS 와 정렬. 정상도태로 평가(경고 금지).",
+    "unplanned": "번식장애·질병·지제·사고 등 = 조기 비계획 도태·기회손실. 원인진단·예방으로 재발 차단.",
+    "age_gate": "계획사유라도 실일령 < EXPECTED(330+산차x150) = 어린 오라벨 의심 → 비계획 손실로 재분류(cull-reasons.ts)."
+  },
+  "causes": {
+    "031038": {"name": "고령/노산", "category": "planned", "cause": "산차 누적에 따른 생산성(산자수·수태율) 자연 감소. 노산차 모돈은 분만성적·포유능력 저하.", "action": "계획적 갱신(노폐돈 매각) = 정상도태. 잔여가치 0·관리양호로 평가하며 경고 대상 아님. 갱신 시점은 산차 7~8 또는 직전 산차 산자수 급감 기준.", "prevention": "산차구조 6~7산 정점 유지·연간 갱신율 35~45% 관리. 후보돈 풀 확보로 계획적 교체.", "refs": ["NIAS 모돈 산차구조 관리", "대한한돈협회 종합DB"]},
+    "031165": {"name": "재발/공태/불임", "category": "unplanned", "cause": "교배 후 수태 실패(재발정)·임신 미성립(공태)·반복 번식실패(불임). 자궁내막염·난소낭종·호르몬 불균형·교배적기 실패·정액 품질.", "action": "번식장애 종합 진단(생식기 초음파·호르몬 검사). 3회 이상 반복 재발 모돈은 도태 검토. 자궁내막염 동반 시 치료 후 1주기 재시도.", "prevention": "발정관찰 2회/일·교배 적기(발정 후 12~24h) 준수·정액 품질관리·임신감정 28일. 이유 후 BCS 회복.", "refs": ["NIAS 번식장애 진단", "RDA 양돈 번식관리", "SEGES Reproduction"]},
+    "031124": {"name": "지제이상/기립불능", "category": "unplanned", "cause": "발굽 병변·관절염·골연화증(Ca/P 불균형)·미끄럼 외상. 기립 곤란으로 사료섭취·포유 불가.", "action": "지제질환 진단(발굽 삭제·관절 촉진). 진통소염제·국소처치. 회복 불가·기립불능은 동물복지상 조기 도태.", "prevention": "사료 Ca/P 균형·비타민D·바닥재 미끄럼 방지·적정 운동. 후보돈 단계 지제 선발.", "refs": ["NIAS 모돈 지제관리", "AHDB Lameness in sows"]},
+    "031007": {"name": "유산", "category": "unplanned", "cause": "감염성(PRRS·파보바이러스·일본뇌염·렙토스피라)·곰팡이독소(제랄레논)·고온스트레스·외상.", "action": "유산 원인 진단 — 군발 발생 시 혈청검사·병성감정. 개체는 자궁 회복 후 재교배 또는 도태 판단.", "prevention": "백신 프로그램(PPV·일본뇌염·렙토)·차단방역·사료 보관(곰팡이 차단)·여름철 냉방·임신사 환경관리.", "refs": ["NIAS 번식장애 바이러스", "RDA 가축위생", "대한한돈협회 질병관리"]},
+    "031073": {"name": "모돈번식장애", "category": "unplanned", "cause": "생식기 이상·만성 감염·내분비 장애로 인한 번식 능력 저하 종합.", "action": "정밀 번식진단(초음파·호르몬·감염검사). 원인별 치료 또는 도태 판단.", "prevention": "영양·BCS·환경(온도·조명)·정기 번식검진. 후보돈 선발 강화.", "refs": ["NIAS 번식장애 진단", "RDA 양돈 번식관리"]},
+    "031056": {"name": "농양", "category": "unplanned", "cause": "외상·주사부위 감염·관절/피하 화농성 세균 감염.", "action": "농양 외과적 배농·항생제·격리. 전신 증상 동반 시 도태.", "prevention": "축사 위생·외상 예방·주사 부위 소독·돈군 합사 시 투쟁 관리.", "refs": ["NIAS 양돈 위생관리", "AHDB Pig health"]},
+    "031139": {"name": "포유성적저하", "category": "unplanned", "cause": "유방염·무유증(MMA 복합)·비유량 부족·모성행동 저하로 자돈 발육 부진.", "action": "포유능력 진단(유방 촉진·체온). 유방염 항생제·소염·옥시토신. 반복 저하 모돈 도태.", "prevention": "분만 전후 BCS 3.0~3.5·사료 급여·유방 관리·MMA 예방(분만 위생·변비 예방).", "refs": ["NIAS 포유모돈 관리", "Quesnel 2012 lactation"]},
+    "031035": {"name": "허약/영양부족/식불", "category": "unplanned", "cause": "사료 섭취 부족·소화기 질환·만성 소모성 질환으로 체력 저하.", "action": "영양·소화기 진단. 회복 사료·수액·구충. 회복 불가 시 도태.", "prevention": "임신/포유 단계별 급여 프로그램·BCS 3.0~3.5 유지·사료 품질·급이기 점검.", "refs": ["NIAS 모돈 영양관리", "RDA 사양표준"]},
+    "031003": {"name": "무발정", "category": "unplanned", "cause": "난소 정지·난소낭종·이유 후 발정 미발현(이유 자돈수·포유스트레스·BCS 손실).", "action": "난소 기능 진단(직장 초음파). 호르몬 처치(PG600 등)·웅돈 자극. 무반응 시 도태.", "prevention": "이유 후 BCS 회복·웅돈 노출(접촉 자극)·조명 16h·군사 스트레스 관리.", "refs": ["NIAS 발정관리", "SEGES Weaning to estrus"]},
+    "031166": {"name": "탈항", "category": "unplanned", "cause": "변비·복압 상승·과밀·바닥 경사·유전 소인으로 직장/질 탈출.", "action": "탈항 정복·고정(봉합)·격리·소염. 중증·재발은 도태.", "prevention": "변비 예방(섬유질·수분)·바닥 경사 완화·과밀 해소·분만사 환경.", "refs": ["NIAS 모돈 관리", "AHDB Prolapse"]},
+    "031053": {"name": "분만사고/난산", "category": "unplanned", "cause": "산도 손상·자궁 이완·태아 거대/과다·체형 불량으로 인한 난산 후유증.", "action": "산후 관리(자궁 회복·항생제·옥시토신). 산도 손상 심한 모돈 도태.", "prevention": "분만 감시·적정 체형(과비 방지)·Ca 보급·임신 후기 운동.", "refs": ["NIAS 분만관리", "Mota-Rojas 2022 oxytocin"]},
+    "031149": {"name": "자궁염", "category": "unplanned", "cause": "분만/교배 시 세균 감염으로 자궁내막염. 농성 분비물·번식 저하 동반.", "action": "자궁내막염 치료(자궁 세척·항생제·PGF2alpha). 만성·재발은 도태.", "prevention": "분만 위생·MMA 예방·교배 위생·산후 관리.", "refs": ["NIAS 자궁염 관리", "RDA 번식위생"]},
+    "031076": {"name": "산자수저하", "category": "unplanned", "cause": "연속 산차 산자수 저조 — 유전 능력 한계·자궁 환경·고령·번식관리 미흡.", "action": "누적 산자수 평가 후 저조 모돈 도태 검토. 유전·영양·자궁환경 진단.", "prevention": "후보돈 선발(산자수 유전능력)·영양/BCS 관리·교배 적기·정액 품질.", "refs": ["NIAS 산자수 개량", "대한한돈협회 종합DB"]},
+    "031107": {"name": "외음부농(분비물)", "category": "unplanned", "cause": "비뇨생식기 감염(방광염·질염·자궁염)으로 외음부 농성 분비물. 번식 저하 동반.", "action": "비뇨생식기 감염 진단·항생제 치료. 번식장애 동반·재발은 도태.", "prevention": "교배/분만 위생·음수 위생·MMA 예방·산후 관리.", "refs": ["NIAS 비뇨생식기 감염", "RDA 번식위생"]},
+    "031017": {"name": "기타", "category": "unplanned", "cause": "위 분류에 속하지 않는 기타 도태 사유.", "action": "도태 사유를 구체 코드로 기록하면 사유별 정밀 처방을 제공합니다. 비계획 도태는 번식장애·지제·질병 진단을 권장합니다.", "prevention": "도태 사유 입력 정확도 관리(피그플랜 모돈 도태 입력).", "refs": ["NIAS 모돈 관리"]},
+    "031019": {"name": "판매", "category": "planned", "cause": "번식계획·종돈 정리에 따른 계획적 판매(노폐돈 매각).", "action": "계획적 판매 = 정상도태. 잔여가치 0·관리양호로 평가하며 경고 대상 아님.", "prevention": "번식계획·갱신율 관리에 따른 정상 운용.", "refs": ["대한한돈협회 종합DB"]},
+    "031002": {"name": "고령(노산)", "category": "planned", "cause": "산차 누적에 따른 생산성 자연 감소.", "action": "계획적 갱신(노폐돈 매각) = 정상도태. 잔여가치 0·관리양호. 경고 대상 아님.", "prevention": "산차구조 6~7산 정점·연 갱신율 35~45% 관리.", "refs": ["NIAS 모돈 산차구조 관리"]},
+    "031020": {"name": "고령(노산)", "category": "planned", "cause": "산차 누적에 따른 생산성 자연 감소.", "action": "계획적 갱신(노폐돈 매각) = 정상도태. 잔여가치 0·관리양호. 경고 대상 아님.", "prevention": "산차구조 6~7산 정점·연 갱신율 35~45% 관리.", "refs": ["NIAS 모돈 산차구조 관리"]},
+    "031174": {"name": "노산도태", "category": "planned", "cause": "고산차 모돈의 계획적 노폐 도태.", "action": "계획적 갱신(노폐돈 매각) = 정상도태. 잔여가치 0·관리양호. 경고 대상 아님.", "prevention": "산차구조 관리·후보돈 풀 확보.", "refs": ["NIAS 모돈 산차구조 관리"]},
+    "031037": {"name": "검사및도태", "category": "planned", "cause": "정기 검사·선별 결과에 따른 계획적 도태.", "action": "계획적 선별 도태 = 정상. 검사 기준에 따른 갱신.", "prevention": "정기 번식검진·선별 기준 운용.", "refs": ["NIAS 모돈 관리", "대한한돈협회 종합DB"]},
+    "031183": {"name": "도태(일반)", "category": "planned", "cause": "농장 운영 계획에 따른 일반 도태.", "action": "계획적 도태 = 정상. 잔여가치 0·관리양호.", "prevention": "도태 사유 구체 기록 권장(정밀 처방용).", "refs": ["대한한돈협회 종합DB"]},
+    "031031": {"name": "임신돈 판매", "category": "planned", "cause": "임신돈 계획적 판매(매각).", "action": "계획적 판매 = 정상도태. 잔여가치 0·관리양호.", "prevention": "번식계획·종돈 운용.", "refs": ["대한한돈협회 종합DB"]},
+    "031032": {"name": "이유모돈 판매", "category": "planned", "cause": "이유모돈 계획적 판매(매각).", "action": "계획적 판매 = 정상도태. 잔여가치 0·관리양호.", "prevention": "번식계획·갱신율 관리.", "refs": ["대한한돈협회 종합DB"]},
+    "031190": {"name": "일반 판매", "category": "planned", "cause": "계획적 일반 판매(매각).", "action": "계획적 판매 = 정상도태. 잔여가치 0·관리양호.", "prevention": "번식계획·종돈 운용.", "refs": ["대한한돈협회 종합DB"]},
+    "031173": {"name": "종돈 감축", "category": "planned", "cause": "사육 규모 조정에 따른 계획적 종돈 감축.", "action": "계획적 감축 = 정상. 경영 판단에 따른 운용.", "prevention": "사육두수 계획 관리.", "refs": ["대한한돈협회 종합DB"]},
+    "031095": {"name": "시장상황", "category": "planned", "cause": "시장 상황(시세·수급)에 따른 계획적 정리.", "action": "계획적 정리 = 정상. 경영 판단에 따른 운용.", "prevention": "출하·도태 계획 관리.", "refs": ["대한한돈협회 종합DB"]}
+  },
+  "default_action": {"cause": "도태 사유 미상 또는 미등록 사유.", "action": "도태 사유를 정확히 기록(피그플랜 모돈 도태 입력)하면 사유별 정밀 처방을 제공합니다. 비계획 조기 도태는 번식장애·지제·질병 진단을 권장합니다.", "prevention": "사유 입력 정확도 관리."},
+  "_internal_meta": {
+    "scope": "domain",
+    "applies_to": ["monthly-report buildSowMortalityCull", "monthly-report buildSowMortalityTabs"],
+    "shared_with_weekly": false,
+    "promotion_path": "주간 도태 처방(현 INTERPRET/CULLING_BENCHMARK 한글명 퍼지매칭)을 본 코드키 룰로 통합 시 COMMON/ 승격 검토 (STEP3).",
+    "sources": ["NIAS(농촌진흥청 국립축산과학원)", "RDA", "대한한돈협회 종합DB", "한돈인닷넷", "SEGES", "AHDB", "Quesnel 2012", "Mota-Rojas 2022"],
+    "spec_doc": "changes-sync/CHANGES_SYNC_20260623.md 0623-04",
+    "session_ref": "Phase5 A1-01 + 도태폐사 처방 아키텍처 검토(w0jiegguk)",
+    "created_dt": "2026-06-23",
+    "applied_dt": "2026-06-23",
+    "content_status": "draft — 26사유(unplanned 14 실발생100% + planned 12 = cull-reasons.ts PLANNED_CULL_REASONS 정렬). 출처검증(NIAS/RDA/한돈협회) 후 정본화 + 잔여 100코드 단계 확장 권장."
+  }
+}
+```
+
+---
+
