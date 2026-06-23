@@ -44,51 +44,51 @@ interface NavItem {
 const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
   {
     items: [
-      { href: "/", icon: LayoutDashboard, label: { en: "Dashboard", ko: "대시보드", zh: "总览", es: "Panel", vi: "Tổng quan" } },
+      { href: "/", icon: LayoutDashboard, label: { en: "Dashboard", ko: "대시보드", zh: "总览", es: "Panel", vi: "Tổng quan", th: "แดชบอร์ด", pt: "Painel" } },
     ],
   },
   {
     items: [
-      { href: "/record", icon: ClipboardList, label: { en: "Record Entry", ko: "기록 입력", zh: "记录录入", es: "Registro", vi: "Nhập dữ liệu" } },
+      { href: "/record", icon: ClipboardList, label: { en: "Record Entry", ko: "기록 입력", zh: "记录录入", es: "Registro", vi: "Nhập dữ liệu", th: "บันทึกข้อมูล", pt: "Registro" } },
     ],
   },
   {
-    label: { en: "Herd", ko: "돈군", zh: "猪群", es: "Hato", vi: "Đàn heo" },
+    label: { en: "Herd", ko: "돈군", zh: "猪群", es: "Hato", vi: "Đàn heo", th: "ฝูงสุกร", pt: "Plantel" },
     items: [
-      { href: "/sows",      icon: PiggyBank, label: { en: "Sows",      ko: "모돈",   zh: "母猪",   es: "Cerdas",   vi: "Heo nái" } },
-      { href: "/boars",     icon: Heart,     label: { en: "Boars",     ko: "웅돈",   zh: "公猪",   es: "Verracos", vi: "Heo nọc" } },
-      { href: "/piglets",   icon: Layers,    label: { en: "Piglets",   ko: "자돈",   zh: "仔猪",   es: "Lechones", vi: "Heo con" } },
-      { href: "/finishers", icon: Beef,      label: { en: "Finishers", ko: "비육돈", zh: "育肥猪", es: "Engorde",  vi: "Heo thịt" } },
+      { href: "/sows",      icon: PiggyBank, label: { en: "Sows",      ko: "모돈",   zh: "母猪",   es: "Cerdas",   vi: "Heo nái", th: "แม่สุกร",   pt: "Matrizes" } },
+      { href: "/boars",     icon: Heart,     label: { en: "Boars",     ko: "웅돈",   zh: "公猪",   es: "Verracos", vi: "Heo nọc", th: "พ่อพันธุ์", pt: "Cachaços" } },
+      { href: "/piglets",   icon: Layers,    label: { en: "Piglets",   ko: "자돈",   zh: "仔猪",   es: "Lechones", vi: "Heo con", th: "ลูกสุกร",   pt: "Leitões" } },
+      { href: "/finishers", icon: Beef,      label: { en: "Finishers", ko: "비육돈", zh: "育肥猪", es: "Engorde",  vi: "Heo thịt", th: "สุกรขุน",  pt: "Terminação" } },
     ],
   },
   {
-    label: { en: "Tasks & Alerts", ko: "할 일·알림", zh: "任务与预警", es: "Tareas y alertas", vi: "Việc & cảnh báo" },
+    label: { en: "Tasks & Alerts", ko: "할 일·알림", zh: "任务与预警", es: "Tareas y alertas", vi: "Việc & cảnh báo", th: "งาน·แจ้งเตือน", pt: "Tarefas e alertas" },
     items: [
-      { href: "/tasks",  icon: ListTodo,       label: { en: "Today's Tasks", ko: "오늘 할 일", zh: "今日任务", es: "Tareas de hoy", vi: "Việc hôm nay" } },
-      { href: "/alerts", icon: AlertTriangle, badge: "alerts", label: { en: "Alerts", ko: "알림", zh: "预警", es: "Alertas", vi: "Cảnh báo" } },
+      { href: "/tasks",  icon: ListTodo,       label: { en: "Today's Tasks", ko: "오늘 할 일", zh: "今日任务", es: "Tareas de hoy", vi: "Việc hôm nay", th: "งานวันนี้", pt: "Tarefas de hoje" } },
+      { href: "/alerts", icon: AlertTriangle, badge: "alerts", label: { en: "Alerts", ko: "알림", zh: "预警", es: "Alertas", vi: "Cảnh báo", th: "แจ้งเตือน", pt: "Alertas" } },
     ],
   },
   {
-    label: { en: "Reports", ko: "보고서", zh: "报告", es: "Informes", vi: "Báo cáo" },
+    label: { en: "Reports", ko: "보고서", zh: "报告", es: "Informes", vi: "Báo cáo", th: "รายงาน", pt: "Relatórios" },
     items: [
-      { href: "/kpi",                  icon: BarChart3, label: { en: "KPI Summary",       ko: "KPI 현황",    zh: "指标概览", es: "Resumen KPI",       vi: "Tổng quan KPI" } },
-      { href: "/reports/sow-status",   icon: PiggyBank, label: { en: "Sow Status",        ko: "모돈 현황",   zh: "母猪状态", es: "Estado cerdas",     vi: "Trạng thái nái" } },
-      { href: "/reports/daily",        icon: FileText,  label: { en: "Daily Report",      ko: "일일 현황",   zh: "每日现状", es: "Informe diario",    vi: "Báo cáo ngày" } },
-      { href: "/reports/comprehensive-daily", icon: FileText, label: { en: "Daily (Full)", ko: "종합일보", zh: "综合日报", es: "Diario integral", vi: "BC tổng hợp ngày" } },
-      { href: "/reports/farrowing",    icon: Baby,      label: { en: "Farrow & Wean",     ko: "분만·이유",   zh: "分娩断奶", es: "Parto y destete",   vi: "Đẻ & cai sữa" } },
-      { href: "/reports/mortality",    icon: TrendingDown, label: { en: "Mortality",      ko: "도폐사·폐사", zh: "淘汰死亡", es: "Mortalidad",        vi: "Loại thải & chết" } },
-      { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản" } },
-      { href: "/reports/grow-finish",  icon: Beef,      label: { en: "Grow-Finish",       ko: "비육성적",    zh: "育肥成绩", es: "Engorde",           vi: "Năng suất vỗ béo" } },
-      { href: "/reports",              icon: FileText,  label: { en: "Sow Report",        ko: "모돈 보고서", zh: "母猪报告", es: "Informe de cerdas", vi: "Báo cáo nái" } },
-      { href: "/reports/ledger",       icon: ClipboardList, label: { en: "Work Ledger",   ko: "작업대장",    zh: "工作台账", es: "Registro",          vi: "Sổ công việc" } },
-      { href: "/reports/prrs",         icon: Dna,       label: { en: "PRRS Genetics",     ko: "PRRS 유전",   zh: "PRRS基因", es: "PRRS genética",     vi: "PRRS di truyền" } },
-      { href: "/reports/data-quality", icon: ShieldCheck, label: { en: "Data Quality",    ko: "데이터 품질", zh: "数据质量", es: "Calidad de datos",  vi: "Chất lượng dữ liệu" } },
+      { href: "/kpi",                  icon: BarChart3, label: { en: "KPI Summary",       ko: "KPI 현황",    zh: "指标概览", es: "Resumen KPI",       vi: "Tổng quan KPI", th: "สรุป KPI", pt: "Resumo KPI" } },
+      { href: "/reports/sow-status",   icon: PiggyBank, label: { en: "Sow Status",        ko: "모돈 현황",   zh: "母猪状态", es: "Estado cerdas",     vi: "Trạng thái nái", th: "สถานะแม่สุกร", pt: "Status das matrizes" } },
+      { href: "/reports/daily",        icon: FileText,  label: { en: "Daily Report",      ko: "일일 현황",   zh: "每日现状", es: "Informe diario",    vi: "Báo cáo ngày", th: "รายงานประจำวัน", pt: "Relatório diário" } },
+      { href: "/reports/comprehensive-daily", icon: FileText, label: { en: "Daily (Full)", ko: "종합일보", zh: "综合日报", es: "Diario integral", vi: "BC tổng hợp ngày", th: "รายงานรวมรายวัน", pt: "Diário completo" } },
+      { href: "/reports/farrowing",    icon: Baby,      label: { en: "Farrow & Wean",     ko: "분만·이유",   zh: "分娩断奶", es: "Parto y destete",   vi: "Đẻ & cai sữa", th: "คลอด·หย่านม", pt: "Parto e desmame" } },
+      { href: "/reports/mortality",    icon: TrendingDown, label: { en: "Mortality",      ko: "도폐사·폐사", zh: "淘汰死亡", es: "Mortalidad",        vi: "Loại thải & chết", th: "คัดทิ้ง·ตาย", pt: "Mortalidade" } },
+      { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản", th: "ผลผลิต(ผสมพันธุ์)", pt: "Produção (Reprodução)" } },
+      { href: "/reports/grow-finish",  icon: Beef,      label: { en: "Grow-Finish",       ko: "비육성적",    zh: "育肥成绩", es: "Engorde",           vi: "Năng suất vỗ béo", th: "สุกรขุน", pt: "Crescimento-Terminação" } },
+      { href: "/reports",              icon: FileText,  label: { en: "Sow Report",        ko: "모돈 보고서", zh: "母猪报告", es: "Informe de cerdas", vi: "Báo cáo nái", th: "รายงานแม่สุกร", pt: "Relatório de matrizes" } },
+      { href: "/reports/ledger",       icon: ClipboardList, label: { en: "Work Ledger",   ko: "작업대장",    zh: "工作台账", es: "Registro",          vi: "Sổ công việc", th: "สมุดงาน", pt: "Livro de trabalho" } },
+      { href: "/reports/prrs",         icon: Dna,       label: { en: "PRRS Genetics",     ko: "PRRS 유전",   zh: "PRRS基因", es: "PRRS genética",     vi: "PRRS di truyền", th: "พันธุกรรม PRRS", pt: "Genética PRRS" } },
+      { href: "/reports/data-quality", icon: ShieldCheck, label: { en: "Data Quality",    ko: "데이터 품질", zh: "数据质量", es: "Calidad de datos",  vi: "Chất lượng dữ liệu", th: "คุณภาพข้อมูล", pt: "Qualidade de dados" } },
     ],
   },
   {
-    label: { en: "Addons", ko: "Addon", zh: "插件", es: "Addons", vi: "Tiện ích" },
+    label: { en: "Addons", ko: "Addon", zh: "插件", es: "Addons", vi: "Tiện ích", th: "ส่วนเสริม", pt: "Complementos" },
     items: [
-      { href: "/addons", icon: Store, label: { en: "Addon Store", ko: "Addon 스토어", zh: "插件商店", es: "Tienda", vi: "Cửa hàng" } },
+      { href: "/addons", icon: Store, label: { en: "Addon Store", ko: "Addon 스토어", zh: "插件商店", es: "Tienda", vi: "Cửa hàng", th: "ร้านส่วนเสริม", pt: "Loja de complementos" } },
     ],
   },
 ];
