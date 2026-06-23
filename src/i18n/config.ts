@@ -1,4 +1,5 @@
-export const locales = ["en", "ko", "zh", "es", "vi"] as const;
+// 7개 로케일 — 공개 6개(en/zh/es/vi/th/pt) + 한국어(ko, 플랫폼 관리자 전용).
+export const locales = ["en", "ko", "zh", "es", "vi", "th", "pt"] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "en";
 

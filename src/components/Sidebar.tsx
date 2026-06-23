@@ -30,7 +30,8 @@ import { notificationsApi } from "@/lib/api/endpoints/notifications";
 import { queryKeys } from "@/lib/api/queryKeys";
 import type { Locale } from "@/i18n/config";
 
-type L = Record<Locale, string>;
+// en 필수 + 나머지 로케일 선택(미번역은 en 폴백). 신규 로케일(th/pt) 점진 번역 허용.
+type L = Partial<Record<Locale, string>> & { en: string };
 
 interface NavItem {
   href: string;
@@ -123,7 +124,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
   });
   const unreadCount = notifUnread?.unread_count ?? 0;
 
-  const t = (obj: L) => obj[lang];
+  const t = (obj: L) => obj[lang] ?? obj.en;
 
   // active 항목 = 현재 경로에 매칭되는 href 중 "가장 긴(가장 구체적인)" 하나만.
   // (예: /reports/reproduction → '생산성적'만 active, 상위 '/reports'(모돈보고서)는 비활성)

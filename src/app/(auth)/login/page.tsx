@@ -11,14 +11,14 @@ import { authApi } from "@/lib/api/endpoints/auth";
 import { useAuthStore } from "@/store/auth.store";
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
-const LANGS = ["en", "ko", "zh", "es", "vi"] as const;
+const LANGS = ["en", "ko", "zh", "es", "vi", "th", "pt"] as const;
 type Lang = (typeof LANGS)[number];
 
 // 한국어는 로그인 전 화면에 노출하지 않음(해외 출시). admin 로그인 후 Topbar에서만 선택 가능.
 const SELECTABLE_LANGS: Lang[] = LANGS.filter((l) => l !== "ko");
 
 const LANG_LABELS: Record<Lang, string> = {
-  en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt",
+  en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt", th: "ไทย", pt: "Português",
 };
 
 const T: Record<Lang, {
@@ -94,6 +94,32 @@ const T: Record<Lang, {
     errInvalid: "Email hoặc mật khẩu không đúng",
     errFormat: "Vui lòng kiểm tra định dạng nhập liệu",
     errServer: "Lỗi máy chủ. Vui lòng thử lại.",
+  },
+  th: {
+    heading: "ยินดีต้อนรับกลับ",
+    subheading: "เข้าสู่ระบบบัญชี PigOS ของคุณ",
+    email: "ที่อยู่อีเมล", password: "รหัสผ่าน",
+    submit: "เข้าสู่ระบบ", submitting: "กำลังเข้าสู่ระบบ…",
+    forgotPassword: "ลืมรหัสผ่าน?",
+    noAccount: "เพิ่งเริ่มใช้ PigOS?", register: "สร้างบัญชีฟรี",
+    rememberId: "จดจำ ID ของฉัน",
+    errEmail: "กรอกอีเมลที่ถูกต้อง", errPassword: "กรอกรหัสผ่านของคุณ",
+    errInvalid: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    errFormat: "โปรดตรวจสอบรูปแบบการกรอก",
+    errServer: "เซิร์ฟเวอร์ผิดพลาด โปรดลองอีกครั้ง",
+  },
+  pt: {
+    heading: "Bem-vindo de volta",
+    subheading: "Entre na sua conta PigOS",
+    email: "Endereço de e-mail", password: "Senha",
+    submit: "Entrar", submitting: "Entrando…",
+    forgotPassword: "Esqueceu a senha?",
+    noAccount: "Novo no PigOS?", register: "Crie uma conta gratuita",
+    rememberId: "Lembrar meu ID",
+    errEmail: "Digite um e-mail válido", errPassword: "Digite sua senha",
+    errInvalid: "E-mail ou senha incorretos",
+    errFormat: "Verifique o formato dos dados",
+    errServer: "Erro no servidor. Tente novamente.",
   },
 };
 

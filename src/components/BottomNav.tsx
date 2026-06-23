@@ -11,7 +11,7 @@ interface BottomNavProps {
   alertCount?: number;
 }
 
-type L = Record<Locale, string>;
+type L = Partial<Record<Locale, string>> & { en: string };
 
 const TABS: { href: string | null; Icon: LucideIcon; label: L; isAI?: boolean; badge?: number }[] = [
   { href: "/",              Icon: LayoutDashboard, label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ" } },
@@ -43,7 +43,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
               >
                 <tab.Icon size={20} />
               </div>
-              <span className="text-[10px] font-semibold text-primary">{tab.label[lang]}</span>
+              <span className="text-[10px] font-semibold text-primary">{tab.label[lang] ?? tab.label.en}</span>
             </button>
           );
         }
@@ -64,7 +64,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
               </span>
             )}
             <span className={`text-[10px] font-medium ${isActive ? "text-primary font-semibold" : "text-faint"}`}>
-              {tab.label[lang]}
+              {tab.label[lang] ?? tab.label.en}
             </span>
           </Link>
         );

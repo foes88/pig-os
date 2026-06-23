@@ -12,7 +12,7 @@ import { test, expect, loginAs, gotoApp, expectNoRawI18nKeys } from "../helpers"
  */
 const ADMIN_EMAIL = "admin@pigos.io";
 const ADMIN_PASSWORD = "admin!2026pw";
-const LOCALES = ["en", "ko", "zh", "es", "vi"] as const;
+const LOCALES = ["en", "ko", "zh", "es", "vi", "th", "pt"] as const;
 const BASE = "http://localhost:3000";
 const SHOTS = "e2e-live/_uat_tmp/shots";
 

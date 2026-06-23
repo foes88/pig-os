@@ -21,7 +21,7 @@ interface QuickInputDrawerProps {
   lang?: Locale;
 }
 
-type L = Record<Locale, string>;
+type L = Partial<Record<Locale, string>> & { en: string };
 
 const EVENTS: { id: string; icon: React.ElementType; color: string; soft: string; label: L }[] = [
   { id: "mating",    icon: Syringe,       color: "#0F6342", soft: "#E8F6EF", label: { en: "Mating",       ko: "교배",    zh: "配种",   es: "Monta",          vi: "Phối giống" } },
@@ -34,7 +34,7 @@ const EVENTS: { id: string; icon: React.ElementType; color: string; soft: string
   { id: "foster",    icon: Repeat,        color: "#0891B2", soft: "#ECFEFF", label: { en: "Foster",       ko: "양자",    zh: "寄养",   es: "Adopción",       vi: "Nuôi ghép" } },
 ];
 
-const UI: Record<Locale, { title: string; sub: string }> = {
+const UI: Partial<Record<Locale, { title: string; sub: string }>> & { en: { title: string; sub: string } } = {
   en: { title: "Quick Input",    sub: "Select an event type" },
   ko: { title: "빠른 입력",       sub: "이벤트 유형을 선택하세요" },
   zh: { title: "快速录入",        sub: "选择事件类型" },
@@ -111,7 +111,7 @@ export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawe
                   <Icon className="w-5 h-5" style={{ color: ev.color }} />
                 </div>
                 <span className="text-[11px] font-semibold text-text2 text-center leading-tight">
-                  {ev.label[lang]}
+                  {ev.label[lang] ?? ev.label.en}
                 </span>
               </button>
             );

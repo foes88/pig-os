@@ -15,7 +15,7 @@ interface AskAiDrawerProps {
   lang?: Locale;
 }
 
-const SUGGESTED: Record<Locale, string[]> = {
+const SUGGESTED: Partial<Record<Locale, string[]>> & { en: string[] } = {
   en: ["Why is PSY low?",        "NPD status",          "Farrowing rate miss",      "Today's issues"],
   ko: ["PSY가 왜 낮아요?",        "비생산일수 현황",      "분만율 미달 이유",          "오늘 이슈 요약"],
   zh: ["PSY为何偏低？",            "非生产天数现状",       "分娩率未达标原因",           "今日问题摘要"],
@@ -23,7 +23,7 @@ const SUGGESTED: Record<Locale, string[]> = {
   vi: ["PSY thấp vì sao?",        "Tình trạng NPD",      "Tỷ lệ đẻ chưa đạt",       "Tóm tắt hôm nay"],
 };
 
-const UI: Record<Locale, { header: string; subtitle: string; placeholder: string }> = {
+const UI: Partial<Record<Locale, { header: string; subtitle: string; placeholder: string }>> & { en: { header: string; subtitle: string; placeholder: string } } = {
   en: { header: "PigOS AI", subtitle: "Rule Engine analysis",      placeholder: "Ask about your farm KPIs…" },
   ko: { header: "PigOS AI", subtitle: "Rule Engine 기반 분석",      placeholder: "농장 KPI나 문제 상황을 질문하세요…" },
   zh: { header: "PigOS AI", subtitle: "规则引擎分析",                placeholder: "询问您的农场KPI…" },
@@ -44,7 +44,9 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
   }, [messages, open]);
 
   const mutation = useMutation({
-    mutationFn: (q: string) => chatApi.query(farmId!, { question: q, locale: lang }),
+    // 챗 렌더러는 en/ko/zh/es/vi 지원 → th/pt는 en으로 매핑(Addon, 추후 확장)
+    mutationFn: (q: string) =>
+      chatApi.query(farmId!, { question: q, locale: lang === "th" || lang === "pt" ? "en" : lang }),
     onSuccess: (data) => setMessages((p) => [...p, { role: "ai", response: data }]),
     onError: () => setMessages((p) => [...p, {
       role: "ai",

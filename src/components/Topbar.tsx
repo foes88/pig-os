@@ -12,10 +12,12 @@ const LABELS: Record<Locale, { search: string; qi: string }> = {
   zh: { search: "搜索母猪ID、批次、栏位…",             qi: "快速录入"       },
   es: { search: "Buscar cerda ID, lote, sala…",   qi: "Entrada Rápida" },
   vi: { search: "Tìm số nái, lô, khu…",           qi: "Nhập nhanh"     },
+  th: { search: "ค้นหารหัสแม่สุกร, รุ่น, โรงเรือน…", qi: "บันทึกด่วน"     },
+  pt: { search: "Buscar ID da matriz, lote, sala…", qi: "Registro rápido" },
 };
 
 const LANG_LABELS: Record<Locale, string> = {
-  en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI",
+  en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI", th: "ไทย", pt: "PT",
 };
 
 interface TopbarProps {

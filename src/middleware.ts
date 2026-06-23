@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/register", "/onboarding", "/forgot-password"];
-const LOCALES = ["en", "ko", "zh", "es", "vi"];
+const LOCALES = ["en", "ko", "zh", "es", "vi", "th", "pt"];
 
 // 첫 방문(쿠키 없음) 시 브라우저 언어(Accept-Language)로 자동 선택.
 // 한국 브라우저→ko, 중국→zh, 스페인어권→es, 베트남→vi, 그 외→en. (GeoIP보다 정확·안전)
