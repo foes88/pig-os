@@ -17,10 +17,13 @@ from app.engine.rules.litter import (
     _total_born_low,
     _weaned_low,
 )
-from app.engine.rules.reproduction import _abortion_rate_high
+from app.engine.rules.reproduction import _abortion_rate_high, _summer_infertility
 from app.engine.rules.sow_herd import (
+    _accident_parity_skew,
     _culling_rate_high,
     _parity_high_ratio,
+    _replacement_rate_abnormal,
+    _second_litter_slump,
     _sow_mortality_high,
 )
 
@@ -171,6 +174,49 @@ class TestSowHerdRules:
     def test_missing_no_finding(self):
         assert run(_culling_rate_high(ctx({}))) == []
         assert run(_parity_high_ratio(ctx({}))) == []
+
+
+# ── Phase B2: herd dynamics 탐지 규칙 ───────────────────────────────────────────
+class TestHerdDynamicsRules:
+    def test_replacement_high_warning(self):
+        f = run(_replacement_rate_abnormal(ctx({"REPLACEMENT_RATE": 55.0})))
+        assert f and f[0].severity == Severity.WARNING and "excessive_sow_replacement" in f[0].causes
+
+    def test_replacement_high_critical(self):
+        f = run(_replacement_rate_abnormal(ctx({"REPLACEMENT_RATE": 65.0})))
+        assert f and f[0].severity == Severity.CRITICAL
+
+    def test_replacement_low_warning(self):
+        f = run(_replacement_rate_abnormal(ctx({"REPLACEMENT_RATE": 25.0})))
+        assert f and "insufficient_sow_replacement" in f[0].causes
+
+    def test_replacement_ok(self):
+        assert run(_replacement_rate_abnormal(ctx({"REPLACEMENT_RATE": 40.0}))) == []
+
+    def test_second_litter_slump(self):
+        assert run(_second_litter_slump(ctx({"SECOND_LITTER_DROP": 1.0}))) == []
+        f = run(_second_litter_slump(ctx({"SECOND_LITTER_DROP": 2.0})))
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_second_litter_slump(ctx({"SECOND_LITTER_DROP": 3.0})))
+        assert f2 and f2[0].severity == Severity.CRITICAL
+
+    def test_accident_parity_skew(self):
+        assert run(_accident_parity_skew(ctx({"ACCIDENT_P1_RATIO": 30.0}))) == []
+        f = run(_accident_parity_skew(ctx({"ACCIDENT_P1_RATIO": 45.0})))
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_accident_parity_skew(ctx({"ACCIDENT_P1_RATIO": 60.0})))
+        assert f2 and "possible_reproductive_disease_in_gilts" in f2[0].causes
+
+    def test_summer_infertility(self):
+        assert run(_summer_infertility(ctx({"SUMMER_FARROW_DROP": 4.0}))) == []
+        f = run(_summer_infertility(ctx({"SUMMER_FARROW_DROP": 8.0})))
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_summer_infertility(ctx({"SUMMER_FARROW_DROP": 12.0})))
+        assert f2 and f2[0].severity == Severity.CRITICAL
+
+    def test_missing_no_finding(self):
+        assert run(_replacement_rate_abnormal(ctx({}))) == []
+        assert run(_summer_infertility(ctx({}))) == []
 
 
 # ── 운영자 임계 조정 반영(국가별 KPI 조정 구조) ────────────────────────────────

@@ -106,6 +106,13 @@ _CAUSE_EN.update({
     "high_sow_mortality":                                    "High sow mortality",
     "possible_disease_or_management_failure":                "Possible disease or management failure",
     "aging_sow_herd_high_parity_share":                     "Aging herd — high share of parity 7+",
+    "excessive_sow_replacement":                            "Excessive sow replacement rate",
+    "insufficient_sow_replacement":                         "Insufficient sow replacement rate",
+    "second_litter_slump":                                  "Second-litter slump (P2 born-alive drop vs P1)",
+    "pregnancy_accidents_concentrated_in_p1":               "Pregnancy accidents concentrated in parity 1",
+    "possible_reproductive_disease_in_gilts":               "Possible reproductive disease in gilts",
+    "seasonal_summer_infertility":                          "Seasonal summer infertility (farrowing-rate drop)",
+    "severe_heat_stress_depressing_conception":             "Severe heat stress depressing conception",
 })
 _CAUSE_KO.update({
     "high_stillbirth_rate":                                   "사산율 과다",
@@ -135,6 +142,13 @@ _CAUSE_KO.update({
     "high_sow_mortality":                                    "모돈 폐사율 과다",
     "possible_disease_or_management_failure":                "질병 또는 관리 실패 의심",
     "aging_sow_herd_high_parity_share":                     "노산돈(7산 이상) 비율 과다",
+    "excessive_sow_replacement":                            "모돈 갱신율 과다",
+    "insufficient_sow_replacement":                         "모돈 갱신율 과소",
+    "second_litter_slump":                                  "2산차 슬럼프(P2 실산 감소)",
+    "pregnancy_accidents_concentrated_in_p1":               "임신사고 1산차 편중",
+    "possible_reproductive_disease_in_gilts":               "후보돈 번식질환 의심",
+    "seasonal_summer_infertility":                          "여름철 계절성 불임(분만율 하락)",
+    "severe_heat_stress_depressing_conception":             "고온스트레스로 수태 저하",
 })
 _ACTION_EN.update({
     "review_farrowing_supervision":                 "Increase farrowing attendance/supervision",
@@ -164,6 +178,15 @@ _ACTION_EN.update({
     "consult_veterinarian_for_sow_mortality":       "Consult vet for sow mortality",
     "review_parity_structure_and_replacement":      "Review parity structure and replacement",
     "plan_gilt_introduction_cadence":               "Plan gilt introduction cadence",
+    "review_involuntary_culling_drivers":           "Review involuntary-culling drivers",
+    "review_gilt_intake_plan":                      "Review gilt intake plan",
+    "improve_p1_lactation_feed_and_bcs":            "Improve P1 lactation feed and body condition",
+    "shorten_p1_wean_to_service_interval":          "Shorten P1 wean-to-service interval",
+    "review_gilt_acclimation_and_vaccination":      "Review gilt acclimation and vaccination",
+    "audit_gilt_breeding_management":               "Audit gilt breeding management",
+    "improve_summer_cooling_and_ventilation":       "Improve summer cooling and ventilation",
+    "review_summer_feed_intake_and_boar_exposure":  "Review summer feed intake and boar exposure",
+    "audit_heat_abatement_and_insemination_timing": "Audit heat abatement and insemination timing",
 })
 _ACTION_KO.update({
     "review_farrowing_supervision":                 "분만 입회·관리 강화",
@@ -193,6 +216,15 @@ _ACTION_KO.update({
     "consult_veterinarian_for_sow_mortality":       "모돈 폐사 수의사 상담",
     "review_parity_structure_and_replacement":      "산차 구조·보충 검토",
     "plan_gilt_introduction_cadence":               "후보돈 도입 주기 계획",
+    "review_involuntary_culling_drivers":           "비자발 도태 원인 검토",
+    "review_gilt_intake_plan":                      "후보돈 도입 계획 검토",
+    "improve_p1_lactation_feed_and_bcs":            "1산차 포유사료·체형 개선",
+    "shorten_p1_wean_to_service_interval":          "1산차 이유~교배 간격 단축",
+    "review_gilt_acclimation_and_vaccination":      "후보돈 순화·백신 검토",
+    "audit_gilt_breeding_management":               "후보돈 교배 관리 점검",
+    "improve_summer_cooling_and_ventilation":       "여름 냉방·환기 개선",
+    "review_summer_feed_intake_and_boar_exposure":  "여름 사료섭취·웅돈접촉 검토",
+    "audit_heat_abatement_and_insemination_timing": "고온대책·수정적기 점검",
 })
 
 

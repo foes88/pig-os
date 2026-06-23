@@ -184,3 +184,37 @@ async def _abortion_rate_high(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("abortion.rate_high", "abortion", "Abortion rate high", _abortion_rate_high))
+
+
+# ── Seasonal summer infertility ───────────────────────────────────────────────
+SID_WARNING, SID_CRITICAL = 6.0, 10.0       # 분만율 하락 pp (여름 cohort)
+
+async def _summer_infertility(ctx: RuleContext) -> list[Finding]:
+    drop = ctx.kpi.get("SUMMER_FARROW_DROP")
+    if drop is None:
+        return []
+    warning, critical = _thresholds(
+        ctx, "SUMMER_FARROW_DROP", *_cfg_default(ctx, "seasonal.summer_infertility", SID_WARNING, SID_CRITICAL)
+    )
+    severity = _severity_above(drop, warning, critical)
+    if severity is None:
+        return []
+
+    causes = ["seasonal_summer_infertility"]
+    actions = ["improve_summer_cooling_and_ventilation", "review_summer_feed_intake_and_boar_exposure"]
+    if severity == Severity.CRITICAL:
+        causes.append("severe_heat_stress_depressing_conception")
+        actions.append("audit_heat_abatement_and_insemination_timing")
+
+    return [Finding(
+        rule_id="seasonal.summer_infertility",
+        kpi="SUMMER_FARROW_DROP",
+        severity=severity,
+        current_value=drop,
+        target_value=warning,
+        causes=causes,
+        recommended_actions=actions,
+    )]
+
+
+RuleRegistry.register(Rule("seasonal.summer_infertility", "seasonal", "Summer infertility (SID)", _summer_infertility))

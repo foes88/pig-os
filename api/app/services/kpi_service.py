@@ -262,6 +262,31 @@ async def build_herd_kpis(
     removed = (await db.execute(text(
         "SELECT count(*) FILTER (WHERE status='CULLED') culled, count(*) FILTER (WHERE status='DEAD') dead "
         "FROM sows WHERE farm_id=:fid AND deleted_at IS NULL AND exit_date BETWEEN :s AND :e"), p)).one()
+    gilt_in = (await db.execute(text(
+        "SELECT count(*) FROM sows WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND entry_type='GILT' AND entry_date BETWEEN :s AND :e"), p)).scalar() or 0
+    # 산차별 실산(분만시점 산차 = breeding_cycles.parity 조인)
+    par = {row.parity: row.aba for row in (await db.execute(text(
+        "SELECT bc.parity parity, avg(f.born_alive) aba FROM farrowings f "
+        "JOIN breeding_cycles bc ON bc.id = f.breeding_cycle_id "
+        "WHERE f.farm_id=:fid AND f.deleted_at IS NULL AND f.farrowing_date BETWEEN :s AND :e "
+        "AND bc.parity IN (1,2) GROUP BY bc.parity"), p)).all()}
+    acc = (await db.execute(text(
+        "SELECT count(*) total, count(*) FILTER (WHERE bc.parity=1) p1 "
+        "FROM reproductive_events re JOIN breeding_cycles bc ON bc.id = re.breeding_cycle_id "
+        "WHERE re.farm_id=:fid AND re.deleted_at IS NULL "
+        "AND re.event_type IN ('RETURN_TO_ESTRUS','ABORTION','EMPTY','INFERTILE') "
+        "AND re.event_date BETWEEN :s AND :e"), p)).one()
+    # 여름(6~8월) 교배 cohort 분만율 vs 그 외 (farrowings.mating_id → mating 월)
+    smat = (await db.execute(text(
+        "SELECT count(*) FILTER (WHERE extract(month from mating_date) IN (6,7,8)) summer, "
+        "count(*) FILTER (WHERE extract(month from mating_date) NOT IN (6,7,8)) other "
+        "FROM matings WHERE farm_id=:fid AND deleted_at IS NULL AND mating_date BETWEEN :s AND :e"), p)).one()
+    sfar = (await db.execute(text(
+        "SELECT count(*) FILTER (WHERE extract(month from m.mating_date) IN (6,7,8)) summer, "
+        "count(*) FILTER (WHERE extract(month from m.mating_date) NOT IN (6,7,8)) other "
+        "FROM farrowings f JOIN matings m ON m.id = f.mating_id "
+        "WHERE f.farm_id=:fid AND f.deleted_at IS NULL AND m.mating_date BETWEEN :s AND :e"), p)).one()
 
     tb = float(far.tb) if far.tb else 0.0
     wsum = float(wea.wsum) if wea.wsum else 0.0
@@ -298,7 +323,26 @@ async def build_herd_kpis(
         "CULLING_RATE":        _rate(float(removed.culled), active_herd),
         "SOW_MORTALITY":       _rate(float(removed.dead), active_herd),
         "HIGH_PARITY_RATIO":   _rate(float(herd.hp) if herd.hp else 0.0, active_herd),
+        "REPLACEMENT_RATE":    _rate(float(gilt_in), active_herd),
+        # 2산차 슬럼프 = P1 실산 − P2 실산 (양쪽 데이터 있을 때만)
+        "SECOND_LITTER_DROP":  (round(float(par[1]) - float(par[2]), 1)
+                                if par.get(1) is not None and par.get(2) is not None else None),
+        # 임신사고 P1 편중 = P1 사고 / 전체 사고 (최소 5건 이상일 때만)
+        "ACCIDENT_P1_RATIO":   (_rate(float(acc.p1), float(acc.total))
+                                if acc.total and acc.total >= 5 else None),
+        # 여름 분만율 하락(pp) = 비여름 cohort FR − 여름 cohort FR (양 cohort ≥5건)
+        "SUMMER_FARROW_DROP":  _summer_drop(smat, sfar),
     }
+
+
+def _summer_drop(smat, sfar) -> float | None:
+    """여름(6~8월) 교배 cohort 분만율 하락(pp). 표본 부족(<5)이면 None."""
+    s_m, o_m = float(smat.summer or 0), float(smat.other or 0)
+    if s_m < 5 or o_m < 5:
+        return None
+    summer_fr = float(sfar.summer or 0) / s_m * 100
+    other_fr = float(sfar.other or 0) / o_m * 100
+    return round(other_fr - summer_fr, 1)
 
 
 async def build_rule_context(

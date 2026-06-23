@@ -77,3 +77,66 @@ async def _parity_high_ratio(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("parity.high_ratio", "parity", "Aging herd (high parity)", _parity_high_ratio))
+
+
+# ── 모돈 갱신율 비정상(과다/과소 양방향) ─────────────────────────────────────────
+async def _replacement_rate_abnormal(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("REPLACEMENT_RATE")
+    if v is None:
+        return []
+    hi_w, hi_c = resolve(ctx, "replacement.rate_abnormal", "REPLACEMENT_RATE", 50.0, 60.0)
+    lo = 30.0  # 과소 갱신 경고선(KR SOW_REPLACEMENT low band)
+    if v > hi_w:
+        sev = Severity.CRITICAL if v > hi_c else Severity.WARNING
+        causes = ["excessive_sow_replacement"]
+        actions = ["review_involuntary_culling_drivers", "review_gilt_intake_plan"]
+        return [Finding(rule_id="replacement.rate_abnormal", kpi="REPLACEMENT_RATE", severity=sev,
+                        current_value=round(v, 1), target_value=hi_w, causes=causes, recommended_actions=actions)]
+    if v < lo:
+        causes = ["insufficient_sow_replacement"]
+        actions = ["plan_gilt_introduction_cadence", "review_parity_structure_and_replacement"]
+        return [Finding(rule_id="replacement.rate_abnormal", kpi="REPLACEMENT_RATE", severity=Severity.WARNING,
+                        current_value=round(v, 1), target_value=lo, causes=causes, recommended_actions=actions)]
+    return []
+
+
+RuleRegistry.register(Rule("replacement.rate_abnormal", "replacement", "Sow replacement rate abnormal", _replacement_rate_abnormal))
+
+
+# ── 2산차 슬럼프(P1 대비 P2 실산 감소) ───────────────────────────────────────────
+async def _second_litter_slump(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("SECOND_LITTER_DROP")
+    if v is None:
+        return []
+    w, c = resolve(ctx, "parity.second_litter_slump", "SECOND_LITTER_DROP", 1.5, 2.5)
+    sev = sev_above(v, w, c)
+    if sev is None:
+        return []
+    causes = ["second_litter_slump"]
+    actions = ["improve_p1_lactation_feed_and_bcs", "shorten_p1_wean_to_service_interval"]
+    return [Finding(rule_id="parity.second_litter_slump", kpi="SECOND_LITTER_DROP", severity=sev,
+                    current_value=round(v, 1), target_value=w, causes=causes, recommended_actions=actions)]
+
+
+RuleRegistry.register(Rule("parity.second_litter_slump", "parity", "Second-litter slump", _second_litter_slump))
+
+
+# ── 임신사고 P1 편중(감염 의심) ──────────────────────────────────────────────────
+async def _accident_parity_skew(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("ACCIDENT_P1_RATIO")
+    if v is None:
+        return []
+    w, c = resolve(ctx, "accident.parity_skew", "ACCIDENT_P1_RATIO", 40.0, 55.0)
+    sev = sev_above(v, w, c)
+    if sev is None:
+        return []
+    causes = ["pregnancy_accidents_concentrated_in_p1"]
+    actions = ["review_gilt_acclimation_and_vaccination", "audit_gilt_breeding_management"]
+    if sev == Severity.CRITICAL:
+        causes.append("possible_reproductive_disease_in_gilts")
+        actions.append("screen_for_abortive_pathogens")
+    return [Finding(rule_id="accident.parity_skew", kpi="ACCIDENT_P1_RATIO", severity=sev,
+                    current_value=round(v, 1), target_value=w, causes=causes, recommended_actions=actions)]
+
+
+RuleRegistry.register(Rule("accident.parity_skew", "accident", "Accident parity skew (P1)", _accident_parity_skew))
