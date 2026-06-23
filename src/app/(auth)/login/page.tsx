@@ -225,11 +225,17 @@ export default function LoginPage() {
 
   useEffect(() => {
     // NEXT_LOCALE 쿠키 우선(앱과 동일 소스), 없으면 localStorage.
-    // 단, 로그인 전엔 한국어 노출 안 함 → ko 저장값은 무시(en 유지).
+    // 한국어는 관리자 전용 → 로그인 전엔 절대 노출 안 함.
     const m = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
     const cookieLang = m?.[1] as Lang | undefined;
     const stored = (cookieLang ?? localStorage.getItem("pigos_lang")) as Lang | null;
-    if (stored && SELECTABLE_LANGS.includes(stored)) setLang(stored);
+    if (stored && SELECTABLE_LANGS.includes(stored)) {
+      setLang(stored);
+    } else if (cookieLang === "ko") {
+      // 이전 관리자 세션이 남긴 ko 쿠키 → 로그인 전엔 en으로 정규화(next-intl 한국어 누수 차단)
+      document.cookie = "NEXT_LOCALE=en; path=/; max-age=31536000; SameSite=Lax";
+      try { localStorage.setItem("pigos_lang", "en"); } catch { /* ignore */ }
+    }
   }, []);
 
   const switchLang = (l: Lang) => {
