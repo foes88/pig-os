@@ -33,6 +33,15 @@ def within_quota(used: int, limit: int = MONTHLY_LIMIT) -> bool:
     return used < limit
 
 
+# detail 중 LLM이 설명에 쓸 수 있는 안전 키만 통과(룰엔진 계산값, raw DB 아님).
+_DETAIL_WHITELIST = ("loss", "grade", "ear_tag", "weakest_kpi", "weakest_rule",
+                     "method", "benchmark_avg", "accidents", "per_litter", "head", "matings")
+
+
+def _safe_detail(detail: dict) -> dict:
+    return {k: detail[k] for k in _DETAIL_WHITELIST if k in detail}
+
+
 def _result_to_payload(result: StructuredResult) -> dict:
     """Compact, vendor-neutral JSON the LLM is allowed to see (no raw DB rows)."""
     return {
@@ -49,20 +58,38 @@ def _result_to_payload(result: StructuredResult) -> dict:
                 "grade": getattr(f, "grade", None),
                 "causes": f.causes,
                 "recommended_actions": f.recommended_actions,
+                "detail": _safe_detail(f.detail) if getattr(f, "detail", None) else {},
             }
             for f in result.findings
         ],
     }
 
 
+# 7개 로케일(공개 6 + ko 관리자). 미지정은 English 폴백.
+_LANG_NAME = {
+    "ko": "Korean", "en": "English", "zh": "Chinese", "es": "Spanish",
+    "vi": "Vietnamese", "th": "Thai", "pt": "Brazilian Portuguese",
+}
+
+
 def build_system_prompt(locale: str) -> str:
-    lang = {"ko": "Korean", "en": "English", "zh": "Chinese", "es": "Spanish", "vi": "Vietnamese"}.get(locale, "English")
+    lang = _LANG_NAME.get(locale, "English")
+    # PigPlan RENDERER 가이드 증류(출력규칙·금지·데이터신뢰) — 판단 금지 원칙은 유지.
     return (
-        "You are a swine-farm analytics explainer. You will receive a JSON object "
-        "produced by a verified rule engine. Your ONLY job is to explain that result "
-        f"in fluent {lang}, in 2-4 short sentences. "
-        "Do NOT add new judgments, numbers, diagnoses, or recommendations beyond what "
-        "the JSON contains. Do not contradict or re-rank the findings."
+        "You are a swine-farm analytics explainer. You receive a JSON object produced "
+        "by a verified rule engine (the 'findings'). Your ONLY job is to explain that "
+        f"result in fluent {lang}, in 2-4 short sentences.\n"
+        "Rules:\n"
+        "- Explain only. Do NOT add new judgments, numbers, diagnoses, or recommendations "
+        "beyond what the JSON contains. Do not contradict or re-rank the findings.\n"
+        "- Lead with the most severe finding (CRITICAL > WARNING > INFO).\n"
+        "- For actions, use ONLY the items in recommended_actions; never invent specifics, "
+        "and never name a drug, vaccine, or commercial product.\n"
+        "- State a monetary amount ONLY if a finding's detail.loss.amount is present; if "
+        "detail.loss.demo is true, present it as an approximate estimate.\n"
+        "- If a value is 0 or 0%, treat it as possibly missing input rather than asserting "
+        "perfect or zero performance.\n"
+        "- Be concrete and practical; do not pad with generalities."
     )
 
 

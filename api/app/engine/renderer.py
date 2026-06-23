@@ -296,7 +296,20 @@ def render_text(result: StructuredResult, locale: str = "en") -> str:
             header = f"{prefix} [{f.kpi}] {f.current_value}"
         else:
             header = f"{prefix} [{f.kpi}]"
+        grade = getattr(f, "grade", None)
+        if grade:
+            header += f" — {grade}"
         lines.append(header)
+
+        # 손실 금액(실 룰엔진 계산값) — detail.loss 있을 때만
+        detail = getattr(f, "detail", None) or {}
+        loss = detail.get("loss") if isinstance(detail, dict) else None
+        if loss and loss.get("amount"):
+            amt = f"{loss['amount']:,} {loss.get('currency', '')}".strip()
+            if loss.get("demo"):
+                amt += " (추정)" if locale == "ko" else " (est.)"
+            label = "손실" if locale == "ko" else "Loss"
+            lines.append(f"  {label}: {amt}")
 
         if f.causes:
             label = "원인" if locale == "ko" else "Causes"
