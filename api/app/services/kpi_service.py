@@ -255,6 +255,13 @@ async def build_herd_kpis(
         "JOIN finisher_groups g ON g.id = fr.group_id AND g.deleted_at IS NULL "
         "WHERE fr.farm_id=:fid AND fr.deleted_at IS NULL "
         "AND g.end_date IS NOT NULL AND g.end_date BETWEEN :s AND :e"), p)).scalar() or 0
+    herd = (await db.execute(text(
+        "SELECT count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT')) active, "
+        "count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT') AND parity >= 7) hp "
+        "FROM sows WHERE farm_id=:fid AND deleted_at IS NULL"), p)).one()
+    removed = (await db.execute(text(
+        "SELECT count(*) FILTER (WHERE status='CULLED') culled, count(*) FILTER (WHERE status='DEAD') dead "
+        "FROM sows WHERE farm_id=:fid AND deleted_at IS NULL AND exit_date BETWEEN :s AND :e"), p)).one()
 
     tb = float(far.tb) if far.tb else 0.0
     wsum = float(wea.wsum) if wea.wsum else 0.0
@@ -267,6 +274,7 @@ async def build_herd_kpis(
         return round(num / den * 100, 1) if den else None
 
     pwmr = _rate(deaths, wsum + deaths)
+    active_herd = float(herd.active) if herd.active else 0.0
     return {
         # 캐논 metric_code(default_metric_values 시드와 정합 → 국가별 benchmark 자동 적용)
         "FARROWING_RATE":      _rate(float(far.c), float(matings)),
@@ -286,6 +294,10 @@ async def build_herd_kpis(
         "ADG":                 round(gain / pigdays * 1000, 1) if pigdays else None,
         "FCR":                 round(float(feed) / gain, 3) if gain else None,
         "FINISH_MORTALITY":    _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
+        # 모돈군 구조(롤링 window 제거율 = 연간 근사, window=365)
+        "CULLING_RATE":        _rate(float(removed.culled), active_herd),
+        "SOW_MORTALITY":       _rate(float(removed.dead), active_herd),
+        "HIGH_PARITY_RATIO":   _rate(float(herd.hp) if herd.hp else 0.0, active_herd),
     }
 
 

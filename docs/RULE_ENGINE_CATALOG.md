@@ -13,7 +13,7 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
         →  Finding[]  →  대시보드 알림 / 챗 응답 / 모바일 insights 배너
 ```
 
-## 규칙 20종
+## 규칙 24종
 
 ### 번식 (Reproduction)
 | rule_id | KPI | 방향 | 코드 기본 임계(주의/긴급) |
@@ -31,12 +31,13 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | pwmr.high | PWMR(포유폐사율) | ↑ | 15 / 20 % |
 | stillborn.rate_high | STILLBORN_RATE | ↑ | 8 / 12 % |
 | mummified.rate_high | MUMMIFIED_RATE | ↑ | 2 / 4 % |
-| born_alive.low | AVG_BORN_ALIVE | ↓ | 11 / 10 두 |
-| weaned.low | AVG_WEANED | ↓ | 10 / 9 두 |
-| birth_weight.low | AVG_BIRTH_WEIGHT | ↓ | 1.3 / 1.1 kg |
-| weaning_weight.low | AVG_WEANING_WEIGHT | ↓ | 5.5 / 5.0 kg |
-| lactation.too_short | AVG_WEANING_AGE | ↓ | 19 / 16 일 |
-| lactation.too_long | AVG_WEANING_AGE | ↑ | 28 / 35 일 |
+| total_born.low | TOTAL_BORN | ↓ | 12 / 11 두 |
+| born_alive.low | BORN_ALIVE | ↓ | 11 / 10 두 |
+| weaned.low | WEANED_COUNT | ↓ | 10 / 9 두 |
+| birth_weight.low | BIRTH_WEIGHT | ↓ | 1.3 / 1.1 kg |
+| weaning_weight.low | WEANING_WEIGHT | ↓ | 5.5 / 5.0 kg |
+| lactation.too_short | WEANING_AGE (LOW 벤치) | ↓ | 19 / 16 일 |
+| lactation.too_long | WEANING_AGE (HIGH 벤치) | ↑ | 28 / 35 일 |
 
 ### 비육 (Grow-finish)
 | rule_id | KPI | 방향 | 코드 기본 임계 |
@@ -44,6 +45,13 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | fcr.high | FCR | ↑ | 3.0 / 3.3 |
 | adg.low | ADG | ↓ | 650 / 550 g/day |
 | finish_mortality.high | FINISH_MORTALITY | ↑ | 5 / 8 % |
+
+### 모돈군 구조 (Sow herd, 롤링 365일=연간 근사)
+| rule_id | KPI | 방향 | 코드 기본 임계 |
+|---|---|---|---|
+| culling.rate_high | CULLING_RATE | ↑ | 45 / 55 % |
+| sow_mortality.high | SOW_MORTALITY | ↑ | 8 / 12 % |
+| parity.high_ratio | HIGH_PARITY_RATIO(7산+) | ↑ | 20 / 30 % |
 
 ### 건강/재고 (Health / Inventory)
 | rule_id | KPI | 내용 |

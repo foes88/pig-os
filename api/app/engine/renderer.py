@@ -100,6 +100,12 @@ _CAUSE_EN.update({
     "possible_subclinical_disease_depressing_growth":         "Possible subclinical disease depressing growth",
     "high_finishing_mortality":                              "High finishing mortality",
     "possible_disease_outbreak_in_finishing":               "Possible disease outbreak in finishing",
+    "low_total_born_per_litter":                             "Low total-born per litter",
+    "high_sow_culling_rate":                                 "High sow culling rate",
+    "possible_involuntary_culling_from_reproductive_failure": "Possible involuntary culling from reproductive failure",
+    "high_sow_mortality":                                    "High sow mortality",
+    "possible_disease_or_management_failure":                "Possible disease or management failure",
+    "aging_sow_herd_high_parity_share":                     "Aging herd — high share of parity 7+",
 })
 _CAUSE_KO.update({
     "high_stillbirth_rate":                                   "사산율 과다",
@@ -123,6 +129,12 @@ _CAUSE_KO.update({
     "possible_subclinical_disease_depressing_growth":         "준임상 질병으로 증체 저하 의심",
     "high_finishing_mortality":                              "비육 폐사율 과다",
     "possible_disease_outbreak_in_finishing":               "비육돈 질병 발생 의심",
+    "low_total_born_per_litter":                             "복당 총산자 부족",
+    "high_sow_culling_rate":                                 "모돈 도태율 과다",
+    "possible_involuntary_culling_from_reproductive_failure": "번식장애로 인한 비자발 도태 의심",
+    "high_sow_mortality":                                    "모돈 폐사율 과다",
+    "possible_disease_or_management_failure":                "질병 또는 관리 실패 의심",
+    "aging_sow_herd_high_parity_share":                     "노산돈(7산 이상) 비율 과다",
 })
 _ACTION_EN.update({
     "review_farrowing_supervision":                 "Increase farrowing attendance/supervision",
@@ -144,6 +156,14 @@ _ACTION_EN.update({
     "check_water_and_feeder_access":                "Check water and feeder access",
     "consult_veterinarian_for_finishing_mortality": "Consult vet for finishing mortality",
     "audit_feed_quality_and_mycotoxins":            "Audit feed quality and mycotoxins",
+    "review_culling_policy_and_reasons":            "Review culling policy and reasons",
+    "review_gilt_replacement_plan":                 "Review gilt replacement plan",
+    "audit_reproductive_failure_and_lameness":      "Audit reproductive failure and lameness",
+    "audit_lameness_and_prolapse":                  "Audit lameness and prolapse",
+    "review_heat_stress_and_body_condition":        "Review heat stress and body condition",
+    "consult_veterinarian_for_sow_mortality":       "Consult vet for sow mortality",
+    "review_parity_structure_and_replacement":      "Review parity structure and replacement",
+    "plan_gilt_introduction_cadence":               "Plan gilt introduction cadence",
 })
 _ACTION_KO.update({
     "review_farrowing_supervision":                 "분만 입회·관리 강화",
@@ -165,6 +185,14 @@ _ACTION_KO.update({
     "check_water_and_feeder_access":                "급수·급이 접근성 점검",
     "consult_veterinarian_for_finishing_mortality": "비육 폐사 수의사 상담",
     "audit_feed_quality_and_mycotoxins":            "사료 품질·곰팡이독소 점검",
+    "review_culling_policy_and_reasons":            "도태 기준·사유 검토",
+    "review_gilt_replacement_plan":                 "후보돈 보충 계획 검토",
+    "audit_reproductive_failure_and_lameness":      "번식장애·지제(파행) 점검",
+    "audit_lameness_and_prolapse":                  "지제(파행)·탈출증 점검",
+    "review_heat_stress_and_body_condition":        "고온스트레스·체형 관리 검토",
+    "consult_veterinarian_for_sow_mortality":       "모돈 폐사 수의사 상담",
+    "review_parity_structure_and_replacement":      "산차 구조·보충 검토",
+    "plan_gilt_introduction_cadence":               "후보돈 도입 주기 계획",
 })
 
 

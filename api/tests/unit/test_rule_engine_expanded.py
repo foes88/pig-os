@@ -14,9 +14,15 @@ from app.engine.rules.litter import (
     _lactation_short,
     _mummified_high,
     _stillborn_high,
+    _total_born_low,
     _weaned_low,
 )
 from app.engine.rules.reproduction import _abortion_rate_high
+from app.engine.rules.sow_herd import (
+    _culling_rate_high,
+    _parity_high_ratio,
+    _sow_mortality_high,
+)
 
 
 def ctx(kpi: dict, rule_configs: dict | None = None, benchmarks: dict | None = None) -> RuleContext:
@@ -135,6 +141,36 @@ class TestAbortionRule:
         f = run(_abortion_rate_high(ctx({"ABORTION_RATE": 6.0})))
         assert f and f[0].severity == Severity.CRITICAL
         assert "possible_abortive_disease" in f[0].causes
+
+
+# ── 모돈군 구조 규칙 ────────────────────────────────────────────────────────────
+class TestSowHerdRules:
+    def test_culling_ok(self):
+        assert run(_culling_rate_high(ctx({"CULLING_RATE": 40.0}))) == []
+
+    def test_culling_warning(self):
+        f = run(_culling_rate_high(ctx({"CULLING_RATE": 50.0})))
+        assert f and f[0].severity == Severity.WARNING
+
+    def test_culling_critical(self):
+        f = run(_culling_rate_high(ctx({"CULLING_RATE": 60.0})))
+        assert f and f[0].severity == Severity.CRITICAL
+
+    def test_sow_mortality_critical(self):
+        f = run(_sow_mortality_high(ctx({"SOW_MORTALITY": 13.0})))
+        assert f and f[0].severity == Severity.CRITICAL
+
+    def test_parity_high_ratio_warning(self):
+        f = run(_parity_high_ratio(ctx({"HIGH_PARITY_RATIO": 25.0})))
+        assert f and f[0].severity == Severity.WARNING
+
+    def test_total_born_low(self):
+        f = run(_total_born_low(ctx({"TOTAL_BORN": 10.5})))
+        assert f and f[0].severity == Severity.CRITICAL
+
+    def test_missing_no_finding(self):
+        assert run(_culling_rate_high(ctx({}))) == []
+        assert run(_parity_high_ratio(ctx({}))) == []
 
 
 # ── 운영자 임계 조정 반영(국가별 KPI 조정 구조) ────────────────────────────────

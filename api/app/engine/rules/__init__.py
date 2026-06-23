@@ -6,4 +6,5 @@ from app.engine.rules import (  # noqa: F401
     grow_finish,
     litter,
     reproduction,
+    sow_herd,
 )

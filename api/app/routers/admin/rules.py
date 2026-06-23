@@ -21,6 +21,7 @@ from app.engine.rules import disease as _d  # noqa: F401
 from app.engine.rules import grow_finish as _gf  # noqa: F401
 from app.engine.rules import litter as _l  # noqa: F401
 from app.engine.rules import reproduction as _r  # noqa: F401
+from app.engine.rules import sow_herd as _sh  # noqa: F401
 
 router = APIRouter(
     prefix="/admin",

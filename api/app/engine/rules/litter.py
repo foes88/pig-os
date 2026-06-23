@@ -84,6 +84,23 @@ async def _born_alive_low(ctx: RuleContext) -> list[Finding]:
 RuleRegistry.register(Rule("born_alive.low", "born_alive", "Born-alive per litter low", _born_alive_low))
 
 
+# ── 복당 총산자 ──────────────────────────────────────────────────────────────────
+async def _total_born_low(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("TOTAL_BORN")
+    if v is None:
+        return []
+    w, c = resolve(ctx, "total_born.low", "TOTAL_BORN", 12.0, 11.0)
+    sev = sev_below(v, w, c)
+    if sev is None:
+        return []
+    causes = ["low_total_born_per_litter"]
+    actions = ["review_gilt_development_and_sow_nutrition", "audit_insemination_timing"]
+    return [_finding("total_born.low", "TOTAL_BORN", sev, v, w, causes, actions)]
+
+
+RuleRegistry.register(Rule("total_born.low", "total_born", "Total-born per litter low", _total_born_low))
+
+
 # ── 복당 이유두수 ────────────────────────────────────────────────────────────────
 async def _weaned_low(ctx: RuleContext) -> list[Finding]:
     v = ctx.kpi.get("WEANED_COUNT")
