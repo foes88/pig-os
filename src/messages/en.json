@@ -820,7 +820,9 @@
     "saveNext": "Save & next sow →",
     "errGeneric": "An error occurred while processing the request.",
     "loadMore": "Load more ({n})",
-    "selectSowHint": "Select a sow to record these events"
+    "selectSowHint": "Select a sow to record these events",
+    "readOnlyTitle": "Read-only access",
+    "readOnlyDesc": "Your role can view data but cannot record events. Contact your farm owner or manager."
   },
   "addons": {
     "storeTitle": "Addon Store",

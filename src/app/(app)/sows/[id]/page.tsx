@@ -10,6 +10,7 @@ import { eventsApi } from "@/lib/api/endpoints/events";
 import { farmsApi } from "@/lib/api/endpoints/farms";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { useAuthStore } from "@/store/auth.store";
+import { canManage } from "@/lib/auth/permissions";
 
 // 상태 배지 색상 (라벨은 sowStatus 키)
 const STATUS_CLS: Record<string, string> = {
@@ -30,6 +31,7 @@ export default function SowDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const canManageRole = canManage(useAuthStore((s) => s.user?.role));
 
   const { data: sow, isLoading: sowLoading } = useQuery({
     queryKey: ["sow", farmId, id],
@@ -229,12 +231,14 @@ export default function SowDetailPage() {
                       }`}>
                         {weaning ? t("cycleWeaned") : farrowing ? t("cycleNursing") : t("cyclePregnant")}
                       </span>
-                      <button
-                        onClick={() => deleteLatest({ mating, farrowing, weaning })}
-                        className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-50"
-                      >
-                        {t("deleteLatest")}
-                      </button>
+                      {canManageRole && (
+                        <button
+                          onClick={() => deleteLatest({ mating, farrowing, weaning })}
+                          className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-50"
+                        >
+                          {t("deleteLatest")}
+                        </button>
+                      )}
                     </div>
                   </div>
 

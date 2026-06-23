@@ -820,7 +820,9 @@
     "saveNext": "Lưu & nái kế tiếp →",
     "errGeneric": "Đã xảy ra lỗi khi xử lý yêu cầu.",
     "loadMore": "Xem thêm ({n})",
-    "selectSowHint": "Chọn một nái để ghi các sự kiện trên"
+    "selectSowHint": "Chọn một nái để ghi các sự kiện trên",
+    "readOnlyTitle": "Quyền chỉ đọc",
+    "readOnlyDesc": "Vai trò của bạn chỉ xem được dữ liệu, không thể ghi sự kiện. Liên hệ chủ trại hoặc quản lý."
   },
   "addons": {
     "storeTitle": "Cửa hàng Addon",

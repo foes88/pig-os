@@ -820,7 +820,9 @@
     "saveNext": "保存并下一头 →",
     "errGeneric": "处理请求时发生错误。",
     "loadMore": "加载更多 ({n})",
-    "selectSowHint": "选择母猪即可录入以上事件"
+    "selectSowHint": "选择母猪即可录入以上事件",
+    "readOnlyTitle": "只读权限",
+    "readOnlyDesc": "您的角色只能查看数据，无法录入事件。请联系农场主或管理员。"
   },
   "addons": {
     "storeTitle": "插件商店",

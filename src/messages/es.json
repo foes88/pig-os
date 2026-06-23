@@ -820,7 +820,9 @@
     "saveNext": "Guardar y siguiente →",
     "errGeneric": "Ocurrió un error al procesar la solicitud.",
     "loadMore": "Cargar más ({n})",
-    "selectSowHint": "Selecciona una cerda para registrar estos eventos"
+    "selectSowHint": "Selecciona una cerda para registrar estos eventos",
+    "readOnlyTitle": "Acceso de solo lectura",
+    "readOnlyDesc": "Tu rol puede ver datos pero no registrar eventos. Contacta al propietario o gerente de la granja."
   },
   "addons": {
     "storeTitle": "Tienda de Addons",

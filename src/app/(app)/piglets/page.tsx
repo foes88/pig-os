@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { pigletsApi } from "@/lib/api/endpoints/piglets";
 import { useAuthStore } from "@/store/auth.store";
+import { canEntry } from "@/lib/auth/permissions";
 import type { CreatePigletGroupRequest, PigletGroupTransferOutRequest } from "@/types/api.types";
 
 // 전출 유형 → i18n 키 (piglets.ttXxx)
@@ -18,6 +19,7 @@ const TRANSFER_TYPE_KEY: Record<string, string> = {
 export default function PigletsPage() {
   const t = useTranslations("piglets");
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const canWrite = canEntry(useAuthStore((s) => s.user?.role));
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [transferId, setTransferId] = useState<string | null>(null);
@@ -53,12 +55,14 @@ export default function PigletsPage() {
             >
               {activeOnly ? t("activeOnly") : t("all")}
             </button>
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
-            >
-              {t("addGroup")}
-            </button>
+            {canWrite && (
+              <button
+                onClick={() => setShowForm(true)}
+                className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition"
+              >
+                {t("addGroup")}
+              </button>
+            )}
           </div>
         </div>
 
@@ -113,7 +117,7 @@ export default function PigletsPage() {
                       )}
                     </div>
                   </div>
-                  {isActive && (
+                  {isActive && canWrite && (
                     <button
                       onClick={() => setTransferId(g.id)}
                       className="bg-success text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-success/90 transition"

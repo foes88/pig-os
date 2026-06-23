@@ -24,4 +24,12 @@ test.describe("live: RBAC role gating", () => {
     await gotoApp(page, "/finishers");
     await expect(page.getByTestId("finishers-add-btn")).toHaveCount(0);
   });
+
+  test("VIEWER는 기록입력(record)이 읽기전용 안내로 막힌다", async ({ page }) => {
+    await loginAs(page, "viewer@pigos.io", PW);
+    await gotoApp(page, "/record");
+    await expect(page.getByTestId("sidebar")).toBeVisible();
+    // 이벤트 저장 버튼이 아예 없음(읽기전용 게이트)
+    await expect(page.getByTestId("event-save")).toHaveCount(0);
+  });
 });

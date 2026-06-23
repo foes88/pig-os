@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, X } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
+import { canEntry } from "@/lib/auth/permissions";
 import {
   boarsApi,
   type Boar,
@@ -53,6 +54,7 @@ const EMPTY_FORM: CreateBoarRequest = {
 export default function BoarsPage() {
   const t = useTranslations("boars");
   const activeFarmId = useAuthStore((s) => s.activeFarmId);
+  const canWrite = canEntry(useAuthStore((s) => s.user?.role));
   const farmId = activeFarmId ?? "";
   const queryClient = useQueryClient();
 
@@ -170,13 +172,15 @@ export default function BoarsPage() {
             <option value="DEAD">{t("statusDead")}</option>
             <option value="TRANSFERRED">{t("statusTransferred")}</option>
           </select>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3.5 py-1.5 rounded-lg hover:bg-success transition"
-          >
-            <Plus size={15} />
-            {t("addBoar")}
-          </button>
+          {canWrite && (
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3.5 py-1.5 rounded-lg hover:bg-success transition"
+            >
+              <Plus size={15} />
+              {t("addBoar")}
+            </button>
+          )}
         </div>
       </div>
 
@@ -190,7 +194,7 @@ export default function BoarsPage() {
           <p className="text-sm text-text3 mb-3">
             {statusFilter ? t("emptyFiltered") : t("emptyNone")}
           </p>
-          {!statusFilter && (
+          {!statusFilter && canWrite && (
             <button onClick={openCreate} className="text-sm font-semibold text-primary hover:underline">
               {t("emptyCta")}
             </button>
@@ -228,6 +232,8 @@ export default function BoarsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      {!canWrite && <span className="text-text3 text-xs">—</span>}
+                      {canWrite && (
                       <button
                         onClick={() => openEdit(boar)}
                         title={t("editTooltip")}
@@ -235,7 +241,8 @@ export default function BoarsPage() {
                       >
                         <Pencil size={13} />
                       </button>
-                      {boar.status === "ACTIVE" && (
+                      )}
+                      {canWrite && boar.status === "ACTIVE" && (
                         <select
                           value=""
                           onChange={(e) => {

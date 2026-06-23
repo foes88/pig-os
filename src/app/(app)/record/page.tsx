@@ -16,6 +16,7 @@ import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { InsightBanner } from "@/components/InsightBanner";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { canEntry } from "@/lib/auth/permissions";
 import type {
   Sow,
   SowStatus,
@@ -108,6 +109,7 @@ export default function RecordPage() {
   const t = useTranslations("record");
   const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const role = useAuthStore((s) => s.user?.role);
   const [selectedSow, setSelectedSow] = useState<Sow | null>(null);
   const [eventType, setEventType] = useState<EventType>("farrowing");
   const [search, setSearch] = useState("");
@@ -149,6 +151,19 @@ export default function RecordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-text3">{t("selectFarm")}</p>
+      </div>
+    );
+  }
+
+  // 권한 게이트: 이벤트 입력은 OWNER/MANAGER/WORKER만. 읽기전용(VIEWER/VET)엔 안내.
+  if (!canEntry(role)) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center gap-3 px-6">
+        <div className="w-14 h-14 rounded-2xl bg-bg2 border border-border flex items-center justify-center text-text3">
+          <PiggyBank size={26} />
+        </div>
+        <p className="text-sm font-bold text-text1">{t("readOnlyTitle")}</p>
+        <p className="text-xs text-text3 max-w-xs">{t("readOnlyDesc")}</p>
       </div>
     );
   }
