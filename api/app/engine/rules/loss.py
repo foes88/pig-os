@@ -67,3 +67,76 @@ async def _loss_pregnancy_accident(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("loss.pregnancy_accident", "loss", "Pregnancy accident loss", _loss_pregnancy_accident))
+
+
+# ── NPD(비생산일) 손실 — WEI 기반(보수적) ───────────────────────────────────────
+# 모돈일 손실 = PSY × 육성률 × 두당가 ÷ 365, × Σ지연일(WEI). (PigPlan S9_NPD §2)
+async def _loss_npd(ctx: RuleContext) -> list[Finding]:
+    li = _inputs(ctx)
+    if not li:
+        return []
+    wei_days = li.get("wei_total_days") or 0.0
+    psy = ctx.kpi.get("PSY")
+    born_alive = ctx.kpi.get("BORN_ALIVE")
+    weaned = ctx.kpi.get("WEANED_COUNT")
+    if wei_days <= 0 or not psy or not born_alive or not weaned:
+        return []
+    weaning_rate = min(float(weaned) / float(born_alive), 1.0)  # 육성률
+    per_sow_day = float(psy) * weaning_rate * li["price"] / 365.0
+    lost_amount = round(wei_days * per_sow_day)
+    if lost_amount <= 0:
+        return []
+    return [Finding(
+        rule_id="loss.npd", kpi="NPD_LOSS", severity=Severity.INFO,
+        current_value=round(wei_days, 0), target_value=None,
+        causes=["npd_nonproductive_days_economic_loss"],
+        recommended_actions=["reduce_weaning_to_service_interval_to_recover_loss"],
+        detail={"loss": {"amount": lost_amount, "currency": li["currency"],
+                         "basis": "wei_sow_days", "wei_days": round(wei_days, 0), "demo": li.get("demo", True)},
+                "scope": "WEI_only_conservative"},
+    )]
+
+
+RuleRegistry.register(Rule("loss.npd", "loss", "NPD (non-productive days) loss", _loss_npd))
+
+
+# ── 조기도태 손실 — 산차별 잔여가치(KR seed, region/KR 없으면 미발화) ────────────
+def _residual(ctx: RuleContext, code: str) -> float | None:
+    b = (ctx.benchmarks.get(code) if ctx.benchmarks else None) or {}
+    return b.get("target")
+
+
+async def _loss_sow_culling(ctx: RuleContext) -> list[Finding]:
+    li = (ctx.extra.get("loss_inputs") if ctx.extra else None) or {}
+    rows = li.get("cull_by_parity") or []
+    if not rows or _residual(ctx, "SOW_RESIDUAL_P0") is None:  # 잔여가치 seed 없으면 미발화
+        return []
+    salvage_cull = _residual(ctx, "SOW_SALVAGE_CULL") or 0.0
+    salvage_death = _residual(ctx, "SOW_SALVAGE_DEATH") or 0.0
+    total = 0.0
+    head = 0
+    for r in rows:
+        parity = r.get("parity", 0)
+        if parity >= 7:           # 적정 이상 도태 — 잔여가치 0(손실 아님)
+            continue
+        residual = _residual(ctx, f"SOW_RESIDUAL_P{parity}")
+        if residual is None:
+            continue
+        salvage = salvage_cull if r.get("status") == "CULLED" else salvage_death
+        loss_per = max(residual - salvage, 0.0)
+        total += loss_per * r.get("count", 0)
+        head += r.get("count", 0)
+    if total <= 0:
+        return []
+    currency = (ctx.benchmarks.get("SOW_RESIDUAL_P0") or {}).get("unit", "KRW")
+    return [Finding(
+        rule_id="loss.sow_culling", kpi="SOW_CULL_LOSS", severity=Severity.INFO,
+        current_value=head, target_value=None,
+        causes=["premature_sow_culling_economic_loss"],
+        recommended_actions=["reduce_early_culling_below_breakeven_parity"],
+        detail={"loss": {"amount": round(total), "currency": currency or "KRW",
+                         "basis": "residual_value_by_parity", "head": head, "demo": False}},
+    )]
+
+
+RuleRegistry.register(Rule("loss.sow_culling", "loss", "Premature sow culling loss", _loss_sow_culling))

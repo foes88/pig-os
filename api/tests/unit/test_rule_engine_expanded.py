@@ -20,7 +20,12 @@ from app.engine.rules.litter import (
 from app.engine.rule_engine import Finding
 from app.engine.rules.boar import _boar_farrow_rate_low
 from app.engine.rules.composite import _farm_health_class, _farm_weakest_kpi
-from app.engine.rules.loss import _loss_pregnancy_accident, _loss_preweaning
+from app.engine.rules.loss import (
+    _loss_npd,
+    _loss_pregnancy_accident,
+    _loss_preweaning,
+    _loss_sow_culling,
+)
 from app.engine.rules.reproduction import _abortion_rate_high, _summer_infertility
 from app.engine.rules.sow_herd import (
     _accident_parity_skew,
@@ -267,6 +272,36 @@ class TestLossRules:
     def test_accident_loss_needs_per_litter(self):
         c = self._ctx({"price": 300000, "accident_count": 5}, kpi={})  # no WEANED_COUNT
         assert run(_loss_pregnancy_accident(c)) == []
+
+    def test_npd_loss(self):
+        c = self._ctx({"price": 365000, "currency": "KRW", "demo": False, "wei_total_days": 100},
+                      kpi={"PSY": 25.0, "BORN_ALIVE": 12.0, "WEANED_COUNT": 12.0})
+        f = run(_loss_npd(c))
+        # per_sow_day = 25 * 1.0 * 365000/365 = 25000; ×100 = 2,500,000
+        assert f and f[0].detail["loss"]["amount"] == 2_500_000
+
+    def test_npd_loss_needs_inputs(self):
+        c = self._ctx({"price": 365000, "wei_total_days": 0}, kpi={"PSY": 25.0})
+        assert run(_loss_npd(c)) == []
+
+    def test_sow_culling_loss(self):
+        bench = {f"SOW_RESIDUAL_P{p}": {"target": v, "unit": "KRW"} for p, v in
+                 {0: 8400000, 1: 7100000, 2: 5800000, 3: 4500000, 4: 3300000, 5: 1950000, 6: 800000}.items()}
+        bench["SOW_SALVAGE_CULL"] = {"target": 300000}
+        bench["SOW_SALVAGE_DEATH"] = {"target": 0}
+        c = RuleContext(farm_id=uuid4(), country="KR", kpi={}, benchmarks=bench, sow_counts={},
+                        extra={"loss_inputs": {"cull_by_parity": [
+                            {"status": "CULLED", "parity": 2, "count": 1},   # 5.8M-0.3M=5.5M
+                            {"status": "DEAD", "parity": 1, "count": 1},     # 7.1M-0=7.1M
+                            {"status": "CULLED", "parity": 8, "count": 1}]}})  # 7+ → 0
+        f = run(_loss_sow_culling(c))
+        assert f and f[0].detail["loss"]["amount"] == 5_500_000 + 7_100_000
+        assert f[0].current_value == 2  # 8산 제외
+
+    def test_sow_culling_no_seed_no_fire(self):
+        c = RuleContext(farm_id=uuid4(), country="US", kpi={}, benchmarks={}, sow_counts={},
+                        extra={"loss_inputs": {"cull_by_parity": [{"status": "CULLED", "parity": 2, "count": 5}]}})
+        assert run(_loss_sow_culling(c)) == []
 
 
 # ── Phase B3: 종합 룰(롤업, 위조 0) ──────────────────────────────────────────────

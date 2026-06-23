@@ -116,6 +116,8 @@ _CAUSE_EN.update({
     "low_boar_farrowing_rate":                             "Low farrowing rate for this boar",
     "preweaning_mortality_economic_loss":                  "Economic loss from pre-weaning mortality",
     "pregnancy_accident_economic_loss":                    "Economic loss from pregnancy accidents",
+    "npd_nonproductive_days_economic_loss":                "Economic loss from non-productive days (WEI)",
+    "premature_sow_culling_economic_loss":                 "Economic loss from premature sow culling",
     "farm_grade_red":                                      "Farm overall grade: RED (urgent)",
     "farm_grade_yellow":                                   "Farm overall grade: YELLOW (watch)",
     "farm_grade_green":                                    "Farm overall grade: GREEN (good)",
@@ -159,6 +161,8 @@ _CAUSE_KO.update({
     "low_boar_farrowing_rate":                             "해당 웅돈 분만율 저조",
     "preweaning_mortality_economic_loss":                  "포유자돈 폐사 경제 손실",
     "pregnancy_accident_economic_loss":                    "임신사고 경제 손실",
+    "npd_nonproductive_days_economic_loss":                "비생산일(WEI) 경제 손실",
+    "premature_sow_culling_economic_loss":                 "조기도태 경제 손실",
     "farm_grade_red":                                      "농가 종합등급: RED(시급)",
     "farm_grade_yellow":                                   "농가 종합등급: YELLOW(주의)",
     "farm_grade_green":                                    "농가 종합등급: GREEN(양호)",
@@ -205,6 +209,8 @@ _ACTION_EN.update({
     "review_boar_usage_and_libido":                 "Review boar usage rotation and libido",
     "reduce_preweaning_mortality_to_recover_loss":  "Reduce pre-weaning mortality to recover this loss",
     "reduce_pregnancy_accidents_to_recover_loss":   "Reduce pregnancy accidents to recover this loss",
+    "reduce_weaning_to_service_interval_to_recover_loss": "Reduce weaning-to-service interval to recover this loss",
+    "reduce_early_culling_below_breakeven_parity":  "Reduce culling below break-even parity (3.5)",
 })
 _ACTION_KO.update({
     "review_farrowing_supervision":                 "분만 입회·관리 강화",
@@ -247,6 +253,8 @@ _ACTION_KO.update({
     "review_boar_usage_and_libido":                 "웅돈 사용 로테이션·성욕 검토",
     "reduce_preweaning_mortality_to_recover_loss":  "포유폐사 감소로 손실 회복",
     "reduce_pregnancy_accidents_to_recover_loss":   "임신사고 감소로 손실 회복",
+    "reduce_weaning_to_service_interval_to_recover_loss": "이유~교배 간격 단축으로 손실 회복",
+    "reduce_early_culling_below_breakeven_parity":  "손익분기(3.5산) 미만 조기도태 감소",
 })
 
 

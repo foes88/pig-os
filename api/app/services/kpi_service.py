@@ -356,6 +356,15 @@ async def build_loss_inputs(db: AsyncSession, farm: Farm, window_days: int = 365
     accidents = (await db.execute(text(
         "SELECT count(*) FROM reproductive_events WHERE farm_id=:fid AND deleted_at IS NULL "
         "AND event_type='ABORTION' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+    # 도태/폐사 모돈 산차별 카운트(잔여가치 손실용)
+    cull_rows = (await db.execute(text(
+        "SELECT status, parity, count(*) cnt FROM sows WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND status IN ('CULLED','DEAD') AND exit_date BETWEEN :s AND :e GROUP BY status, parity"), p)).all()
+    cull_by_parity = [{"status": r.status, "parity": int(r.parity or 0), "count": int(r.cnt)} for r in cull_rows]
+    # NPD(WEI) 총 지연일 합 — S9 ① 이유→교배 (보수적, v_sow_npd)
+    wei_total = (await db.execute(text(
+        "SELECT coalesce(sum(wei_days),0) FROM v_sow_npd WHERE farm_id=:fid "
+        "AND wei_days IS NOT NULL AND wei_days > 0"), {"fid": str(farm.id)})).scalar() or 0
     price = await _load_price(db, farm)
     return {
         "price": price["price"] if price else None,
@@ -363,6 +372,8 @@ async def build_loss_inputs(db: AsyncSession, farm: Farm, window_days: int = 365
         "demo": price["demo"] if price else True,
         "pw_deaths": float(pw_deaths),
         "accident_count": float(accidents),
+        "cull_by_parity": cull_by_parity,
+        "wei_total_days": float(wei_total),
     }
 
 
