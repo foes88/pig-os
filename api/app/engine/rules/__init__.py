@@ -3,9 +3,11 @@
 from app.engine.rules import (  # noqa: F401
     base,
     boar,
+    composite,
     disease,
     grow_finish,
     litter,
+    loss,
     reproduction,
     sow_herd,
 )

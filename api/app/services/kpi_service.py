@@ -345,6 +345,27 @@ def _summer_drop(smat, sfar) -> float | None:
     return round(other_fr - summer_fr, 1)
 
 
+async def build_loss_inputs(db: AsyncSession, farm: Farm, window_days: int = 365) -> dict:
+    """손실계산 입력(실 count + 출하두당가). 가격 없으면 price=None → 손실룰 미발화(위조 0)."""
+    from app.services.insight_service import _load_price
+    today = date.today()
+    p = {"fid": str(farm.id), "s": today - timedelta(days=window_days), "e": today}
+    pw_deaths = (await db.execute(text(
+        "SELECT coalesce(sum(piglet_count),0) FROM piglet_events WHERE farm_id=:fid "
+        "AND deleted_at IS NULL AND event_type='DEATH' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+    accidents = (await db.execute(text(
+        "SELECT count(*) FROM reproductive_events WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND event_type='ABORTION' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+    price = await _load_price(db, farm)
+    return {
+        "price": price["price"] if price else None,
+        "currency": price["currency"] if price else "",
+        "demo": price["demo"] if price else True,
+        "pw_deaths": float(pw_deaths),
+        "accident_count": float(accidents),
+    }
+
+
 async def build_boar_stats(
     db: AsyncSession, farm: Farm, window_days: int = 365, min_matings: int = 10
 ) -> list[dict]:
@@ -405,6 +426,7 @@ async def build_rule_context(
     # 운영자 규칙 설정(임계/활성) — 행 없으면 빈 dict → 엔진이 코드 기본값으로 폴백
     rule_configs = await load_rule_configs(db)
     boar_stats = await build_boar_stats(db, farm)
+    loss_inputs = await build_loss_inputs(db, farm)
 
     return RuleContext(
         farm_id=farm.id,
@@ -414,7 +436,7 @@ async def build_rule_context(
         sow_counts=counts,
         as_of=today,
         extra={"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs,
-               "boar_stats": boar_stats},
+               "boar_stats": boar_stats, "loss_inputs": loss_inputs},
     )
 
 
@@ -580,13 +602,14 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     benchmarks = await _all_benchmarks(db, farm)
     rule_configs = await load_rule_configs(db)
     boar_stats = await build_boar_stats(db, farm)
+    loss_inputs = await build_loss_inputs(db, farm)
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
         kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
         benchmarks=benchmarks,
         sow_counts=counts,
-        extra={"rule_configs": rule_configs, "boar_stats": boar_stats},
+        extra={"rule_configs": rule_configs, "boar_stats": boar_stats, "loss_inputs": loss_inputs},
     )
     result: StructuredResult = await RuleEngine.evaluate(ctx, intent="dashboard")
 

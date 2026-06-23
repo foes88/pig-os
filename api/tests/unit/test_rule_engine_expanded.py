@@ -17,7 +17,10 @@ from app.engine.rules.litter import (
     _total_born_low,
     _weaned_low,
 )
+from app.engine.rule_engine import Finding
 from app.engine.rules.boar import _boar_farrow_rate_low
+from app.engine.rules.composite import _farm_health_class, _farm_weakest_kpi
+from app.engine.rules.loss import _loss_pregnancy_accident, _loss_preweaning
 from app.engine.rules.reproduction import _abortion_rate_high, _summer_infertility
 from app.engine.rules.sow_herd import (
     _accident_parity_skew,
@@ -237,6 +240,70 @@ class TestBoarRule:
         assert len(out) == 2
         sev = {f.detail["ear_tag"]: f.severity for f in out}
         assert sev["B-1"] == Severity.WARNING and sev["B-2"] == Severity.CRITICAL
+
+
+# ── Phase B1: 손실계산기 (실 count × 단가, 위조 0) ──────────────────────────────
+class TestLossRules:
+    def _ctx(self, loss_inputs, kpi=None):
+        return RuleContext(farm_id=uuid4(), country="KR", kpi=kpi or {}, benchmarks={},
+                           sow_counts={}, extra={"loss_inputs": loss_inputs})
+
+    def test_no_price_no_loss(self):
+        c = self._ctx({"price": None, "pw_deaths": 50})
+        assert run(_loss_preweaning(c)) == []
+
+    def test_preweaning_loss(self):
+        c = self._ctx({"price": 300000, "currency": "KRW", "demo": False, "pw_deaths": 40})
+        f = run(_loss_preweaning(c))
+        assert f and f[0].detail["loss"]["amount"] == 40 * 300000
+        assert f[0].detail["loss"]["demo"] is False
+
+    def test_pregnancy_accident_loss(self):
+        c = self._ctx({"price": 300000, "currency": "KRW", "demo": True, "accident_count": 5},
+                      kpi={"WEANED_COUNT": 11.0})
+        f = run(_loss_pregnancy_accident(c))
+        assert f and f[0].detail["loss"]["amount"] == round(5 * 11.0 * 300000)
+
+    def test_accident_loss_needs_per_litter(self):
+        c = self._ctx({"price": 300000, "accident_count": 5}, kpi={})  # no WEANED_COUNT
+        assert run(_loss_pregnancy_accident(c)) == []
+
+
+# ── Phase B3: 종합 룰(롤업, 위조 0) ──────────────────────────────────────────────
+class TestCompositeRules:
+    def _ctx(self, prior):
+        return RuleContext(farm_id=uuid4(), country="KR", kpi={}, benchmarks={},
+                           sow_counts={}, extra={"_prior_findings": prior})
+
+    def _f(self, sev, rule_id="x.y", kpi="K", gap=0.0):
+        return Finding(rule_id=rule_id, kpi=kpi, severity=sev, current_value=1.0,
+                       target_value=1.0, detail={"normalized_gap": gap})
+
+    def test_green_when_no_issues(self):
+        f = run(_farm_health_class(self._ctx([])))
+        assert f[0].grade == "GREEN"
+
+    def test_yellow_one_warning(self):
+        f = run(_farm_health_class(self._ctx([self._f(Severity.WARNING)])))
+        assert f[0].grade == "YELLOW"
+
+    def test_red_on_critical(self):
+        f = run(_farm_health_class(self._ctx([self._f(Severity.CRITICAL)])))
+        assert f[0].grade == "RED" and f[0].severity == Severity.CRITICAL
+
+    def test_red_on_three_warnings(self):
+        f = run(_farm_health_class(self._ctx([self._f(Severity.WARNING)] * 3)))
+        assert f[0].grade == "RED"
+
+    def test_weakest_picks_critical_highest_gap(self):
+        prior = [self._f(Severity.WARNING, "a", "A", 0.5),
+                 self._f(Severity.CRITICAL, "b", "B", 0.2),
+                 self._f(Severity.CRITICAL, "c", "C", 0.8)]
+        f = run(_farm_weakest_kpi(self._ctx(prior)))
+        assert f and f[0].detail["weakest_kpi"] == "C"
+
+    def test_weakest_none_when_all_ok(self):
+        assert run(_farm_weakest_kpi(self._ctx([self._f(Severity.INFO)]))) == []
 
 
 # ── 운영자 임계 조정 반영(국가별 KPI 조정 구조) ────────────────────────────────

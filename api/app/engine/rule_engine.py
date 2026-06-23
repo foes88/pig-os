@@ -142,13 +142,23 @@ class RuleEngine:
         # 운영자가 비활성한 규칙은 건너뜀(ctx.extra["rule_configs"][rule_id].enabled=False).
         # 설정 행이 없으면 활성(기본). 비파괴적 폴백.
         rule_configs: dict = ctx.extra.get("rule_configs", {}) if ctx.extra else {}
-        all_findings: list[Finding] = []
-        for rule in rules:
+
+        def _enabled(rule: Rule) -> bool:
             cfg = rule_configs.get(rule.rule_id)
-            if cfg is not None and cfg.get("enabled") is False:
-                continue
-            findings = await rule.fn(ctx)
-            all_findings.extend(findings)
+            return not (cfg is not None and cfg.get("enabled") is False)
+
+        # composite 룰(종합등급·최약KPI)은 앞선 findings를 입력으로 받음 → 2-pass: 일반 먼저, composite 나중.
+        base_rules = [r for r in rules if r.domain != "composite" and _enabled(r)]
+        composite_rules = [r for r in rules if r.domain == "composite" and _enabled(r)]
+        all_findings: list[Finding] = []
+        for rule in base_rules:
+            all_findings.extend(await rule.fn(ctx))
+        if composite_rules:
+            if ctx.extra is None:
+                ctx.extra = {}
+            ctx.extra["_prior_findings"] = list(all_findings)
+            for rule in composite_rules:
+                all_findings.extend(await rule.fn(ctx))
 
         severity = max(
             (f.severity for f in all_findings),
