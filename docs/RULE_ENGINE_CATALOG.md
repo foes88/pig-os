@@ -13,7 +13,9 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
         →  Finding[]  →  대시보드 알림 / 챗 응답 / 모바일 insights 배너
 ```
 
-## 규칙 24종
+## 규칙 33종
+
+> Phase B(ENGINE-NEW Tier A) 추가분 — 아래 표 뒤 "Phase B 신규" 섹션 참조.
 
 ### 번식 (Reproduction)
 | rule_id | KPI | 방향 | 코드 기본 임계(주의/긴급) |
@@ -59,7 +61,22 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | disease.endemic_risk | DISEASE | 최근 법정전염병 발생 감지 |
 | inventory.zero | SOW_COUNT | 활성 모돈 0 |
 
-> **국가별 조정 예**: KR PSY 목표 24, US/BR은 다른 목표 → `benchmarks` 행만 다르면 동일 규칙이 자동으로 각국 기준 적용. 운영자가 특정 농장군에 더 엄격히 하려면 `/admin/rules`에서 임계 오버라이드.
+### Phase B 신규 (ENGINE-NEW Tier A, 9종)
+| rule_id | KPI | 방향 | 기본 임계 | 데이터 |
+|---|---|---|---|---|
+| seasonal.summer_infertility | SUMMER_FARROW_DROP | ↑ | 6 / 10 pp | 여름(6~8월) 교배 cohort 분만율 하락(farrowings.mating_id→교배월) |
+| replacement.rate_abnormal | REPLACEMENT_RATE | 양방향 | >50/60, <30 | gilt 도입/활성herd |
+| parity.second_litter_slump | SECOND_LITTER_DROP | ↑ | 1.5 / 2.5 두 | P1−P2 실산(breeding_cycles.parity) |
+| accident.parity_skew | ACCIDENT_P1_RATIO | ↑ | 40 / 55 % | 임신사고 1산 편중(감염의심) |
+| boar.farrow_rate_low | BOAR_FARROW_RATE | ↓ | 65 / 55 % | 웅돈별 분만율(멀티개체, 표본≥10) |
+| loss.preweaning_mortality | PREWEAN_LOSS | 금액 | — | 포유폐사 두수×출하두당가(가격 없으면 미발화) |
+| loss.pregnancy_accident | ACCIDENT_LOSS | 금액 | — | 사고건수×복당이유두수×단가 |
+| farm.health_class | FARM_HEALTH_CLASS | 종합 | RED/YEL/GREEN | 전 룰 severity 롤업(2-pass finalizer) |
+| farm.weakest_kpi | WEAKEST_KPI | 종합 | — | 최고 severity+최대 gap KPI 선정 |
+
+> **미구현(위조 방지)**: `loss.npd`·`loss.sow_culling`은 NPD 일당 기회비용·산차별 잔존가 **seed 테이블 선행 필요** → 그 전엔 만들지 않음.
+
+> **국가별 조정 예**: KR PSY 목표 24, US/BR은 다른 목표 → `benchmarks` 행만 다르면 동일 규칙이 자동으로 각국 기준 적용. 운영자가 특정 농장군에 더 엄격히 하려면 `/admin/rules`에서 임계 오버라이드. Phase A에서 KR 실측 8종 주입 완료(STILLBORN/ABORTION/FCR/CULLING/SOW_MORTALITY/HIGH_PARITY/WEANING_WEIGHT/WEANING_AGE_LOW).
 
 ## 신규 규칙 추가 절차
 1. `build_herd_kpis`(또는 build_rule_context)에 KPI 계산 추가 — **실데이터만**(없으면 None → 규칙 빈 결과).
