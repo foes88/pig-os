@@ -478,7 +478,7 @@
     "inviteNote": "不会发送邮件 — 请创建账户和初始密码并告知成员。",
     "deactivate": "停用",
     "activate": "启用",
-    "onlyManagers": "仅所有者/管理员可添加成员。"
+    "onlyManagers": "成员管理仅限所有者。"
   },
   "boars": {
     "title": "公猪管理",
@@ -971,7 +971,8 @@
     "change": "更改",
     "history": "账单记录",
     "paid": "已支付",
-    "receipt": "收据"
+    "receipt": "收据",
+    "ownerOnly": "仅限农场所有者。请联系所有者。"
   },
   "deleteAccount": {
     "confirmWord": "删除",
@@ -989,7 +990,8 @@
     "recovery": "删除后30天内可申请恢复，之后将永久删除。",
     "typeToConfirm": "请输入 {word} 以确认",
     "cancel": "取消",
-    "deleteForever": "永久删除账户"
+    "deleteForever": "永久删除账户",
+    "ownerOnly": "仅限农场所有者。请联系所有者。"
   },
   "announcements": {
     "title": "公告",

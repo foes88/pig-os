@@ -62,3 +62,18 @@ async def test_worker_cannot_create_member(client: AsyncClient, db, test_user, t
         json={"name": "X", "email": "x@pigos.io", "password": "Worker1234!", "role": "FARM_WORKER"},
     )
     assert r.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_manager_cannot_create_member(client: AsyncClient, db, test_user, test_farm):
+    """MANAGER는 일상 운영은 가능하나 멤버 임명은 OWNER 전용 → 403."""
+    test_user.role = "FARM_MANAGER"
+    test_user.system_role = "FARM_MANAGER"
+    await db.flush()
+    headers = await _auth(db, test_user, test_farm)
+    r = await client.post(
+        f"/api/v1/farms/{test_farm.id}/members",
+        headers=headers,
+        json={"name": "X", "email": "mgrx@pigos.io", "password": "Worker1234!", "role": "FARM_WORKER"},
+    )
+    assert r.status_code == 403

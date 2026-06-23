@@ -478,7 +478,7 @@
     "inviteNote": "Không gửi email — hãy tạo tài khoản với mật khẩu ban đầu và chia sẻ cho thành viên.",
     "deactivate": "Ngừng kích hoạt",
     "activate": "Kích hoạt",
-    "onlyManagers": "Chỉ chủ trại/quản lý mới thêm được thành viên."
+    "onlyManagers": "Quản lý thành viên chỉ dành cho chủ trại."
   },
   "boars": {
     "title": "Quản lý heo nọc",
@@ -971,7 +971,8 @@
     "change": "Đổi",
     "history": "Lịch sử thanh toán",
     "paid": "Đã thanh toán",
-    "receipt": "Biên lai"
+    "receipt": "Biên lai",
+    "ownerOnly": "Chỉ chủ trại. Vui lòng liên hệ chủ trại."
   },
   "deleteAccount": {
     "confirmWord": "XÓA",
@@ -989,7 +990,8 @@
     "recovery": "Có thể yêu cầu khôi phục trong 30 ngày sau khi xóa, sau đó xóa vĩnh viễn.",
     "typeToConfirm": "Nhập {word} để xác nhận",
     "cancel": "Hủy",
-    "deleteForever": "Xóa tài khoản vĩnh viễn"
+    "deleteForever": "Xóa tài khoản vĩnh viễn",
+    "ownerOnly": "Chỉ chủ trại. Vui lòng liên hệ chủ trại."
   },
   "announcements": {
     "title": "Thông báo",

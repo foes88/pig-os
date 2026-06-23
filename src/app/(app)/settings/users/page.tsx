@@ -7,6 +7,7 @@ import { Plus, X } from "lucide-react";
 import { membersApi, type CreateMemberRequest, type FarmRole, type Member } from "@/lib/api/endpoints/members";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { canOwn } from "@/lib/auth/permissions";
 import type { UserRole } from "@/types/api.types";
 
 const ROLES: FarmRole[] = ["FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "VET", "VIEWER"];
@@ -19,8 +20,9 @@ const ROLE_BADGE: Record<FarmRole, string> = {
   VIEWER: "bg-gray-100 text-gray-500",
 };
 
+// 멤버 관리는 소유자(OWNER) 전용 — MANAGER는 조회만(백엔드 require_farm_role과 일치).
 function canManageMembers(role: UserRole | undefined): boolean {
-  return role === "FARM_OWNER" || role === "FARM_MANAGER" || role === "OWNER" || role === "MANAGER";
+  return canOwn(role);
 }
 
 function getErrorMessage(err: unknown, fallback: string): string {

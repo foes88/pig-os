@@ -478,7 +478,7 @@
     "inviteNote": "No email is sent — create the account with an initial password and share it with the member.",
     "deactivate": "Deactivate",
     "activate": "Activate",
-    "onlyManagers": "Only owners/managers can add members."
+    "onlyManagers": "Member management is owner-only."
   },
   "boars": {
     "title": "Boar management",
@@ -971,7 +971,8 @@
     "change": "Change",
     "history": "Billing history",
     "paid": "Paid",
-    "receipt": "Receipt"
+    "receipt": "Receipt",
+    "ownerOnly": "Owner only. Contact the farm owner."
   },
   "deleteAccount": {
     "confirmWord": "DELETE",
@@ -989,7 +990,8 @@
     "recovery": "Recovery requests are possible for 30 days after deletion, then permanently erased.",
     "typeToConfirm": "Type {word} to confirm",
     "cancel": "Cancel",
-    "deleteForever": "Delete account permanently"
+    "deleteForever": "Delete account permanently",
+    "ownerOnly": "Owner only. Contact the farm owner."
   },
   "announcements": {
     "title": "Announcements",

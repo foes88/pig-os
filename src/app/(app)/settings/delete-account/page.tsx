@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useAuthStore } from "@/store/auth.store";
+import { canOwn } from "@/lib/auth/permissions";
 
 export default function DeleteAccountPage() {
   const t = useTranslations("deleteAccount");
@@ -9,6 +11,19 @@ export default function DeleteAccountPage() {
   const router = useRouter();
   const confirmWord = t("confirmWord");
   const canDelete = confirm === confirmWord;
+  const isOwner = canOwn(useAuthStore((s) => s.user?.role));
+
+  // 계정/농장 삭제는 소유자 전용
+  if (!isOwner) {
+    return (
+      <div className="max-w-xl mx-auto px-7 py-6">
+        <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
+        <div className="bg-surface border border-border rounded-2xl p-6 text-center text-sm text-text3">
+          {t("ownerOnly")}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto px-7 py-6">

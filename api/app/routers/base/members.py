@@ -3,7 +3,7 @@
 
 멤버 = UserFarm로 농장에 연결된 사용자. 역할은 farm 레벨 role_override 우선.
 이메일 발송 불가 환경 → '초대'는 관리자가 계정+초기 비밀번호 생성으로 처리.
-관리(생성/수정)는 FARM_OWNER / FARM_MANAGER 만 가능.
+관리(생성/수정)는 FARM_OWNER(소유자) 전용. MANAGER는 일상 운영만, 멤버 임명 불가.
 """
 from uuid import UUID
 
@@ -18,7 +18,9 @@ from app.schemas.member import MemberCreate, MemberResponse, MemberUpdate
 
 router = APIRouter(prefix="/farms", tags=["Members"])
 
-_MANAGER_ROLES = ("FARM_OWNER", "FARM_MANAGER")
+# 멤버 관리(생성/수정)는 소유자 전용 — 누가 농장에 접근하는지는 OWNER 권한.
+# (MANAGER는 일상 운영은 가능하되 멤버 임명/역할변경은 불가.)
+_OWNER_ROLES = ("FARM_OWNER", "SUPER_ADMIN")
 
 
 def _to_response(user: User, link: UserFarm) -> MemberResponse:
@@ -46,7 +48,7 @@ async def list_members(farm: FarmDep, db: DbDep):
     "/{farm_id}/members",
     response_model=MemberResponse,
     status_code=201,
-    dependencies=[require_farm_role(*_MANAGER_ROLES)],
+    dependencies=[require_farm_role(*_OWNER_ROLES)],
 )
 async def create_member(
     body: MemberCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser
@@ -86,7 +88,7 @@ async def create_member(
 @router.patch(
     "/{farm_id}/members/{user_id}",
     response_model=MemberResponse,
-    dependencies=[require_farm_role(*_MANAGER_ROLES)],
+    dependencies=[require_farm_role(*_OWNER_ROLES)],
 )
 async def update_member(
     user_id: UUID, body: MemberUpdate, farm: FarmDep, db: DbDep, current_user: CurrentUser

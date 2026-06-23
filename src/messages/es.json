@@ -478,7 +478,7 @@
     "inviteNote": "No se envía correo — cree la cuenta con una contraseña inicial y compártala con el miembro.",
     "deactivate": "Desactivar",
     "activate": "Activar",
-    "onlyManagers": "Solo propietarios/gerentes pueden agregar miembros."
+    "onlyManagers": "La gestión de miembros es solo del propietario."
   },
   "boars": {
     "title": "Gestión de verracos",
@@ -971,7 +971,8 @@
     "change": "Cambiar",
     "history": "Historial de pagos",
     "paid": "Pagado",
-    "receipt": "Recibo"
+    "receipt": "Recibo",
+    "ownerOnly": "Solo el propietario. Contacta al propietario de la granja."
   },
   "deleteAccount": {
     "confirmWord": "ELIMINAR",
@@ -989,7 +990,8 @@
     "recovery": "Se puede solicitar recuperación durante 30 días tras la eliminación; luego se borra permanentemente.",
     "typeToConfirm": "Escriba {word} para confirmar",
     "cancel": "Cancelar",
-    "deleteForever": "Eliminar cuenta permanentemente"
+    "deleteForever": "Eliminar cuenta permanentemente",
+    "ownerOnly": "Solo el propietario. Contacta al propietario de la granja."
   },
   "announcements": {
     "title": "Anuncios",
