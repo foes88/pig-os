@@ -138,11 +138,11 @@ export default function OnboardingPage() {
                 <p className="text-sm text-slate-500 mt-0.5">Tell us about your farm operation</p>
               </div>
               <Field label="Organization / Company *">
-                <input value={form.org_name} onChange={(e) => set("org_name", e.target.value)}
+                <input value={form.org_name} onChange={(e) => set("org_name", e.target.value)} data-testid="onb-org-name"
                   placeholder="e.g. WiseLake Farm Co." className="fin" />
               </Field>
               <Field label="Farm name *">
-                <input value={form.farm_name} onChange={(e) => set("farm_name", e.target.value)}
+                <input value={form.farm_name} onChange={(e) => set("farm_name", e.target.value)} data-testid="onb-farm-name"
                   placeholder="e.g. Main Farm" className="fin" />
               </Field>
               <div className="grid grid-cols-2 gap-4">
@@ -172,19 +172,19 @@ export default function OnboardingPage() {
                 <p className="text-sm text-slate-500 mt-0.5">You'll use this to sign in to PigOS</p>
               </div>
               <Field label="Full name *">
-                <input value={form.name} onChange={(e) => set("name", e.target.value)}
+                <input value={form.name} onChange={(e) => set("name", e.target.value)} data-testid="onb-name"
                   placeholder="e.g. John Kim" className="fin" />
               </Field>
               <Field label="Email address *">
-                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)}
+                <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} data-testid="onb-email"
                   placeholder="farmer@example.com" className="fin" />
               </Field>
               <Field label="Password * (min. 8 characters)">
-                <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)}
+                <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} data-testid="onb-password"
                   placeholder="••••••••" className="fin" />
               </Field>
               <Field label="Confirm password *">
-                <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} data-testid="onb-confirm"
                   placeholder="••••••••" className={`fin ${confirmPw && form.password !== confirmPw ? "!border-red-400" : ""}`} />
                 {confirmPw && form.password !== confirmPw && (
                   <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
@@ -244,7 +244,7 @@ export default function OnboardingPage() {
                 Back
               </button>
             )}
-            <button onClick={next}
+            <button onClick={next} data-testid="onb-next"
               disabled={!canProceed() || mutation.isPending}
               className="flex-1 h-11 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50
                 text-white font-semibold rounded-lg text-sm transition shadow-sm shadow-blue-200/60">
