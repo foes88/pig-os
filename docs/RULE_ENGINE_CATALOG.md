@@ -13,7 +13,7 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
         →  Finding[]  →  대시보드 알림 / 챗 응답 / 모바일 insights 배너
 ```
 
-## 규칙 33종
+## 규칙 35종
 
 > Phase B(ENGINE-NEW Tier A) 추가분 — 아래 표 뒤 "Phase B 신규" 섹션 참조.
 
@@ -71,10 +71,12 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | boar.farrow_rate_low | BOAR_FARROW_RATE | ↓ | 65 / 55 % | 웅돈별 분만율(멀티개체, 표본≥10) |
 | loss.preweaning_mortality | PREWEAN_LOSS | 금액 | — | 포유폐사 두수×출하두당가(가격 없으면 미발화) |
 | loss.pregnancy_accident | ACCIDENT_LOSS | 금액 | — | 사고건수×복당이유두수×단가 |
+| loss.npd | NPD_LOSS | 금액 | — | WEI 기반: PSY×육성률×두당가/365 × Σwei_days (S9_NPD §2) |
+| loss.sow_culling | SOW_CULL_LOSS | 금액 | — | 산차별 잔여가치 seed(KR)−salvage, 7산+ 제외 (S2_SOW_RETIREMENT) |
 | farm.health_class | FARM_HEALTH_CLASS | 종합 | RED/YEL/GREEN | 전 룰 severity 롤업(2-pass finalizer) |
 | farm.weakest_kpi | WEAKEST_KPI | 종합 | — | 최고 severity+최대 gap KPI 선정 |
 
-> **미구현(위조 방지)**: `loss.npd`·`loss.sow_culling`은 NPD 일당 기회비용·산차별 잔존가 **seed 테이블 선행 필요** → 그 전엔 만들지 않음.
+> **D-lite 완료(2026-06-24)**: `loss.npd`(WEI 기반)·`loss.sow_culling`(KR 잔여가치 seed) 활성. 타국은 잔여가치 seed 행 추가 시 자동 작동.
 
 > **국가별 조정 예**: KR PSY 목표 24, US/BR은 다른 목표 → `benchmarks` 행만 다르면 동일 규칙이 자동으로 각국 기준 적용. 운영자가 특정 농장군에 더 엄격히 하려면 `/admin/rules`에서 임계 오버라이드. Phase A에서 KR 실측 8종 주입 완료(STILLBORN/ABORTION/FCR/CULLING/SOW_MORTALITY/HIGH_PARITY/WEANING_WEIGHT/WEANING_AGE_LOW).
 
