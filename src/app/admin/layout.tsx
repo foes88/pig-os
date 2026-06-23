@@ -16,21 +16,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const t = useTranslations("admin");
   const user = useAuthStore((s) => s.user);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
+  // 미로그인만 /login 으로. (비관리자는 redirect 대신 접근거부 화면 — admin 도메인 무한루프 방지)
   useEffect(() => {
-    if (!mounted) return;
-    if (!user) router.replace("/login");
-    else if (!isPlatformAdmin(user.role)) router.replace("/");
+    if (mounted && !user) router.replace("/login");
   }, [mounted, user, router]);
 
-  // 하이드레이트 전/비인가 시 콘텐츠 노출 금지
-  if (!mounted || !user || !isPlatformAdmin(user.role)) {
+  // 하이드레이트 전 / 미로그인
+  if (!mounted || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
         <p className="text-text3 text-sm">{t("checkingAccess")}</p>
+      </div>
+    );
+  }
+
+  // 로그인했으나 비관리자 → 접근거부(루프 안전: redirect 안 함). 로그아웃 제공.
+  if (!isPlatformAdmin(user.role)) {
+    const logout = () => {
+      clearAuth();
+      document.cookie = "pigos_session=; path=/; max-age=0; SameSite=Lax";
+      router.replace("/login");
+    };
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-bg text-center px-6">
+        <ShieldCheck size={28} className="text-text3" />
+        <p className="text-sm font-bold text-text">{t("accessDeniedTitle")}</p>
+        <p className="text-xs text-text3 max-w-xs">{t("accessDeniedDesc")}</p>
+        <button onClick={logout} className="mt-1 text-xs font-semibold text-white bg-primary px-4 py-2 rounded-lg hover:opacity-90">
+          {t("accessDeniedLogout")}
+        </button>
       </div>
     );
   }

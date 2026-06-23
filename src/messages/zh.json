@@ -1556,6 +1556,9 @@
     "orgFarmCount": "{n} 农场",
     "orgUserCount": "{n} 用户",
     "orgShowFarms": "显示 {n} 个农场",
-    "orgHideFarms": "隐藏农场"
+    "orgHideFarms": "隐藏农场",
+    "accessDeniedTitle": "仅限运营者",
+    "accessDeniedDesc": "此控制台仅供 PigOS 平台运营者(SUPER_ADMIN)使用。当前账号无权访问。",
+    "accessDeniedLogout": "退出登录"
   }
 }

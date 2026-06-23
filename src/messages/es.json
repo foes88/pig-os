@@ -1556,6 +1556,9 @@
     "orgFarmCount": "{n} granjas",
     "orgUserCount": "{n} usuarios",
     "orgShowFarms": "Ver {n} granjas",
-    "orgHideFarms": "Ocultar granjas"
+    "orgHideFarms": "Ocultar granjas",
+    "accessDeniedTitle": "Solo operadores",
+    "accessDeniedDesc": "Esta consola es para operadores de la plataforma PigOS (SUPER_ADMIN). Tu cuenta no tiene acceso.",
+    "accessDeniedLogout": "Cerrar sesión"
   }
 }

@@ -1556,6 +1556,9 @@
     "orgFarmCount": "{n} trại",
     "orgUserCount": "{n} người dùng",
     "orgShowFarms": "Xem {n} trại",
-    "orgHideFarms": "Ẩn trại"
+    "orgHideFarms": "Ẩn trại",
+    "accessDeniedTitle": "Chỉ dành cho vận hành",
+    "accessDeniedDesc": "Bảng điều khiển này dành cho nhà vận hành PigOS (SUPER_ADMIN). Tài khoản của bạn không có quyền.",
+    "accessDeniedLogout": "Đăng xuất"
   }
 }

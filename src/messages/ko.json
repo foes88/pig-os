@@ -1556,6 +1556,9 @@
     "orgFarmCount": "농장 {n}",
     "orgUserCount": "사용자 {n}",
     "orgShowFarms": "농장 {n}개 보기",
-    "orgHideFarms": "농장 숨기기"
+    "orgHideFarms": "농장 숨기기",
+    "accessDeniedTitle": "운영자 전용",
+    "accessDeniedDesc": "이 콘솔은 PigOS 플랫폼 운영자(SUPER_ADMIN) 전용입니다. 현재 계정은 접근 권한이 없습니다.",
+    "accessDeniedLogout": "로그아웃"
   }
 }
