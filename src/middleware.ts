@@ -36,6 +36,26 @@ export function middleware(request: NextRequest) {
   };
 
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+
+  // ── 도메인 분리: 운영자 콘솔(/admin)은 admin.* 호스트 전용 ──────────────────
+  // 운영(admin.pigos.io): 관리자 도메인=관리자만, 고객 도메인=/admin 차단.
+  // 로컬/사설IP: 분리 안 함(둘 다 허용 — 개발·리뷰 편의). 클라(layout)+백엔드 게이트가 추가 방어.
+  const host = (request.headers.get("host") ?? "").toLowerCase();
+  const isLocalEnv =
+    host.startsWith("localhost") || host.startsWith("127.0.0.1") || /^\d+\.\d+\.\d+\.\d+/.test(host);
+  const isAdminHost = host.startsWith("admin.");
+  const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
+  if (!isLocalEnv) {
+    if (isAdminPath && !isAdminHost) {
+      // 고객 도메인에서 관리자 콘솔 노출 차단
+      return withLocale(NextResponse.redirect(new URL("/", request.url)));
+    }
+    if (isAdminHost && !isAdminPath && !isPublic) {
+      // 관리자 도메인에선 관리자/공개(login 등) 경로만 — 나머지는 /admin으로
+      return withLocale(NextResponse.redirect(new URL("/admin", request.url)));
+    }
+  }
+
   // Auth token stored in localStorage — not accessible in middleware.
   // We use a lightweight session cookie set at login time for route protection.
   const hasSession = request.cookies.has("pigos_session");
