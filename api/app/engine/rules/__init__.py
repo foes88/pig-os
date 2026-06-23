@@ -2,6 +2,7 @@
 # Addon rules are imported in their respective addon packages.
 from app.engine.rules import (  # noqa: F401
     base,
+    boar,
     disease,
     grow_finish,
     litter,

@@ -345,6 +345,27 @@ def _summer_drop(smat, sfar) -> float | None:
     return round(other_fr - summer_fr, 1)
 
 
+async def build_boar_stats(
+    db: AsyncSession, farm: Farm, window_days: int = 365, min_matings: int = 10
+) -> list[dict]:
+    """웅돈별 분만율(farrowings/matings) — 멀티개체 룰(boar.farrow_rate_low)용. 표본 부족 제외."""
+    today = date.today()
+    rows = (await db.execute(text(
+        "SELECT m.boar_id, b.ear_tag, count(DISTINCT m.id) matings, count(DISTINCT f.id) farrows "
+        "FROM matings m JOIN boars b ON b.id = m.boar_id "
+        "LEFT JOIN farrowings f ON f.mating_id = m.id AND f.deleted_at IS NULL "
+        "WHERE m.farm_id=:fid AND m.deleted_at IS NULL AND m.boar_id IS NOT NULL "
+        "AND m.mating_date BETWEEN :s AND :e "
+        "GROUP BY m.boar_id, b.ear_tag HAVING count(DISTINCT m.id) >= :mm"),
+        {"fid": str(farm.id), "s": today - timedelta(days=window_days), "e": today, "mm": min_matings},
+    )).all()
+    return [
+        {"boar_id": str(r.boar_id), "ear_tag": r.ear_tag,
+         "matings": int(r.matings), "fr": round(int(r.farrows) / int(r.matings) * 100, 1)}
+        for r in rows
+    ]
+
+
 async def build_rule_context(
     db: AsyncSession,
     farm: Farm,
@@ -383,6 +404,7 @@ async def build_rule_context(
 
     # 운영자 규칙 설정(임계/활성) — 행 없으면 빈 dict → 엔진이 코드 기본값으로 폴백
     rule_configs = await load_rule_configs(db)
+    boar_stats = await build_boar_stats(db, farm)
 
     return RuleContext(
         farm_id=farm.id,
@@ -391,7 +413,8 @@ async def build_rule_context(
         benchmarks=benchmarks,
         sow_counts=counts,
         as_of=today,
-        extra={"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs},
+        extra={"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs,
+               "boar_stats": boar_stats},
     )
 
 
@@ -556,13 +579,14 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     herd = await build_herd_kpis(db, farm)
     benchmarks = await _all_benchmarks(db, farm)
     rule_configs = await load_rule_configs(db)
+    boar_stats = await build_boar_stats(db, farm)
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
         kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
         benchmarks=benchmarks,
         sow_counts=counts,
-        extra={"rule_configs": rule_configs},
+        extra={"rule_configs": rule_configs, "boar_stats": boar_stats},
     )
     result: StructuredResult = await RuleEngine.evaluate(ctx, intent="dashboard")
 

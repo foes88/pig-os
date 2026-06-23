@@ -113,6 +113,7 @@ _CAUSE_EN.update({
     "possible_reproductive_disease_in_gilts":               "Possible reproductive disease in gilts",
     "seasonal_summer_infertility":                          "Seasonal summer infertility (farrowing-rate drop)",
     "severe_heat_stress_depressing_conception":             "Severe heat stress depressing conception",
+    "low_boar_farrowing_rate":                             "Low farrowing rate for this boar",
 })
 _CAUSE_KO.update({
     "high_stillbirth_rate":                                   "사산율 과다",
@@ -149,6 +150,7 @@ _CAUSE_KO.update({
     "possible_reproductive_disease_in_gilts":               "후보돈 번식질환 의심",
     "seasonal_summer_infertility":                          "여름철 계절성 불임(분만율 하락)",
     "severe_heat_stress_depressing_conception":             "고온스트레스로 수태 저하",
+    "low_boar_farrowing_rate":                             "해당 웅돈 분만율 저조",
 })
 _ACTION_EN.update({
     "review_farrowing_supervision":                 "Increase farrowing attendance/supervision",
@@ -187,6 +189,8 @@ _ACTION_EN.update({
     "improve_summer_cooling_and_ventilation":       "Improve summer cooling and ventilation",
     "review_summer_feed_intake_and_boar_exposure":  "Review summer feed intake and boar exposure",
     "audit_heat_abatement_and_insemination_timing": "Audit heat abatement and insemination timing",
+    "check_semen_quality_and_storage":              "Check semen quality and storage",
+    "review_boar_usage_and_libido":                 "Review boar usage rotation and libido",
 })
 _ACTION_KO.update({
     "review_farrowing_supervision":                 "분만 입회·관리 강화",
@@ -225,6 +229,8 @@ _ACTION_KO.update({
     "improve_summer_cooling_and_ventilation":       "여름 냉방·환기 개선",
     "review_summer_feed_intake_and_boar_exposure":  "여름 사료섭취·웅돈접촉 검토",
     "audit_heat_abatement_and_insemination_timing": "고온대책·수정적기 점검",
+    "check_semen_quality_and_storage":              "정액 품질·보관 점검",
+    "review_boar_usage_and_libido":                 "웅돈 사용 로테이션·성욕 검토",
 })
 
 

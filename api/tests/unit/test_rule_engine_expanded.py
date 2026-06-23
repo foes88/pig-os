@@ -17,6 +17,7 @@ from app.engine.rules.litter import (
     _total_born_low,
     _weaned_low,
 )
+from app.engine.rules.boar import _boar_farrow_rate_low
 from app.engine.rules.reproduction import _abortion_rate_high, _summer_infertility
 from app.engine.rules.sow_herd import (
     _accident_parity_skew,
@@ -217,6 +218,25 @@ class TestHerdDynamicsRules:
     def test_missing_no_finding(self):
         assert run(_replacement_rate_abnormal(ctx({}))) == []
         assert run(_summer_infertility(ctx({}))) == []
+
+
+# ── Phase B4: 웅돈별 분만율(멀티개체) ────────────────────────────────────────────
+class TestBoarRule:
+    def _ctx(self, boar_stats):
+        return RuleContext(farm_id=uuid4(), country="KR", kpi={}, benchmarks={},
+                           sow_counts={}, extra={"rule_configs": {}, "boar_stats": boar_stats})
+
+    def test_no_boars(self):
+        assert run(_boar_farrow_rate_low(self._ctx([]))) == []
+
+    def test_low_boar_flagged(self):
+        stats = [{"boar_id": "b1", "ear_tag": "B-1", "matings": 20, "fr": 60.0},   # warn (<65)
+                 {"boar_id": "b2", "ear_tag": "B-2", "matings": 15, "fr": 50.0},   # crit (<55)
+                 {"boar_id": "b3", "ear_tag": "B-3", "matings": 30, "fr": 88.0}]   # ok
+        out = run(_boar_farrow_rate_low(self._ctx(stats)))
+        assert len(out) == 2
+        sev = {f.detail["ear_tag"]: f.severity for f in out}
+        assert sev["B-1"] == Severity.WARNING and sev["B-2"] == Severity.CRITICAL
 
 
 # ── 운영자 임계 조정 반영(국가별 KPI 조정 구조) ────────────────────────────────
