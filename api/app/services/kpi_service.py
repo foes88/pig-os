@@ -5,7 +5,7 @@ PSY, MSY, NPD from DB views + Rule Engine alerts.
 Benchmarks resolved via effective_metric_values() DB function
 (farm → region → market → system).
 """
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
 from sqlalchemy import func, select, text
@@ -164,6 +164,105 @@ async def _recent_notifiable_diseases(db: AsyncSession, farm_id: UUID) -> list[d
     ]
 
 
+async def _bench_with_default(
+    db: AsyncSession, code: str, farm: Farm, dw: float, dc: float, direction: str
+) -> dict:
+    """DB 벤치마크 + 코드 기본 임계 폴백(국가 행 없으면 글로벌 기본값으로 규칙 작동)."""
+    b = await _get_benchmark(db, code, farm)
+    if b.get("warning") is None:
+        b["warning"] = dw
+    if b.get("critical") is None:
+        b["critical"] = dc
+    if not b.get("direction"):
+        b["direction"] = direction
+    return b
+
+
+async def build_herd_kpis(
+    db: AsyncSession, farm: Farm, window_days: int = 365
+) -> dict[str, float | None]:
+    """
+    롤링 window의 번식·자돈·비육 herd KPI를 실데이터로 집계해 RuleContext.kpi에 주입한다.
+    값이 없으면 None → 규칙은 빈 결과(날조 0). 국가별 임계는 benchmarks/rule_configs가 조정.
+    """
+    today = date.today()
+    p = {"fid": str(farm.id), "s": today - timedelta(days=window_days), "e": today}
+
+    def _f(v) -> float | None:
+        return float(v) if v is not None else None
+
+    matings = (await db.execute(text(
+        "SELECT count(*) FROM matings WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND mating_date BETWEEN :s AND :e"), p)).scalar() or 0
+    far = (await db.execute(text(
+        "SELECT count(*) c, sum(total_born) tb, sum(born_alive) ba, sum(stillborn) sb, "
+        "sum(mummified) mum, avg(born_alive) aba, avg(total_born) atb, "
+        "avg(avg_birth_weight_kg) abw "
+        "FROM farrowings WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND farrowing_date BETWEEN :s AND :e"), p)).one()
+    wea = (await db.execute(text(
+        "SELECT count(*) c, sum(weaned_count) wsum, avg(weaned_count) aw, "
+        "avg(weaning_age_days) aage, avg(avg_weaning_weight_kg) aww "
+        "FROM weanings WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND weaning_date BETWEEN :s AND :e"), p)).one()
+    rts = (await db.execute(text(
+        "SELECT count(*) FROM reproductive_events WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND event_type='RETURN_TO_ESTRUS' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+    abo = (await db.execute(text(
+        "SELECT count(*) FROM reproductive_events WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND event_type='ABORTION' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+    deaths = (await db.execute(text(
+        "SELECT coalesce(sum(piglet_count),0) FROM piglet_events WHERE farm_id=:fid "
+        "AND deleted_at IS NULL AND event_type='DEATH' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+    wsi_avg = (await db.execute(text(
+        "SELECT avg(wsi) FROM (SELECT (m.mating_date - (SELECT max(w.weaning_date) FROM weanings w "
+        "WHERE w.sow_id=m.sow_id AND w.deleted_at IS NULL AND w.weaning_date <= m.mating_date)) AS wsi "
+        "FROM matings m WHERE m.farm_id=:fid AND m.deleted_at IS NULL "
+        "AND m.mating_date BETWEEN :s AND :e) t WHERE wsi IS NOT NULL AND wsi >= 0"), p)).scalar()
+    gf = (await db.execute(text(
+        "SELECT coalesce(sum(head_count_in),0) hin, coalesce(sum(head_count_out),0) hout, "
+        "coalesce(sum((avg_exit_weight_kg - avg_entry_weight_kg) * head_count_out),0) gain, "
+        "coalesce(sum((end_date - start_date) * head_count_out),0) pigdays "
+        "FROM finisher_groups WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND end_date IS NOT NULL AND head_count_out IS NOT NULL "
+        "AND avg_exit_weight_kg IS NOT NULL AND avg_entry_weight_kg IS NOT NULL "
+        "AND end_date BETWEEN :s AND :e"), p)).one()
+    feed = (await db.execute(text(
+        "SELECT coalesce(sum(fr.quantity_kg),0) FROM feed_records fr "
+        "JOIN finisher_groups g ON g.id = fr.group_id AND g.deleted_at IS NULL "
+        "WHERE fr.farm_id=:fid AND fr.deleted_at IS NULL "
+        "AND g.end_date IS NOT NULL AND g.end_date BETWEEN :s AND :e"), p)).scalar() or 0
+
+    tb = float(far.tb) if far.tb else 0.0
+    wsum = float(wea.wsum) if wea.wsum else 0.0
+    deaths = float(deaths)
+    gain = float(gf.gain) if gf.gain else 0.0
+    pigdays = float(gf.pigdays) if gf.pigdays else 0.0
+    hin = float(gf.hin) if gf.hin else 0.0
+
+    def _rate(num: float, den: float) -> float | None:
+        return round(num / den * 100, 1) if den else None
+
+    return {
+        "FARROWING_RATE":    _rate(float(far.c), float(matings)),
+        "RTS_RATE":          _rate(float(rts), float(matings)),
+        "ABORTION_RATE":     _rate(float(abo), float(matings)),
+        "STILLBORN_RATE":    _rate(float(far.sb) if far.sb else 0.0, tb),
+        "MUMMIFIED_RATE":    _rate(float(far.mum) if far.mum else 0.0, tb),
+        "PWMR":              _rate(deaths, wsum + deaths),
+        "WSI":               round(float(wsi_avg), 1) if wsi_avg is not None else None,
+        "AVG_TOTAL_BORN":    round(_f(far.atb), 1) if far.atb is not None else None,
+        "AVG_BORN_ALIVE":    round(_f(far.aba), 1) if far.aba is not None else None,
+        "AVG_WEANED":        round(_f(wea.aw), 1) if wea.aw is not None else None,
+        "AVG_BIRTH_WEIGHT":  round(_f(far.abw), 2) if far.abw is not None else None,
+        "AVG_WEANING_WEIGHT": round(_f(wea.aww), 2) if wea.aww is not None else None,
+        "AVG_WEANING_AGE":   round(_f(wea.aage), 1) if wea.aage is not None else None,
+        "ADG":               round(gain / pigdays * 1000, 1) if pigdays else None,
+        "FCR":               round(float(feed) / gain, 3) if gain else None,
+        "FINISH_MORTALITY":  _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
+    }
+
+
 async def build_rule_context(
     db: AsyncSession,
     farm: Farm,
@@ -182,16 +281,19 @@ async def build_rule_context(
     # Resolve benchmarks
     psy_bench = await _get_benchmark(db, "PSY", farm)
     npd_bench = await _get_benchmark(db, "NPD", farm)
+    fr_bench = await _bench_with_default(db, "FARROWING_RATE", farm, 85.0, 80.0, "below")
 
-    # KPI values
+    # KPI values — herd 집계(번식·자돈·비육) + PSY/NPD. explicit가 herd 위에 우선.
+    herd = await build_herd_kpis(db, farm)
     if kpi_overrides:
-        kpi = kpi_overrides
+        kpi = {**herd, **kpi_overrides}
     else:
         psy_detail = await calculate_psy(db, farm.id, year)
         npd_detail = await calculate_npd_breakdown(
             db, farm.id, date(today.year, 1, 1), today
         )
         kpi = {
+            **herd,
             "PSY": psy_detail.psy if psy_detail else None,
             "NPD": npd_detail.avg_npd,
         }
@@ -209,6 +311,7 @@ async def build_rule_context(
         benchmarks={
             "PSY": psy_bench,
             "NPD": npd_bench,
+            "FARROWING_RATE": fr_bench,
         },
         sow_counts=counts,
         as_of=today,
@@ -373,12 +476,17 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     ) or 0
 
     # Rule Engine — base tier only (no addon subscriptions needed)
+    # herd 집계(번식·자돈·비육) 주입 → 대시보드 알림도 확장 규칙 노출. explicit FR 우선.
+    herd = await build_herd_kpis(db, farm)
+    fr_bench = await _bench_with_default(db, "FARROWING_RATE", farm, 85.0, 80.0, "below")
+    rule_configs = await load_rule_configs(db)
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
-        kpi={"PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
-        benchmarks={"PSY": psy_bench, "NPD": npd_bench},
+        kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
+        benchmarks={"PSY": psy_bench, "NPD": npd_bench, "FARROWING_RATE": fr_bench},
         sow_counts=counts,
+        extra={"rule_configs": rule_configs},
     )
     result: StructuredResult = await RuleEngine.evaluate(ctx, intent="dashboard")
 

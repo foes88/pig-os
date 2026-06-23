@@ -150,3 +150,37 @@ async def _pwmr_high(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("pwmr.high", "pwmr", "Pre-weaning mortality high", _pwmr_high))
+
+
+# ── Abortion rate high ────────────────────────────────────────────────────────
+ABORTION_WARNING, ABORTION_CRITICAL = 3.0, 5.0       # % of services
+
+async def _abortion_rate_high(ctx: RuleContext) -> list[Finding]:
+    rate = ctx.kpi.get("ABORTION_RATE")
+    if rate is None:
+        return []
+    warning, critical = _thresholds(
+        ctx, "ABORTION_RATE", *_cfg_default(ctx, "abortion.rate_high", ABORTION_WARNING, ABORTION_CRITICAL)
+    )
+    severity = _severity_above(rate, warning, critical)
+    if severity is None:
+        return []
+
+    causes = ["elevated_abortion_rate"]
+    actions = ["review_gestation_biosecurity_and_vaccination", "audit_feed_quality_and_mycotoxins"]
+    if severity == Severity.CRITICAL:
+        causes.append("possible_abortive_disease")
+        actions.append("screen_for_abortive_pathogens")
+
+    return [Finding(
+        rule_id="abortion.rate_high",
+        kpi="ABORTION_RATE",
+        severity=severity,
+        current_value=rate,
+        target_value=warning,
+        causes=causes,
+        recommended_actions=actions,
+    )]
+
+
+RuleRegistry.register(Rule("abortion.rate_high", "abortion", "Abortion rate high", _abortion_rate_high))
