@@ -1,5 +1,14 @@
 # PigOS 진행 상황
 
+## [현재상태 2026-06-24] — Rule Engine 40종 + D1~D4 + 배포준비 + UAT (origin/main 푸시 완료)
+- **Rule Engine 8→40종**: 피그플랜 136룰 본문 재검증(handoff/pigplan-rules/) 기반. 번식·자돈·비육·모돈군·웅돈·손실·종합·건강 + 임신감정/MSY/배치. 국가 차등은 seed(default_metric_values, `if country==` 0), AI Insight(LLM Renderer) 7개어.
+- **신규 입력기능**: D1 임신감정(pregnancy-check 풀스택+conception.rate_low) · D2 자돈폐사 사유/일령(룰2+mortality 리포트 일령분해) · D3 MSY · D4 배치(AIAO).
+- **배포 사전점검**: 블로커 2건 수정(CORS admin 오리진 / NEXT_PUBLIC build ARG), root .env.example, 런북 보강. 실서버 배포는 사람(런북 §0~6).
+- **UAT**: live E2E 35/35 · 탐지 라운드트립 테스트(실데이터→탐지→알림 RED) · pytest **485** · ruff/tsc/build green.
+- **i18n 7개어**: en/zh/es/vi/th/pt + ko(관리자). 1337키 누락0, th/pt 잔여 ~650키 실번역 완료(잔량 th17·pt51=acronym/코드).
+- **모바일**: docs/contract(openapi·catalog·validation-ref) 동기화 + 핸드오프 공지. **origin/main 푸시됨** → 모바일 `git pull` 가능.
+- **보류(7월 이후)**: D5(BCS)·D6(치료) = 신규 입력기능(인프라 0, KR 임계값 로드맵 보존). E(전국벤치·크롤러·예측)=네이티브 피드 선행.
+
 ## [야간스프린트 시작 2026-06-15 / DB_OK=false (partial)]
 - 환경: Cowork 샌드박스(리눅스). Docker/Postgres/psql 없음, root 불가 → 운영 DB·테스트 DB 연결 불가.
 - 그러나 시스템 Python 3.10 + `datetime.UTC` shim(/tmp/shim, 저장소 미변경)으로 **import-smoke + unit 테스트 실제 실행 가능**.
