@@ -309,6 +309,29 @@ export interface CreateReproductiveEventRequest {
   notes?: string;
 }
 
+export interface CreatePregnancyCheckRequest {
+  sow_id: string;
+  check_date: string;
+  result: "POSITIVE" | "NEGATIVE" | "UNCERTAIN";
+  mating_id?: string;
+  days_after_mating?: number;
+  method?: "ULTRASOUND" | "DOPPLER" | "VISUAL" | "BLOOD" | "OTHER";
+  notes?: string;
+}
+
+export interface PregnancyCheck {
+  id: string;
+  farm_id: string;
+  sow_id: string;
+  mating_id?: string | null;
+  check_date: string;
+  days_after_mating?: number | null;
+  result: string;
+  method?: string | null;
+  created_at: string;
+  insights?: EventInsight[];
+}
+
 export interface SowCullRequest {
   removal_type: "CULLED" | "DEAD" | "SOLD" | "TRANSFER";
   removal_date: string;

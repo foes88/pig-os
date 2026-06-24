@@ -3,12 +3,14 @@ import type {
   CreateFarrowingRequest,
   CreateMatingRequest,
   CreatePigletEventRequest,
+  CreatePregnancyCheckRequest,
   CreateReproductiveEventRequest,
   CreateWeaningRequest,
   Farrowing,
   LedgerEntry,
   Mating,
   PigletEventRecord,
+  PregnancyCheck,
   ReproductiveEvent,
   UpdateFarrowingRequest,
   UpdateMatingRequest,
@@ -88,6 +90,18 @@ export const eventsApi = {
     create: (farmId: string, body: CreatePigletEventRequest) =>
       apiClient
         .post<PigletEventRecord>(`${base(farmId)}/piglet_events`, body)
+        .then((r) => r.data),
+  },
+
+  pregnancyChecks: {
+    list: (farmId: string, sowId?: string) =>
+      apiClient
+        .get<PregnancyCheck[]>(`${base(farmId)}/pregnancy_checks`, { params: { sow_id: sowId } })
+        .then((r) => r.data),
+
+    create: (farmId: string, body: CreatePregnancyCheckRequest) =>
+      apiClient
+        .post<PregnancyCheck>(`${base(farmId)}/pregnancy_checks`, body)
         .then((r) => r.data),
   },
 };

@@ -24,6 +24,7 @@ import type {
   CreateFarrowingRequest,
   CreateWeaningRequest,
   CreateReproductiveEventRequest,
+  CreatePregnancyCheckRequest,
   SowCullRequest,
   CreatePigletEventRequest,
   EventInsight,
@@ -31,13 +32,14 @@ import type {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-type EventType = "farrowing" | "mating" | "weaning" | "repro" | "cull" | "piglet_death";
+type EventType = "farrowing" | "mating" | "weaning" | "preg_check" | "repro" | "cull" | "piglet_death";
 
 // label은 record.tabXxx 키로 해석
 const EVENT_TYPES: { value: EventType; labelKey: string; color: string; bg: string }[] = [
   { value: "farrowing",    labelKey: "tabFarrowing",   color: "#0E9F6E", bg: "#0E9F6E18" },
   { value: "mating",       labelKey: "tabMating",      color: "#0F6342", bg: "#0F634218" },
   { value: "weaning",      labelKey: "tabWeaning",     color: "#D97706", bg: "#D9770618" },
+  { value: "preg_check",   labelKey: "tabPregCheck",   color: "#2563EB", bg: "#2563EB18" },
   { value: "repro",        labelKey: "tabRepro",       color: "#5F4B2C", bg: "#5F4B2C18" },
   { value: "cull",         labelKey: "tabCull",        color: "#DC2626", bg: "#DC262618" },
   { value: "piglet_death", labelKey: "tabPigletDeath", color: "#9D174D", bg: "#9D174D18" },
@@ -323,6 +325,9 @@ export default function RecordPage() {
                   )}
                   {eventType === "weaning" && (
                     <WeaningPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "preg_check" && (
+                    <PregnancyCheckPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
                   )}
                   {eventType === "repro" && (
                     <ReproPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
@@ -617,6 +622,86 @@ function WeaningPanel({ farmId, sow, onSaved }: PanelProps) {
           <Check size={15} /> {t("save")}
         </button>
         <button type="button" disabled={count < 1 || mutation.isPending} onClick={() => submit(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
+    </div>
+  );
+}
+
+// ─── Pregnancy Check Panel (D1) ───────────────────────────────────────────────
+
+const PREG_RESULT_KEYS = [
+  { value: "POSITIVE",  key: "pcPositive" },
+  { value: "NEGATIVE",  key: "pcNegative" },
+  { value: "UNCERTAIN", key: "pcUncertain" },
+];
+
+function PregnancyCheckPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
+  const [form, setForm] = useState<CreatePregnancyCheckRequest>({
+    sow_id: sow.id, check_date: today(), result: "POSITIVE",
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: (goNext: boolean) =>
+      eventsApi.pregnancyChecks
+        .create(farmId, { ...form, sow_id: sow.id })
+        .then((resp) => ({ goNext, insights: resp.insights })),
+    onSuccess: ({ goNext, insights }) => {
+      const k = PREG_RESULT_KEYS.find((x) => x.value === form.result)?.key;
+      onSaved(t("savedPregCheck", { tag: sow.ear_tag, label: k ? t(k) : "" }), sow.id, goNext, insights);
+      setForm({ sow_id: sow.id, check_date: today(), result: "POSITIVE" });
+      setError(null);
+    },
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
+  });
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="brand" />
+      <Group label={t("pcResult")}>
+        <p className="text-xs text-muted -mt-1">{t("pcDesc")}</p>
+        <Field label={t("pcResult")}>
+          <select value={form.result}
+            onChange={(e) => setForm((f) => ({ ...f, result: e.target.value as CreatePregnancyCheckRequest["result"] }))}
+            className="input" data-testid="pc-result">
+            {PREG_RESULT_KEYS.map((r) => <option key={r.value} value={r.value}>{t(r.key)}</option>)}
+          </select>
+        </Field>
+        {form.result === "NEGATIVE" && (
+          <p className="text-xs text-warning">{t("pcNegativeHint")}</p>
+        )}
+        <DateField label={t("pcCheckDate")} value={form.check_date}
+          onChange={(v) => setForm((f) => ({ ...f, check_date: v }))} />
+        <Field label={t("pcDaysAfter")}>
+          <input type="number" min={1} max={120} value={form.days_after_mating ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, days_after_mating: e.target.value ? Number(e.target.value) : undefined }))}
+            placeholder={t("pcDaysAfterPh")} className="input" />
+        </Field>
+        <Field label={t("pcMethod")}>
+          <select value={form.method ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, method: (e.target.value || undefined) as CreatePregnancyCheckRequest["method"] }))}
+            className="input">
+            <option value="">—</option>
+            <option value="ULTRASOUND">{t("pcmUltrasound")}</option>
+            <option value="DOPPLER">{t("pcmDoppler")}</option>
+            <option value="VISUAL">{t("pcmVisual")}</option>
+            <option value="BLOOD">{t("pcmBlood")}</option>
+            <option value="OTHER">{t("pcmOther")}</option>
+          </select>
+        </Field>
+      </Group>
+      {error && <ValidationBanner tone="red" title={error} />}
+      <RecordFooter>
+        <button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={mutation.isPending} onClick={() => mutation.mutate(true)}
           className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
           {mutation.isPending ? t("saving") : t("saveNext")}
         </button>
