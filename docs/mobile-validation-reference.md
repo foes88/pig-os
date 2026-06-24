@@ -104,7 +104,7 @@ culling   : 모든 활성상태             → CULLED
 ## 11. 탐지 계층(SOFT / AI Rule Engine) — 검증과 별개
 HARD 검증(위 1~10, 입력 차단)과 달리, **탐지는 막지 않고 알려준다**(저장 후 또는 herd 집계 기준).
 - **이벤트 insights**: 이벤트 POST 응답 `insights[]`(분만 사산율·실산자, 이유 포유폐사율·이유일령, 교배 WSI 등) → 배너 렌더만.
-- **AI Rule Engine 38종**: 번식·자돈·비육·모돈군·웅돈·손실·종합·건강 KPI 탐지. 전수 = `docs/RULE_ENGINE_CATALOG.md`. 노출처 = 대시보드 알림 · `GET /alerts/*` · 챗. **목록 가변**(운영자 `/admin/rules` 추가/조정) → 모바일은 서버 rule_id/severity/문구 렌더만, 하드코딩 금지.
+- **AI Rule Engine 40종**: 번식·자돈·비육·모돈군·웅돈·손실·종합·건강 KPI 탐지. 전수 = `docs/RULE_ENGINE_CATALOG.md`. 노출처 = 대시보드 알림 · `GET /alerts/*` · 챗. **목록 가변**(운영자 `/admin/rules` 추가/조정) → 모바일은 서버 rule_id/severity/문구 렌더만, 하드코딩 금지.
 - **임계는 운영자/국가가 조정**: `/admin/rules`(DB·무배포) + 국가 benchmark. **모바일은 판정/임계 재구현 0** — 서버 severity·문구만 표시.
 
 > 변경 시 이 문서 = 단일 소스. 백엔드 검증 추가/변경되면 여기 + 웹 Zod + 모바일 동시 갱신.

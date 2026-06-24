@@ -13,7 +13,7 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
         →  Finding[]  →  대시보드 알림 / 챗 응답 / 모바일 insights 배너
 ```
 
-## 규칙 38종
+## 규칙 40종
 
 > Phase B(ENGINE-NEW Tier A) 추가분 — 아래 표 뒤 "Phase B 신규" 섹션 참조.
 
@@ -57,6 +57,8 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | culling.rate_high | CULLING_RATE | ↑ | 45 / 55 % |
 | sow_mortality.high | SOW_MORTALITY | ↑ | 8 / 12 % |
 | parity.high_ratio | HIGH_PARITY_RATIO(7산+) | ↑ | 20 / 30 % |
+| msy.below_bep | MSY | ↓ | 17 / 15 (출하/모돈/년, D3) |
+| batch.aiao_detect | BATCH_DOW_CONCENTRATION | INFO | >50% 요일집중→배치운영 분류 (D4) |
 
 ### 건강/재고 (Health / Inventory)
 | rule_id | KPI | 내용 |
