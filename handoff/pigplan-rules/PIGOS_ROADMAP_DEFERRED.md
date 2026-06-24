@@ -9,16 +9,18 @@
 ## Phase D-heavy — 신규 데이터 입력기능 → 그 위 룰
 각 항목 = **입력 UI + 모델 + 마이그레이션이 선행**, 그 다음 룰. 독립적이라 하나씩 진행.
 
-| # | 입력기능 (선행) | 활성될 룰 | KR 근거 | 우선도 |
+| # | 입력기능 (선행) | 활성될 룰 | KR 근거 | 상태 |
 |---|---|---|---|---|
-| D1 | **임신감정(pregnancy-check)** 이벤트 입력 | `conception.rate_low` + `abortion.rate_high` 분모 정밀화(risk-population) | PREG_ACCIDENT_DENOM | ★ 높음(번식 핵심) |
-| D2 | **자돈 폐사 사유·일령** 코딩(piglet_events에 reason/age) | `piglet.crushing_rate`·`piglet.lbw_rate`·`piglet.death_age_skew`·`piglet.cause_trend` | PIGLET_DEATH_KPI_V1·AGE_DEATH_ANALYSIS·REASON_TREND | ★ 높음(PWMR 심화) |
-| D3 | **MSY 산출**(출하↔모돈 연결 또는 스냅샷) | `msy.below_bep`(BEP 17.0) | MSY_BEP | 중 |
-| D4 | **배치(AIAO) 16주+ 이력 집계** | `batch.aiao_detect`(요일집중·주기 fitness) | BATCH_MGMT·BATCH_CONCENTRATION·BATCH_CYCLE_CONFIG | 중 |
-| D5 | **BCS·체중 입력** | (heat/BCS 룰) | BCS_THRESHOLD·HEAT_DETECTION_THRESHOLD | 낮음(seed는 이미 대기) |
-| D6 | **치료이력(약품) 입력 활용** | `treatment.frequency_high` | TREATMENT_THRESHOLD | 낮음(health_events 존재, 집계만) |
+| D1 | **임신감정(pregnancy-check)** 이벤트 입력 | `conception.rate_low` | PREG_ACCIDENT_DENOM | ✅ 완료(백+프론트+모바일) |
+| D2 | **자돈 폐사 사유·일령**(이미 캡처: reason+age_days 자동) | `piglet.crushing_rate_high`·`piglet.death_age_skew` (+ mortality 리포트 사유분해) | PIGLET_DEATH_KPI_V1·AGE_DEATH | ✅ 완료(룰+리포트) |
+| D3 | **MSY 산출**(비육 head_out/활성모돈) | `msy.below_bep`(BEP 17.0) | MSY_BEP | ✅ 완료 |
+| D4 | **배치(AIAO) 교배 요일집중** | `batch.aiao_detect`(INFO 분류) | BATCH_MGMT·BATCH_CONCENTRATION | ✅ 완료(단순판 — 주기 fitness는 후속) |
+| D5 | **BCS·체중 입력** ⬜ **인프라 0(새 테이블 필요)** | (BCS 룰) | BCS_THRESHOLD·HEAT_DETECTION | ⬜ 미착수 — 입력기능 설계 필요 |
+| D6 | **치료이력(약품) 입력 플로우** ⬜ **health_events 비어있음** | `treatment.frequency_high` | TREATMENT_THRESHOLD | ⬜ 미착수 — 입력 플로우 정의 필요 |
 
-> seed는 이미 system 기본으로 일부 대기(THI/BCS/TREATMENT/HEAT/MSY) — 입력·집계가 붙으면 즉시 작동.
+> **현재 결정론 룰엔진 = 40종**(D1~D4 반영). 데이터가 실제로 캡처되는 탐지는 사실상 전부 구현.
+> D5/D6는 **룰 추가가 아니라 신규 입력기능 프로젝트** — 데이터 없이 룰만 만들면 위조라 미착수. 입력기능부터 설계 후 진행.
+> 후속 미세룰: `piglet.cause_trend`(주간 연속1위 streak — 시계열 윈도잉), 배치 주기 fitness, abortion 분모 risk-population 정밀화.
 
 ---
 
