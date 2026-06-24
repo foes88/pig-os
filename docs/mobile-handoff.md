@@ -19,7 +19,7 @@ cp /c/dev/PigOS/docs/api/openapi-v1.yaml                   docs/contract/
 cp /c/dev/PigOS/docs/specs/2026-05-19_offline-sync-spec.md docs/contract/
 cp /c/dev/PigOS/docs/specs/2026-06-19_partial-weaning-spec.md docs/contract/   # 계약서가 참조
 cp /c/dev/PigOS/docs/mobile-validation-reference.md           docs/contract/   # 정합성 검증 단일소스
-cp /c/dev/PigOS/docs/RULE_ENGINE_CATALOG.md                   docs/contract/   # AI 탐지 규칙 36종 전수
+cp /c/dev/PigOS/docs/RULE_ENGINE_CATALOG.md                   docs/contract/   # AI 탐지 규칙 38종 전수
 git add docs/contract && git commit -m "docs: sync backend contract (YYYY-MM-DD)"
 
 # (참고) 계약서가 참조하는 스펙이 늘면 이 cp 목록에도 같이 추가할 것.
@@ -86,7 +86,7 @@ cd <pigos-ios> && claude --dangerously-skip-permissions
 - **🆕 7개 언어(2026-06-23)**: 로케일 7개 = 공개 6개(`en`·`zh`·`es`·`vi`·`th`·`pt`) + `ko`(플랫폼 관리자 전용, 일반/로그인전 숨김). 모바일도 동일 7로케일. 신규 추가 = 태국어(th)·브라질 포르투갈어(pt). 현재 웹 번역: 공통/메뉴/로그인/상태/오류/검증/알림은 th/pt 실번역, 나머지 화면은 영어 폴백(점진 번역 — `docs/verification/i18n_coverage_2026-06-23.md`). 모바일도 동일 키 세트 사용 + 미번역은 en 폴백 권장. 언어≠국가(단위/통화는 `GET /farms/{id}/config`).
 - **🆕 정합성 검증 참조(2026-06-23)**: 모바일 클라 사전검증을 웹/백엔드와 동일하게 `docs/mobile-validation-reference.md` 단일소스로. 분만/이유/교배/양자/도폐사/비육 임계 + 상태전이 + 날짜정합 + 미래일유예 전수. 백엔드=권위(422/409/423), 모바일은 즉시 UX피드백.
 - **🆕 임신감정(pregnancy-check, D1, 2026-06-24)**: 신규 엔드포인트 `POST/GET /api/v1/farms/{id}/events/pregnancy_checks` (OpenAPI 재생성됨 — `cp` 재동기화 필요). body: `{sow_id, check_date, result: POSITIVE|NEGATIVE|UNCERTAIN, days_after_mating?, method?(ULTRASOUND/DOPPLER/VISUAL/BLOOD/OTHER), mating_id?, notes?}`. **PREGNANT 모돈만**(아니면 422), **NEGATIVE=공태 → 모돈 ACCIDENT 전이**(서버 처리, 모바일은 반영만). 모바일 record 화면에 "임신감정" 탭 추가(웹 동일). 신규 룰 `conception.rate_low` 연동. ⚠️ **현재 sync 6엔티티에 미포함 = REST 온라인 입력만**(오프라인 sync 추가는 후속 결정 — 합의 전 Room/CoreData 엔티티 추가 보류).
-- **🆕 Rule Engine 확장 36종(2026-06-24)**: AI 탐지 규칙 8→36종(번식·자돈·비육·모돈군·웅돈·손실·종합·건강·임신감정). 전수 = `docs/RULE_ENGINE_CATALOG.md`(contract/로 동기화됨). **모바일은 탐지 로직 재구현 0·룰 목록 하드코딩 0** — 이벤트 POST 응답의 `insights[]`와 `GET /alerts/*`, 대시보드 알림을 **배너로 렌더만**. 규칙은 운영자가 `/admin/rules`에서 추가/조정(무배포)하므로 **목록은 가변** — 서버가 내려준 rule_id/severity/문구를 그대로 표시(임계·판정 하드코딩 금지). 국가별 benchmark 자동 적용. 손실금액 등 미보유 데이터 위조 금지. API 계약(스키마)은 불변 — insights/alerts 필드 그대로.
+- **🆕 Rule Engine 확장 38종(2026-06-24)**: AI 탐지 규칙 8→38종(번식·자돈·비육·모돈군·웅돈·손실·종합·건강·임신감정·자돈폐사사유). 전수 = `docs/RULE_ENGINE_CATALOG.md`(contract/로 동기화됨). **모바일은 탐지 로직 재구현 0·룰 목록 하드코딩 0** — 이벤트 POST 응답의 `insights[]`와 `GET /alerts/*`, 대시보드 알림을 **배너로 렌더만**. 규칙은 운영자가 `/admin/rules`에서 추가/조정(무배포)하므로 **목록은 가변** — 서버가 내려준 rule_id/severity/문구를 그대로 표시(임계·판정 하드코딩 금지). 국가별 benchmark 자동 적용. 손실금액 등 미보유 데이터 위조 금지. API 계약(스키마)은 불변 — insights/alerts 필드 그대로.
 - **플랫폼별 글루(§8b)**: 네트워크 평문예외·푸시·로컬DB·백그라운드는 OS API가 달라 iOS/Android **각각** 검증.
 - **검증 현황(백엔드/웹)**: ruff·tsc·i18n(1084×5)·build 그린 / pytest 379 · live E2E 30 통과 / vitest는 로컬 Node<20.12로 보류(`docs/verification/qa_qc_2026-06-19.md`). 모바일은 동일 계약을 단말에서 재검증.
 - 릴리스 = 8a 공통 통과 + 8b 각각 통과 + 계약서 §6 갭(G1 푸시활성화/G4 실단말 sync/G5 이미지) closed 또는 "다음 버전" 합의.

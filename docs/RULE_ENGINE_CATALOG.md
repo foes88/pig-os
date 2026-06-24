@@ -13,7 +13,7 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
         →  Finding[]  →  대시보드 알림 / 챗 응답 / 모바일 insights 배너
 ```
 
-## 규칙 36종
+## 규칙 38종
 
 > Phase B(ENGINE-NEW Tier A) 추가분 — 아래 표 뒤 "Phase B 신규" 섹션 참조.
 
@@ -41,6 +41,8 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | weaning_weight.low | WEANING_WEIGHT | ↓ | 5.5 / 5.0 kg |
 | lactation.too_short | WEANING_AGE (LOW 벤치) | ↓ | 19 / 16 일 |
 | lactation.too_long | WEANING_AGE (HIGH 벤치) | ↑ | 28 / 35 일 |
+| piglet.crushing_rate_high | CRUSHING_RATE | ↑ | 6 / 10 % (압사/실산, D2) |
+| piglet.death_age_skew | DEATH_AGE_0_3_RATIO | ↑ | 70 / 80 % (0~3일 폐사 편중→분만관리, D2) |
 
 ### 비육 (Grow-finish)
 | rule_id | KPI | 방향 | 코드 기본 임계 |
