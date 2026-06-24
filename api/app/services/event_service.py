@@ -508,7 +508,9 @@ async def record_weaning(
     # 데이터 정합성: 이유된 자돈을 그룹으로 추적(떠다니는 두수 방지, PSY→MSY 사슬 연결).
     # 이유 1건 = 자돈그룹 1개 자동 생성. 같은 날 부분이유 복수 대비 weaning id suffix로 충돌 방지.
     if req.weaned_count > 0:
-        code = f"WG-{req.weaning_date:%y%m%d}-{sow.ear_tag}-{str(weaning.id)[:4]}"
+        # group_code는 VARCHAR(30) — ear_tag 길이에 무관하게 길이 보장(INTEG-1).
+        # weaning.id로 유일성 확보(같은 날 부분이유 복수 충돌 방지), ear_tag는 notes에 보존.
+        code = f"WG-{req.weaning_date:%y%m%d}-{str(weaning.id)[:8]}"  # 18자 ≤ 30
         exists = await db.scalar(
             select(PigletGroup).where(PigletGroup.farm_id == farm_id, PigletGroup.group_code == code)
         )
@@ -712,6 +714,17 @@ async def record_piglet_event(
             raise ValidationError(
                 f"Cross-foster counterpart sow must be lactating (current: {target.status})"
             )
+        # TENANT#1 — target_farrowing_id 주어지면 같은 농장 분만인지 검증(교차테넌트 dangling FK 방지)
+        if req.target_farrowing_id:
+            tgt_far = await db.scalar(
+                select(Farrowing).where(
+                    Farrowing.id == req.target_farrowing_id,
+                    Farrowing.farm_id == farm_id,
+                    Farrowing.deleted_at.is_(None),
+                )
+            )
+            if not tgt_far:
+                raise ValidationError("target_farrowing_id is not a valid farrowing in this farm")
         # V3 — 양자 전입(FOSTER_IN) 후 이 모돈 포유두수가 상한 초과 시 차단(과혼잡 방지)
         if req.event_type == "FOSTER_IN":
             fi, fo, dd = await _calc_piglet_adjustments(db, farrowing.id)
@@ -721,14 +734,15 @@ async def record_piglet_event(
                     f"Nursing count after foster-in ({nursing_after}) exceeds max {MAX_NURSING_COUNT}"
                 )
 
-    # 정합성: 자돈 폐사 두수는 현재 포유 두수(생존+양자in-양자out-기존폐사) 초과 불가.
-    # (초과 시 이유두수 공식이 음수로 깨져 두수가 안 맞음)
-    if req.event_type == "DEATH":
+    # 정합성: 포유 두수를 줄이는 이벤트(폐사·양자전출)는 현재 포유 두수 초과 불가.
+    # (초과 시 포유두수가 음수 → 이유두수 공식이 깨져 두수 꼬임. C3: FOSTER_OUT도 가드)
+    if req.event_type in ("DEATH", "FOSTER_OUT"):
         foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
         nursing = farrowing.born_alive + foster_in - foster_out - deaths
         if req.piglet_count > nursing:
+            label = "Piglet deaths" if req.event_type == "DEATH" else "Foster-out count"
             raise ValidationError(
-                f"Piglet deaths ({req.piglet_count}) exceed current nursing count "
+                f"{label} ({req.piglet_count}) exceed current nursing count "
                 f"({farrowing.born_alive} born_alive + {foster_in} in - {foster_out} out "
                 f"- {deaths} prior deaths = {nursing})"
             )
@@ -970,6 +984,13 @@ async def delete_weaning(db, farm_id, user_id, weaning_id) -> None:
         raise NotFoundError(f"Weaning {weaning_id} not found")
     await _ensure_period_unlocked(db, farm_id, w.weaning_date)
     w.deleted_at = datetime.now(UTC)
+    # BUG-3: 이유 시 자동생성된 자돈그룹(WG-...)도 soft-delete(유령 재고 방지). create와 동일 code.
+    wg_code = f"WG-{w.weaning_date:%y%m%d}-{str(w.id)[:8]}"
+    wg = await db.scalar(select(PigletGroup).where(
+        PigletGroup.farm_id == farm_id, PigletGroup.group_code == wg_code,
+        PigletGroup.deleted_at.is_(None)))
+    if wg:
+        wg.deleted_at = datetime.now(UTC)
     sow = await _get_active_sow(db, farm_id, w.sow_id)
     sow.status = rollback_status_on_delete("weaning")
     if w.breeding_cycle_id:

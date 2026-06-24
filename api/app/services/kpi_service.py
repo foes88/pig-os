@@ -604,12 +604,14 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         select(func.count()).select_from(Mating).where(
             Mating.farm_id == farm.id,
             Mating.mating_date >= date(today.year, 1, 1),
+            Mating.deleted_at.is_(None),  # INTEG-2: soft-delete 제외(드리프트 방지)
         )
     )
     farrowing_count = await db.scalar(
         select(func.count()).select_from(Farrowing).where(
             Farrowing.farm_id == farm.id,
             Farrowing.farrowing_date >= date(today.year, 1, 1),
+            Farrowing.deleted_at.is_(None),  # INTEG-2: soft-delete 제외
         )
     )
     farrowing_rate = (farrowing_count / mating_count * 100) if mating_count else None
