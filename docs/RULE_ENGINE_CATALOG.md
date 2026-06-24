@@ -13,7 +13,7 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
         →  Finding[]  →  대시보드 알림 / 챗 응답 / 모바일 insights 배너
 ```
 
-## 규칙 35종
+## 규칙 36종
 
 > Phase B(ENGINE-NEW Tier A) 추가분 — 아래 표 뒤 "Phase B 신규" 섹션 참조.
 
@@ -26,6 +26,7 @@ build_herd_kpis(롤링 365일 집계)  →  RuleContext.kpi
 | wsi.overdue | WSI | ↑ | 10 / 14 일 |
 | rts.rate_high | RTS_RATE | ↑ | 15 / 25 % |
 | abortion.rate_high | ABORTION_RATE | ↑ | 3 / 5 % |
+| conception.rate_low | CONCEPTION_RATE | ↓ | 85 / 80 % (임신감정 양성/(양성+음성), 표본≥5) |
 
 ### 자돈/복 성적 (Litter)
 | rule_id | KPI | 방향 | 코드 기본 임계 |

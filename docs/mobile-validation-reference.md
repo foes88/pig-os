@@ -35,6 +35,15 @@
 | 웅돈 상태 | ACTIVE 웅돈만 사용 | HARD |
 | 동일일자 중복 교배 | 같은 모돈·같은 날짜 중복 | CONFLICT(409) |
 
+## 3b. 임신감정 (Pregnancy check, D1)  — `event_service.record_pregnancy_check`
+| 규칙 | 내용 | 유형 |
+|---|---|---|
+| 대상 모돈 상태 | **PREGNANT만**(교배 후) | HARD(422) |
+| result enum | POSITIVE / NEGATIVE / UNCERTAIN | HARD |
+| 음성(NEGATIVE) 전이 | 공태 → 모돈 **ACCIDENT** + 사이클 FAILED (서버 자동) | 서버 |
+| 감정일 ≥ 입식일 | event_within_sow_lifespan | HARD |
+> 엔드포인트 `POST/GET /events/pregnancy_checks`. 음성=재교배 대기, 모바일은 상태 반영만.
+
 ## 4. 양자 (Cross-fostering)  — `validators/cross_fostering.py` + `event_service`
 | 규칙 | 내용 | 유형 |
 |---|---|---|
@@ -95,7 +104,7 @@ culling   : 모든 활성상태             → CULLED
 ## 11. 탐지 계층(SOFT / AI Rule Engine) — 검증과 별개
 HARD 검증(위 1~10, 입력 차단)과 달리, **탐지는 막지 않고 알려준다**(저장 후 또는 herd 집계 기준).
 - **이벤트 insights**: 이벤트 POST 응답 `insights[]`(분만 사산율·실산자, 이유 포유폐사율·이유일령, 교배 WSI 등) → 배너 렌더만.
-- **AI Rule Engine 35종**: 번식·자돈·비육·모돈군·웅돈·손실·종합·건강 KPI 탐지. 전수 = `docs/RULE_ENGINE_CATALOG.md`. 노출처 = 대시보드 알림 · `GET /alerts/*` · 챗. **목록 가변**(운영자 `/admin/rules` 추가/조정) → 모바일은 서버 rule_id/severity/문구 렌더만, 하드코딩 금지.
+- **AI Rule Engine 36종**: 번식·자돈·비육·모돈군·웅돈·손실·종합·건강 KPI 탐지. 전수 = `docs/RULE_ENGINE_CATALOG.md`. 노출처 = 대시보드 알림 · `GET /alerts/*` · 챗. **목록 가변**(운영자 `/admin/rules` 추가/조정) → 모바일은 서버 rule_id/severity/문구 렌더만, 하드코딩 금지.
 - **임계는 운영자/국가가 조정**: `/admin/rules`(DB·무배포) + 국가 benchmark. **모바일은 판정/임계 재구현 0** — 서버 severity·문구만 표시.
 
 > 변경 시 이 문서 = 단일 소스. 백엔드 검증 추가/변경되면 여기 + 웹 Zod + 모바일 동시 갱신.
