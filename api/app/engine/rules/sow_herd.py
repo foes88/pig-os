@@ -140,3 +140,22 @@ async def _accident_parity_skew(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("accident.parity_skew", "accident", "Accident parity skew (P1)", _accident_parity_skew))
+
+
+# ── MSY 손익분기 미달(D3) ────────────────────────────────────────────────────────
+async def _msy_below_bep(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("MSY")
+    if v is None:
+        return []
+    # 낮을수록 나쁨 — BEP 17.0 기준(KR MSY_BEP)
+    w, c = resolve(ctx, "msy.below_bep", "MSY", 17.0, 15.0)
+    if v >= w:
+        return []
+    sev = Severity.CRITICAL if v < c else Severity.WARNING
+    causes = ["msy_below_breakeven"]
+    actions = ["improve_psy_and_finishing_survival", "review_throughput_and_mortality"]
+    return [Finding(rule_id="msy.below_bep", kpi="MSY", severity=sev,
+                    current_value=round(v, 1), target_value=w, causes=causes, recommended_actions=actions)]
+
+
+RuleRegistry.register(Rule("msy.below_bep", "msy", "MSY below break-even", _msy_below_bep))

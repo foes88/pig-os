@@ -127,6 +127,8 @@ _CAUSE_EN.update({
     "farm_grade_yellow":                                   "Farm overall grade: YELLOW (watch)",
     "farm_grade_green":                                    "Farm overall grade: GREEN (good)",
     "weakest_kpi_priority":                                "Most urgent KPI to address first",
+    "msy_below_breakeven":                                 "MSY below break-even (marketed pigs/sow/year)",
+    "batch_managed_farm_detected":                         "Batch (all-in-all-out) management detected",
 })
 _CAUSE_KO.update({
     "high_stillbirth_rate":                                   "사산율 과다",
@@ -177,6 +179,8 @@ _CAUSE_KO.update({
     "farm_grade_yellow":                                   "농가 종합등급: YELLOW(주의)",
     "farm_grade_green":                                    "농가 종합등급: GREEN(양호)",
     "weakest_kpi_priority":                                "가장 먼저 개선할 KPI",
+    "msy_below_breakeven":                                 "MSY 손익분기 미달(연간 출하/모돈)",
+    "batch_managed_farm_detected":                         "배치(올인올아웃) 운영 감지",
 })
 _ACTION_EN.update({
     "review_farrowing_supervision":                 "Increase farrowing attendance/supervision",
@@ -223,6 +227,9 @@ _ACTION_EN.update({
     "reduce_pregnancy_accidents_to_recover_loss":   "Reduce pregnancy accidents to recover this loss",
     "reduce_weaning_to_service_interval_to_recover_loss": "Reduce weaning-to-service interval to recover this loss",
     "reduce_early_culling_below_breakeven_parity":  "Reduce culling below break-even parity (3.5)",
+    "improve_psy_and_finishing_survival":           "Improve PSY and finishing survival",
+    "review_throughput_and_mortality":              "Review throughput and mortality",
+    "interpret_weekly_kpis_with_batch_cycle_in_mind": "Interpret weekly KPIs with the batch cycle in mind",
 })
 _ACTION_KO.update({
     "review_farrowing_supervision":                 "분만 입회·관리 강화",
@@ -269,6 +276,9 @@ _ACTION_KO.update({
     "reduce_pregnancy_accidents_to_recover_loss":   "임신사고 감소로 손실 회복",
     "reduce_weaning_to_service_interval_to_recover_loss": "이유~교배 간격 단축으로 손실 회복",
     "reduce_early_culling_below_breakeven_parity":  "손익분기(3.5산) 미만 조기도태 감소",
+    "improve_psy_and_finishing_survival":           "PSY·비육 생존율 개선",
+    "review_throughput_and_mortality":              "회전율·폐사 검토",
+    "interpret_weekly_kpis_with_batch_cycle_in_mind": "주간 KPI를 배치 주기 감안해 해석",
 })
 
 

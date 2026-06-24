@@ -20,6 +20,7 @@ from app.engine.rules.litter import (
     _weaned_low,
 )
 from app.engine.rule_engine import Finding
+from app.engine.rules.batch import _batch_aiao_detect
 from app.engine.rules.boar import _boar_farrow_rate_low
 from app.engine.rules.composite import _farm_health_class, _farm_weakest_kpi
 from app.engine.rules.loss import (
@@ -36,6 +37,7 @@ from app.engine.rules.reproduction import (
 from app.engine.rules.sow_herd import (
     _accident_parity_skew,
     _culling_rate_high,
+    _msy_below_bep,
     _parity_high_ratio,
     _replacement_rate_abnormal,
     _second_litter_slump,
@@ -203,6 +205,20 @@ class TestSowHerdRules:
     def test_missing_no_finding(self):
         assert run(_culling_rate_high(ctx({}))) == []
         assert run(_parity_high_ratio(ctx({}))) == []
+
+    def test_msy_below_bep(self):
+        assert run(_msy_below_bep(ctx({"MSY": 20.0}))) == []                # ok
+        f = run(_msy_below_bep(ctx({"MSY": 16.0})))                         # <17 warn
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_msy_below_bep(ctx({"MSY": 14.0})))                        # <15 crit
+        assert f2 and f2[0].severity == Severity.CRITICAL
+        assert run(_msy_below_bep(ctx({}))) == []                          # 출하데이터 없음
+
+    def test_batch_detect(self):
+        assert run(_batch_aiao_detect(ctx({"BATCH_DOW_CONCENTRATION": 35.0}))) == []   # 비배치
+        f = run(_batch_aiao_detect(ctx({"BATCH_DOW_CONCENTRATION": 60.0})))            # 집중→배치 INFO
+        assert f and f[0].severity == Severity.INFO
+        assert run(_batch_aiao_detect(ctx({}))) == []                                  # 표본 부족
 
 
 # ── Phase B2: herd dynamics 탐지 규칙 ───────────────────────────────────────────

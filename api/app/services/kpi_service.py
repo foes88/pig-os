@@ -299,6 +299,12 @@ async def build_herd_kpis(
         "coalesce(sum(piglet_count),0) total "
         "FROM piglet_events WHERE farm_id=:fid AND deleted_at IS NULL "
         "AND event_type='DEATH' AND event_date BETWEEN :s AND :e"), p)).one()
+    # 배치(AIAO) 요일집중도(D4) — 최다 요일 교배수 / 전체 (표본 ≥16)
+    bdow = (await db.execute(text(
+        "SELECT max(cnt) maxd, sum(cnt) total FROM ("
+        "SELECT extract(dow from mating_date) d, count(*) cnt FROM matings "
+        "WHERE farm_id=:fid AND deleted_at IS NULL AND mating_date BETWEEN :s AND :e "
+        "GROUP BY 1) t"), p)).one()
 
     tb = float(far.tb) if far.tb else 0.0
     wsum = float(wea.wsum) if wea.wsum else 0.0
@@ -352,6 +358,12 @@ async def build_herd_kpis(
                                 if far.ba else None),
         "DEATH_AGE_0_3_RATIO": (_rate(float(pd.age0_3), float(pd.total))
                                 if pd.total and pd.total >= 5 else None),
+        # MSY(D3) = 연간 출하두수(비육 완료 head_out) / 활성 모돈. 출하 데이터 없으면 None(오발화 방지)
+        "MSY":                 (round((float(gf.hout) if gf.hout else 0.0) / active_herd, 1)
+                                if active_herd and gf.hout else None),
+        # 배치 요일집중도(D4) — 최다 요일 교배 비중 % (표본 ≥16)
+        "BATCH_DOW_CONCENTRATION": (_rate(float(bdow.maxd), float(bdow.total))
+                                    if bdow.total and bdow.total >= 16 else None),
     }
 
 
