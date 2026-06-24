@@ -11,6 +11,10 @@ from sqlalchemy import select
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.sow import PigletGroup, PigletTransfer
+from app.validators.cross_fostering import (
+    validate_cross_foster_distinct,
+    validate_cross_fostering,
+)
 from app.schemas.piglet import (
     PigletGroupCreate,
     PigletGroupDeathRecord,
@@ -148,6 +152,10 @@ async def create_piglet_transfer(
     양자/대리모 기록.
     분만 기록과 별도 — PSY는 생물학적 산자 기준, 이유두수는 양자 반영 수 기준.
     """
+    # B6: 동일 모돈 양자 차단 + 1회 이전 두수 상한(양자 validator). piglet_count≥1은 스키마가 강제.
+    # 직접 piglet_events 경로엔 self-check가 있었으나 이 transfers 엔드포인트엔 누락이었음.
+    validate_cross_foster_distinct(body.source_sow_id, body.dest_sow_id)
+    validate_cross_fostering(transfer_count=body.piglet_count)
     transfer = PigletTransfer(
         farm_id=farm.id,
         created_by=current_user.id,
