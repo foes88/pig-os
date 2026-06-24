@@ -855,7 +855,8 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
             Mating.deleted_at.is_(None), Mating.id != m.id))
         if dup:
             raise ConflictError("A mating is already recorded for this sow on this date")
-    await _audit(db, user_id, farm_id, "UPDATE", "matings", m.id, data)
+    # audit new_value는 JSONB — date 객체 직렬화 불가. mode="json"으로 ISO 문자열화(날짜수정 500 근인).
+    await _audit(db, user_id, farm_id, "UPDATE", "matings", m.id, body.model_dump(mode="json", exclude_unset=True))
     await db.commit(); await db.refresh(m)
     return m
 
@@ -921,7 +922,8 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
                 f"born_alive too low: already weaned {int(weaned_sum)} exceeds effective litter {effective}"
             )
         f.nursing_head = f.born_alive  # 포유개시두수 동기화
-    await _audit(db, user_id, farm_id, "UPDATE", "farrowings", f.id, data)
+    # audit new_value는 JSONB — date 객체 직렬화 불가. mode="json"으로 ISO 문자열화(날짜수정 500 근인).
+    await _audit(db, user_id, farm_id, "UPDATE", "farrowings", f.id, body.model_dump(mode="json", exclude_unset=True))
     await db.commit(); await db.refresh(f)
     return f
 
@@ -972,7 +974,8 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
                 raise ValidationError(
                     f"total weaned ({int(others) + w.weaned_count}) > effective litter ({effective})"
                 )
-    await _audit(db, user_id, farm_id, "UPDATE", "weanings", w.id, data)
+    # audit new_value는 JSONB — date 객체 직렬화 불가. mode="json"으로 ISO 문자열화(날짜수정 500 근인).
+    await _audit(db, user_id, farm_id, "UPDATE", "weanings", w.id, body.model_dump(mode="json", exclude_unset=True))
     await db.commit(); await db.refresh(w)
     return w
 

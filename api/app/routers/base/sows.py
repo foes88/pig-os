@@ -110,6 +110,24 @@ async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: Cu
     return SowResponse.model_validate(sow)
 
 
+# ★ 정적 경로 /removals 는 동적 /{sow_id} 보다 먼저 등록해야 함(아니면 "removals"를
+#   sow_id로 파싱해 uuid_parsing 422 — B7 도폐사이력 화면 불능 근인. 2026-06-24 수정).
+@router.get("/removals", response_model=list[RemovalResponse])
+async def list_removals(
+    farm: FarmDep,
+    db: DbDep,
+    removal_type: str | None = Query(None, description="CULLED|DEAD|SOLD|TRANSFER"),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """도폐사·판매 이력 목록."""
+    q = select(Removal).where(Removal.farm_id == farm.id)
+    if removal_type:
+        q = q.where(Removal.removal_type == removal_type)
+    q = q.order_by(Removal.removal_date.desc()).limit(limit)
+    rows = await db.scalars(q)
+    return [RemovalResponse.model_validate(r) for r in rows]
+
+
 @router.get("/{sow_id}", response_model=SowResponse)
 async def get_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
     sow = await db.scalar(
@@ -205,22 +223,6 @@ async def cull_sow(
     await db.commit()
     await db.refresh(removal)
     return RemovalResponse.model_validate(removal)
-
-
-@router.get("/removals", response_model=list[RemovalResponse])
-async def list_removals(
-    farm: FarmDep,
-    db: DbDep,
-    removal_type: str | None = Query(None, description="CULLED|DEAD|SOLD|TRANSFER"),
-    limit: int = Query(50, ge=1, le=200),
-):
-    """?꾪룓???먮ℓ ?대젰 紐⑸줉."""
-    q = select(Removal).where(Removal.farm_id == farm.id)
-    if removal_type:
-        q = q.where(Removal.removal_type == removal_type)
-    q = q.order_by(Removal.removal_date.desc()).limit(limit)
-    rows = await db.scalars(q)
-    return [RemovalResponse.model_validate(r) for r in rows]
 
 
 @router.delete("/{sow_id}", status_code=204,
