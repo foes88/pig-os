@@ -292,6 +292,13 @@ async def build_herd_kpis(
         "SELECT count(*) FILTER (WHERE result='POSITIVE') pos, count(*) FILTER (WHERE result='NEGATIVE') neg "
         "FROM pregnancy_checks WHERE farm_id=:fid AND deleted_at IS NULL "
         "AND check_date BETWEEN :s AND :e"), p)).one()
+    # 자돈 폐사 사유/일령 분해(D2) — reason·age_days(서버 자동계산) 집계
+    pd = (await db.execute(text(
+        "SELECT coalesce(sum(piglet_count) FILTER (WHERE reason='CRUSHING'),0) crushing, "
+        "coalesce(sum(piglet_count) FILTER (WHERE age_days <= 3),0) age0_3, "
+        "coalesce(sum(piglet_count),0) total "
+        "FROM piglet_events WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND event_type='DEATH' AND event_date BETWEEN :s AND :e"), p)).one()
 
     tb = float(far.tb) if far.tb else 0.0
     wsum = float(wea.wsum) if wea.wsum else 0.0
@@ -340,6 +347,11 @@ async def build_herd_kpis(
         # 임신감정 수태율 = 양성/(양성+음성), 표본 ≥5
         "CONCEPTION_RATE":     (_rate(float(pc.pos), float(pc.pos) + float(pc.neg))
                                 if (pc.pos + pc.neg) >= 5 else None),
+        # 자돈 폐사 사유/일령(D2) — 압사율(실산 대비), 0~3일 폐사 편중(분만관리)
+        "CRUSHING_RATE":       (_rate(float(pd.crushing), float(far.ba))
+                                if far.ba else None),
+        "DEATH_AGE_0_3_RATIO": (_rate(float(pd.age0_3), float(pd.total))
+                                if pd.total and pd.total >= 5 else None),
     }
 
 

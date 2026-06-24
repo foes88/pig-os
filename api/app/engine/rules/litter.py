@@ -187,3 +187,41 @@ async def _lactation_long(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("lactation.too_long", "lactation", "Lactation too long", _lactation_long))
+
+
+# ── 압사율(D2) — 압사 폐사 / 실산 ────────────────────────────────────────────────
+async def _crushing_rate_high(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("CRUSHING_RATE")
+    if v is None:
+        return []
+    w, c = resolve(ctx, "piglet.crushing_rate_high", "CRUSHING_RATE", 6.0, 10.0)
+    sev = sev_above(v, w, c)
+    if sev is None:
+        return []
+    causes = ["high_crushing_death_rate"]
+    actions = ["review_farrowing_crate_and_supervision", "improve_creep_area_and_heat_lamp"]
+    if sev == Severity.CRITICAL:
+        causes.append("possible_poor_farrowing_management_or_sow_agitation")
+    return [_finding("piglet.crushing_rate_high", "CRUSHING_RATE", sev, v, w, causes, actions)]
+
+
+RuleRegistry.register(Rule("piglet.crushing_rate_high", "piglet", "Piglet crushing rate high", _crushing_rate_high))
+
+
+# ── 0~3일 폐사 편중(D2) — 분만관리 의심 ──────────────────────────────────────────
+async def _death_age_skew(ctx: RuleContext) -> list[Finding]:
+    v = ctx.kpi.get("DEATH_AGE_0_3_RATIO")
+    if v is None:
+        return []
+    w, c = resolve(ctx, "piglet.death_age_skew", "DEATH_AGE_0_3_RATIO", 70.0, 80.0)
+    sev = sev_above(v, w, c)
+    if sev is None:
+        return []
+    causes = ["preweaning_deaths_concentrated_first_3_days"]
+    actions = ["review_farrowing_supervision", "improve_colostrum_and_cross_fostering"]
+    if sev == Severity.CRITICAL:
+        causes.append("possible_farrowing_management_or_low_vitality_piglets")
+    return [_finding("piglet.death_age_skew", "DEATH_AGE_0_3_RATIO", sev, v, w, causes, actions)]
+
+
+RuleRegistry.register(Rule("piglet.death_age_skew", "piglet", "Piglet death age-skew (0-3d)", _death_age_skew))

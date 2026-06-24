@@ -10,6 +10,8 @@ from app.engine.rules._common import resolve, sev_above, sev_below
 from app.engine.rules.grow_finish import _adg_low, _fcr_high, _finish_mortality_high
 from app.engine.rules.litter import (
     _born_alive_low,
+    _crushing_rate_high,
+    _death_age_skew,
     _lactation_long,
     _lactation_short,
     _mummified_high,
@@ -120,6 +122,20 @@ class TestLitterRules:
     def test_missing_kpi_no_finding(self):
         assert run(_stillborn_high(ctx({}))) == []
         assert run(_weaned_low(ctx({}))) == []
+
+    def test_crushing_rate(self):
+        assert run(_crushing_rate_high(ctx({"CRUSHING_RATE": 4.0}))) == []      # ok
+        f = run(_crushing_rate_high(ctx({"CRUSHING_RATE": 8.0})))               # >6 warn
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_crushing_rate_high(ctx({"CRUSHING_RATE": 12.0})))             # >10 crit
+        assert f2 and f2[0].severity == Severity.CRITICAL
+
+    def test_death_age_skew(self):
+        assert run(_death_age_skew(ctx({"DEATH_AGE_0_3_RATIO": 60.0}))) == []   # ok
+        f = run(_death_age_skew(ctx({"DEATH_AGE_0_3_RATIO": 75.0})))            # >70 warn
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_death_age_skew(ctx({"DEATH_AGE_0_3_RATIO": 85.0})))           # >80 crit
+        assert f2 and "possible_farrowing_management_or_low_vitality_piglets" in f2[0].causes
 
 
 # ── grow-finish 규칙 ────────────────────────────────────────────────────────────
