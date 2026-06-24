@@ -287,6 +287,11 @@ async def build_herd_kpis(
         "count(*) FILTER (WHERE extract(month from m.mating_date) NOT IN (6,7,8)) other "
         "FROM farrowings f JOIN matings m ON m.id = f.mating_id "
         "WHERE f.farm_id=:fid AND f.deleted_at IS NULL AND m.mating_date BETWEEN :s AND :e"), p)).one()
+    # 임신감정 수태율(D1) — 양성/(양성+음성), 표본 부족 None
+    pc = (await db.execute(text(
+        "SELECT count(*) FILTER (WHERE result='POSITIVE') pos, count(*) FILTER (WHERE result='NEGATIVE') neg "
+        "FROM pregnancy_checks WHERE farm_id=:fid AND deleted_at IS NULL "
+        "AND check_date BETWEEN :s AND :e"), p)).one()
 
     tb = float(far.tb) if far.tb else 0.0
     wsum = float(wea.wsum) if wea.wsum else 0.0
@@ -332,6 +337,9 @@ async def build_herd_kpis(
                                 if acc.total and acc.total >= 5 else None),
         # 여름 분만율 하락(pp) = 비여름 cohort FR − 여름 cohort FR (양 cohort ≥5건)
         "SUMMER_FARROW_DROP":  _summer_drop(smat, sfar),
+        # 임신감정 수태율 = 양성/(양성+음성), 표본 ≥5
+        "CONCEPTION_RATE":     (_rate(float(pc.pos), float(pc.pos) + float(pc.neg))
+                                if (pc.pos + pc.neg) >= 5 else None),
     }
 
 

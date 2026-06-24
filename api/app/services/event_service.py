@@ -24,6 +24,7 @@ from app.db.models.events import (
     Farrowing,
     Mating,
     PigletEvent,
+    PregnancyCheck,
     ReproductiveEvent,
     Weaning,
 )
@@ -35,6 +36,7 @@ from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
     PigletEventCreate,
+    PregnancyCheckCreate,
     ReproductiveEventCreate,
     WeaningCreate,
 )
@@ -599,6 +601,52 @@ async def record_reproductive_event(
     await apply_terminal_reproductive(db, sow, req.event_type, req.event_date, farm_id)
 
     await _audit(db, user_id, farm_id, "CREATE", "reproductive_events", event.id, req.model_dump(mode="json"))
+    await db.commit()
+    await db.refresh(event)
+    return event
+
+
+async def record_pregnancy_check(
+    db: AsyncSession,
+    farm_id: UUID,
+    user_id: UUID,
+    req: PregnancyCheckCreate,
+) -> PregnancyCheck:
+    """임신감정 기록. PREGNANT 모돈만 대상. 음성(NEGATIVE)=공태 → ACCIDENT 전이(EMPTY와 동일)."""
+    sow = await _get_active_sow(db, farm_id, req.sow_id)
+
+    # 임신감정은 교배 후 PREGNANT 모돈에서만
+    if sow.status != "PREGNANT":
+        raise ValidationError(
+            f"Pregnancy check requires a PREGNANT sow (current: {sow.status})"
+        )
+
+    validate_event_within_sow_lifespan(
+        event_date=req.check_date,
+        entry_date=_as_date(sow.entry_date),
+        exit_date=_as_date(sow.exit_date),
+        event_name="Pregnancy check",
+    )
+
+    event = PregnancyCheck(
+        farm_id=farm_id,
+        sow_id=req.sow_id,
+        mating_id=req.mating_id,
+        check_date=req.check_date,
+        days_after_mating=req.days_after_mating,
+        result=req.result,
+        method=req.method,
+        notes=req.notes,
+        created_by=user_id,
+    )
+    db.add(event)
+    await db.flush()
+
+    # 음성 = 공태(EMPTY) → ACCIDENT 전이 + 진행 사이클 FAILED (재교배 대기)
+    if req.result == "NEGATIVE":
+        await apply_terminal_reproductive(db, sow, "EMPTY", req.check_date, farm_id)
+
+    await _audit(db, user_id, farm_id, "CREATE", "pregnancy_checks", event.id, req.model_dump(mode="json"))
     await db.commit()
     await db.refresh(event)
     return event

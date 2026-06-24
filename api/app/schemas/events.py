@@ -160,6 +160,30 @@ class PigletEventResponse(UUIDMixin):
     created_at: datetime
 
 
+# ── Pregnancy check (D1 — 임신감정) ───────────────────────────────────────────
+
+class PregnancyCheckCreate(BaseModel):
+    sow_id: UUID
+    check_date: date
+    result: str = Field(..., pattern="^(POSITIVE|NEGATIVE|UNCERTAIN)$")
+    mating_id: UUID | None = None
+    days_after_mating: int | None = Field(None, ge=1, le=120)
+    method: str | None = Field(None, pattern="^(ULTRASOUND|DOPPLER|VISUAL|BLOOD|OTHER)$")
+    notes: str | None = None
+
+
+class PregnancyCheckResponse(UUIDMixin):
+    farm_id: UUID
+    sow_id: UUID
+    mating_id: UUID | None
+    check_date: date
+    days_after_mating: int | None
+    result: str
+    method: str | None
+    created_at: datetime
+    insights: list[EventInsight] = []
+
+
 # ── Update bodies (Phase 12 — edit/delete) ────────────────────────────────────
 
 class MatingUpdate(BaseModel):

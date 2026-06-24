@@ -12,7 +12,14 @@ from fastapi import APIRouter, Query, Response
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.db.models.events import Farrowing, Mating, PigletEvent, ReproductiveEvent, Weaning
+from app.db.models.events import (
+    Farrowing,
+    Mating,
+    PigletEvent,
+    PregnancyCheck,
+    ReproductiveEvent,
+    Weaning,
+)
 from app.db.models.health import Removal
 from app.db.models.master import EventDefinition
 from app.db.models.sow import Sow
@@ -26,6 +33,8 @@ from app.schemas.events import (
     MatingUpdate,
     PigletEventCreate,
     PigletEventResponse,
+    PregnancyCheckCreate,
+    PregnancyCheckResponse,
     ReproductiveEventCreate,
     ReproductiveEventResponse,
     WeaningCreate,
@@ -288,6 +297,40 @@ async def record_piglet_event(
     """
     event = await event_service.record_piglet_event(db, farm.id, current_user.id, body)
     return PigletEventResponse.model_validate(event)
+
+
+@router.get("/pregnancy_checks", response_model=list[PregnancyCheckResponse])
+async def list_pregnancy_checks(
+    farm: FarmDep,
+    db: DbDep,
+    sow_id: UUID | None = Query(None),
+):
+    """List pregnancy-check records (optionally filtered by sow)."""
+    q = select(PregnancyCheck).where(
+        PregnancyCheck.farm_id == farm.id, PregnancyCheck.deleted_at.is_(None)
+    )
+    if sow_id:
+        q = q.where(PregnancyCheck.sow_id == sow_id)
+    rows = (await db.scalars(q.order_by(PregnancyCheck.check_date.desc()))).all()
+    return [PregnancyCheckResponse.model_validate(r) for r in rows]
+
+
+@router.post("/pregnancy_checks", response_model=PregnancyCheckResponse, status_code=201,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
+async def record_pregnancy_check(
+    body: PregnancyCheckCreate,
+    farm: FarmDep,
+    db: DbDep,
+    current_user: CurrentUser,
+):
+    """
+    Record a pregnancy check on a PREGNANT sow.
+    NEGATIVE result = empty/open → sow transitions to ACCIDENT (re-breeding wait).
+    """
+    event = await event_service.record_pregnancy_check(db, farm.id, current_user.id, body)
+    resp = PregnancyCheckResponse.model_validate(event)
+    resp.insights = await _attach_insights(db, farm, "pregnancy_check", event)
+    return resp
 
 
 

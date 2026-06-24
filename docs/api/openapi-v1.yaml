@@ -1539,6 +1539,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/events/pregnancy_checks:
+    get:
+      tags:
+      - Events
+      summary: List Pregnancy Checks
+      description: List pregnancy-check records (optionally filtered by sow).
+      operationId: list_pregnancy_checks_api_v1_farms__farm_id__events_pregnancy_checks_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: sow_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sow Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PregnancyCheckResponse'
+                title: Response List Pregnancy Checks Api V1 Farms  Farm Id  Events
+                  Pregnancy Checks Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Events
+      summary: Record Pregnancy Check
+      description: 'Record a pregnancy check on a PREGNANT sow.
+
+        NEGATIVE result = empty/open → sow transitions to ACCIDENT (re-breeding wait).'
+      operationId: record_pregnancy_check_api_v1_farms__farm_id__events_pregnancy_checks_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PregnancyCheckCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PregnancyCheckResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/farms/{farm_id}/events/matings/{mating_id}:
     patch:
       tags:
@@ -3267,6 +3351,217 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/comprehensive-daily:
+    get:
+      tags:
+      - Reports
+      summary: Comprehensive Daily Report
+      description: 종합일보 — PigPlan .mrd 6섹션(돈군/교배/임신사고/생산/전입출) 일계·월계. dict 반환.
+      operationId: comprehensive_daily_report_api_v1_farms__farm_id__reports_comprehensive_daily_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+          title: Date
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/sow-status:
+    get:
+      tags:
+      - Reports
+      summary: Sow Status Report
+      description: '#1 모돈 현재 상태표 — 상태별 두수 + 모돈 목록.'
+      operationId: sow_status_report_api_v1_farms__farm_id__reports_sow_status_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SowStatusReport'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/farrowing:
+    get:
+      tags:
+      - Reports
+      summary: Farrowing Report
+      description: '#3 산차별 분만/포유/이유 성적표.'
+      operationId: farrowing_report_api_v1_farms__farm_id__reports_farrowing_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: start_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: Start Date
+      - name: end_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: End Date
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FarrowingPerfRow'
+                title: Response Farrowing Report Api V1 Farms  Farm Id  Reports Farrowing
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/mortality:
+    get:
+      tags:
+      - Reports
+      summary: Mortality Report
+      description: '#4 도폐사/포유폐사 리포트 — 유형·사유별 + 이유전 폐사율.'
+      operationId: mortality_report_api_v1_farms__farm_id__reports_mortality_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: start_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: Start Date
+      - name: end_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: End Date
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortalityReport'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/data-quality:
+    get:
+      tags:
+      - Reports
+      summary: Data Quality Report
+      description: 데이터 정합성 점검 — 두수 불일치·날짜 역전·상태 고아·입력 누락(과기한).
+      operationId: data_quality_report_api_v1_farms__farm_id__reports_data_quality_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: as_of
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+          description: 과기한 판정 기준일(기본 오늘)
+          title: As Of
+        description: 과기한 판정 기준일(기본 오늘)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataQualityIssue'
+                title: Response Data Quality Report Api V1 Farms  Farm Id  Reports
+                  Data Quality Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/farms/{farm_id}/reports/reproduction:
     get:
       tags:
@@ -3639,6 +3934,790 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/overview:
+    get:
+      tags:
+      - Admin Console
+      summary: Get Overview
+      description: 플랫폼 전사 개요 카운트 — 어드민 대시보드 상단 카드.
+      operationId: get_overview_api_v1_admin_overview_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOverview'
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/me:
+    get:
+      tags:
+      - Admin Console
+      summary: Admin Me
+      description: 현재 운영자 정보 — 어드민 셸 헤더용 + 게이트 동작 확인.
+      operationId: admin_me_api_v1_admin_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminWhoAmI'
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/members:
+    get:
+      tags:
+      - Admin · Users
+      summary: List Members
+      description: 전사 회원 목록 — 검색·상태/조직 필터·페이지네이션.
+      operationId: list_members_api_v1_admin_members_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 이메일/이름 부분검색
+          title: Q
+        description: 이메일/이름 부분검색
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 승인상태(PENDING/APPROVED/REJECTED)
+          title: Status
+        description: 승인상태(PENDING/APPROVED/REJECTED)
+      - name: org_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: 조직 필터
+          title: Org Id
+        description: 조직 필터
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Per Page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_AdminMemberRow_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/members/{member_id}:
+    get:
+      tags:
+      - Admin · Users
+      summary: Get Member
+      description: 회원 상세 — 소속 농장/역할 포함.
+      operationId: get_member_api_v1_admin_members__member_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: member_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Member Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminMemberDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/members/{member_id}/status:
+    patch:
+      tags:
+      - Admin · Users
+      summary: Update Member Status
+      description: 가입 승인/반려 + 활성 토글. 변경 전/후를 AuditLog에 기록.
+      operationId: update_member_status_api_v1_admin_members__member_id__status_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: member_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Member Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberStatusUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminMemberRow'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/pilot-signups:
+    get:
+      tags:
+      - Admin · Users
+      summary: List Pilot Signups
+      description: 베타 가입 접수 목록.
+      operationId: list_pilot_signups_api_v1_admin_pilot_signups_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: pending/contacted/onboarded/rejected
+          title: Status
+        description: pending/contacted/onboarded/rejected
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Per Page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_PilotSignupRow_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/pilot-signups/{signup_id}/approve:
+    post:
+      tags:
+      - Admin · Users
+      summary: Approve Pilot Signup
+      description: '베타 가입 승인 → 운영 계정(Org+User+Farm+UserFarm) 생성.
+
+
+        이메일 발송 불가 환경 → 초기 비밀번호를 운영자가 발급해 직접 전달.'
+      operationId: approve_pilot_signup_api_v1_admin_pilot_signups__signup_id__approve_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: signup_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Signup Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PilotApproveRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PilotApproveResult'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/announcements:
+    get:
+      tags:
+      - Admin · Content
+      summary: Admin List Announcements
+      description: 전체 공지(게시여부 무관) — 최신·고정 우선.
+      operationId: admin_list_announcements_api_v1_admin_announcements_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AnnouncementOut'
+                type: array
+                title: Response Admin List Announcements Api V1 Admin Announcements
+                  Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - Admin · Content
+      summary: Admin Create Announcement
+      operationId: admin_create_announcement_api_v1_admin_announcements_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/announcements/{ann_id}:
+    put:
+      tags:
+      - Admin · Content
+      summary: Admin Update Announcement
+      operationId: admin_update_announcement_api_v1_admin_announcements__ann_id__put
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ann_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ann Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnouncementUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Admin · Content
+      summary: Admin Delete Announcement
+      operationId: admin_delete_announcement_api_v1_admin_announcements__ann_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ann_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ann Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/support:
+    get:
+      tags:
+      - Admin · Content
+      summary: Admin List Tickets
+      operationId: admin_list_tickets_api_v1_admin_support_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: OPEN/ANSWERED/CLOSED
+          title: Status
+        description: OPEN/ANSWERED/CLOSED
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Per Page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_SupportTicketOut_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/support/{ticket_id}:
+    get:
+      tags:
+      - Admin · Content
+      summary: Admin Get Ticket
+      operationId: admin_get_ticket_api_v1_admin_support__ticket_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ticket Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/support/{ticket_id}/reply:
+    post:
+      tags:
+      - Admin · Content
+      summary: Admin Reply Ticket
+      operationId: admin_reply_ticket_api_v1_admin_support__ticket_id__reply_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ticket Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportReplyCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/rules:
+    get:
+      tags:
+      - Admin · Rules
+      summary: List Rules
+      description: 등록된 모든 규칙 + DB 오버라이드(없으면 활성·임계 null=코드기본).
+      operationId: list_rules_api_v1_admin_rules_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RuleRow'
+                type: array
+                title: Response List Rules Api V1 Admin Rules Get
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/rules/{rule_id}:
+    patch:
+      tags:
+      - Admin · Rules
+      summary: Update Rule
+      description: 규칙 활성/임계 오버라이드 upsert.
+      operationId: update_rule_api_v1_admin_rules__rule_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: rule_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rule Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleRow'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/audit-log:
+    get:
+      tags:
+      - Admin · Audit
+      summary: List Audit
+      operationId: list_audit_api_v1_admin_audit_log_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: action
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: CREATE/UPDATE/DELETE 등
+          title: Action
+        description: CREATE/UPDATE/DELETE 등
+      - name: entity_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: admin_user/announcement/rule_config 등
+          title: Entity Type
+        description: admin_user/announcement/rule_config 등
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+          title: Page
+      - name: per_page
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 30
+          title: Per Page
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResponse_AuditRow_'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/orgs:
+    get:
+      tags:
+      - Admin · Orgs
+      summary: List Orgs
+      description: 전사 조직 목록(트리 구성용). parent_org_id로 프론트에서 업체→총판→대리점 계층화.
+      operationId: list_orgs_api_v1_admin_orgs_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AdminOrgRow'
+                type: array
+                title: Response List Orgs Api V1 Admin Orgs Get
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/orgs/{org_id}/farms:
+    get:
+      tags:
+      - Admin · Orgs
+      summary: List Org Farms
+      description: 해당 조직에 직접 속한 농장 목록(드릴다운 말단).
+      operationId: list_org_farms_api_v1_admin_orgs__org_id__farms_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: org_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Org Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminOrgFarm'
+                title: Response List Org Farms Api V1 Admin Orgs  Org Id  Farms Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/announcements:
+    get:
+      tags:
+      - Announcements
+      summary: List Announcements
+      operationId: list_announcements_api_v1_announcements_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: lang
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 언어 필터(해당 언어 + 전체 대상)
+          title: Lang
+        description: 언어 필터(해당 언어 + 전체 대상)
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnnouncementOut'
+                title: Response List Announcements Api V1 Announcements Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/support/tickets:
+    get:
+      tags:
+      - Support
+      summary: My Tickets
+      operationId: my_tickets_api_v1_support_tickets_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SupportTicketOut'
+                type: array
+                title: Response My Tickets Api V1 Support Tickets Get
+      security:
+      - HTTPBearer: []
+    post:
+      tags:
+      - Support
+      summary: Create Ticket
+      operationId: create_ticket_api_v1_support_tickets_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportTicketCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketOut'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/support/tickets/{ticket_id}:
+    get:
+      tags:
+      - Support
+      summary: My Ticket Detail
+      operationId: my_ticket_detail_api_v1_support_tickets__ticket_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ticket Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/support/tickets/{ticket_id}/reply:
+    post:
+      tags:
+      - Support
+      summary: My Ticket Followup
+      operationId: my_ticket_followup_api_v1_support_tickets__ticket_id__reply_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: ticket_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Ticket Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupportReplyCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportTicketDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /health:
     get:
       tags:
@@ -3653,6 +4732,257 @@ paths:
               schema: {}
 components:
   schemas:
+    AdminMemberDetail:
+      properties:
+        id:
+          type: string
+          title: Id
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        name:
+          type: string
+          title: Name
+        role:
+          type: string
+          title: Role
+        system_role:
+          type: string
+          title: System Role
+        approval_status:
+          type: string
+          title: Approval Status
+        active:
+          type: boolean
+          title: Active
+        org_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Org Id
+        org_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Org Name
+        farm_count:
+          type: integer
+          title: Farm Count
+        created_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created At
+        last_login_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Login At
+        farms:
+          items:
+            $ref: '#/components/schemas/AdminMemberFarm'
+          type: array
+          title: Farms
+      type: object
+      required:
+      - id
+      - email
+      - name
+      - role
+      - system_role
+      - approval_status
+      - active
+      - org_id
+      - org_name
+      - farm_count
+      - created_at
+      - last_login_at
+      - farms
+      title: AdminMemberDetail
+    AdminMemberFarm:
+      properties:
+        farm_id:
+          type: string
+          title: Farm Id
+        role:
+          type: string
+          title: Role
+      type: object
+      required:
+      - farm_id
+      - role
+      title: AdminMemberFarm
+    AdminMemberRow:
+      properties:
+        id:
+          type: string
+          title: Id
+        email:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Email
+        name:
+          type: string
+          title: Name
+        role:
+          type: string
+          title: Role
+        system_role:
+          type: string
+          title: System Role
+        approval_status:
+          type: string
+          title: Approval Status
+        active:
+          type: boolean
+          title: Active
+        org_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Org Id
+        org_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Org Name
+        farm_count:
+          type: integer
+          title: Farm Count
+        created_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created At
+        last_login_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Login At
+      type: object
+      required:
+      - id
+      - email
+      - name
+      - role
+      - system_role
+      - approval_status
+      - active
+      - org_id
+      - org_name
+      - farm_count
+      - created_at
+      - last_login_at
+      title: AdminMemberRow
+    AdminOrgFarm:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        farm_code:
+          type: string
+          title: Farm Code
+        country:
+          type: string
+          title: Country
+        active:
+          type: boolean
+          title: Active
+      type: object
+      required:
+      - id
+      - name
+      - farm_code
+      - country
+      - active
+      title: AdminOrgFarm
+    AdminOrgRow:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        org_type:
+          type: string
+          title: Org Type
+        org_level:
+          type: integer
+          title: Org Level
+        parent_org_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Parent Org Id
+        country:
+          type: string
+          title: Country
+        farm_count:
+          type: integer
+          title: Farm Count
+        user_count:
+          type: integer
+          title: User Count
+      type: object
+      required:
+      - id
+      - name
+      - org_type
+      - org_level
+      - parent_org_id
+      - country
+      - farm_count
+      - user_count
+      title: AdminOrgRow
+    AdminOverview:
+      properties:
+        organizations:
+          type: integer
+          title: Organizations
+        farms:
+          type: integer
+          title: Farms
+        users:
+          type: integer
+          title: Users
+        sows:
+          type: integer
+          title: Sows
+      type: object
+      required:
+      - organizations
+      - farms
+      - users
+      - sows
+      title: AdminOverview
+    AdminWhoAmI:
+      properties:
+        id:
+          type: string
+          title: Id
+        email:
+          type: string
+          title: Email
+        name:
+          type: string
+          title: Name
+        role:
+          type: string
+          title: Role
+      type: object
+      required:
+      - id
+      - email
+      - name
+      - role
+      title: AdminWhoAmI
     Alert:
       properties:
         rule_id:
@@ -3684,6 +5014,209 @@ components:
       - severity
       - message
       title: Alert
+    AnnouncementCreate:
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Title
+        body:
+          type: string
+          minLength: 1
+          title: Body
+        category:
+          type: string
+          title: Category
+          default: GENERAL
+        pinned:
+          type: boolean
+          title: Pinned
+          default: false
+        published:
+          type: boolean
+          title: Published
+          default: true
+        publish_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Publish From
+        publish_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Publish Until
+        lang:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lang
+      type: object
+      required:
+      - title
+      - body
+      title: AnnouncementCreate
+    AnnouncementOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        title:
+          type: string
+          title: Title
+        body:
+          type: string
+          title: Body
+        category:
+          type: string
+          title: Category
+        pinned:
+          type: boolean
+          title: Pinned
+        published:
+          type: boolean
+          title: Published
+        publish_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Publish From
+        publish_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Publish Until
+        lang:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lang
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Created At
+      type: object
+      required:
+      - id
+      - title
+      - body
+      - category
+      - pinned
+      - published
+      - publish_from
+      - publish_until
+      - lang
+      - created_at
+      title: AnnouncementOut
+    AnnouncementUpdate:
+      properties:
+        title:
+          anyOf:
+          - type: string
+            maxLength: 200
+          - type: 'null'
+          title: Title
+        body:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Body
+        category:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Category
+        pinned:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Pinned
+        published:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Published
+        publish_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Publish From
+        publish_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Publish Until
+        lang:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Lang
+      type: object
+      title: AnnouncementUpdate
+    AuditRow:
+      properties:
+        id:
+          type: string
+          title: Id
+        actor_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Actor Id
+        actor_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Actor Name
+        action:
+          type: string
+          title: Action
+        entity_type:
+          type: string
+          title: Entity Type
+        entity_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Entity Id
+        old_value:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Old Value
+        new_value:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: New Value
+        created_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created At
+      type: object
+      required:
+      - id
+      - actor_id
+      - actor_name
+      - action
+      - entity_type
+      - entity_id
+      - old_value
+      - new_value
+      - created_at
+      title: AuditRow
     BenchmarkValue:
       properties:
         metric_code:
@@ -4107,6 +5640,12 @@ components:
             $ref: '#/components/schemas/Alert'
           type: array
           title: Alerts
+        estimated_loss:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Estimated Loss
       type: object
       required:
       - farm_id
@@ -4121,6 +5660,39 @@ components:
       - alerts
       title: DashboardKpi
       description: Main KPI dashboard — Base tier (free). Flat structure for frontend.
+    DataQualityIssue:
+      properties:
+        issue_type:
+          type: string
+          title: Issue Type
+        severity:
+          type: string
+          title: Severity
+        sow_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Sow Id
+        ear_tag:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Ear Tag
+        detail:
+          type: string
+          title: Detail
+        event_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Event Date
+      type: object
+      required:
+      - issue_type
+      - severity
+      - detail
+      title: DataQualityIssue
+      description: 데이터 정합성 이슈 1건 (#5 데이터 품질 리포트).
     DeviceRegister:
       properties:
         platform:
@@ -4642,6 +6214,25 @@ components:
           minimum: 0.0
           title: Mummified
           default: 0
+        avg_birth_weight_kg:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Avg Birth Weight Kg
+          description: 평균 출생체중(kg)
+        born_alive_male:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Born Alive Male
+        born_alive_female:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Born Alive Female
         farrowing_ease:
           anyOf:
           - type: string
@@ -4663,6 +6254,54 @@ components:
       - farrowing_date
       - born_alive
       title: FarrowingCreate
+    FarrowingPerfRow:
+      properties:
+        parity:
+          type: integer
+          title: Parity
+        farrowings:
+          type: integer
+          title: Farrowings
+        avg_total_born:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Total Born
+        avg_born_alive:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Born Alive
+        avg_stillborn:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Stillborn
+        avg_mummified:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Mummified
+        avg_weaned:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Weaned
+        avg_lactation_days:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Lactation Days
+        litters_weaned:
+          type: integer
+          title: Litters Weaned
+          default: 0
+      type: object
+      required:
+      - parity
+      - farrowings
+      title: FarrowingPerfRow
+      description: '#3 산차별 분만/포유/이유 성적.'
     FarrowingResponse:
       properties:
         id:
@@ -4697,6 +6336,16 @@ components:
         mummified:
           type: integer
           title: Mummified
+        nursing_head:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Nursing Head
+        avg_birth_weight_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Birth Weight Kg
         farrowing_ease:
           anyOf:
           - type: string
@@ -4759,6 +6408,12 @@ components:
             minimum: 0.0
           - type: 'null'
           title: Mummified
+        avg_birth_weight_kg:
+          anyOf:
+          - type: number
+            exclusiveMinimum: 0.0
+          - type: 'null'
+          title: Avg Birth Weight Kg
         notes:
           anyOf:
           - type: string
@@ -5425,6 +7080,20 @@ components:
       - role
       - active
       title: MemberResponse
+    MemberStatusUpdate:
+      properties:
+        approval_status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Approval Status
+        active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Active
+      type: object
+      title: MemberStatusUpdate
     MemberUpdate:
       properties:
         role:
@@ -5440,6 +7109,65 @@ components:
           title: Active
       type: object
       title: MemberUpdate
+    MortalityCount:
+      properties:
+        key:
+          type: string
+          title: Key
+        count:
+          type: integer
+          title: Count
+        piglets:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Piglets
+      type: object
+      required:
+      - key
+      - count
+      title: MortalityCount
+    MortalityReport:
+      properties:
+        removals_by_type:
+          items:
+            $ref: '#/components/schemas/MortalityCount'
+          type: array
+          title: Removals By Type
+        removals_by_reason:
+          items:
+            $ref: '#/components/schemas/MortalityCount'
+          type: array
+          title: Removals By Reason
+        piglet_deaths_by_reason:
+          items:
+            $ref: '#/components/schemas/MortalityCount'
+          type: array
+          title: Piglet Deaths By Reason
+        total_removals:
+          type: integer
+          title: Total Removals
+        total_piglet_deaths:
+          type: integer
+          title: Total Piglet Deaths
+        born_alive_in_period:
+          type: integer
+          title: Born Alive In Period
+        preweaning_mortality_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Preweaning Mortality Rate
+      type: object
+      required:
+      - removals_by_type
+      - removals_by_reason
+      - piglet_deaths_by_reason
+      - total_removals
+      - total_piglet_deaths
+      - born_alive_in_period
+      title: MortalityReport
+      description: '#4 도폐사/포유폐사 리포트.'
     NotificationList:
       properties:
         items:
@@ -5872,6 +7600,48 @@ components:
       - per_page
       - pages
       title: PageMeta
+    PagedResponse_AdminMemberRow_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AdminMemberRow'
+          type: array
+          title: Items
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+      type: object
+      required:
+      - items
+      - meta
+      title: PagedResponse[AdminMemberRow]
+    PagedResponse_AuditRow_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/AuditRow'
+          type: array
+          title: Items
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+      type: object
+      required:
+      - items
+      - meta
+      title: PagedResponse[AuditRow]
+    PagedResponse_PilotSignupRow_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/PilotSignupRow'
+          type: array
+          title: Items
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+      type: object
+      required:
+      - items
+      - meta
+      title: PagedResponse[PilotSignupRow]
     PagedResponse_SowResponse_:
       properties:
         items:
@@ -5886,6 +7656,20 @@ components:
       - items
       - meta
       title: PagedResponse[SowResponse]
+    PagedResponse_SupportTicketOut_:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SupportTicketOut'
+          type: array
+          title: Items
+        meta:
+          $ref: '#/components/schemas/PageMeta'
+      type: object
+      required:
+      - items
+      - meta
+      title: PagedResponse[SupportTicketOut]
     PigletEventCreate:
       properties:
         farrowing_id:
@@ -6283,6 +8067,41 @@ components:
       - reason
       - created_at
       title: PigletTransferResponse
+    PilotApproveRequest:
+      properties:
+        initial_password:
+          type: string
+          title: Initial Password
+        system_role:
+          type: string
+          title: System Role
+          default: FARM_OWNER
+      type: object
+      required:
+      - initial_password
+      title: PilotApproveRequest
+      description: 승인 시 운영 계정 생성(이메일 발송 불가 → 초기 비밀번호 직접 발급).
+    PilotApproveResult:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+        email:
+          type: string
+          title: Email
+        initial_password:
+          type: string
+          title: Initial Password
+        note:
+          type: string
+          title: Note
+      type: object
+      required:
+      - user_id
+      - email
+      - initial_password
+      - note
+      title: PilotApproveResult
     PilotSignupIn:
       properties:
         name:
@@ -6321,6 +8140,158 @@ components:
       required:
       - success
       title: PilotSignupOut
+    PilotSignupRow:
+      properties:
+        id:
+          type: string
+          title: Id
+        name:
+          type: string
+          title: Name
+        email:
+          type: string
+          title: Email
+        farm_size:
+          type: string
+          title: Farm Size
+        country:
+          type: string
+          title: Country
+        role:
+          type: string
+          title: Role
+        lang:
+          type: string
+          title: Lang
+        status:
+          type: string
+          title: Status
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        created_at:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Created At
+      type: object
+      required:
+      - id
+      - name
+      - email
+      - farm_size
+      - country
+      - role
+      - lang
+      - status
+      - notes
+      - created_at
+      title: PilotSignupRow
+    PregnancyCheckCreate:
+      properties:
+        sow_id:
+          type: string
+          format: uuid
+          title: Sow Id
+        check_date:
+          type: string
+          format: date
+          title: Check Date
+        result:
+          type: string
+          pattern: ^(POSITIVE|NEGATIVE|UNCERTAIN)$
+          title: Result
+        mating_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Mating Id
+        days_after_mating:
+          anyOf:
+          - type: integer
+            maximum: 120.0
+            minimum: 1.0
+          - type: 'null'
+          title: Days After Mating
+        method:
+          anyOf:
+          - type: string
+            pattern: ^(ULTRASOUND|DOPPLER|VISUAL|BLOOD|OTHER)$
+          - type: 'null'
+          title: Method
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+      type: object
+      required:
+      - sow_id
+      - check_date
+      - result
+      title: PregnancyCheckCreate
+    PregnancyCheckResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        farm_id:
+          type: string
+          format: uuid
+          title: Farm Id
+        sow_id:
+          type: string
+          format: uuid
+          title: Sow Id
+        mating_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Mating Id
+        check_date:
+          type: string
+          format: date
+          title: Check Date
+        days_after_mating:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Days After Mating
+        result:
+          type: string
+          title: Result
+        method:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Method
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        insights:
+          items:
+            $ref: '#/components/schemas/EventInsight'
+          type: array
+          title: Insights
+          default: []
+      type: object
+      required:
+      - id
+      - farm_id
+      - sow_id
+      - mating_id
+      - check_date
+      - days_after_mating
+      - result
+      - method
+      - created_at
+      title: PregnancyCheckResponse
     ProductionSummary:
       properties:
         group_by:
@@ -6779,6 +8750,62 @@ components:
       - detected_method
       - created_at
       title: ReproductiveEventResponse
+    RuleRow:
+      properties:
+        rule_id:
+          type: string
+          title: Rule Id
+        domain:
+          type: string
+          title: Domain
+        description:
+          type: string
+          title: Description
+        tier:
+          type: string
+          title: Tier
+        enabled:
+          type: boolean
+          title: Enabled
+        warning:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Warning
+        critical:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Critical
+      type: object
+      required:
+      - rule_id
+      - domain
+      - description
+      - tier
+      - enabled
+      - warning
+      - critical
+      title: RuleRow
+    RuleUpdate:
+      properties:
+        enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Enabled
+        warning:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Warning
+        critical:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Critical
+      type: object
+      title: RuleUpdate
     ServerChanges:
       properties:
         sows:
@@ -7098,6 +9125,54 @@ components:
       - created_at
       - updated_at
       title: SowResponse
+    SowStatusReport:
+      properties:
+        total:
+          type: integer
+          title: Total
+        by_status:
+          additionalProperties:
+            type: integer
+          type: object
+          title: By Status
+        sows:
+          items:
+            $ref: '#/components/schemas/SowStatusRow'
+          type: array
+          title: Sows
+      type: object
+      required:
+      - total
+      - by_status
+      - sows
+      title: SowStatusReport
+      description: '#1 모돈 현재 상태표.'
+    SowStatusRow:
+      properties:
+        sow_id:
+          type: string
+          title: Sow Id
+        ear_tag:
+          type: string
+          title: Ear Tag
+        status:
+          type: string
+          title: Status
+        parity:
+          type: integer
+          title: Parity
+        entry_date:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Entry Date
+      type: object
+      required:
+      - sow_id
+      - ear_tag
+      - status
+      - parity
+      title: SowStatusRow
     SowUpdate:
       properties:
         ear_tag:
@@ -7169,6 +9244,149 @@ components:
         status는 활성 상태(GILT/OPEN/PREGNANT/LACTATING/ACCIDENT)만 허용 —
 
         종료(CULLED/DEAD/SOLD/TRANSFER)는 /cull 엔드포인트(도폐사·판매 모달)로 처리.'
+    SupportReplyCreate:
+      properties:
+        body:
+          type: string
+          minLength: 1
+          title: Body
+      type: object
+      required:
+      - body
+      title: SupportReplyCreate
+    SupportReplyOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        author_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Author Id
+        is_staff:
+          type: boolean
+          title: Is Staff
+        body:
+          type: string
+          title: Body
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Created At
+      type: object
+      required:
+      - id
+      - author_id
+      - is_staff
+      - body
+      - created_at
+      title: SupportReplyOut
+    SupportTicketCreate:
+      properties:
+        subject:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Subject
+        body:
+          type: string
+          minLength: 1
+          title: Body
+        farm_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Farm Id
+      type: object
+      required:
+      - subject
+      - body
+      title: SupportTicketCreate
+    SupportTicketDetail:
+      properties:
+        id:
+          type: string
+          title: Id
+        user_id:
+          type: string
+          title: User Id
+        farm_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Farm Id
+        subject:
+          type: string
+          title: Subject
+        body:
+          type: string
+          title: Body
+        status:
+          type: string
+          title: Status
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Created At
+        replies:
+          items:
+            $ref: '#/components/schemas/SupportReplyOut'
+          type: array
+          title: Replies
+      type: object
+      required:
+      - id
+      - user_id
+      - farm_id
+      - subject
+      - body
+      - status
+      - created_at
+      - replies
+      title: SupportTicketDetail
+    SupportTicketOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        user_id:
+          type: string
+          title: User Id
+        farm_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Farm Id
+        subject:
+          type: string
+          title: Subject
+        body:
+          type: string
+          title: Body
+        status:
+          type: string
+          title: Status
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Created At
+      type: object
+      required:
+      - id
+      - user_id
+      - farm_id
+      - subject
+      - body
+      - status
+      - created_at
+      title: SupportTicketOut
     SyncAccepted:
       properties:
         id:
@@ -7890,6 +10108,10 @@ components:
             exclusiveMinimum: 0.0
           - type: 'null'
           title: Avg Weaning Weight Kg
+        is_partial:
+          type: boolean
+          title: Is Partial
+          default: false
         notes:
           anyOf:
           - type: string

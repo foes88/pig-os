@@ -218,3 +218,38 @@ async def _summer_infertility(ctx: RuleContext) -> list[Finding]:
 
 
 RuleRegistry.register(Rule("seasonal.summer_infertility", "seasonal", "Summer infertility (SID)", _summer_infertility))
+
+
+# ── Conception rate low (임신감정 기반, D1) ──────────────────────────────────────
+CONCEPTION_WARNING, CONCEPTION_CRITICAL = 85.0, 80.0       # % (낮을수록 나쁨)
+
+async def _conception_rate_low(ctx: RuleContext) -> list[Finding]:
+    rate = ctx.kpi.get("CONCEPTION_RATE")
+    if rate is None:
+        return []
+    warning, critical = _thresholds(
+        ctx, "CONCEPTION_RATE", *_cfg_default(ctx, "conception.rate_low", CONCEPTION_WARNING, CONCEPTION_CRITICAL)
+    )
+    # 낮을수록 나쁨(below)
+    if rate >= warning:
+        return []
+    severity = Severity.CRITICAL if rate < critical else Severity.WARNING
+
+    causes = ["low_conception_rate"]
+    actions = ["audit_heat_detection_and_insemination_timing", "check_semen_handling_and_boar_fertility"]
+    if severity == Severity.CRITICAL:
+        causes.append("possible_reproductive_disease_or_seasonal_infertility")
+        actions.append("consult_veterinarian_for_reproductive_disease_screening")
+
+    return [Finding(
+        rule_id="conception.rate_low",
+        kpi="CONCEPTION_RATE",
+        severity=severity,
+        current_value=rate,
+        target_value=warning,
+        causes=causes,
+        recommended_actions=actions,
+    )]
+
+
+RuleRegistry.register(Rule("conception.rate_low", "conception", "Conception rate low", _conception_rate_low))

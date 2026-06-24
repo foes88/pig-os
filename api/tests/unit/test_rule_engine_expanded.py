@@ -26,7 +26,11 @@ from app.engine.rules.loss import (
     _loss_preweaning,
     _loss_sow_culling,
 )
-from app.engine.rules.reproduction import _abortion_rate_high, _summer_infertility
+from app.engine.rules.reproduction import (
+    _abortion_rate_high,
+    _conception_rate_low,
+    _summer_infertility,
+)
 from app.engine.rules.sow_herd import (
     _accident_parity_skew,
     _culling_rate_high,
@@ -226,6 +230,14 @@ class TestHerdDynamicsRules:
     def test_missing_no_finding(self):
         assert run(_replacement_rate_abnormal(ctx({}))) == []
         assert run(_summer_infertility(ctx({}))) == []
+
+    def test_conception_rate(self):
+        assert run(_conception_rate_low(ctx({"CONCEPTION_RATE": 90.0}))) == []   # ok
+        f = run(_conception_rate_low(ctx({"CONCEPTION_RATE": 83.0})))            # <85 warn
+        assert f and f[0].severity == Severity.WARNING
+        f2 = run(_conception_rate_low(ctx({"CONCEPTION_RATE": 78.0})))           # <80 crit
+        assert f2 and f2[0].severity == Severity.CRITICAL
+        assert run(_conception_rate_low(ctx({}))) == []                         # 데이터 없음
 
 
 # ── Phase B4: 웅돈별 분만율(멀티개체) ────────────────────────────────────────────
