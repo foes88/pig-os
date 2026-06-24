@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
     environment: str = "development"
-    cors_origins: list[str] = ["https://pigos.io", "https://app.pigos.io"]
+    cors_origins: list[str] = [
+        "https://pigos.io",
+        "https://app.pigos.io",
+        "https://admin.pigos.io",  # 운영자 콘솔 — 누락 시 admin API 호출 CORS 차단
+    ]
 
     # Supabase (파일럿 신청용 + 프로덕션 DB)
     supabase_url: str = ""

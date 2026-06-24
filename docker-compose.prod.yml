@@ -4,6 +4,10 @@ services:
     build:
       context: ./src
       dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* 는 빌드타임 인라인 → build args로 주입해야 클라 번들에 반영됨
+        NEXT_PUBLIC_API_URL: https://api.pigos.io
+        NEXT_PUBLIC_APP_URL: https://app.pigos.io
     container_name: pigos-web
     restart: unless-stopped
     environment:

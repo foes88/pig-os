@@ -80,3 +80,10 @@ curl -I https://admin.pigos.io/login         # 200 (운영자 로그인)
 ## 알려진 보강 포인트
 - compose에 postgres 서비스 없음 → 외부 DB(RDS) 또는 postgres 서비스 추가 필요.
 - `NEXT_PUBLIC_API_URL`이 절대 URL(api.pigos.io)이라 CORS 의존. (대안: 상대경로 + nginx `/api` 프록시로 동일출처화 — 현재 nginx는 도메인 분리 방식.)
+
+## ✅ 배포 사전점검 수정 (2026-06-24)
+- **CORS**: 프로덕션 허용 오리진에 `admin.pigos.io` 누락 → 추가. `app/main.py`가 `settings.cors_origins` 사용(env-override 가능)으로 변경 — admin 콘솔 API 호출 차단 방지.
+- **web 빌드 ARG**: `NEXT_PUBLIC_API_URL`은 빌드타임 인라인 → `src/Dockerfile` `ARG/ENV` + `docker-compose.prod.yml` `web.build.args`로 주입. (런타임 env만으론 클라 번들에 안 박혀 API 호출 실패하던 문제 해결.)
+- **root `.env.example`** 추가 → `cp .env.example .env` 후 값 채우기.
+- `alembic upgrade head` 한 번이면 40룰 seed·임신감정 테이블 등 전부 적용. 현재 단일 head `a1c3e5079b2d`.
+> ⚠️ 실제 서버 작업(SSH·certbot·docker compose up·RDS)은 **사람이 런북대로 실행**. 코드/설정은 위로 준비 완료.
