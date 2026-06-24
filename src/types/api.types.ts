@@ -944,6 +944,7 @@ export interface MortalityReport {
   removals_by_type: MortalityCount[];
   removals_by_reason: MortalityCount[];
   piglet_deaths_by_reason: MortalityCount[];
+  piglet_deaths_by_age?: MortalityCount[];
   total_removals: number;
   total_piglet_deaths: number;
   born_alive_in_period: number;

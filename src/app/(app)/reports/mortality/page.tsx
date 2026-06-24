@@ -113,6 +113,12 @@ export default function MortalityReportPage() {
             <List title={t("byReason")} items={data?.removals_by_reason ?? []} prefix="rc" />
             <List title={t("pigletByReason")} items={data?.piglet_deaths_by_reason ?? []} prefix="pc" showPiglets />
           </div>
+
+          {(data?.piglet_deaths_by_age?.length ?? 0) > 0 && (
+            <div className="mt-3">
+              <List title={t("pigletByAge")} items={data?.piglet_deaths_by_age ?? []} prefix="" showPiglets />
+            </div>
+          )}
         </>
       )}
     </div>

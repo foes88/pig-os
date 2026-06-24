@@ -7144,6 +7144,12 @@ components:
             $ref: '#/components/schemas/MortalityCount'
           type: array
           title: Piglet Deaths By Reason
+        piglet_deaths_by_age:
+          items:
+            $ref: '#/components/schemas/MortalityCount'
+          type: array
+          title: Piglet Deaths By Age
+          default: []
         total_removals:
           type: integer
           title: Total Removals

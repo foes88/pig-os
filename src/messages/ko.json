@@ -1397,7 +1397,8 @@
     "reason": "사유",
     "count": "건수",
     "piglets": "두수",
-    "noData": "해당 기간 데이터 없음"
+    "noData": "해당 기간 데이터 없음",
+    "pigletByAge": "일령별 포유자돈 폐사 (일)"
   },
   "comprehensiveDaily": {
     "title": "종합일보",

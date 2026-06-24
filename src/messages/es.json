@@ -1397,7 +1397,8 @@
     "reason": "Causa",
     "count": "Cantidad",
     "piglets": "Lechones",
-    "noData": "Sin datos en este período"
+    "noData": "Sin datos en este período",
+    "pigletByAge": "Muertes de lechones por edad (días)"
   },
   "comprehensiveDaily": {
     "title": "Informe diario integral",

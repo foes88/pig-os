@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.events import (
@@ -712,6 +712,28 @@ async def get_mortality_report(db: AsyncSession, farm_id: UUID, start: date, end
     piglet_deaths_by_reason = [
         {"key": r[0] or "UNKNOWN", "count": r[1], "piglets": int(r[2])} for r in pd_rows
     ]
+    # 일령대별 포유자돈 폐사(D2) — age_days(서버 자동계산) 구간 분해
+    _band = case(
+        (PigletEvent.age_days <= 3, "0-3"),
+        (PigletEvent.age_days <= 7, "4-7"),
+        (PigletEvent.age_days <= 14, "8-14"),
+        (PigletEvent.age_days <= 21, "15-21"),
+        else_="22+",
+    )
+    age_rows = {
+        r[0]: (int(r[1]), int(r[2])) for r in (await db.execute(
+            select(_band.label("band"), func.count(),
+                   func.coalesce(func.sum(PigletEvent.piglet_count), 0))
+            .where(PigletEvent.farm_id == farm_id, PigletEvent.deleted_at.is_(None),
+                   PigletEvent.event_type == "DEATH", PigletEvent.age_days.isnot(None),
+                   PigletEvent.event_date >= start, PigletEvent.event_date <= end)
+            .group_by(_band)
+        )).all()
+    }
+    piglet_deaths_by_age = [
+        {"key": b, "count": age_rows[b][0], "piglets": age_rows[b][1]}
+        for b in ("0-3", "4-7", "8-14", "15-21", "22+") if age_rows.get(b)
+    ]
     total_removals = sum(x["count"] for x in by_type)
     total_piglet_deaths = sum(x["piglets"] for x in piglet_deaths_by_reason)
 
@@ -727,6 +749,7 @@ async def get_mortality_report(db: AsyncSession, farm_id: UUID, start: date, end
         "removals_by_type": by_type,
         "removals_by_reason": by_reason,
         "piglet_deaths_by_reason": piglet_deaths_by_reason,
+        "piglet_deaths_by_age": piglet_deaths_by_age,
         "total_removals": total_removals,
         "total_piglet_deaths": total_piglet_deaths,
         "born_alive_in_period": int(born_alive),

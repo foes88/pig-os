@@ -145,6 +145,7 @@ class MortalityReport(BaseModel):
     removals_by_type: list[MortalityCount]
     removals_by_reason: list[MortalityCount]
     piglet_deaths_by_reason: list[MortalityCount]
+    piglet_deaths_by_age: list[MortalityCount] = []
     total_removals: int
     total_piglet_deaths: int
     born_alive_in_period: int

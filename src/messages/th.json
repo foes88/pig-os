@@ -1397,7 +1397,8 @@
     "reason": "Reason",
     "count": "Count",
     "piglets": "Piglets",
-    "noData": "No data in this period"
+    "noData": "No data in this period",
+    "pigletByAge": "ลูกสุกรตายตามอายุ (วัน)"
   },
   "comprehensiveDaily": {
     "title": "Comprehensive Daily",

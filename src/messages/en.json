@@ -1397,7 +1397,8 @@
     "reason": "Reason",
     "count": "Count",
     "piglets": "Piglets",
-    "noData": "No data in this period"
+    "noData": "No data in this period",
+    "pigletByAge": "Piglet deaths by age (days)"
   },
   "comprehensiveDaily": {
     "title": "Comprehensive Daily",

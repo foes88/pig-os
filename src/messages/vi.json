@@ -1397,7 +1397,8 @@
     "reason": "Lý do",
     "count": "Số lượng",
     "piglets": "Số con",
-    "noData": "Không có dữ liệu trong kỳ"
+    "noData": "Không có dữ liệu trong kỳ",
+    "pigletByAge": "Heo con chết theo ngày tuổi (ngày)"
   },
   "comprehensiveDaily": {
     "title": "Báo cáo tổng hợp ngày",

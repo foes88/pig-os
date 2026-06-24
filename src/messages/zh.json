@@ -1397,7 +1397,8 @@
     "reason": "原因",
     "count": "数量",
     "piglets": "头数",
-    "noData": "此期间无数据"
+    "noData": "此期间无数据",
+    "pigletByAge": "按日龄的哺乳仔猪死亡（天）"
   },
   "comprehensiveDaily": {
     "title": "综合日报",
