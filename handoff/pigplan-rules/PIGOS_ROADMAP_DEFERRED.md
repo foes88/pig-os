@@ -22,6 +22,12 @@
 > D5/D6는 **룰 추가가 아니라 신규 입력기능 프로젝트** — 데이터 없이 룰만 만들면 위조라 미착수. 입력기능부터 설계 후 진행.
 > 후속 미세룰: `piglet.cause_trend`(주간 연속1위 streak — 시계열 윈도잉), 배치 주기 fitness, abortion 분모 risk-population 정밀화.
 
+### D5/D6 재개용 KR 임계값(본문 추출 완료 — 재추출 불필요)
+- **BCS_THRESHOLD**(등지방 mm 분포): target_range [17,20], low_max 13, high_min 22 / target_good 60%·warn 40% / low·high warn 15%·danger 30% / window 180일, min_events 50, min_pigs 10.
+- **TREATMENT_THRESHOLD**: 반복치료율 repeat_warn 20%·repeat_red 30% / window 180일, min_events 20, min_pigs 5.
+- **HEAT_DETECTION_THRESHOLD**: 정상 1→2차 간격 [18,24]일, BCS(등지방) 정상 [17,20]mm / good 80%·warn 60% / window 180, min_heads 10, min_cycles 5.
+> 주의: KR은 **등지방(mm)** 기준(BCS 1~5 척도 아님). PigOS는 BCS 척도 vs 등지방 중 입력 방식 결정 필요(설계 항목).
+
 ---
 
 ## Phase E — Out-of-scope (PigOS 네이티브 피드 선행, 로드맵만)
