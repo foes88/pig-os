@@ -12,6 +12,25 @@ class TestFarrowingValidatorValid:
             avg_birth_weight_kg=1.4,
         )
 
+
+class TestFarrowingLitterIdentity:
+    """B1: total_born = born_alive + stillborn + mummified 항등식(/sync·REST 공통)."""
+
+    def test_identity_holds_passes(self):
+        validate_farrowing(total_born=12, born_alive=11, stillborn=1, mummified=0)
+
+    def test_identity_with_mummified_passes(self):
+        validate_farrowing(total_born=15, born_alive=12, stillborn=2, mummified=1)
+
+    def test_mismatch_raises(self):
+        # TB=20, BA=10, SB=0, MUM=0 → 합 10 ≠ 20 (B1 오염 케이스)
+        with pytest.raises(ValidationError):
+            validate_farrowing(total_born=20, born_alive=10, stillborn=0, mummified=0)
+
+    def test_mismatch_under_raises(self):
+        with pytest.raises(ValidationError):
+            validate_farrowing(total_born=10, born_alive=8, stillborn=1, mummified=0)  # 합 9 ≠ 10
+
     def test_total_born_boundary_35(self):
         validate_farrowing(total_born=35, born_alive=35)
 
