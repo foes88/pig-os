@@ -152,10 +152,11 @@ class Benchmark(Base):
             name="ck_bench_incompatible_silent",
         ),
         Index("idx_bench_lookup", "country_code", "kpi_code", "definition_id"),
-        # active verified 중복 방지: 동일 (country,system,size,kpi,def) verified류 1개만 (§4.5)
+        # active verified 중복 방지: 동일 (country,system,size,population,kpi,def) verified류 1개만 (§4.5 + v3.2 §10.4)
+        # population_scope 포함 — national_general vs professional 같은 KPI 공존 허용(전국 22.4 / 전문 24.2 등).
         Index(
             "uq_bench_active_verified",
-            "country_code", "production_system", "farm_size_band", "kpi_code", "definition_id",
+            "country_code", "production_system", "farm_size_band", "population_scope", "kpi_code", "definition_id",
             unique=True,
             postgresql_where="benchmark_status IN ('verified','normalized_verified') AND is_active",
         ),
@@ -177,6 +178,7 @@ class Benchmark(Base):
     critical_min: Mapped[float | None] = mapped_column(Numeric)
     critical_max: Mapped[float | None] = mapped_column(Numeric)
     target: Mapped[float | None] = mapped_column(Numeric)
+    population_scope: Mapped[str | None] = mapped_column(Text)   # national_general|professional|coop|top1 (v3.2 §10.4)
     mapping_status: Mapped[str | None] = mapped_column(Text)
     comparison_status: Mapped[str | None] = mapped_column(Text)
     benchmark_status: Mapped[str] = mapped_column(Text, server_default="missing")

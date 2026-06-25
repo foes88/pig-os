@@ -191,7 +191,8 @@ async def test_07_composite_fk_mismatch_fails(db: AsyncSession):
 async def test_15_duplicate_active_verified_blocked(db: AsyncSession):
     """동일 (country,kpi,def) active verified 2건 → 중복 방지 인덱스 위반 (period 달라도)."""
     await _seed_kpi_defs(db)
-    common = dict(country_code="KR", kpi_code="psy", definition_id="PIGOS_PSY_V1",
+    common = dict(country_code="KR", population_scope="national_general", kpi_code="psy",
+                  definition_id="PIGOS_PSY_V1",
                   benchmark_status="verified", comparison_status="compatible", mapping_status="exact",
                   transformed_value=24, value_scale="n/a", is_provisional=False, is_active=True,
                   warning_min=22, critical_min=18)
