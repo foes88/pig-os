@@ -44,13 +44,23 @@ def _cfg_default(ctx: RuleContext, rule_id: str, default_w: float, default_c: fl
     return (w if w is not None else default_w, c if c is not None else default_c)
 
 
+def _resolve(ctx: RuleContext, rule_id: str, kpi: str, default_w: float, default_c: float) -> tuple[float, float]:
+    """A-하이브리드 임계 해소. flag ON: rule_config→operational_defaults→code.
+    flag OFF: 기존 경로 유지(benchmark > rule_config > code) — 동작 변화 0."""
+    from app.engine.threshold_resolver import governance_enabled, gov_resolve_thresholds
+    if governance_enabled():
+        w, c, _ = gov_resolve_thresholds(ctx, rule_id, default_w, default_c)
+        return w, c
+    return _thresholds(ctx, kpi, *_cfg_default(ctx, rule_id, default_w, default_c))
+
+
 # ── WSI overdue ───────────────────────────────────────────────────────────────
 
 async def _wsi_overdue(ctx: RuleContext) -> list[Finding]:
     wsi = ctx.kpi.get("WSI")
     if wsi is None:
         return []
-    warning, critical = _thresholds(ctx, "WSI", *_cfg_default(ctx, "wsi.overdue", WSI_WARNING, WSI_CRITICAL))
+    warning, critical = _resolve(ctx, "wsi.overdue", "WSI", WSI_WARNING, WSI_CRITICAL)
     severity = _severity_above(wsi, warning, critical)
     if severity is None:
         return []
@@ -81,7 +91,7 @@ async def _rts_rate_high(ctx: RuleContext) -> list[Finding]:
     rts = ctx.kpi.get("RTS_RATE")
     if rts is None:
         return []
-    warning, critical = _thresholds(ctx, "RTS_RATE", *_cfg_default(ctx, "rts.rate_high", RTS_WARNING, RTS_CRITICAL))
+    warning, critical = _resolve(ctx, "rts.rate_high", "RTS_RATE", RTS_WARNING, RTS_CRITICAL)
     severity = _severity_above(rts, warning, critical)
     if severity is None:
         return []
@@ -126,7 +136,7 @@ async def _pwmr_high(ctx: RuleContext) -> list[Finding]:
     pwmr = _compute_pwmr(ctx, method)
     if pwmr is None:
         return []
-    warning, critical = _thresholds(ctx, "PWMR", *_cfg_default(ctx, "pwmr.high", PWMR_WARNING, PWMR_CRITICAL))
+    warning, critical = _resolve(ctx, "pwmr.high", "PWMR", PWMR_WARNING, PWMR_CRITICAL)
     severity = _severity_above(pwmr, warning, critical)
     if severity is None:
         return []
@@ -159,9 +169,7 @@ async def _abortion_rate_high(ctx: RuleContext) -> list[Finding]:
     rate = ctx.kpi.get("ABORTION_RATE")
     if rate is None:
         return []
-    warning, critical = _thresholds(
-        ctx, "ABORTION_RATE", *_cfg_default(ctx, "abortion.rate_high", ABORTION_WARNING, ABORTION_CRITICAL)
-    )
+    warning, critical = _resolve(ctx, "abortion.rate_high", "ABORTION_RATE", ABORTION_WARNING, ABORTION_CRITICAL)
     severity = _severity_above(rate, warning, critical)
     if severity is None:
         return []
@@ -193,9 +201,7 @@ async def _summer_infertility(ctx: RuleContext) -> list[Finding]:
     drop = ctx.kpi.get("SUMMER_FARROW_DROP")
     if drop is None:
         return []
-    warning, critical = _thresholds(
-        ctx, "SUMMER_FARROW_DROP", *_cfg_default(ctx, "seasonal.summer_infertility", SID_WARNING, SID_CRITICAL)
-    )
+    warning, critical = _resolve(ctx, "seasonal.summer_infertility", "SUMMER_FARROW_DROP", SID_WARNING, SID_CRITICAL)
     severity = _severity_above(drop, warning, critical)
     if severity is None:
         return []
@@ -227,9 +233,7 @@ async def _conception_rate_low(ctx: RuleContext) -> list[Finding]:
     rate = ctx.kpi.get("CONCEPTION_RATE")
     if rate is None:
         return []
-    warning, critical = _thresholds(
-        ctx, "CONCEPTION_RATE", *_cfg_default(ctx, "conception.rate_low", CONCEPTION_WARNING, CONCEPTION_CRITICAL)
-    )
+    warning, critical = _resolve(ctx, "conception.rate_low", "CONCEPTION_RATE", CONCEPTION_WARNING, CONCEPTION_CRITICAL)
     # 낮을수록 나쁨(below)
     if rate >= warning:
         return []
