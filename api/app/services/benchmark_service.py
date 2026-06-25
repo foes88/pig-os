@@ -127,6 +127,16 @@ async def resolve_benchmark(
     여러 행이면 status 우선순위로 1개 채택. 행이 없으면 None(= 미시드, 발화 안 함).
     default_metric_values는 보지 않는다(§5).
     """
+    rows = await _fetch_rows(db, country_code, kpi_code, population_scope)
+    if not rows:
+        return None
+    rows = sorted(rows, key=lambda b: _STATUS_RANK.get(b.benchmark_status, 0), reverse=True)
+    kdefs = kpi_definition_index()
+    best = rows[0]
+    return _to_resolved(best, kdefs.get(best.kpi_code))
+
+
+async def _fetch_rows(db: AsyncSession, country_code: str, kpi_code: str, population_scope: str | None):
     stmt = select(Benchmark).where(
         Benchmark.country_code == country_code,
         Benchmark.kpi_code == kpi_code,
@@ -134,13 +144,68 @@ async def resolve_benchmark(
     )
     if population_scope is not None:
         stmt = stmt.where(Benchmark.population_scope == population_scope)
-    rows = (await db.scalars(stmt)).all()
+    return (await db.scalars(stmt)).all()
+
+
+@dataclass
+class BenchmarkContext:
+    """T1-4 — insight에 붙이는 '비교 맥락' (발화 결정과 무관, §5)."""
+    available: bool
+    benchmark_value: float | None
+    value_scale: str | None
+    benchmark_id: int | None
+    benchmark_status: str | None
+    comparison_status: str | None
+    source_obs_id: int | None
+    obs_group_id: str | None
+    population_scope: str | None
+    is_global_fallback: bool
+    unavailable_reason: str | None   # none|provisional|missing|benchmark_value_scale_mismatch
+
+    def trace(self) -> dict:
+        return asdict(self)
+
+
+_CONTEXT_OK = {"verified", "normalized_verified", "global_fallback"}
+
+
+async def resolve_benchmark_context(
+    db: AsyncSession, country_code: str, kpi_code: str, *, population_scope: str | None = None,
+) -> BenchmarkContext:
+    """
+    verified/normalized 평균을 비교 맥락으로 해소(§5). **발화 결정 아님.**
+    - verified/normalized_verified/global_fallback + value_scale 일치 → 맥락 첨부.
+    - provisional/missing → 맥락 금지(사용자 노출 안 함), reason 기록.
+    - value_scale mismatch → 맥락만 강등(benchmark_value_scale_mismatch), 발화는 막지 않음(threshold 담당).
+    """
+    def _none(reason: str) -> BenchmarkContext:
+        return BenchmarkContext(False, None, None, None, None, None, None, None, None, False, reason)
+
+    rows = await _fetch_rows(db, country_code, kpi_code, population_scope)
     if not rows:
-        return None
-    rows = sorted(rows, key=lambda b: _STATUS_RANK.get(b.benchmark_status, 0), reverse=True)
+        return _none("none")
     kdefs = kpi_definition_index()
-    best = rows[0]
-    return _to_resolved(best, kdefs.get(best.kpi_code))
+    b = sorted(rows, key=lambda r: _STATUS_RANK.get(r.benchmark_status, 0), reverse=True)[0]
+    kdef = kdefs.get(b.kpi_code)
+    is_gf = b.benchmark_status == "global_fallback"
+
+    if b.benchmark_status not in _CONTEXT_OK:
+        # provisional / missing → 맥락도 노출 금지
+        return _none(b.benchmark_status)
+
+    kdef_scale = kdef["value_scale"] if kdef else None
+    if b.value_scale is None or kdef_scale is None or b.value_scale != kdef_scale:
+        # value_scale 불일치 → 맥락만 강등(발화는 별개)
+        return BenchmarkContext(
+            False, None, b.value_scale, b.bench_id, b.benchmark_status, b.comparison_status,
+            b.source_obs_id, b.obs_group_id, b.population_scope, is_gf, "benchmark_value_scale_mismatch")
+
+    return BenchmarkContext(
+        available=True,
+        benchmark_value=float(b.transformed_value) if b.transformed_value is not None else None,
+        value_scale=b.value_scale, benchmark_id=b.bench_id, benchmark_status=b.benchmark_status,
+        comparison_status=b.comparison_status, source_obs_id=b.source_obs_id, obs_group_id=b.obs_group_id,
+        population_scope=b.population_scope, is_global_fallback=is_gf, unavailable_reason=None)
 
 
 def evaluate_severity(rb: ResolvedBenchmark, value: float) -> str | None:
