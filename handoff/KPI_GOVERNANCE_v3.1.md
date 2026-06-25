@@ -90,7 +90,7 @@ period(연간/분기/rolling)·population(전국/조합/전문사용자/상위10
 | prewean_mortality | 이유전폐사율 | 이유전폐사 | 포유개시두수 | piglet | lower_better | percent | percent_0_100 | US14~17/GB12.5/DK20 |
 | postwean_mortality | 이유후폐사율 | 이유후폐사 | 이유두수 | piglet | lower_better | percent | percent_0_100 | |
 | sow_mortality | 모돈폐사율 | 모돈폐사 | 평균사육모돈 | avg_inventory_sow | lower_better | percent | percent_0_100 | US12.6 상승 |
-| fcr | 사료요구율 | 사료급여량 | 증체량 | weight | lower_better | kg_per_kg | ratio | 체중구간 정의필요 |
+| fcr | 사료요구율 | 사료급여량 | 증체량 | weight | lower_better | kg_per_kg | n/a | 체중구간 정의필요. ~~ratio~~→n/a 확정(D-13): FCR≈2.5는 percent도 0~1 ratio도 아님 |
 | wsi | 이유후재교배간격 | 이유~초교배일수 | 교배모돈수 | mated_female | lower_better | days | n/a | KR임계7일 |
 
 ### 2.3 range_target

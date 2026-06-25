@@ -1,4 +1,4 @@
-"""
+﻿"""
 KPI Governance v3.1 — kpi_definitions 시드 데이터 (§2) + seed validator (§3.5 ★⑦⑧⑫ + §6 게이트).
 
 문서: handoff/KPI_GOVERNANCE_v3.1.md
