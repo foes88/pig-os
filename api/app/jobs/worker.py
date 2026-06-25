@@ -11,6 +11,7 @@ from arq import cron
 from arq.connections import RedisSettings
 
 from app.core.config import settings
+from app.jobs.keepalive import db_keepalive
 from app.jobs.kpi import (
     daily_kpi_aggregation,
     monthly_kpi_aggregation,
@@ -42,9 +43,12 @@ class WorkerSettings:
         recalculate_farm_kpi,
         generate_tasks_job,
         generate_notifications_job,
+        db_keepalive,
     ]
 
     cron_jobs = [
+        # 매일 12:00 UTC — DB keep-alive (Supabase 무료 auto-pause 방지)
+        cron(db_keepalive, hour=12, minute=0),
         # 매일 00:05 UTC — 전날 일별 KPI 집계
         cron(daily_kpi_aggregation, hour=0, minute=5),
         # 매주 월요일 00:10 UTC — 지난 주 KPI
