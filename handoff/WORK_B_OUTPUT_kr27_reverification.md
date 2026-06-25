@@ -84,7 +84,12 @@ orphan(KR출신) 중 **글로벌 Rule Engine이 발화 참조**하는 것 확인
 | HIGH_PARITY_RATIO | `sow_herd.py` | 보편 KPI | 낮음 |
 | BORN_ALIVE / WEANING_AGE_LOW / WEANING_WEIGHT | `litter.py`,`loss.py` | 보편 KPI | 낮음 |
 
-→ **질문(코드 임의판정 금지)**: 경제값 3종(SOW_RESIDUAL/SOW_SALVAGE)이 KRW 가정으로 글로벌 발화 시 非KR 농장에 한국 잔존가가 노출됨. **이를 (a) KR 전용으로 분리할지 (b) 국가별 통화/잔존가 시드로 일반화할지** 결정 필요. **실행은 보류**(분리/삭제 안 함) — 표시만. ("KR전용 6종" 후보 = SOW_RESIDUAL_P0, SOW_SALVAGE_CULL, SOW_SALVAGE_DEATH, MARKET_PRICE_HEAD + HIGH_PARITY_RATIO + RTS_RATE 중 어디까지를 'KR전용'으로 볼지도 D-7 확정 필요.)
+→ **질문(코드 임의판정 금지)**: 경제값 3종(SOW_RESIDUAL/SOW_SALVAGE)이 KRW 가정으로 글로벌 발화 시 非KR 농장에 한국 잔존가가 노출됨. **이를 (a) KR 전용으로 분리할지 (b) 국가별 통화/잔존가 시드로 일반화할지** 결정 필요. **실행은 보류**(분리/삭제 안 함) — 표시만.
+
+**✅ 사용자 결정 (2026-06-25)**: **(a) 출시 전 "분리"로 누수만 차단, (b) 통화 일반화는 P2(유료 AI Insight 단계)로 이월.**
+- 근거: 원화 노출은 **출시(7/1) 블로커 버그**지만, 통화 일반화는 currency 컬럼 + 환율/국가별 단가 테이블이 필요한 손실액(MSD) 영역 = 메모상 **P2**. 7/1에 일반화까지 끌면 범위 폭발.
+- 실행 범위(별도 작업): `loss.py`에서 KRW 경제값(SOW_RESIDUAL_P*/SOW_SALVAGE_*) 발화를 **country_code='KR'일 때만** 적용하도록 게이트(非KR 농장은 해당 손실액 룰 침묵). 보편 KPI(ABORTION/RTS/HIGH_PARITY/BORN_ALIVE/WEANING_*)는 글로벌 유지.
+- D-10(손실액 MSD MVP vs P2)도 이 결정으로 **P2 확정**.
 
 ## 7. 테스트 (작업 B)
 `api/tests/integration/test_kr27_reverification.py` — 15종 PASS:
