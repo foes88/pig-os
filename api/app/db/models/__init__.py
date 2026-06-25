@@ -6,6 +6,7 @@ from app.db.models.benchmark import (  # noqa: F401
     KpiDefinition,
     SourceObservation,
 )
+from app.db.models.operational_default import OperationalDefault  # noqa: F401
 from app.db.models.config import (  # noqa: F401
     ComplianceProfile,
     DefaultMetricValue,
