@@ -543,6 +543,8 @@ Agriness(BR)·WEPIG(VN)·중국·태국·멕시코 미확인. 등급배분 방�
 - **앵커마켓 BR(Agriness)·VN(WEPIG)·CN·TH·MX**: 1차 수치 없음 → 해당국 룰 침묵. 시드 금지(위조 0). PDF와 무관, 변동 없음.
 - US(PigCHAMP): 확보됨 ✓ — 사산율 normalized 9.93%, 분만율 verified 83.81%, PWMFY→psy missing.
 
+> **US PWMFY 처리 확정 (작업 US, D-4)**: PWMFY 27.1은 **source_observations에 참고 출처값으로만 보존**하고 **PigOS KPI로 승격하지 않는다(보류)**. 분모(교배모돈) ≠ PigOS PSY(상시모돈)이므로 **PigOS PSY와 직접 비교 금지**. PSY benchmark는 missing 유지. 별도 `pwmfy` kpi_definition은 만들지 않음 — PigOS가 농장 PWMFY를 계산하지 않아 비교 대상이 없고(쓰지 않는 KPI 정식등록 방지), 안 만들어야 PSY 오용 경로가 구조적으로 차단됨. 필요(농장 PWMFY 계산 or US 참고지표 표시) 발생 시 non-firing 참고전용으로 후속 추가.
+
 ### 10.7 권고 작업 순서 (갱신)
 
 ```
