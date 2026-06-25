@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # 서비스 계정 JSON 경로 (google-auth가 읽음). 미설정 시 푸시 비활성.
     fcm_credentials_path: str = ""
 
+    # KPI Governance 3-table benchmark 연결 (handoff/KPI_GOVERNANCE_v3.1.md).
+    # True: Rule Engine이 governance resolver만 사용(검증 안 된 benchmark는 발화 금지+insufficient).
+    # False(기본): 기존 default_metric_values 경로 유지(롤백 전용·현행 동작). 운영 전환 전까지 False.
+    use_governance_benchmarks: bool = False
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
