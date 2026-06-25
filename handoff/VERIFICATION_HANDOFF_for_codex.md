@@ -89,3 +89,5 @@ US:lb/USD  KR:kg/KRW  CN:kg/CNY  VN:kg/VND  TH:kg/THB  PH:kg/PHP  BR:kg/BRL  MX:
 - pigos는 docker compose(web:3010·api:8010·worker·redis), 호스트 nginx가 프록시. pigsignal/dawoon/topic-lab/pigos-landing와 **포트·nginx 분리** — 건드리지 말 것.
 - DB = Supabase pooler. **운영 alembic은 빌드 이후 실행**(이미지 갱신 후) — 순서 틀리면 마이그레이션 누락(b3d5f7091a2c 한번 누락→재적용한 전례).
 - 배포 순서: tar(api+src, `--exclude='.venv*'`) → scp → extract → build → up → **빌드 후 alembic upgrade** → force-recreate → 3도메인 200 스모크.
+- ⚠️ **worker는 `pigos-worker` 자체 이미지**(compose `worker.build: ./api`, api와 별개). 백엔드 코드 바꾸면 **`build api` + `build worker` 둘 다** 해야 worker에 반영됨. `build api`만 하고 `up worker` 하면 worker는 옛 코드 유지(2026-06-25 db_keepalive 배포 시 이 함정으로 2회 헛돌았음).
+- docker 명령은 prod에서 **sudo 필요**. compose 파일 2개 항상 같이: `-f docker-compose.prod.yml -f docker-compose.deploy.yml`.
