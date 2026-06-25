@@ -509,7 +509,7 @@ export interface KpiDashboard {
   as_of: string;
   psy: number | null;
   npd: number | null;
-  farrowing_rate: number | null;
+  farrowing_rate: number | null;  // percent(0~100) 단일 SSOT — 시드 benchmarks·trend와 동일 스케일. ×100 금지.
   active_sows: number;
   gestating: number;
   lactating: number;
@@ -535,7 +535,7 @@ export interface KpiTrend {
   period: string;
   psy: number | null;
   npd: number | null;
-  farrowing_rate: number | null;
+  farrowing_rate: number | null;  // percent(0~100) — KpiDashboard와 동일 스케일.
 }
 
 // ─── Q&A / Chat ───────────────────────────────────────────────────────────────

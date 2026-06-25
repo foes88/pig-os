@@ -170,7 +170,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
               <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} />
               <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} />
-              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${(data.farrowing_rate! * 100).toFixed(1)}%`} />
+              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} />
               <KpiCard
                 t={t}
                 label={t("statAiAlerts")}

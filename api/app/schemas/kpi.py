@@ -27,7 +27,7 @@ class DashboardKpi(BaseModel):
 
     psy: float | None
     npd: float | None
-    farrowing_rate: float | None
+    farrowing_rate: float | None  # percent(0~100) 단일 SSOT — 시드 benchmarks와 동일 스케일. ratio 변환 금지.
 
     active_sows: int
     gestating: int
@@ -85,4 +85,4 @@ class KpiTrend(BaseModel):
     period: str        # "YYYY-MM"
     psy: float | None
     npd: float | None
-    farrowing_rate: float | None
+    farrowing_rate: float | None  # percent(0~100) — DashboardKpi와 동일 스케일 SSOT.

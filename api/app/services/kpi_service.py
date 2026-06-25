@@ -701,8 +701,10 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         as_of=today,
         psy=psy_value,
         npd=npd_detail.avg_npd,
-        # API는 비율(0~1)로 반환 — 프론트가 ×100해 % 표시. (RuleEngine 내부는 위 percent값 사용)
-        farrowing_rate=(farrowing_rate / 100) if farrowing_rate is not None else None,
+        # 스케일 SSOT: percent(0~100) 단일 통일(2026-06-25). 시드 benchmarks(f3a7c2e9b5d1)가 percent
+        # (KR target 85.0, unit "%")이고 RuleEngine 입력(L654)·trend 모두 percent → 출력도 percent로 통일해
+        # 이중표현(ratio↔percent) 제거. ÷100 금지(과거 ratio 반환이 클라 스케일 꼬임의 근인이었음).
+        farrowing_rate=farrowing_rate,
         active_sows=sum(
             counts.get(s, 0)
             for s in ("GILT", "OPEN", "PREGNANT", "LACTATING", "ACCIDENT")
