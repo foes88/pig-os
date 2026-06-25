@@ -80,6 +80,11 @@ async def handle_query(
     # Base tier only; pass active addon codes here when Addon subscriptions are checked
     result = await RuleEngine.evaluate(ctx, intent=intent, tiers=["base"])
 
+    from app.core.config import settings
+    if settings.use_governance_benchmarks:  # flag ON: 비교 맥락 + §7 trace 첨부
+        from app.services.benchmark_service import enrich_findings_with_governance
+        await enrich_findings_with_governance(db, farm.country or "default", result.findings)
+
     answer, used_renderer = await llm_render(
         result, locale=query.locale, use_llm=use_llm, usage_count=usage_count
     )

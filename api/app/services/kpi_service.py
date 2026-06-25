@@ -15,7 +15,9 @@ from app.db.models.health import HealthEvent
 from app.db.models.master import DiseaseCode
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
+from app.core.config import settings
 from app.engine import RuleContext, RuleEngine, StructuredResult
+from app.engine.threshold_resolver import load_operational_defaults_map
 from app.engine.rules import (
     base as _base_rules,  # ensure rules are registered  # noqa: F401
 )
@@ -471,6 +473,10 @@ async def build_rule_context(
     boar_stats = await build_boar_stats(db, farm)
     loss_inputs = await build_loss_inputs(db, farm)
 
+    extra = {"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs,
+             "boar_stats": boar_stats, "loss_inputs": loss_inputs}
+    if settings.use_governance_benchmarks:  # flag ON: Threshold Resolver용 레지스트리 주입
+        extra["operational_defaults"] = await load_operational_defaults_map(db, farm.country)
     return RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
@@ -478,8 +484,7 @@ async def build_rule_context(
         benchmarks=benchmarks,
         sow_counts=counts,
         as_of=today,
-        extra={"recent_notifiable_diseases": notifiable_diseases, "rule_configs": rule_configs,
-               "boar_stats": boar_stats, "loss_inputs": loss_inputs},
+        extra=extra,
     )
 
 
@@ -648,15 +653,21 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     rule_configs = await load_rule_configs(db)
     boar_stats = await build_boar_stats(db, farm)
     loss_inputs = await build_loss_inputs(db, farm)
+    dash_extra = {"rule_configs": rule_configs, "boar_stats": boar_stats, "loss_inputs": loss_inputs}
+    if settings.use_governance_benchmarks:
+        dash_extra["operational_defaults"] = await load_operational_defaults_map(db, farm.country)
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
         kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
         benchmarks=benchmarks,
         sow_counts=counts,
-        extra={"rule_configs": rule_configs, "boar_stats": boar_stats, "loss_inputs": loss_inputs},
+        extra=dash_extra,
     )
     result: StructuredResult = await RuleEngine.evaluate(ctx, intent="dashboard")
+    if settings.use_governance_benchmarks:  # flag ON: verified 평균을 비교 맥락으로 첨부 + §7 trace
+        from app.services.benchmark_service import enrich_findings_with_governance
+        await enrich_findings_with_governance(db, farm.country or "default", result.findings)
 
     alerts = [
         Alert(

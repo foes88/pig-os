@@ -221,6 +221,42 @@ def evaluate_severity(rb: ResolvedBenchmark, value: float) -> str | None:
     return sev
 
 
+# 룰 KPI 코드(대문자 legacy) → governance kpi_code(소문자). 매핑 없으면 맥락 없음.
+RULE_KPI_TO_GOVERNANCE = {
+    "PSY": "psy", "MSY": "msy", "FARROWING_RATE": "farrowing_rate", "WEANED_COUNT": "weaned_per_litter",
+    "NPD": "npd", "STILLBORN_RATE": "stillbirth_rate", "MUMMIFIED_RATE": "mummy_rate",
+    "SOW_MORTALITY": "sow_mortality", "FCR": "fcr", "WSI": "wsi", "CULLING_RATE": "culling_rate",
+}
+
+
+async def enrich_findings_with_governance(db: AsyncSession, country_code: str, findings: list) -> None:
+    """
+    T1-5: flag ON일 때만 호출. 각 finding.detail["governance_trace"]에 §7 trace + 비교 맥락 첨부.
+    benchmark context는 §5(verified/normalized만 첨부). 매핑 없는 룰 KPI는 benchmark_source=none.
+    발화는 이미 끝난 상태 — 여기선 맥락/감사 trace만 붙인다(발화 변경 없음).
+    """
+    from app.engine.rule_engine import Severity  # noqa
+    for f in findings:
+        gov_kpi = RULE_KPI_TO_GOVERNANCE.get(f.kpi)
+        bc = None
+        if gov_kpi is not None:
+            bc = await resolve_benchmark_context(db, country_code, gov_kpi)
+        sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
+        f.detail["governance_trace"] = {
+            "rule_id": f.rule_id, "kpi_code": f.kpi, "governance_kpi": gov_kpi, "severity": sev,
+            "current_value": f.current_value, "target_value": f.target_value,
+            "benchmark_source": "governance_benchmark" if (bc and bc.available) else "none",
+            "benchmark_value": bc.benchmark_value if bc else None,
+            "benchmark_id": bc.benchmark_id if bc else None,
+            "benchmark_status": bc.benchmark_status if bc else None,
+            "comparison_status": bc.comparison_status if bc else None,
+            "source_obs_id": bc.source_obs_id if bc else None,
+            "obs_group_id": bc.obs_group_id if bc else None,
+            "is_global_fallback": bool(bc.is_global_fallback) if bc else False,
+            "benchmark_unavailable_reason": bc.unavailable_reason if bc else "no_mapping",
+        }
+
+
 async def list_benchmarks(
     db: AsyncSession, *, country_code: str | None = None, kpi_code: str | None = None,
 ) -> list[Benchmark]:
