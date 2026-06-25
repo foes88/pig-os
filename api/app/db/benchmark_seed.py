@@ -116,8 +116,10 @@ def validate_benchmark(b: dict, kpi_defs: dict[str, dict]) -> None:
         raise SeedValidationError(
             f"[{kpi}] definition_id 불일치: {b.get('definition_id')} ≠ {kdef['definition_id']} (★④ 복합 FK)")
 
-    # ★⑫-4 value_scale ≠ kpi_definitions.value_scale (크로스테이블 — DB CHECK 불가)
     bvs = b.get("value_scale")
+    # value_scale enum 유효성은 DB CHECK(ck_bench_valuescale)가 강제. 여기선 ★⑫-4(값 불일치)만 본다 —
+    # invalid enum값은 항상 kdef와도 불일치하므로 ★⑫-4가 자동으로 잡는다(별도 enum 분기는 도달불가 죽은코드라 제거).
+    # ★⑫-4 value_scale ≠ kpi_definitions.value_scale (크로스테이블 — DB CHECK 불가)
     if bvs is not None and bvs != kdef["value_scale"]:
         raise SeedValidationError(
             f"[{kpi}] value_scale 불일치: benchmarks={bvs} ≠ kpi_definitions={kdef['value_scale']} (★⑫-4)")
@@ -167,7 +169,3 @@ def validate_benchmark(b: dict, kpi_defs: dict[str, dict]) -> None:
     if cmp_ in ("incompatible", "unknown") and (b.get("transformed_value") is not None or _has_threshold(b)):
         raise SeedValidationError(
             f"[{kpi}] comparison_status={cmp_}인데 transformed_value/threshold 발화가능 상태 (★⑫-6)")
-
-    # value_scale enum (kpi_definitions와 동일 집합 — n/a 포함)
-    if bvs is not None and bvs not in ("percent_0_100", "ratio_0_1", "n/a"):
-        raise SeedValidationError(f"[{kpi}] benchmarks.value_scale={bvs} 허용 외 (★⑧-5/§E)")
