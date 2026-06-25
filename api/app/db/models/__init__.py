@@ -1,6 +1,11 @@
 """
 Import all models here so Alembic autogenerate picks them up.
 """
+from app.db.models.benchmark import (  # noqa: F401
+    Benchmark,
+    KpiDefinition,
+    SourceObservation,
+)
 from app.db.models.config import (  # noqa: F401
     ComplianceProfile,
     DefaultMetricValue,
