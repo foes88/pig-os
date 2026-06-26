@@ -33,6 +33,7 @@ from app.db.models.events import (
     Farrowing,
     Mating,
     PigletEvent,
+    PregnancyCheck,
     ReproductiveEvent,
     Weaning,
 )
@@ -48,6 +49,7 @@ from app.schemas.sync import (
     SyncHealthEvent,
     SyncMating,
     SyncPigletEvent,
+    SyncPregnancyCheck,
     SyncRejected,
     SyncReproductiveEvent,
     SyncRequest,
@@ -522,6 +524,65 @@ async def _process_reproductive(
     return SyncAccepted(id=item.id, entity="reproductive_event", action="created"), None, None
 
 
+# ── Pregnancy check (임신감정) — REST record_pregnancy_check 미러(오프라인 큐 경로) ──────────
+_PREGNANCY_RESULTS = frozenset({"POSITIVE", "NEGATIVE", "UNCERTAIN"})
+
+
+async def _process_pregnancy_check(
+    db: AsyncSession,
+    farm_id: UUID,
+    item: SyncPregnancyCheck,
+    dry_run: bool,
+) -> tuple[SyncAccepted | None, SyncRejected | None, SyncConflict | None]:
+
+    check_date = _parse_date(item.check_date)
+
+    if _is_future_date(check_date):
+        return None, SyncRejected(id=item.id, entity="pregnancy_check", reason="FUTURE_DATE",
+                                   detail={"check_date": item.check_date}), None
+
+    lock = await _check_period_locked(db, farm_id, check_date)
+    if lock:
+        return None, SyncRejected(id=item.id, entity="pregnancy_check", reason="PERIOD_LOCKED",
+                                   detail={"period": f"{check_date.year}-{check_date.month:02d}"}), None
+
+    sow = await _get_sow(db, farm_id, item.sow_id)
+    if not sow:
+        return None, SyncRejected(id=item.id, entity="pregnancy_check", reason="SOW_NOT_FOUND",
+                                   detail={"sow_id": str(item.sow_id)}), None
+
+    existing_by_id = await db.get(PregnancyCheck, item.id)
+    if existing_by_id:
+        return SyncAccepted(id=item.id, entity="pregnancy_check", action="merged"), None, None
+
+    if item.result not in _PREGNANCY_RESULTS:
+        return None, SyncRejected(
+            id=item.id, entity="pregnancy_check", reason="VALIDATION_FAILED",
+            detail={"field": "result", "message": "invalid result", "value": item.result},
+        ), None
+
+    # 임신감정은 PREGNANT 모돈만(REST record_pregnancy_check와 동일) → 부적격은 영구거부(STATUS_CONFLICT).
+    if sow.status != "PREGNANT":
+        return None, SyncRejected(
+            id=item.id, entity="pregnancy_check", reason="STATUS_CONFLICT",
+            detail={"current": sow.status, "allowed": ["PREGNANT"]},
+        ), None
+
+    if not dry_run:
+        event = PregnancyCheck(
+            id=item.id, farm_id=farm_id, sow_id=item.sow_id, mating_id=item.mating_id,
+            check_date=check_date, days_after_mating=item.days_after_mating,
+            result=item.result, method=item.method, notes=item.notes,
+        )
+        db.add(event)
+        db.add(_audit(farm_id, "pregnancy_check", item.id, "CREATE", item.model_dump(mode="json")))
+        # 음성(NEGATIVE)=공태(EMPTY) → ACCIDENT 전이 + 사이클 FAILED(재교배 대기). REST와 동일 헬퍼.
+        if item.result == "NEGATIVE":
+            await apply_terminal_reproductive(db, sow, "EMPTY", check_date, farm_id)
+
+    return SyncAccepted(id=item.id, entity="pregnancy_check", action="created"), None, None
+
+
 # ── Health event validation ────────────────────────────────────────────────────
 
 async def _process_health_event(
@@ -750,7 +811,8 @@ async def process_sync(
         len(req.changes.weanings) +
         len(req.changes.reproductive_events) +
         len(req.changes.health_events) +
-        len(req.changes.piglet_events)
+        len(req.changes.piglet_events) +
+        len(req.changes.pregnancy_checks)
     )
     if total_items > _MAX_ITEMS_PER_REQUEST:
         return SyncResponse(
@@ -793,6 +855,7 @@ async def process_sync(
                 (req.changes.piglet_events,       _process_piglet_event),
                 (req.changes.weanings,            _process_weaning),
                 (req.changes.reproductive_events, _process_reproductive),
+                (req.changes.pregnancy_checks,    _process_pregnancy_check),
                 (req.changes.health_events,       _process_health_event),
             ]
 

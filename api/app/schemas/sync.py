@@ -87,6 +87,19 @@ class SyncPigletEvent(BaseModel):
     client_created_at: datetime
 
 
+class SyncPregnancyCheck(BaseModel):
+    id: UUID
+    sow_id: UUID
+    check_date: str
+    # 스키마 하드제약 대신 _process_pregnancy_check에서 항목별 검증(배치 전체 422 방지)
+    result: str  # POSITIVE | NEGATIVE | UNCERTAIN
+    mating_id: UUID | None = None
+    days_after_mating: int | None = None
+    method: str | None = None
+    notes: str | None = None
+    client_created_at: datetime
+
+
 class SyncChanges(BaseModel):
     matings:             list[SyncMating]            = Field(default_factory=list)
     farrowings:          list[SyncFarrowing]         = Field(default_factory=list)
@@ -94,6 +107,7 @@ class SyncChanges(BaseModel):
     reproductive_events: list[SyncReproductiveEvent] = Field(default_factory=list)
     health_events:       list[SyncHealthEvent]       = Field(default_factory=list)
     piglet_events:       list[SyncPigletEvent]       = Field(default_factory=list)
+    pregnancy_checks:    list[SyncPregnancyCheck]    = Field(default_factory=list)
 
 
 # ── Sync request ──────────────────────────────────────────────────────────────
