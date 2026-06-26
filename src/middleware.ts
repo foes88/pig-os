@@ -62,8 +62,10 @@ export function middleware(request: NextRequest) {
 
   if (!isPublic && !hasSession) {
     const loginUrl = new URL("/login", request.url);
-    // 루트(/)는 로그인 후 기본 목적지라 next 생략 → 깔끔한 /login. 그 외만 복귀경로 기록.
-    if (pathname !== "/") {
+    // 기본 목적지(/ = 대시보드, /admin = admin 홈)는 로그인 후 알아서 가므로 next 생략 → 깔끔한 /login.
+    // 그 외 특정 경로만 복귀용 next 기록.
+    const isDefaultDest = pathname === "/" || pathname === "/admin";
+    if (!isDefaultDest) {
       loginUrl.searchParams.set("next", pathname);
     }
     return withLocale(NextResponse.redirect(loginUrl));

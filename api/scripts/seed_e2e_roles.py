@@ -35,7 +35,7 @@ async def main() -> None:
             if await db.scalar(select(User).where(User.email == email)):
                 print(f"이미 존재: {email}")
                 continue
-            u = User(org_id=owner.org_id, email=email, name=name,
+            u = User(org_id=owner.org_id, username=email.split("@")[0], email=email, name=name,
                      password_hash=hash_password(PASSWORD), role=role, language="en")
             db.add(u)
             await db.flush()

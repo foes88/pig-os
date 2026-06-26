@@ -124,9 +124,11 @@ async def test_farm(db: AsyncSession, test_org: Organization) -> Farm:
 @pytest_asyncio.fixture
 async def test_user(db: AsyncSession, test_org: Organization) -> User:
     from app.core.security import hash_password
+    _u = uuid.uuid4().hex[:6]
     user = User(
         org_id=test_org.id,
-        email=f"test-{uuid.uuid4().hex[:6]}@pigos.io",
+        username=f"test_{_u}",
+        email=f"test-{_u}@pigos.io",
         name="Test User",
         password_hash=hash_password("Test1234!"),
         role="FARM_OWNER",

@@ -29,6 +29,7 @@ async def main() -> None:
 
         user = User(
             org_id=org.id,
+            username="test001",
             email=EMAIL,
             name="Test Owner",
             password_hash=hash_password(PASSWORD),

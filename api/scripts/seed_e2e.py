@@ -34,6 +34,7 @@ async def main() -> None:
 
         user = User(
             org_id=org.id,
+            username="e2e",
             email=EMAIL,
             name="E2E Tester",
             password_hash=hash_password(PASSWORD),
