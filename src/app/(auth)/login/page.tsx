@@ -307,7 +307,9 @@ export default function LoginPage() {
         data.farm_ids[0],
       );
       document.cookie = `pigos_session=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      router.replace(searchParams.get("next") ?? "/");
+      // 운영자(SUPER_ADMIN)는 admin 콘솔로. 일반 사용자는 next 또는 대시보드(/).
+      const dest = data.role === "SUPER_ADMIN" ? "/admin" : (searchParams.get("next") ?? "/");
+      router.replace(dest);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 401) setServerError(t.errInvalid);
