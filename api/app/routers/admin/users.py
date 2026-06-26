@@ -5,7 +5,7 @@
 레거시 officers/UserInfo.do 복제 아님 — PigOS User/UserFarm/PilotSignup 기반.
 """
 from typing import Annotated
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, or_, select
@@ -232,6 +232,12 @@ async def approve_pilot_signup(
     if existing:
         raise ConflictError(f"User already exists for {p.email}")
 
+    # username = email 로컬파트(충돌 시 id 접미). 파일럿 승인은 저볼륨.
+    base_username = (p.email.split("@")[0] or "user")[:40]
+    username = base_username
+    if await db.scalar(select(User).where(User.username == username)):
+        username = f"{base_username}_{uuid4().hex[:8]}"
+
     # Org/Farm.country 는 2자 국가코드 → 가입 자유텍스트(예: "Vietnam")에서 앞 2자 코드화
     country_code = (p.country or "XX")[:2].upper()
     org = Organization(name=f"{p.name} Org", country=country_code, timezone="UTC")
@@ -240,6 +246,7 @@ async def approve_pilot_signup(
 
     user = User(
         org_id=org.id,
+        username=username,
         email=p.email,
         name=p.name,
         password_hash=hash_password(body.initial_password),
