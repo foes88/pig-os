@@ -1,8 +1,9 @@
-# PROMPT — 작업 A+B 교차검증 (Codex용) ★ US 적재 전 필수
+# PROMPT — 작업 A+B+C 교차검증 (Codex용) ★ US 적재 전 필수
 
 대상: Codex (활성 dev PC, c:\dev\PigOS)
-기준 문서: `handoff/KPI_GOVERNANCE_v3.1.md` (단일 진실 소스)
-검증 대상 커밋: A=`bcf75fb`, B=`5d0b4ef` (그 사이 `96d7bf3` 검증프롬프트)
+기준 문서: `handoff/KPI_GOVERNANCE_v3.1.md` **§10(v3.2)** (단일 진실 소스)
+검증 대상 커밋: A=`bcf75fb`, B=`5d0b4ef`, **C=`9c41221`**
+검증 head: `uv run alembic current` → **`d7f9b2c4e6a1`** (C 적용 후) / 회귀 기대 **530 passed**
 역할: **독립 적대적 감사자.** 고치지 말고 보고. 결함은 재현절차+문서조항 근거 포함.
 
 ## 0. 왜 지금(US 적재 전)인가
@@ -59,10 +60,29 @@ docker exec pigos-postgres psql -U pigos -d pigos -c "SELECT count(*) FROM defau
 - 사산율 missing 근거(원자료 raw_fields 없음)가 맞는지: KR stillbirth source_observations.raw_fields_json에 stillborn/mummified/total_born **분리수치가 없는지** 확인.
 - **D-7 누수 재현**: 非KR 농장 컨텍스트에서 loss.py의 sow_cull_loss류가 SOW_RESIDUAL/SOW_SALVAGE(KRW)로 발화 가능한지 코드 경로 추적. (사용자 결정: 출시 전 KR 전용 분리, P2 일반화 — 단 이 검증은 "누수 실재 여부" 확인까지만, 분리 구현은 별도 작업.)
 
+## 5.5 ★ 작업 C 검증 (KR verified 승격 — 1차자료 한돈팜스 2025)
+C는 **verified를 실제로 박은 쓰기 작업**이라 게이트가 새면 잘못된 verified가 들어간다. 집중 감사:
+```
+docker exec pigos-postgres psql -U pigos -d pigos -c "SELECT benchmark_status,population_scope,count(*) FROM benchmarks WHERE country_code='KR' GROUP BY 1,2 ORDER BY 1,2;"
+docker exec pigos-postgres psql -U pigos -d pigos -c "SELECT kpi_code,population_scope,transformed_value,value_scale,comparison_status,transform_formula FROM benchmarks WHERE country_code='KR' AND benchmark_status IN ('verified','normalized_verified') ORDER BY benchmark_status,kpi_code;"
+```
+- **national_general verified 7종** = psy22.4/msy18.9/farrowing_rate85.7/prewean_survival89.1/postwean_survival84.3/weaned_per_litter10.45/sow_turnover2.14. 값/value_scale이 §10.3 및 kpi_definitions와 일치하는가(override 0)?
+- 7종 모두 comparison_status=`compatible`, transform_formula=NULL(verified는 ★⑫-3), transformed_value NOT NULL(★⑦)?
+- **professional stillbirth_rate** normalized_verified 9.3%, transform_formula·obs_group 기록, comparison_status=`normalized`(★⑧ 6조건)?
+- **전국 stillbirth_rate는 여전히 missing**인가? (전문 9.3%가 national_general로 새지 않았는지 — 모집단 혼입 ★) :
+  ```
+  docker exec pigos-postgres psql -U pigos -d pigos -c "SELECT population_scope,benchmark_status FROM benchmarks WHERE country_code='KR' AND kpi_code='stillbirth_rate';"
+  ```
+  → (NULL/missing) + (professional/normalized_verified) 2행이어야. national_general verified면 **FAIL**.
+- **드롭 확인**: total_born·market_age가 benchmarks/kpi_definitions에 신규 생성되지 않았는가(범위 밖 코드 신설 금지)?
+- **npd** 여전히 provisional(전국 데이터 없음, D-1 무관)인가?
+- population_scope unique: national+professional 같은 kpi 공존 / 같은 population 중복 차단(SQL raw INSERT 재현). is_provisional/transformed_value 정합(★⑦).
+- C 마이그레이션 downgrade가 깨끗한가(provisional 복원·신규3 삭제·professional 삭제·컬럼 drop) — `alembic downgrade -1` 후 `upgrade head` 왕복 테스트(dev에서, 데이터 무손상 확인).
+
 ## 6. 회귀
-- `cd api && uv run pytest tests/ -q` → **519 passed** 재현, 0 fail/error.
-- `uv run alembic current` → `c5e7a9b1d3f0`.
-- git diff로 A·B 변경 범위가 신규파일 + models/__init__ 등록 + benchmark_seed 복원뿐인지(기존 default_metric_values·Rule Engine·이벤트 로직 무변경) 확인.
+- `cd api && uv run pytest tests/ -q` → **530 passed** 재현, 0 fail/error.
+- `uv run alembic current` → `d7f9b2c4e6a1`.
+- git diff로 A·B·C 변경 범위가 신규파일 + models(benchmark.py population_scope) + benchmark_seed 복원뿐인지(기존 default_metric_values·Rule Engine·이벤트 로직 무변경) 확인.
 
 ## 7. 출력
 - mutation 재점검 결과표(규칙→테스트 RED 여부). RED 안 되는 규칙 있으면 ★P0.
