@@ -39,6 +39,13 @@ def validate_farrowing(
         raise ValidationError(
             f"Born Alive ({born_alive}) cannot exceed Total Born ({total_born})"
         )
+    # B1: 두수 항등식 — total_born = born_alive + stillborn + mummified.
+    # /sync·직접REST 공통 강제(이전엔 /sync에 누락 → litter 두수 오염 가능). 앱은 항상 합으로 전송.
+    if total_born != born_alive + stillborn + mummified:
+        raise ValidationError(
+            f"Total Born ({total_born}) must equal Born Alive + Stillborn + Mummified "
+            f"({born_alive} + {stillborn} + {mummified} = {born_alive + stillborn + mummified})"
+        )
     if male is not None and female is not None and born_alive != male + female:
         raise ValidationError(
             f"Born Alive ({born_alive}) must equal Male + Female ({male} + {female})"

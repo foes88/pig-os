@@ -22,11 +22,11 @@ export function npdTier(v: number | null | undefined): KpiTier {
   return n <= 35 ? "normal" : n <= 50 ? "warning" : "critical";
 }
 
-/** 분만율 — 비율(0~1). 범위 밖(예: 34.78=3478%)이면 데이터부족. ≥0.9 normal / ≥0.8 warning / 그외 critical. */
+/** 분만율 — percent(0~100) 단일 SSOT(2026-06-25, 시드 benchmarks와 동일 스케일). ≥90 normal / ≥80 warning / 그외 critical. */
 export function farrowingRateTier(v: number | null | undefined): KpiTier {
-  if (invalid(v, 0, 1)) return "insufficient";
+  if (invalid(v, 0, 100)) return "insufficient";
   const n = v as number;
-  return n >= 0.9 ? "normal" : n >= 0.8 ? "warning" : "critical";
+  return n >= 90 ? "normal" : n >= 80 ? "warning" : "critical";
 }
 
 /** tier → 색상 토큰. 색의미: normal=outline(white카드 내), warning/critical=fill accent, insufficient=brown. */

@@ -26,7 +26,7 @@ import json
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.events import (
@@ -54,7 +54,7 @@ from app.schemas.sync import (
     SyncResponse,
     SyncWeaning,
 )
-from app.services.event_service import apply_terminal_reproductive
+from app.services.event_service import _calc_piglet_adjustments, apply_terminal_reproductive
 from app.validators.base import ValidationError
 from app.validators.farrowing import validate_farrowing
 
@@ -409,23 +409,49 @@ async def _process_weaning(
                                    detail=invalid), None
 
     if not dry_run:
-        # farrowing_id 는 NOT NULL FK — 해당 sow 최근 분만에 연결.
-        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
+        # farrowing 은 NOT NULL FK — 해당 sow 최근 분만에 연결.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing/piglet_events(pending) 조회 위해 flush.
+        # 처리순서 재정렬(piglet_events → weanings)로, 이 시점엔 같은 배치의 양자/폐사가 반영된다.
         await db.flush()
-        farrowing_id = await db.scalar(
-            select(Farrowing.id)
+        farrowing = await db.scalar(
+            select(Farrowing)
             .where(Farrowing.sow_id == item.sow_id, Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None))
             .order_by(Farrowing.farrowing_date.desc())
             .limit(1)
         )
-        if not farrowing_id:
+        if not farrowing:
             return None, SyncRejected(
                 id=item.id, entity="weaning", reason="NO_ACTIVE_FARROWING",
                 detail={"sow_id": str(item.sow_id), "message": "No farrowing to attach weaning to"},
             ), None
+        # B4: 이유두수 ≤ 잔여 유효복당 (born_alive + 양자전입 − 양자전출 − 폐사 − 기존이유합).
+        # 직접 REST(event_service)와 동일 규칙. 처리순서 재정렬 덕에 같은 배치 양자/폐사가 먼저
+        # 반영되어, 양자 받은 nurse sow가 자기 born_alive보다 많이 이유해도 오거부되지 않는다.
+        foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
+        effective_litter = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
+        prior_weaned = await db.scalar(
+            select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+                Weaning.farrowing_id == farrowing.id, Weaning.deleted_at.is_(None)
+            )
+        ) or 0
+        remaining = effective_litter - int(prior_weaned)
+        if item.weaned_count > remaining:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={
+                    "field": "weaned_count",
+                    "message": (
+                        f"weaned_count ({item.weaned_count}) > remaining nursing "
+                        f"(effective litter {effective_litter} - already weaned {int(prior_weaned)} = {remaining})"
+                    ),
+                    "effective_litter": effective_litter,
+                    "prior_weaned": int(prior_weaned),
+                    "remaining": remaining,
+                },
+            ), None
         # 모델 컬럼명: avg_weaning_weight_kg (sync 입력은 avg_weight_kg).
         weaning = Weaning(
-            id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing_id,
+            id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing.id,
             weaning_date=event_date, weaned_count=item.weaned_count,
             avg_weaning_weight_kg=item.avg_weight_kg, notes=item.notes,
         )
@@ -755,13 +781,19 @@ async def process_sync(
 
     try:
         async with db.begin_nested():  # savepoint for dry_run rollback
+            # 처리 순서 = 의존관계 순서(B4 정공법, 2026-06-25):
+            #   matings → farrowings → piglet_events(양자/폐사) → weanings → repro → health
+            # 이유(weaning)의 유효복당 = born_alive + foster_in - foster_out - deaths 이므로,
+            # piglet_events를 weanings보다 먼저 적용해야 양자 받은 nurse sow가 오거부되지 않는다.
+            # (부가효과: 이유 후 sow=OPEN으로 바뀌므로, piglet_events를 먼저 처리해야 LACTATING
+            #  상태에서 정상 기록됨 — 역순이면 뒤늦은 piglet_event가 STATUS 충돌로 거부될 수 있음.)
             processors = [
                 (req.changes.matings,             _process_mating),
                 (req.changes.farrowings,          _process_farrowing),
+                (req.changes.piglet_events,       _process_piglet_event),
                 (req.changes.weanings,            _process_weaning),
                 (req.changes.reproductive_events, _process_reproductive),
                 (req.changes.health_events,       _process_health_event),
-                (req.changes.piglet_events,       _process_piglet_event),
             ]
 
             for items, processor in processors:

@@ -1,5 +1,5 @@
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import bcrypt as _bcrypt
 from jose import JWTError, jwt
@@ -16,7 +16,10 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def _make_token(data: dict, expires_delta: timedelta) -> str:
-    payload = {**data, "exp": datetime.now(UTC) + expires_delta}
+    # jti(고유 토큰 ID): 같은 유저·같은 초에 발급해도 토큰이 유일 → RefreshToken.token_hash
+    # (UNIQUE) 충돌 방지. jti 없으면 동시/연속 로그인·즉시 refresh가 동일 토큰을 만들어
+    # IntegrityError 500(P0 refresh·P1 로그인 동시성)의 근인. (2026-06-24 수정)
+    payload = {**data, "exp": datetime.now(UTC) + expires_delta, "jti": str(uuid4())}
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 

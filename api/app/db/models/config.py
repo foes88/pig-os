@@ -86,6 +86,10 @@ class DefaultMetricValue(Base):
     proxy_type: Mapped[str | None] = mapped_column(String(20))       # top10|best_decile|cooperative|sample|global
     threshold_basis: Mapped[str | None] = mapped_column(String(40))  # country_avg|poor_decile|pic_intervention
     source_ref: Mapped[str | None] = mapped_column(String(200))      # 기관/연도
+    # 검증 게이트 메타(2026-06-25). definition_id=어떤 정의로 계산된 값인지(재정규화 기준).
+    # benchmark_status: missing|unverified|provisional|verified — 룰 전환 시 발화 게이트(수치는 별도 시드).
+    definition_id: Mapped[str | None] = mapped_column(String(60))
+    benchmark_status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="unverified")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

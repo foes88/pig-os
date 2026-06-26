@@ -17,3 +17,11 @@ def validate_cross_fostering(*, transfer_count: int) -> None:
         raise ValidationError(
             f"Cross-fostering cannot exceed {MAX_TRANSFER_COUNT} piglets per transfer"
         )
+
+
+def validate_cross_foster_distinct(source_sow_id, dest_sow_id) -> None:
+    """B6: 동일 모돈 양자 차단 — 자기 자신에게 전입/전출 불가(두수 꼬임 방지)."""
+    if source_sow_id == dest_sow_id:
+        raise ValidationError(
+            "Cross-foster source and destination must be different sows (cannot transfer to self)"
+        )

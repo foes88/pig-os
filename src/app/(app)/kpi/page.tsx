@@ -84,10 +84,10 @@ export default function KpiPage() {
             />
             <KpiCard
               label={t("frLabel")} desc={t("frDesc")} unit="%"
-              value={data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(1) : "—"}
+              value={data.farrowing_rate != null ? data.farrowing_rate.toFixed(1) : "—"}
               bench={data.benchmarks?.FARROWING_RATE?.target ?? 90}
               tier={farrowingRateTier(data.farrowing_rate)}
-              spark={trend?.map((r) => (r.farrowing_rate != null ? r.farrowing_rate * 100 : null))} t={t}
+              spark={trend?.map((r) => r.farrowing_rate)} t={t}
             />
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between">
               <span className="text-[11px] font-bold tracking-wide uppercase text-text3">{t("herdActiveTotal")}</span>
@@ -267,7 +267,7 @@ function CompareCard({ trend, t }: { trend?: KpiTrend[]; t: (k: string, v?: Reco
           <tbody>
             {mk("psy", "PSY", prev?.psy, curr?.psy)}
             {mk("npd", "NPD", prev?.npd, curr?.npd, 1, true)}
-            {mk("fr", t("frLabel"), prev?.farrowing_rate != null ? prev.farrowing_rate * 100 : null, curr?.farrowing_rate != null ? curr.farrowing_rate * 100 : null)}
+            {mk("fr", t("frLabel"), prev?.farrowing_rate ?? null, curr?.farrowing_rate ?? null)}
           </tbody>
         </table>
       ) : (
@@ -289,7 +289,7 @@ function AiSummaryCard({
   const summary = t("aiSummaryBody", {
     psy: fmt(data.psy, 1),
     psyDelta: psyDelta != null ? (psyDelta > 0 ? "+" : "") + psyDelta.toFixed(1) : "—",
-    fr: data.farrowing_rate != null ? (data.farrowing_rate * 100).toFixed(0) : "—",
+    fr: data.farrowing_rate != null ? data.farrowing_rate.toFixed(0) : "—",
     signals: data.alerts.length,
     crit,
   });
