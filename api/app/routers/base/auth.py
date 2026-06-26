@@ -7,6 +7,8 @@ from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
     MeResponse,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
@@ -40,6 +42,22 @@ async def refresh(body: RefreshRequest, db: DbDep):
 @router.post("/logout", status_code=204)
 async def logout(body: RefreshRequest, db: DbDep):
     await auth_service.logout(db, body.refresh_token)
+
+
+@router.post("/password-reset/request", status_code=204)
+async def password_reset_request(body: PasswordResetRequest, db: DbDep):
+    """비밀번호 재설정 요청 — 계정 존재 여부와 무관하게 항상 204(열거 방지). 존재 시 토큰 발급·전달."""
+    raw = await auth_service.request_password_reset(db, body.email)
+    if raw:
+        await auth_service._deliver_reset_token(body.email, raw)  # 응답엔 노출 안 함
+    await db.commit()
+
+
+@router.post("/password-reset/confirm", status_code=204)
+async def password_reset_confirm(body: PasswordResetConfirm, db: DbDep):
+    """토큰 + 새 비번 → 검증 후 비번 갱신(+ refresh 전부 폐기). 무효/만료 토큰은 400."""
+    await auth_service.confirm_password_reset(db, body.token, body.new_password)
+    await db.commit()
 
 
 @router.get("/me", response_model=MeResponse)

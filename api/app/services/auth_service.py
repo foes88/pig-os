@@ -1,12 +1,14 @@
 import hashlib
+import logging
+import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.exceptions import ConflictError, UnauthorizedError
+from app.core.exceptions import ConflictError, UnauthorizedError, ValidationError
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -15,7 +17,14 @@ from app.core.security import (
     verify_password,
 )
 from app.db.models.config import FarmConfig
-from app.db.models.platform import Farm, Organization, RefreshToken, User, UserFarm
+from app.db.models.platform import (
+    Farm,
+    Organization,
+    PasswordResetToken,
+    RefreshToken,
+    User,
+    UserFarm,
+)
 from app.schemas.auth import (
     LoginResponse,
     OnboardingCompleteRequest,
@@ -181,3 +190,60 @@ async def logout(db: AsyncSession, refresh_token: str) -> None:
     if stored:
         stored.revoked = True
         await db.commit()
+
+
+# ── 비밀번호 재설정 (PASSWORD_RESET_DRAFT.md 구현, 2026-06-26) ─────────────────
+logger = logging.getLogger("pigos.auth.reset")
+RESET_TTL = timedelta(minutes=30)
+
+
+def _hash_reset_token(raw: str) -> str:
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+async def _deliver_reset_token(email: str, raw: str) -> None:
+    """토큰 전달 — 현재는 로그(운영자 중개 임시). TODO: SMTP/SES/SMS로 교체.
+    운영(production)에선 raw 토큰을 평문 로그에 남기지 않는다(운영자 콘솔/메일 채널 필요)."""
+    if settings.is_production:
+        logger.warning("[PASSWORD-RESET] 토큰 발급(%s) — 전달 채널 미설정(운영자 조치 필요)", email)
+    else:
+        logger.warning("[PASSWORD-RESET][dev] %s 토큰=%s (TTL 30분, 1회용)", email, raw)
+
+
+async def request_password_reset(db: AsyncSession, email: str) -> str | None:
+    """유저 존재·active면 1회용 토큰 생성·반환(라우터가 전달). 없으면 None. 라우터는 항상 204(열거 방지).
+    반환된 raw 토큰은 라우터의 _deliver_reset_token으로만 전달 — 응답엔 절대 노출 안 함."""
+    user = await db.scalar(select(User).where(User.email == email, User.active.is_(True)))
+    if not user:
+        return None
+    raw = secrets.token_urlsafe(32)
+    db.add(PasswordResetToken(
+        user_id=user.id,
+        token_hash=_hash_reset_token(raw),
+        expires_at=datetime.now(UTC) + RESET_TTL,
+    ))
+    await db.flush()
+    return raw
+
+
+async def confirm_password_reset(db: AsyncSession, token: str, new_password: str) -> None:
+    """토큰 검증(해시·미만료·미사용) → 비번 갱신 + 토큰 소진 + 해당 유저 refresh 전부 폐기."""
+    prt = await db.scalar(
+        select(PasswordResetToken).where(PasswordResetToken.token_hash == _hash_reset_token(token))
+    )
+    now = datetime.now(UTC)
+    if not prt or prt.used_at is not None or prt.expires_at < now:
+        raise ValidationError("토큰이 유효하지 않거나 만료되었습니다.")
+    user = await db.get(User, prt.user_id)
+    if not user:
+        raise ValidationError("토큰이 유효하지 않습니다.")
+    user.password_hash = hash_password(new_password)
+    prt.used_at = now
+    # 같은 유저의 다른 미사용 reset 토큰 무효 + refresh 토큰 전부 삭제(강제 재로그인)
+    await db.execute(
+        update(PasswordResetToken)
+        .where(PasswordResetToken.user_id == user.id, PasswordResetToken.used_at.is_(None))
+        .values(used_at=now)
+    )
+    await db.execute(delete(RefreshToken).where(RefreshToken.user_id == user.id))
+    await db.flush()
