@@ -1,4 +1,21 @@
 {
+  "feed": {
+    "title": "Thức ăn",
+    "subtitle": "Ghi lượng thức ăn đã cho — đầu vào tính FCR.",
+    "add": "Thêm bản ghi thức ăn",
+    "recordDate": "Ngày",
+    "feedType": "Loại thức ăn",
+    "feedTypePlaceholder": "vd: Mang thai / Nuôi con / Vỗ béo",
+    "quantityKg": "Số lượng (kg)",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "recent": "Bản ghi gần đây",
+    "empty": "Chưa có bản ghi thức ăn.",
+    "delete": "Xóa",
+    "qtyError": "Số lượng phải lớn hơn 0.",
+    "saveError": "Lưu thất bại.",
+    "noFarm": "Vui lòng chọn trại trước."
+  },
   "prrsReport": {
     "title": "PRRS theo di truyền",
     "subtitle": "Tỷ lệ PRRS theo giống / dòng di truyền",

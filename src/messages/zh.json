@@ -1,4 +1,21 @@
 {
+  "feed": {
+    "title": "饲料",
+    "subtitle": "记录投喂的饲料量 — FCR 计算输入。",
+    "add": "添加饲料记录",
+    "recordDate": "日期",
+    "feedType": "饲料类型",
+    "feedTypePlaceholder": "如：妊娠 / 哺乳 / 育肥",
+    "quantityKg": "数量 (kg)",
+    "save": "保存",
+    "saving": "保存中…",
+    "recent": "最近记录",
+    "empty": "暂无饲料记录。",
+    "delete": "删除",
+    "qtyError": "数量必须大于 0。",
+    "saveError": "保存失败。",
+    "noFarm": "请先选择猪场。"
+  },
   "prrsReport": {
     "title": "按基因的PRRS",
     "subtitle": "按品种/基因系的PRRS发生率",

@@ -1,4 +1,21 @@
 {
+  "feed": {
+    "title": "Alimentación",
+    "subtitle": "Registra el alimento suministrado — entrada para el ICA (FCR).",
+    "add": "Añadir registro de alimento",
+    "recordDate": "Fecha",
+    "feedType": "Tipo de alimento",
+    "feedTypePlaceholder": "ej. Gestación / Lactación / Engorde",
+    "quantityKg": "Cantidad (kg)",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "recent": "Registros recientes",
+    "empty": "Aún no hay registros de alimento.",
+    "delete": "Eliminar",
+    "qtyError": "La cantidad debe ser mayor que 0.",
+    "saveError": "Error al guardar.",
+    "noFarm": "Seleccione una granja primero."
+  },
   "prrsReport": {
     "title": "PRRS por genética",
     "subtitle": "Incidencia de PRRS por raza / línea genética",

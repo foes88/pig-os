@@ -1,4 +1,21 @@
 {
+  "feed": {
+    "title": "사료 급여",
+    "subtitle": "급여한 사료량 기록 — FCR 계산 입력원.",
+    "add": "사료 기록 추가",
+    "recordDate": "날짜",
+    "feedType": "사료 종류",
+    "feedTypePlaceholder": "예: 임신돈 / 포유돈 / 비육",
+    "quantityKg": "급여량 (kg)",
+    "save": "저장",
+    "saving": "저장 중…",
+    "recent": "최근 기록",
+    "empty": "사료 기록이 없습니다.",
+    "delete": "삭제",
+    "qtyError": "급여량은 0보다 커야 합니다.",
+    "saveError": "저장에 실패했습니다.",
+    "noFarm": "농장을 먼저 선택하세요."
+  },
   "prrsReport": {
     "title": "유전자별 PRRS",
     "subtitle": "품종/유전자 라인별 PRRS 발생률",

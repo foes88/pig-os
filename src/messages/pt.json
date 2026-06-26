@@ -1,4 +1,21 @@
 {
+  "feed": {
+    "title": "Ração",
+    "subtitle": "Registre a ração fornecida — entrada para o FCR.",
+    "add": "Adicionar registro de ração",
+    "recordDate": "Data",
+    "feedType": "Tipo de ração",
+    "feedTypePlaceholder": "ex: Gestação / Lactação / Terminação",
+    "quantityKg": "Quantidade (kg)",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "recent": "Registros recentes",
+    "empty": "Ainda não há registros de ração.",
+    "delete": "Excluir",
+    "qtyError": "A quantidade deve ser maior que 0.",
+    "saveError": "Falha ao salvar.",
+    "noFarm": "Selecione uma fazenda primeiro."
+  },
   "prrsReport": {
     "title": "PRRS por genética",
     "subtitle": "Incidência de PRRS por raça / linha genética",

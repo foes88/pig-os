@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   Baby,
   TrendingDown,
+  Wheat,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -59,6 +60,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
       { href: "/boars",     icon: Heart,     label: { en: "Boars",     ko: "웅돈",   zh: "公猪",   es: "Verracos", vi: "Heo nọc", th: "พ่อพันธุ์", pt: "Cachaços" } },
       { href: "/piglets",   icon: Layers,    label: { en: "Piglets",   ko: "자돈",   zh: "仔猪",   es: "Lechones", vi: "Heo con", th: "ลูกสุกร",   pt: "Leitões" } },
       { href: "/finishers", icon: Beef,      label: { en: "Finishers", ko: "비육돈", zh: "育肥猪", es: "Engorde",  vi: "Heo thịt", th: "สุกรขุน",  pt: "Terminação" } },
+      { href: "/feed",      icon: Wheat,     label: { en: "Feed",      ko: "사료",   zh: "饲料",   es: "Alimento", vi: "Thức ăn", th: "อาหารสัตว์", pt: "Ração" } },
     ],
   },
   {
