@@ -30,7 +30,7 @@ async def test_owner_can_create_member(client: AsyncClient, db, test_user, test_
     r = await client.post(
         f"/api/v1/farms/{test_farm.id}/members",
         headers=headers,
-        json={"name": "New Worker", "email": "worker1@pigos.io",
+        json={"name": "New Worker", "username": "worker1", "email": "worker1@pigos.io",
               "password": "Worker1234!", "role": "FARM_WORKER"},
     )
     assert r.status_code == 201, r.text
@@ -42,7 +42,7 @@ async def test_owner_can_create_member(client: AsyncClient, db, test_user, test_
 @pytest.mark.asyncio
 async def test_duplicate_email_conflict(client: AsyncClient, db, test_user, test_farm):
     headers = await _auth(db, test_user, test_farm)
-    payload = {"name": "Dup", "email": "dup@pigos.io",
+    payload = {"name": "Dup", "username": "dupuser", "email": "dup@pigos.io",
                "password": "Worker1234!", "role": "FARM_WORKER"}
     r1 = await client.post(f"/api/v1/farms/{test_farm.id}/members", headers=headers, json=payload)
     assert r1.status_code == 201

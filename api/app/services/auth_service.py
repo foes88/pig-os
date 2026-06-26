@@ -40,8 +40,9 @@ def _hash_token(token: str) -> str:
 
 
 async def register(db: AsyncSession, req: RegisterRequest) -> tuple[User, Organization]:
-    existing = await db.scalar(select(User).where(User.email == req.email))
-    if existing:
+    if await db.scalar(select(User).where(User.username == req.username)):
+        raise ConflictError("Username already taken")
+    if await db.scalar(select(User).where(User.email == req.email)):
         raise ConflictError("Email already registered")
 
     org = Organization(
@@ -54,6 +55,7 @@ async def register(db: AsyncSession, req: RegisterRequest) -> tuple[User, Organi
 
     user = User(
         org_id=org.id,
+        username=req.username,
         email=req.email,
         name=req.name,
         password_hash=hash_password(req.password),
@@ -66,8 +68,8 @@ async def register(db: AsyncSession, req: RegisterRequest) -> tuple[User, Organi
     return user, org
 
 
-async def authenticate(db: AsyncSession, email: str, password: str) -> User:
-    user = await db.scalar(select(User).where(User.email == email, User.active.is_(True)))
+async def authenticate(db: AsyncSession, username: str, password: str) -> User:
+    user = await db.scalar(select(User).where(User.username == username, User.active.is_(True)))
     if not user or not verify_password(password, user.password_hash):
         raise UnauthorizedError("Invalid credentials")
 
@@ -97,6 +99,7 @@ async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
         expires_in=settings.access_token_expire_minutes * 60,
         user_id=str(user.id),
         name=user.name,
+        username=user.username,
         email=user.email or "",
         role=user.role,
         farm_ids=farm_ids,
@@ -106,8 +109,9 @@ async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
 async def complete_onboarding(
     db: AsyncSession, req: OnboardingCompleteRequest
 ) -> OnboardingCompleteResponse:
-    existing = await db.scalar(select(User).where(User.email == req.email))
-    if existing:
+    if await db.scalar(select(User).where(User.username == req.username)):
+        raise ConflictError("Username already taken")
+    if await db.scalar(select(User).where(User.email == req.email)):
         raise ConflictError("Email already registered")
 
     org = Organization(name=req.org_name, country=req.country, timezone=req.timezone)
@@ -116,6 +120,7 @@ async def complete_onboarding(
 
     user = User(
         org_id=org.id,
+        username=req.username,
         email=req.email,
         name=req.name,
         password_hash=hash_password(req.password),

@@ -53,12 +53,14 @@ async def list_members(farm: FarmDep, db: DbDep):
 async def create_member(
     body: MemberCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser
 ):
-    existing = await db.scalar(select(User).where(User.email == body.email))
-    if existing:
+    if await db.scalar(select(User).where(User.username == body.username)):
+        raise ConflictError(f"Username '{body.username}' already taken")
+    if await db.scalar(select(User).where(User.email == body.email)):
         raise ConflictError(f"User with email {body.email} already exists")
 
     user = User(
         org_id=farm.org_id,
+        username=body.username,
         email=body.email,
         name=body.name,
         password_hash=hash_password(body.password),

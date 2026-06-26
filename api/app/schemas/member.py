@@ -20,6 +20,7 @@ class MemberResponse(BaseModel):
 
 class MemberCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
+    username: str = Field(..., pattern=r"^[a-zA-Z0-9_.-]{3,50}$", description="직원 로그인 아이디")
     email: EmailStr
     password: str = Field(..., min_length=8)
     role: str = Field(default="FARM_WORKER", pattern=_FARM_ROLES)

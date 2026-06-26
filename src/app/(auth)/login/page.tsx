@@ -23,101 +23,101 @@ const LANG_LABELS: Record<Lang, string> = {
 
 const T: Record<Lang, {
   heading: string; subheading: string;
-  email: string; password: string;
+  username: string; password: string;
   submit: string; submitting: string;
   forgotPassword: string; noAccount: string; register: string;
   rememberId: string;
-  errEmail: string; errPassword: string;
+  errUsername: string; errPassword: string;
   errInvalid: string; errFormat: string; errServer: string;
 }> = {
   en: {
     heading: "Welcome back",
     subheading: "Sign in to your PigOS account",
-    email: "Email address", password: "Password",
+    username: "Username (ID)", password: "Password",
     submit: "Sign in", submitting: "Signing in…",
     forgotPassword: "Forgot password?",
     noAccount: "New to PigOS?", register: "Create a free account",
     rememberId: "Remember my ID",
-    errEmail: "Enter a valid email address", errPassword: "Enter your password",
-    errInvalid: "Email or password is incorrect",
+    errUsername: "Enter your ID", errPassword: "Enter your password",
+    errInvalid: "ID or password is incorrect",
     errFormat: "Please check your input format",
     errServer: "Server error. Please try again.",
   },
   ko: {
     heading: "다시 오셨군요",
     subheading: "PigOS 계정에 로그인하세요",
-    email: "이메일 주소", password: "비밀번호",
+    username: "아이디", password: "비밀번호",
     submit: "로그인", submitting: "로그인 중…",
     forgotPassword: "비밀번호 찾기",
     noAccount: "PigOS가 처음이신가요?", register: "무료로 시작하기",
     rememberId: "아이디 저장",
-    errEmail: "올바른 이메일을 입력하세요", errPassword: "비밀번호를 입력하세요",
-    errInvalid: "이메일 또는 비밀번호가 올바르지 않습니다",
+    errUsername: "아이디를 입력하세요", errPassword: "비밀번호를 입력하세요",
+    errInvalid: "아이디 또는 비밀번호가 올바르지 않습니다",
     errFormat: "입력 형식을 확인해 주세요",
     errServer: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
   },
   zh: {
     heading: "欢迎回来",
     subheading: "登录您的 PigOS 账户",
-    email: "邮箱地址", password: "密码",
+    username: "账号", password: "密码",
     submit: "登录", submitting: "登录中…",
     forgotPassword: "忘记密码？",
     noAccount: "初次使用 PigOS？", register: "免费注册",
     rememberId: "记住账号",
-    errEmail: "请输入有效的邮箱地址", errPassword: "请输入密码",
-    errInvalid: "邮箱或密码不正确",
+    errUsername: "请输入账号", errPassword: "请输入密码",
+    errInvalid: "账号或密码不正确",
     errFormat: "请检查您的输入格式",
     errServer: "服务器错误，请稍后重试。",
   },
   es: {
     heading: "Bienvenido de nuevo",
     subheading: "Inicia sesión en PigOS",
-    email: "Correo electrónico", password: "Contraseña",
+    username: "Usuario (ID)", password: "Contraseña",
     submit: "Iniciar sesión", submitting: "Iniciando…",
     forgotPassword: "¿Olvidaste tu contraseña?",
     noAccount: "¿Nuevo en PigOS?", register: "Crea una cuenta gratis",
     rememberId: "Recordar mi ID",
-    errEmail: "Ingresa un correo válido", errPassword: "Ingresa tu contraseña",
-    errInvalid: "Correo o contraseña incorrectos",
+    errUsername: "Ingresa tu usuario", errPassword: "Ingresa tu contraseña",
+    errInvalid: "Usuario o contraseña incorrectos",
     errFormat: "Verifica el formato de tus datos",
     errServer: "Error de servidor. Inténtalo de nuevo.",
   },
   vi: {
     heading: "Chào mừng trở lại",
     subheading: "Đăng nhập vào tài khoản PigOS",
-    email: "Địa chỉ email", password: "Mật khẩu",
+    username: "Tên đăng nhập (ID)", password: "Mật khẩu",
     submit: "Đăng nhập", submitting: "Đang đăng nhập…",
     forgotPassword: "Quên mật khẩu?",
     noAccount: "Lần đầu dùng PigOS?", register: "Tạo tài khoản miễn phí",
     rememberId: "Ghi nhớ ID",
-    errEmail: "Nhập địa chỉ email hợp lệ", errPassword: "Nhập mật khẩu của bạn",
-    errInvalid: "Email hoặc mật khẩu không đúng",
+    errUsername: "Nhập tên đăng nhập của bạn", errPassword: "Nhập mật khẩu của bạn",
+    errInvalid: "Tên đăng nhập hoặc mật khẩu không đúng",
     errFormat: "Vui lòng kiểm tra định dạng nhập liệu",
     errServer: "Lỗi máy chủ. Vui lòng thử lại.",
   },
   th: {
     heading: "ยินดีต้อนรับกลับ",
     subheading: "เข้าสู่ระบบบัญชี PigOS ของคุณ",
-    email: "ที่อยู่อีเมล", password: "รหัสผ่าน",
+    username: "ชื่อผู้ใช้ (ID)", password: "รหัสผ่าน",
     submit: "เข้าสู่ระบบ", submitting: "กำลังเข้าสู่ระบบ…",
     forgotPassword: "ลืมรหัสผ่าน?",
     noAccount: "เพิ่งเริ่มใช้ PigOS?", register: "สร้างบัญชีฟรี",
     rememberId: "จดจำ ID ของฉัน",
-    errEmail: "กรอกอีเมลที่ถูกต้อง", errPassword: "กรอกรหัสผ่านของคุณ",
-    errInvalid: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+    errUsername: "กรอกชื่อผู้ใช้", errPassword: "กรอกรหัสผ่านของคุณ",
+    errInvalid: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
     errFormat: "โปรดตรวจสอบรูปแบบการกรอก",
     errServer: "เซิร์ฟเวอร์ผิดพลาด โปรดลองอีกครั้ง",
   },
   pt: {
     heading: "Bem-vindo de volta",
     subheading: "Entre na sua conta PigOS",
-    email: "Endereço de e-mail", password: "Senha",
+    username: "Usuário (ID)", password: "Senha",
     submit: "Entrar", submitting: "Entrando…",
     forgotPassword: "Esqueceu a senha?",
     noAccount: "Novo no PigOS?", register: "Crie uma conta gratuita",
     rememberId: "Lembrar meu ID",
-    errEmail: "Digite um e-mail válido", errPassword: "Digite sua senha",
-    errInvalid: "E-mail ou senha incorretos",
+    errUsername: "Digite seu usuário", errPassword: "Digite sua senha",
+    errInvalid: "Usuário ou senha incorretos",
     errFormat: "Verifique o formato dos dados",
     errServer: "Erro no servidor. Tente novamente.",
   },
@@ -125,7 +125,7 @@ const T: Record<Lang, {
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const schema = z.object({
-  email: z.string().email("invalid"),
+  username: z.string().min(3, "invalid"),
   password: z.string().min(1, "required"),
 });
 type FormValues = z.infer<typeof schema>;
@@ -280,22 +280,23 @@ export default function LoginPage() {
 
   // 저장된 아이디 프리필 (비밀번호는 보안상 저장 안 함 — 브라우저 비밀번호 관리자 사용)
   useEffect(() => {
-    const saved = localStorage.getItem("pigos_saved_email");
+    const saved = localStorage.getItem("pigos_saved_username");
     if (saved) {
-      setValue("email", saved);
+      setValue("username", saved);
       setRememberId(true);
     }
   }, [setValue]);
 
   const onSubmit = async (values: FormValues) => {
     setServerError(null);
-    if (rememberId) localStorage.setItem("pigos_saved_email", values.email);
-    else localStorage.removeItem("pigos_saved_email");
+    if (rememberId) localStorage.setItem("pigos_saved_username", values.username);
+    else localStorage.removeItem("pigos_saved_username");
     try {
       const data = await authApi.login(values);
       setAuth(
         {
           id: data.user_id,
+          username: data.username,
           email: data.email,
           name: data.name,
           role: data.role,
@@ -349,24 +350,24 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
-              {/* Email */}
+              {/* Username (ID) */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  {t.email}
+                  {t.username}
                 </label>
                 <input
-                  type="email"
-                  data-testid="login-email"
-                  autoComplete="email"
-                  placeholder="farmer@example.com"
-                  {...register("email")}
+                  type="text"
+                  data-testid="login-username"
+                  autoComplete="username"
+                  placeholder="admin"
+                  {...register("username")}
                   className={`w-full h-11 px-3.5 rounded-lg text-sm text-slate-900
                     placeholder:text-slate-400 outline-none border bg-white transition
                     focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]
-                    ${errors.email ? "border-red-400" : "border-[#CBD5E1]"}`}
+                    ${errors.username ? "border-red-400" : "border-[#CBD5E1]"}`}
                 />
-                {errors.email && (
-                  <p className="text-xs text-red-500 mt-1">{t.errEmail}</p>
+                {errors.username && (
+                  <p className="text-xs text-red-500 mt-1">{t.errUsername}</p>
                 )}
               </div>
 

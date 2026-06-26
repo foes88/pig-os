@@ -30,7 +30,7 @@ async def register(body: RegisterRequest, db: DbDep):
 
 @router.post("/login", response_model=LoginResponse)
 async def login(body: LoginRequest, db: DbDep):
-    user = await auth_service.authenticate(db, body.email, body.password)
+    user = await auth_service.authenticate(db, body.username, body.password)
     return await auth_service.issue_tokens(db, user)
 
 
@@ -68,6 +68,7 @@ async def me(current_user: CurrentUser, db: DbDep):
     return MeResponse(
         id=str(current_user.id),
         name=current_user.name,
+        username=current_user.username,
         email=current_user.email,
         role=current_user.role,
         org_id=str(current_user.org_id) if current_user.org_id else None,

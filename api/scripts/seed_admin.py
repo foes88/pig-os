@@ -41,6 +41,7 @@ async def main() -> None:
 
         user = User(
             org_id=e2e.org_id,
+            username="admin",
             email=EMAIL,
             name="Platform Admin",
             password_hash=hash_password(PASSWORD),

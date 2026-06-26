@@ -99,7 +99,12 @@ class User(Base):
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     org_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("organizations.id"))
-    email: Mapped[str | None] = mapped_column(String(255), unique=True)
+    # 로그인 ID(현장형). API(register/onboarding)는 schema에서 username 필수 강제.
+    # default는 직접 생성(테스트/시드)이 username을 빠뜨려도 NOT NULL·unique 깨지지 않게 하는 안전망.
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False, default=lambda: f"u_{uuid4().hex[:16]}"
+    )
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)    # 복구·알림·연락용(필수·unique)
     phone: Mapped[str | None] = mapped_column(String(30))
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)

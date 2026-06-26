@@ -24,7 +24,7 @@ export interface PagedResult<T> {
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface LoginRequest {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -39,6 +39,7 @@ export interface LoginResponse {
   token_type: string;
   user_id: string;
   name: string;
+  username: string;
   email: string;
   role: UserRole;
   farm_ids: string[];
@@ -51,6 +52,7 @@ export interface RefreshResponse {
 
 export interface UserProfile {
   id: string;
+  username: string;
   email: string;
   name: string;
   role: UserRole;
@@ -63,6 +65,7 @@ export interface OnboardingRequest {
   org_name: string;
   country: string;
   name: string;
+  username: string;
   email: string;
   password: string;
   farm_name: string;
