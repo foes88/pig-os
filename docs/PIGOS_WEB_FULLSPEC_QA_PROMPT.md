@@ -209,3 +209,155 @@ B9 합리성(WARN): 임신/포유기간 비현실 수집.
 - 웹 신규: admin콘솔(W1)·세션/멀티탭(W2·W3)·브라우저네비(W4)·보안 XSS/CSP(W5)·a11y axe(W6)·
   반응형/크로스브라우저(W7)·hydration/캐시(W8).
 - 정정: **VET=읽기전용**(입력불가). SUPER_ADMIN=admin전용.
+
+<!-- ============================================================
+  부록 A 바로 뒤에 append. (docs/PIGOS_WEB_FULLSPEC_QA_PROMPT.md)
+  A = 빌드(게이트/STOP-on-FAIL). B = QA/QC(전수/run-to-completion/데이터 잔존).
+============================================================ -->
+
+## 부록 B — 오픈 전 QA/QC 전수검증 하니스 (UAT)
+
+> **모드: run-to-completion.** 첫 실패에서 멈추지 않는다. 모든 카테고리를 끝까지 실행하고 **결함을 전량 수집**해 리포트한다. (부록 A의 STOP-on-FAIL과 의도적으로 반대.)
+> **데이터: 잔존.** UAT 데이터는 `uat_` 네임스페이스로 시드하고 **지우지 않는다**. 수동 검토 가능 상태로 남긴다.
+> **목적:** 웹사이트 개발 완료 후 오픈 전, 데이터 무결성·DB 정합성·검증 로직이 전부 올바른지 QA/QC 전문 수준으로 확인.
+
+---
+
+### B-0. 전제 (확인만, STOP 아님 — 불일치는 리포트 상단에 경고로 기록)
+
+- 환경 == dev (운영/스테이징 DSN이면 **여기선 STOP** — UAT 데이터를 운영에 심으면 안 됨)
+- 부록 A의 G1(마스터/코드 시드) 완료 상태 (UAT 이벤트가 참조할 코드가 있어야 함)
+- governance 기준선 캡처: `kpi_def=16 benchmarks=18 operational=29 dmv=85` (B 종료 시 불변 검증)
+- 전체 테스트 baseline 통과수 기록: `<BASELINE_TEST_COUNT>` ← 실측 (생성 금지)
+
+---
+
+### B-1. UAT 데이터셋 시드 (결정적·잔존·`uat_` 플래그)
+
+> 모든 값은 **결정적 시드**. random 금지. 검증 임계값/KPI는 spec·code에서만. 합성데이터이며 실제 농가 아님 — 레코드에 `uat_` 플래그.
+> 아래 분포는 기본값. **PLAN에 데이터 볼륨이 박혀 있으면 그 값으로 치환.**
+
+**농장 30 — 시나리오 매트릭스**
+- 지역: US 10 / EU 10 / SEA 10  (각 지역 검증 우선순위 반영: US=PSY/NPD/cost, EU=복지/항생제/이력추적, SEA=ASF/오프라인)
+- 규모: 소(<200모돈) 9 / 중(200~1000) 12 / 대(>1000) 6 / 멀티사이트(2~4 site) 3
+- 데이터 상태: full 12 / partial 9 / boundary 6 / invalid 3
+  - **partial** = 일부 KPI source 없음 → "missing = rule silence(PASS)" 검증용
+  - **boundary** = 임계 경계값 → 룰 발화 경계 검증용
+  - **invalid** = 검증 실패를 **의도적으로 유도** → EventValidation이 잡는지 negative 검증용
+
+**사용자 ~35 — 역할 매트릭스**
+- SUPER_ADMIN 1 / owner 8 / manager 8 / worker 8 / vet 5 / viewer 3 / consultant 2
+- 일부는 **멀티농장 배정** → farm scope 격리 검증용
+
+- **인수조건:** 시드 재실행 시 동일 결과(결정적). `uat_` 레코드 count == 기대치. governance 4테이블 불변.
+
+---
+
+### B-2. 데이터 무결성 (referential / constraint)
+
+- FK 무결성: 모든 외래키 참조 유효, **orphan row 0**
+- NOT NULL / UNIQUE / CHECK 제약 위반 **0**
+- 이벤트·질병·백신·약품 코드가 G1 master에 **전부 존재** (dangling 코드 0)
+- 결함 발견 시: 테이블·PK·위반 종류 리포트(중단 없이 계속)
+
+### B-3. 입력 검증 (EventValidation, positive + negative)
+
+- full/boundary 농장 정상 데이터 → **PASS**
+- invalid 농장 비정상 데이터 → **정확한 에러 코드로 reject** (false negative 0)
+- 규칙 커버리지: 이유두수 identity / 보어 순서 / 날짜 교차검증 포함 (parity audit에서 양 플랫폼 누락으로 식별된 3건 포함)
+- 백엔드 결과 == SSOT(`mobile-validation-reference.md`) 기대
+- partial 농장 missing 필드 → **rule silence(PASS)**, 실패 아님
+
+### B-4. 계산 정합성 (derived values)
+
+- PSY 분모 == **상시모돈두수** 전 농장 일관
+- **stillbirth_rate = (stillborn + mummies) ÷ total born** — 공식대로 산출되는지 assert. 관례(stillborn only) 대비 ~3pp 높음 → 외부 직접비교 무효임을 **리포트에 명시**
+- 집계값 == 행단위 합 (대시보드 수치 == 원천 합산)
+- kg↔lb 왕복 변환 오차 허용범위 내, 날짜포맷/타임존 로케일별 일관
+
+### B-5. 룰엔진 (2-resolver)
+
+- Threshold Resolver firing authority = `rule_configs`/`operational_default`에서만
+- Benchmark Context Resolver: governance verified 평균이 **comparative context로만** attach, trace에서 firing과 strict separation
+- missing slot = silence(PASS)
+- 40 inline operational_default가 시드값과 일치
+
+### B-6. KPI/벤치마크 거버넌스
+
+- verified 7 KPI 노출 정확 (psy 22.4 / msy 18.9 / farrowing_rate 85.7 / preweaning 89.1 / postweaning 84.3 / weaned_per_litter 10.45 / sow_turnover 2.14)
+- **위조 0**: first-party source 없는 slot == `missing`, estimated 아님
+- **KR 벤치마크가 한국시장 경로·외부 API로 노출 안 됨** (negative assert — 노출되면 결함)
+- stillbirth professional cohort == `normalized_verified`만
+
+### B-7. RBAC / 권한
+
+- 역할별 가시성·조작 매트릭스(SUPER_ADMIN→VIEWER) 기대대로
+- farm scope: 사용자는 **배정 농장만** 조회/조작. 멀티농장 배정자는 배정분만
+- cross-farm / cross-role 접근 시도 → **차단** (우회 1건이라도 발견 시 critical 결함)
+
+### B-8. 감사로그
+
+- UAT 중 발생한 **모든 변경 → audit_log 1건** (who/what/when/before/after non-null)
+- 변경 대비 감사 누락 **0**
+
+### B-9. i18n / 현지화
+
+- 7개 언어 키 누락 **0** (chat 라벨 ~285 포함)
+- **D-7 KRW leak gate**: 외부·글로벌 경로에 KRW/원화 노출 **0**
+- 미번역 하드코딩 문자열 검출 → 리스트업
+- kg↔lb·날짜포맷 로케일별 정확
+
+### B-10. 기간잠금 / 상태
+
+- 잠긴 기간 쓰기 → **PeriodLockedError**
+- 상태 전이 무결성(허용 전이만)
+
+### B-11. E2E / UI / 성능 스모크
+
+- 주요 화면 렌더, **화면 카운트 == DB 카운트**
+- 콘솔 에러 0, 의도외 4xx/5xx 0
+- **30농장 규모**에서 핵심 페이지 로드 — N+1 폭증/타임아웃 없음(쿼리 수·응답시간 기록)
+
+### B-12. 전체 테스트 스위트 실행
+
+- backend pytest 전량 + frontend + E2E 실행
+- 통과수 baseline 대비 리포트 (UAT 신규 케이스 포함). **untested PASS 금지.**
+
+---
+
+### B-종료 — UAT QA 리포트 (오픈 전 결재용)
+
+```
+=== PIGOS PRE-LAUNCH UAT QA REPORT ===
+env            : dev
+uat_dataset    : farms=30 users=35 (uat_ flagged, RETAINED)
+governance     : base kpi_def=16 bench=18 op=29 dmv=85 | final __/__/__/__ (동일=OK)
+test_suite     : <before> → <after>  (backend/frontend/e2e)
+
+[카테고리별]  PASS / FAIL / 결함수
+B-2 무결성        : __ / __ / __
+B-3 입력검증      : __ / __ / __   (positive __, negative __)
+B-4 계산정합성    : __ / __ / __
+B-5 룰엔진        : __ / __ / __
+B-6 거버넌스      : __ / __ / __
+B-7 RBAC          : __ / __ / __
+B-8 감사로그      : __ / __ / __
+B-9 i18n          : __ / __ / __   (KRW leak: PASS/FAIL)
+B-10 기간잠금     : __ / __ / __
+B-11 E2E/성능     : __ / __ / __
+
+[CRITICAL 결함]   ← 오픈 차단 항목 (RBAC 우회 / 위조 노출 / KRW leak / 감사누락 / orphan)
+- <id> <카테고리> <repro> <기대 vs 실제>
+
+[전체 결함 목록]
+- <id> <severity> <카테고리> <repro> <기대 vs 실제> ...
+
+[명시 주의]
+- stillbirth_rate = (stillborn+mummies)/total born → 외부 직접비교 무효
+- UAT 데이터는 uat_ 플래그, 운영 아님, 잔존
+
+pushed/deployed : NO (강제)
+launch_gate     : GO / NO-GO  (CRITICAL 0 일 때만 GO)
+```
+
+<!-- ============================ append 끝 ============================ -->
