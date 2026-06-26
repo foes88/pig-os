@@ -193,6 +193,19 @@ class RefreshToken(Base):
     user: Mapped["User"] = relationship(back_populates="refresh_tokens")
 
 
+class PasswordResetToken(Base):
+    """비밀번호 재설정 1회용 토큰 — sha256 해시만 저장, TTL 30분, 1회용(used_at)."""
+    __tablename__ = "password_reset_tokens"
+    __table_args__ = (Index("idx_prt_user", "user_id"),)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)  # sha256 hex
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class AddonSubscription(Base):
     """
     Domain gate: which Addons a farm has active.

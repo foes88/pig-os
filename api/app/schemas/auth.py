@@ -63,3 +63,12 @@ class MeResponse(BaseModel):
     org_id: str | None
     language: str
     farm_ids: list[str]
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=128)
