@@ -62,7 +62,10 @@ export function middleware(request: NextRequest) {
 
   if (!isPublic && !hasSession) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    // 루트(/)는 로그인 후 기본 목적지라 next 생략 → 깔끔한 /login. 그 외만 복귀경로 기록.
+    if (pathname !== "/") {
+      loginUrl.searchParams.set("next", pathname);
+    }
     return withLocale(NextResponse.redirect(loginUrl));
   }
 
