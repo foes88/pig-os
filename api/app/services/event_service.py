@@ -14,11 +14,10 @@ PigPlan 로직 기반 핵심 규칙:
 from datetime import UTC, date, datetime
 from uuid import UUID
 
-from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.core.exceptions import ConflictError, NotFoundError, PeriodLockedError, ValidationError
 from app.db.models.config import ComplianceProfile, RegionDefault
 from app.db.models.events import (
     Farrowing,
@@ -825,9 +824,9 @@ async def _ensure_period_unlocked(db: AsyncSession, farm_id: UUID, d: date) -> N
         )
     )
     if lock:
-        raise HTTPException(
-            status_code=423,
-            detail=f"Period {d.year}-{d.month:02d} is locked; unlock it before editing.",
+        # 명명 예외(PeriodLockedError, HTTP 423)로 일관 — raw HTTPException/죽은 409 제거.
+        raise PeriodLockedError(
+            f"Period {d.year}-{d.month:02d} is locked; unlock it before editing."
         )
 
 

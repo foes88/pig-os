@@ -46,8 +46,8 @@ class AddonNotSubscribedError(PigOSError):
 
 
 class PeriodLockedError(PigOSError):
-    """Raised when trying to modify data in a locked period."""
-    status_code = 409
+    """Raised when trying to modify data in a locked period. HTTP 423 Locked."""
+    status_code = 423
     code = "PERIOD_LOCKED"
 
 
