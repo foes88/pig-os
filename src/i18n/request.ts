@@ -15,6 +15,8 @@ export default getRequestConfig(async () => {
   if (cookieLocale && locales.includes(cookieLocale as Locale)) {
     const adminOnly = ADMIN_ONLY_LOCALES.includes(cookieLocale as Locale);
     locale = adminOnly && !isAdminHost ? defaultLocale : cookieLocale;
+  } else if (isAdminHost) {
+    locale = "ko";  // admin 콘솔은 운영자(국내)용 → 쿠키 없으면 기본 한국어
   }
 
   return {
