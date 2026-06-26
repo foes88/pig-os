@@ -107,6 +107,10 @@ def _residual(ctx: RuleContext, code: str) -> float | None:
 
 
 async def _loss_sow_culling(ctx: RuleContext) -> list[Finding]:
+    # D-7: SOW_RESIDUAL/SALVAGE는 KRW(한국 잔존가 모델 S2_SOW_RETIREMENT) 기반 → KR 전용.
+    # 非KR 농장엔 원화 잔존가가 새지 않도록 게이트(출시 전 분리, 통화 일반화는 P2).
+    if (ctx.country or "").upper() != "KR":
+        return []
     li = (ctx.extra.get("loss_inputs") if ctx.extra else None) or {}
     rows = li.get("cull_by_parity") or []
     if not rows or _residual(ctx, "SOW_RESIDUAL_P0") is None:  # 잔여가치 seed 없으면 미발화
