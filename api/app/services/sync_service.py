@@ -122,6 +122,19 @@ def _audit(farm_id: UUID, entity_type: str, entity_id: UUID, action: str, new_va
     )
 
 
+def _cross_farm_id_conflict(existing, item, farm_id: UUID, entity: str) -> SyncRejected | None:
+    """클라가 보낸 PK가 '다른 농장' 행을 가리키면 거부(F1).
+
+    멱등성 by-id 조회는 전역(PK 충돌 감지 목적)이라, 다른 농장 UUID를 그대로
+    merge 처리하면 호출자의 정상 레코드가 무성 손실됐다. 또 농장 스코프만 좁혀
+    insert로 흘리면 전역 PK 유니크 충돌(500)이 난다. 따라서 교차농장 PK는 ID_CONFLICT로 거부.
+    """
+    if existing is not None and existing.farm_id != farm_id:
+        return SyncRejected(id=item.id, entity=entity, reason="ID_CONFLICT",
+                            detail={"reason": "id already used by another farm"})
+    return None
+
+
 # ── Mating validation ─────────────────────────────────────────────────────────
 
 async def _process_mating(
@@ -159,6 +172,9 @@ async def _process_mating(
     # 4. Idempotency — same UUID already exists
     existing_by_id = await db.get(Mating, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "mating")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="mating", action="merged"), None, None
 
     # 4b. Field validation — REST MatingCreate 규칙 미러 (finding #1 확장)
@@ -315,6 +331,9 @@ async def _process_farrowing(
 
     existing_by_id = await db.get(Farrowing, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "farrowing")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="farrowing", action="merged"), None, None
 
     if sow.status != "PREGNANT":
@@ -413,6 +432,9 @@ async def _process_weaning(
 
     existing_by_id = await db.get(Weaning, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "weaning")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="weaning", action="merged"), None, None
 
     if sow.status != "LACTATING":
@@ -567,6 +589,9 @@ async def _process_reproductive(
 
     existing_by_id = await db.get(ReproductiveEvent, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "reproductive_event")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="reproductive_event", action="merged"), None, None
 
     # 항목별 검증 — REST 규칙 미러(배치 전체 422 방지) — Codex P1
@@ -619,6 +644,9 @@ async def _process_pregnancy_check(
 
     existing_by_id = await db.get(PregnancyCheck, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "pregnancy_check")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="pregnancy_check", action="merged"), None, None
 
     if item.result not in _PREGNANCY_RESULTS:
@@ -678,6 +706,9 @@ async def _process_health_event(
 
     existing_by_id = await db.get(HealthEvent, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "health_event")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="health_event", action="merged"), None, None
 
     if not dry_run:
@@ -720,6 +751,9 @@ async def _process_piglet_event(
 
     existing_by_id = await db.get(PigletEvent, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "piglet_event")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="piglet_event", action="merged"), None, None
 
     # 항목별 검증 — REST PigletEventCreate 규칙 미러(배치 전체 422 방지) — Codex P1
