@@ -5,10 +5,8 @@ import { resolve } from "path";
 // Run: npm install -D vitest jsdom @vitejs/plugin-react @testing-library/react \
 //        @testing-library/user-event @testing-library/jest-dom
 export default defineConfig({
+  // @vitejs/plugin-react가 JSX 자동 런타임 변환을 담당(vitest4는 oxc 트랜스포머 사용).
   plugins: [react()],
-  // tsconfig는 jsx:"preserve"(Next 기본) → vitest esbuild가 classic 런타임으로 폴백해
-  // 테스트 .tsx에서 "React is not defined" 발생. 자동 런타임 명시로 해소.
-  esbuild: { jsx: "automatic", jsxImportSource: "react" },
   test: {
     environment: "jsdom",
     globals: true,
