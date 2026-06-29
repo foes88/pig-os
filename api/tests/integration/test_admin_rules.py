@@ -64,6 +64,11 @@ async def test_rule_update_validation_and_persist(client: AsyncClient, db: Async
     # 미등록 규칙
     assert (await client.patch("/api/v1/admin/rules/nope.rule", headers=_auth(admin),
                                json={"enabled": False})).status_code == 404
+    # ADM-RULES-NULLCLEAR: 명시적 null로 임계값을 코드 기본(null)으로 클리어 가능
+    cleared = await client.patch("/api/v1/admin/rules/wsi.overdue", headers=_auth(admin),
+                                 json={"warning": None, "critical": None})
+    assert cleared.status_code == 200, cleared.text
+    assert cleared.json()["warning"] is None and cleared.json()["critical"] is None
 
 
 # ── 엔진 반영 ───────────────────────────────────────────────────────────────────

@@ -81,11 +81,14 @@ async def update_rule(rule_id: str, body: RuleUpdate, db: DbDep, admin: SuperAdm
         cfg = RuleConfig(rule_id=rule_id, enabled=True)
         db.add(cfg)
     before = {"enabled": cfg.enabled, "warning": cfg.warning, "critical": cfg.critical}
+    # ADM-RULES-NULLCLEAR: model_fields_set으로 '전달됨(명시적 null 포함)'과 '누락'을 구분 →
+    # warning/critical을 null로 보내면 코드 기본값으로 클리어 가능(과거엔 is_not_none이라 불가).
+    fields = body.model_fields_set
     if body.enabled is not None:
         cfg.enabled = body.enabled
-    if body.warning is not None:
+    if "warning" in fields:
         cfg.warning = body.warning
-    if body.critical is not None:
+    if "critical" in fields:
         cfg.critical = body.critical
     cfg.updated_by = admin.id
 
