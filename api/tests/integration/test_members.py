@@ -51,6 +51,19 @@ async def test_owner_can_create_member(client: AsyncClient, db, test_user, test_
 
 
 @pytest.mark.asyncio
+async def test_member_create_rejects_unknown_fields(client: AsyncClient, db, test_user, test_farm):
+    """ACC-C-hardening: 알 수 없는/권한 필드 주입(system_role 등)은 422로 거부(방어심층)."""
+    headers = await _auth(db, test_user, test_farm)
+    r = await client.post(
+        f"/api/v1/farms/{test_farm.id}/members",
+        headers=headers,
+        json={"name": "Inj", "username": "injuser", "email": "inj@pigos.io",
+              "password": "Worker1234!", "role": "FARM_WORKER", "system_role": "SUPER_ADMIN"},
+    )
+    assert r.status_code == 422, r.text
+
+
+@pytest.mark.asyncio
 async def test_duplicate_email_conflict(client: AsyncClient, db, test_user, test_farm):
     headers = await _auth(db, test_user, test_farm)
     payload = {"name": "Dup", "username": "dupuser", "email": "dup@pigos.io",

@@ -5,7 +5,7 @@
 """
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 _FARM_ROLES = "^(FARM_OWNER|FARM_MANAGER|FARM_WORKER|VET|VIEWER)$"
 
@@ -19,6 +19,8 @@ class MemberResponse(BaseModel):
 
 
 class MemberCreate(BaseModel):
+    # ACC-C-hardening: 알 수 없는 필드(system_role/approval_status 등) 주입 차단(방어심층).
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(..., min_length=1, max_length=100)
     username: str = Field(..., pattern=r"^[a-zA-Z0-9_.-]{3,50}$", description="직원 로그인 아이디")
     email: EmailStr
@@ -27,5 +29,6 @@ class MemberCreate(BaseModel):
 
 
 class MemberUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     role: str | None = Field(default=None, pattern=_FARM_ROLES)
     active: bool | None = None
