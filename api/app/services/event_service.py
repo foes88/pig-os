@@ -910,6 +910,11 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
     validate_farrowing(total_born=f.total_born, born_alive=f.born_alive,
                        stillborn=f.stillborn, mummified=f.mummified,
                        avg_birth_weight_kg=f.avg_birth_weight_kg)
+    # 수정 시 날짜순서(INV4) 재검증 — 분만일을 교배 前으로 못 옮김(QA ws_update 발견: 등록은 검증, 수정은 누락).
+    if "farrowing_date" in data and f.mating_id:
+        _m = await db.get(Mating, f.mating_id)
+        validate_farrowing_after_mating(farrowing_date=f.farrowing_date,
+                                        mating_date=_m.mating_date if _m else None)
     # 견고화: 실산 축소가 기존 이유두수 합/양자 정합성을 깨면 차단(두수 꼬임 방지)
     if "born_alive" in data:
         fi, fo, deaths = await _calc_piglet_adjustments(db, f.id)
@@ -962,6 +967,10 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
         raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
     if w.farrowing_id:
         farrowing = await db.get(Farrowing, w.farrowing_id)
+        # 수정 시 날짜순서(INV4) 재검증 — 이유일을 분만 前으로 못 옮김(QA ws_update 발견).
+        if "weaning_date" in data and farrowing:
+            validate_weaning_after_farrowing(weaning_date=w.weaning_date,
+                                             farrowing_date=farrowing.farrowing_date)
         if farrowing:
             foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
             effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
