@@ -95,4 +95,10 @@ export const adminApi = {
   // 조직 트리 (업체→총판→대리점→농장)
   orgs: () => apiClient.get<AdminOrgRow[]>(`${BASE}/orgs`).then((r) => r.data),
   orgFarms: (orgId: string) => apiClient.get<AdminOrgFarm[]>(`${BASE}/orgs/${orgId}/farms`).then((r) => r.data),
+  createOrg: (body: { name: string; org_type: string; parent_org_id?: string | null; country: string }) =>
+    apiClient.post<AdminOrgRow>(`${BASE}/orgs`, body).then((r) => r.data),
+  updateOrg: (orgId: string, body: { name?: string; org_type?: string; parent_org_id?: string | null }) =>
+    apiClient.patch<AdminOrgRow>(`${BASE}/orgs/${orgId}`, body).then((r) => r.data),
+  reassignFarm: (farmId: string, orgId: string) =>
+    apiClient.patch<AdminOrgFarm>(`${BASE}/farms/${farmId}/org`, { org_id: orgId }).then((r) => r.data),
 };
