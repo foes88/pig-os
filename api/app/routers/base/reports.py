@@ -11,15 +11,6 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DbDep, FarmDep
-
-
-def _farm_today(farm) -> date:
-    """농장 타임존 기준 '오늘'. 서버(KST) date.today()를 그대로 쓰면 비-KST 농장이
-    날짜 경계에서 하루 어긋남(M5). tzdata 의존성으로 명명 타임존 해석."""
-    try:
-        return datetime.now(ZoneInfo(farm.timezone or "UTC")).date()
-    except Exception:  # noqa: BLE001 — 알 수 없는 tz는 UTC 폴백
-        return datetime.now(ZoneInfo("UTC")).date()
 from app.schemas.report import (
     DailyReport,
     DataQualityIssue,
@@ -36,6 +27,15 @@ from app.services import report_service
 router = APIRouter(prefix="/farms/{farm_id}/reports", tags=["Reports"])
 
 MAX_RANGE_DAYS = 731  # ~2 years
+
+
+def _farm_today(farm) -> date:
+    """농장 타임존 기준 '오늘'. 서버(KST) date.today()를 그대로 쓰면 비-KST 농장이
+    날짜 경계에서 하루 어긋남(M5). tzdata 의존성으로 명명 타임존 해석."""
+    try:
+        return datetime.now(ZoneInfo(farm.timezone or "UTC")).date()
+    except Exception:  # noqa: BLE001 — 알 수 없는 tz는 UTC 폴백
+        return datetime.now(ZoneInfo("UTC")).date()
 
 
 @router.get("/daily", response_model=DailyReport)
