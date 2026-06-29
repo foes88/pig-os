@@ -17,6 +17,7 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "arq>=0.26",
     "email-validator>=2.0",
+    "tzdata>=2026.2",
 ]
 
 [tool.uv]

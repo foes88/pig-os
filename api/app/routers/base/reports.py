@@ -4,12 +4,22 @@ Reports router — reproduction & grow-finish performance, sow breeding history.
 Reference: docs/SCREEN_MENU_SPEC.md → Reports.
 Aggregation lives in app.services.report_service (pure builders + DB wrappers).
 """
-from datetime import date
+from datetime import date, datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DbDep, FarmDep
+
+
+def _farm_today(farm) -> date:
+    """농장 타임존 기준 '오늘'. 서버(KST) date.today()를 그대로 쓰면 비-KST 농장이
+    날짜 경계에서 하루 어긋남(M5). tzdata 의존성으로 명명 타임존 해석."""
+    try:
+        return datetime.now(ZoneInfo(farm.timezone or "UTC")).date()
+    except Exception:  # noqa: BLE001 — 알 수 없는 tz는 UTC 폴백
+        return datetime.now(ZoneInfo("UTC")).date()
 from app.schemas.report import (
     DailyReport,
     DataQualityIssue,
@@ -42,10 +52,10 @@ async def daily_report(
 async def comprehensive_daily_report(
     farm: FarmDep,
     db: DbDep,
-    day: date = Query(default_factory=date.today, alias="date"),
+    day: date | None = Query(None, alias="date"),
 ):
     """종합일보 — PigPlan .mrd 6섹션(돈군/교배/임신사고/생산/전입출) 일계·월계. dict 반환."""
-    return await report_service.get_comprehensive_daily_report(db, farm.id, day)
+    return await report_service.get_comprehensive_daily_report(db, farm.id, day or _farm_today(farm))
 
 
 @router.get("/sow-status", response_model=SowStatusReport)
@@ -82,10 +92,10 @@ async def mortality_report(
 async def data_quality_report(
     farm: FarmDep,
     db: DbDep,
-    as_of: date = Query(default_factory=date.today, description="과기한 판정 기준일(기본 오늘)"),
+    as_of: date | None = Query(None, description="과기한 판정 기준일(기본=농장 오늘)"),
 ):
     """데이터 정합성 점검 — 두수 불일치·날짜 역전·상태 고아·입력 누락(과기한)."""
-    return await report_service.get_data_quality_report(db, farm.id, as_of)
+    return await report_service.get_data_quality_report(db, farm.id, as_of or _farm_today(farm))
 
 
 def _check_range(start: date, end: date) -> None:
