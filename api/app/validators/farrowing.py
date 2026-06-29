@@ -13,6 +13,7 @@ from __future__ import annotations
 from app.validators.base import ValidationError
 
 MAX_TOTAL_BORN = 35
+MIN_TOTAL_BORN = 1
 MAX_STILLBORN = 25
 MAX_MUMMIFIED = 25
 MAX_AVG_BIRTH_WEIGHT_KG = 3.0
@@ -31,6 +32,9 @@ def validate_farrowing(
     """Raise :class:`ValidationError` (HTTP 422) on an invalid farrowing record."""
     if total_born > MAX_TOTAL_BORN:
         raise ValidationError(f"Total Born cannot exceed {MAX_TOTAL_BORN}")
+    # 최소 1 — 0마리 분만(빈 litter)은 무의미하며 parity·LACTATING 오염. 앱(EventValidation.kt)은 1..35 강제.
+    if total_born < MIN_TOTAL_BORN:
+        raise ValidationError(f"Total Born must be at least {MIN_TOTAL_BORN}")
     if stillborn > MAX_STILLBORN:
         raise ValidationError(f"Stillborn cannot exceed {MAX_STILLBORN}")
     if mummified > MAX_MUMMIFIED:
