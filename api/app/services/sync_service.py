@@ -181,12 +181,15 @@ async def _process_mating(
             },
         ), None
 
-    # 6. Duplicate check (same sow, same date, different UUID)
+    # 6. Duplicate check (same sow, same date, SAME type, different UUID).
+    # #3: mating_type까지 일치해야 중복. 같은 날 AI 후 NATURAL 백업교배(실제 관행)는
+    # 서로 다른 교배라 둘 다 수용해야 함 — type을 빼면 무음 병합으로 데이터 손실.
     dup = await db.scalar(
         select(Mating).where(
             Mating.sow_id == item.sow_id,
             Mating.farm_id == farm_id,
             Mating.mating_date == event_date,
+            Mating.mating_type == item.mating_type,
             Mating.deleted_at.is_(None),
         )
     )
