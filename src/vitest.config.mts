@@ -6,6 +6,9 @@ import { resolve } from "path";
 //        @testing-library/user-event @testing-library/jest-dom
 export default defineConfig({
   plugins: [react()],
+  // tsconfig는 jsx:"preserve"(Next 기본) → vitest esbuild가 classic 런타임으로 폴백해
+  // 테스트 .tsx에서 "React is not defined" 발생. 자동 런타임 명시로 해소.
+  esbuild: { jsx: "automatic", jsxImportSource: "react" },
   test: {
     environment: "jsdom",
     globals: true,

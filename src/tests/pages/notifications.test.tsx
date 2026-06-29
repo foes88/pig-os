@@ -3,8 +3,7 @@ import { screen } from "@testing-library/react";
 
 import { renderWithClient } from "../test-utils";
 
-vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+// next-intl·next/navigation은 tests/setup.ts에서 전역 mock (완전한 형태).
 vi.mock("@/store/auth.store", () => ({
   useAuthStore: (sel: (s: { activeFarmId: string | null }) => unknown) => sel({ activeFarmId: "farm-1" }),
 }));

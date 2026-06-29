@@ -2,8 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithClient } from "../test-utils";
 
-vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/alerts" }));
+// next-intl·next/navigation은 tests/setup.ts에서 전역 mock (완전한 형태).
 vi.mock("next/link", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/store/auth.store", () => ({
   useAuthStore: (sel: (s: { activeFarmId: string | null }) => unknown) => sel({ activeFarmId: "farm-1" }),
@@ -31,7 +30,8 @@ describe("AlertsPage", () => {
 
   it("shows an overdue sow row after data loads", async () => {
     renderWithClient(<AlertsPage />);
-    expect(await screen.findByText("A-001")).toBeInTheDocument();
+    // SignalCard는 "A-001 · Open"을 한 노드에 렌더 → 부분일치 matcher 사용.
+    expect(await screen.findByText(/A-001/)).toBeInTheDocument();
   });
 
   it("shows a cull candidate after data loads", async () => {
