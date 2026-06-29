@@ -909,6 +909,9 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
         raise NotFoundError(f"Farrowing {farrowing_id} not found")
     await _ensure_period_unlocked(db, farm_id, f.farrowing_date)
     data = body.model_dump(exclude_unset=True)
+    # 날짜 이동 시 도착 월도 잠금 검사(잠긴 월로 백데이트 차단 — update_mating과 동일)
+    if "farrowing_date" in data and data["farrowing_date"]:
+        await _ensure_period_unlocked(db, farm_id, data["farrowing_date"])
     for k, v in data.items():
         setattr(f, k, v)
     f.total_born = f.born_alive + f.stillborn + f.mummified
@@ -961,6 +964,9 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
         raise NotFoundError(f"Weaning {weaning_id} not found")
     await _ensure_period_unlocked(db, farm_id, w.weaning_date)
     data = body.model_dump(exclude_unset=True)
+    # 날짜 이동 시 도착 월도 잠금 검사(잠긴 월로 백데이트 차단 — update_mating과 동일)
+    if "weaning_date" in data and data["weaning_date"]:
+        await _ensure_period_unlocked(db, farm_id, data["weaning_date"])
     for k, v in data.items():
         setattr(w, k, v)
     # V7 정합성: 수정 시에도 이유두수 재검증(유효 복당두수·상한 초과 차단)

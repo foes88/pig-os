@@ -17,6 +17,7 @@ from app.schemas.sow import (
     SowResponse,
     SowUpdate,
 )
+from app.services.event_service import _ensure_period_unlocked
 
 router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 
@@ -187,6 +188,10 @@ async def cull_sow(
         raise ValidationError("removal_date cannot be before the sow's entry_date")
     if body.removal_date > datetime.now(UTC).date() + timedelta(days=1):
         raise ValidationError("removal_date cannot be in the future")
+
+    # 월마감 잠금: 도폐사일이 속한 월이 잠겨있으면 423 (확정 데이터 보호 — 다른 이벤트 경로와 동일).
+    # removal은 모돈 수/PSY 분모·손실·일별보고서 입력이라 잠긴 월로 백데이트 금지.
+    await _ensure_period_unlocked(db, farm.id, body.removal_date)
 
     now = datetime.now(UTC)
 

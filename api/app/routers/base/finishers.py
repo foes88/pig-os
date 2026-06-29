@@ -17,6 +17,7 @@ from app.schemas.finisher import (
     FinisherGroupShip,
     FinisherGroupUpdate,
 )
+from app.services.event_service import _ensure_period_unlocked
 from app.validators.finisher import (
     validate_finisher_entry,
     validate_finisher_event_count,
@@ -58,6 +59,9 @@ async def create_finisher_group(
     current_user: CurrentUser,
 ):
     """비육돈 그룹 입식 등록"""
+    # 월마감 잠금: 입식일이 속한 월이 잠겨있으면 423 (grow-finish KPI 입력 보호)
+    if body.start_date:
+        await _ensure_period_unlocked(db, farm.id, body.start_date)
     # P0-BE-12: 입식 두수·체중 검증
     validate_finisher_entry(
         entry_count=body.head_count_in,
@@ -106,6 +110,9 @@ async def ship_finisher_group(
     if group.end_date is not None:
         raise ConflictError("Group already shipped")
 
+    # 월마감 잠금: 출하일이 속한 월이 잠겨있으면 423 (확정 월로 출하 백데이트 차단)
+    await _ensure_period_unlocked(db, farm.id, body.end_date)
+
     # H1: 출하일은 입식일 이후여야 함(음수 사육일수 → 음수 ADG/일수로 KPI 오염 방지).
     if group.start_date is not None and body.end_date < group.start_date:
         raise ValidationError(
@@ -147,6 +154,10 @@ async def delete_finisher_group(group_id: UUID, farm: FarmDep, db: DbDep):
     )
     if not group:
         raise NotFoundError(f"Finisher group {group_id} not found")
+    # 월마감 잠금: 그룹 시작/종료월이 잠겨있으면 삭제 차단(확정 KPI 보호)
+    for d in (group.start_date, group.end_date):
+        if d:
+            await _ensure_period_unlocked(db, farm.id, d)
     group.deleted_at = datetime.now(UTC)
     await db.commit()
 
@@ -163,7 +174,12 @@ async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm:
     )
     if not group:
         raise NotFoundError(f"Finisher group {group_id} not found")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    data = body.model_dump(exclude_unset=True)
+    # 월마감 잠금: 기존 시작/종료월 + 변경하려는 새 시작/종료월 모두 잠금 검사
+    for d in (group.start_date, group.end_date, data.get("start_date"), data.get("end_date")):
+        if d:
+            await _ensure_period_unlocked(db, farm.id, d)
+    for k, v in data.items():
         setattr(group, k, v)
     # H5: 수정 후 정합성 — 입식두수 < 출하두수(이미 출하됨)면 음수 폐사율 발생 → 차단.
     if group.head_count_out is not None and group.head_count_in is not None \
