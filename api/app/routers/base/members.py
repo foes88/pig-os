@@ -34,8 +34,11 @@ def _to_response(user: User, link: UserFarm) -> MemberResponse:
     )
 
 
-@router.get("/{farm_id}/members", response_model=list[MemberResponse])
+@router.get("/{farm_id}/members", response_model=list[MemberResponse],
+            dependencies=[require_farm_role(*_OWNER_ROLES)])
 async def list_members(farm: FarmDep, db: DbDep):
+    # ACC-R2: 멤버 디렉터리(이메일·역할 PII)는 소유자/조직관리자 전용. 과거엔 FarmDep만 있어
+    # WORKER/VIEWER/VET가 전체 멤버를 열거할 수 있었음(생성·수정은 이미 OWNER 가드).
     rows = await db.execute(
         select(User, UserFarm)
         .join(UserFarm, UserFarm.user_id == User.id)

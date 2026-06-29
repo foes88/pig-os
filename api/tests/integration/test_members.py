@@ -24,6 +24,17 @@ async def test_list_members_includes_self(client: AsyncClient, db, test_user, te
 
 
 @pytest.mark.asyncio
+async def test_readonly_role_cannot_list_members(client: AsyncClient, db, test_user, test_farm):
+    """ACC-R2: VIEWER/VET 등 읽기전용 역할은 멤버 디렉터리(PII) 열거 불가 → 403."""
+    test_user.role = "VIEWER"
+    test_user.system_role = "VIEWER"
+    await db.flush()
+    headers = await _auth(db, test_user, test_farm)
+    r = await client.get(f"/api/v1/farms/{test_farm.id}/members", headers=headers)
+    assert r.status_code == 403, r.text
+
+
+@pytest.mark.asyncio
 async def test_owner_can_create_member(client: AsyncClient, db, test_user, test_farm):
     # test_user는 FARM_OWNER (fixture 기본)
     headers = await _auth(db, test_user, test_farm)
