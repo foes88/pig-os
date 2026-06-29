@@ -142,6 +142,8 @@ export default function RecordPage() {
     return () => clearTimeout(id);
   }, [search]);
 
+  const queryClient = useQueryClient();
+
   const { data: sowData } = useQuery({
     queryKey: queryKeys.sows.list(farmId ?? "", { search: debounced }),
     queryFn: () => sowsApi.list(farmId!, { per_page: 200, search: debounced || undefined }),
@@ -161,6 +163,14 @@ export default function RecordPage() {
 
   const handleSaved = (msg: string, sowId: string, goNext: boolean, insights?: EventInsight[]) => {
     setDoneIds((prev) => new Set([...prev, sowId]));
+    // 이벤트 저장 후 모돈 상태 배지·최근이벤트 레일이 stale로 남던 버그 수정:
+    // sows 전체(목록+상세) + 해당 모돈 이벤트 쿼리 무효화(검색 파라미터 무관 prefix 매칭).
+    if (farmId) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.sows.all(farmId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.matings(farmId, sowId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.farrowings(farmId, sowId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.weanings(farmId, sowId) });
+    }
     setLastSaved(msg);
     setLastInsights(insights ?? []);   // 인사이트는 다음 저장 전까지 유지(경고 놓치지 않게)
     if (goNext) {
