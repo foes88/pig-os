@@ -47,6 +47,30 @@ def _avg(xs: list[float]) -> float | None:
     return round(sum(xs) / len(xs), 2) if xs else None
 
 
+def enumerate_period_keys(start: date, end: date, period: str) -> list[str]:
+    """[start, end] 범위의 모든 기간 키(연속). 이벤트 없는 기간도 빈 행으로 채우기 위함(M4).
+    트렌드(generate_series)와 동일하게 보고서도 연속 기간을 반환해 뷰 간 불일치 제거."""
+    keys: list[str] = []
+    if period == "monthly":
+        y, m = start.year, start.month
+        while (y, m) <= (end.year, end.month):
+            keys.append(f"{y}-{m:02d}")
+            m += 1
+            if m > 12:
+                m, y = 1, y + 1
+    elif period == "quarterly":
+        y, q = start.year, (start.month - 1) // 3 + 1
+        endq = (end.month - 1) // 3 + 1
+        while (y, q) <= (end.year, endq):
+            keys.append(f"{y}-Q{q}")
+            q += 1
+            if q > 4:
+                q, y = 1, y + 1
+    elif period == "annual":
+        keys = [str(y) for y in range(start.year, end.year + 1)]
+    return keys
+
+
 # ── Reproduction ──────────────────────────────────────────────────────────────
 
 def build_reproduction_rows(
@@ -68,6 +92,7 @@ def build_reproduction_rows(
     mating_types: list[str] | None = None,            # parallel to matings (AI/NATURAL)
     stillborn: list[int] | None = None,               # parallel to farrowings
     mummified: list[int] | None = None,               # parallel to farrowings
+    fill_periods: list[str] | None = None,            # 빈 기간도 행 생성(M4, group_by="period"만)
 ) -> list[dict]:
     """기간별(period) 또는 품종별(breed) 번식성적 집계.
 
@@ -124,6 +149,11 @@ def build_reproduction_rows(
     for i, (d, n) in enumerate(deaths):
         breed = death_breeds[i] if death_breeds and i < len(death_breeds) else None
         b(gkey(d, breed))["deaths"] += n
+
+    # M4: 이벤트 없는 기간도 빈 버킷 생성(연속 기간) — group_by="period"일 때만.
+    if fill_periods and group_by != "breed":
+        for p in fill_periods:
+            b(p)
 
     rows = []
     for key in sorted(buckets):
@@ -358,6 +388,8 @@ async def get_reproduction_report(
         weaning_breeds=[r[3] for r in wrows],
         rts_breeds=[r[1] for r in rrows],
         death_breeds=[r[2] for r in drows],
+        # M4: 기간 단위 보고서는 빈 기간도 연속으로 채움(트렌드와 일치).
+        fill_periods=enumerate_period_keys(start, end, period) if group_by == "period" else None,
     )
 
 
