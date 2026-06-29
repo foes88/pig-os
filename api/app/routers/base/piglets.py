@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
-from app.db.models.sow import PigletGroup, PigletTransfer
+from app.db.models.sow import PigletGroup, PigletTransfer, Sow
 from app.schemas.piglet import (
     PigletGroupCreate,
     PigletGroupDeathRecord,
@@ -171,6 +171,12 @@ async def create_piglet_transfer(
     # 직접 piglet_events 경로엔 self-check가 있었으나 이 transfers 엔드포인트엔 누락이었음.
     validate_cross_foster_distinct(body.source_sow_id, body.dest_sow_id)
     validate_cross_fostering(transfer_count=body.piglet_count)
+    # 데이터 정합성: 출처/대상 모돈이 이 농장 소속인지 검증(외부 UUID가 자기 행에 박히는 것 차단)
+    for label, sid in (("source_sow_id", body.source_sow_id), ("dest_sow_id", body.dest_sow_id)):
+        ok = await db.scalar(select(Sow.id).where(
+            Sow.id == sid, Sow.farm_id == farm.id, Sow.deleted_at.is_(None)))
+        if not ok:
+            raise NotFoundError(f"{label} not found in this farm")
     # H4: 양자 출처 분만이 지정되면, 실산두수보다 많이 양자 보낼 수 없음(말도 안 되는 입력 차단).
     if body.source_farrowing_id is not None:
         from app.db.models.events import Farrowing

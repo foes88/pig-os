@@ -83,6 +83,24 @@ async def test_cross_foster_exceeds_born_alive_blocked(client: AsyncClient, db, 
     assert r.status_code == 422, r.text
 
 
+# ── 데이터 정합성: 양자 출처/대상 모돈이 다른 농장이면 거부(외부 UUID 박힘 차단) ──
+async def test_cross_foster_foreign_dest_sow_blocked(client: AsyncClient, db, test_org, test_farm, test_sow):
+    owner = await _owner(db, test_farm)
+    # 다른 농장의 모돈
+    other = Farm(org_id=test_org.id, farm_code=f"OF-{uuid.uuid4().hex[:5].upper()}",
+                 name="Other", country="KR", timezone="Asia/Seoul", active=True)
+    db.add(other)
+    await db.flush()
+    foreign = Sow(farm_id=other.id, ear_tag="FOR-1", parity=1, status="LACTATING",
+                  entry_date=datetime(2024, 1, 1, tzinfo=UTC), entry_type="GILT")
+    db.add(foreign)
+    await db.flush()
+    r = await client.post(f"/api/v1/farms/{test_farm.id}/piglets/transfers", headers=_h(owner),
+                          json={"source_sow_id": str(test_sow.id), "dest_sow_id": str(foreign.id),
+                                "transfer_date": "2026-05-01", "piglet_count": 5})
+    assert r.status_code == 404, r.text
+
+
 # ── H1/H5: 비육 그룹 ─────────────────────────────────────────────────────────
 async def test_finisher_ship_end_before_start_blocked(client: AsyncClient, db, test_farm):
     owner = await _owner(db, test_farm)
