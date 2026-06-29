@@ -40,6 +40,10 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+# F3: 사용자 부재 시에도 동일한 bcrypt 비용을 치러 계정 열거(타이밍 오라클)를 차단.
+_DUMMY_PW_HASH = hash_password("pigos-timing-equalizer")
+
+
 def normalize_username(username: str) -> str:
     """username 정규화 — 앞뒤 공백 제거 + 소문자.
     'Admin'/'admin'/' admin ' 가 같은 계정으로 취급되도록(대소문자 footgun 차단, H3).
@@ -81,7 +85,11 @@ async def authenticate(db: AsyncSession, username: str, password: str) -> User:
     user = await db.scalar(
         select(User).where(User.username == normalize_username(username), User.active.is_(True))
     )
-    if not user or not verify_password(password, user.password_hash):
+    if not user:
+        # 미존재 계정도 1회 bcrypt 검증을 수행해 존재 계정과 응답시간을 맞춤(결과 무시).
+        verify_password(password, _DUMMY_PW_HASH)
+        raise UnauthorizedError("Invalid credentials")
+    if not verify_password(password, user.password_hash):
         raise UnauthorizedError("Invalid credentials")
 
     user.last_login_at = datetime.now(UTC)
@@ -180,15 +188,22 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
         raise UnauthorizedError("Invalid refresh token")
 
     token_hash = _hash_token(refresh_token)
+    # revoked 필터 없이 먼저 조회 — '이미 회전된(revoked) 토큰의 재사용'과 '미지의 토큰'을 구분.
     stored = await db.scalar(
-        select(RefreshToken).where(
-            RefreshToken.token_hash == token_hash,
-            RefreshToken.revoked.is_(False),
-            RefreshToken.expires_at > datetime.now(UTC),
-        )
+        select(RefreshToken).where(RefreshToken.token_hash == token_hash)
     )
-    if not stored:
+    if not stored or stored.expires_at <= datetime.now(UTC):
         raise UnauthorizedError("Refresh token revoked or expired")
+    if stored.revoked:
+        # F2: 회전 완료된 토큰의 재사용 = 탈취 의심(OWASP) → 해당 사용자 활성 토큰 전부 회수.
+        # 탈취자·피해자 중 누가 재사용하든 패밀리 전체를 끊어 재로그인을 강제한다.
+        await db.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == stored.user_id, RefreshToken.revoked.is_(False))
+            .values(revoked=True)
+        )
+        await db.commit()
+        raise UnauthorizedError("Refresh token reuse detected; please log in again")
 
     # Rotate: revoke old, issue new
     stored.revoked = True
