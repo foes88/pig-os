@@ -12,7 +12,7 @@ from app.schemas.boar import BoarCreate, BoarResponse, BoarUpdate
 
 router = APIRouter(prefix="/farms/{farm_id}/boars", tags=["Boars"])
 
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 @router.get("", response_model=list[BoarResponse])

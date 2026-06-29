@@ -21,7 +21,7 @@ router = APIRouter(prefix="/farms", tags=["Members"])
 
 # 멤버 관리(생성/수정)는 소유자 전용 — 누가 농장에 접근하는지는 OWNER 권한.
 # (MANAGER는 일상 운영은 가능하되 멤버 임명/역할변경은 불가.)
-_OWNER_ROLES = ("FARM_OWNER", "SUPER_ADMIN")
+_OWNER_ROLES = ("FARM_OWNER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")
 
 
 def _to_response(user: User, link: UserFarm) -> MemberResponse:

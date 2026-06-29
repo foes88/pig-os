@@ -21,9 +21,9 @@ from app.schemas.sow import (
 router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 
 # 파괴적 작업(도태·삭제)은 농장 OWNER/MANAGER만 (Section D RBAC)
-_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")
 # 일상 입력/수정 = WORKER 이상 (VIEWER/VET/API_CLIENT 읽기전용 차단) — Section D2
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")
 
 
 @router.get("", response_model=PagedResponse[SowResponse])

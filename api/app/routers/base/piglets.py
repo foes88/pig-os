@@ -26,7 +26,7 @@ from app.validators.cross_fostering import (
 
 router = APIRouter(prefix="/farms/{farm_id}/piglets", tags=["Piglets"])
 
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 # ── Piglet Groups ─────────────────────────────────────────────────────────────

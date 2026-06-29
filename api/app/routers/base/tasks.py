@@ -14,7 +14,7 @@ from app.services import task_service
 
 router = APIRouter(prefix="/farms/{farm_id}/tasks", tags=["Tasks"])
 
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 def _to_response(task, ear_tag: str | None) -> TaskResponse:

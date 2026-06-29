@@ -12,7 +12,7 @@ from app.services import farm_service
 
 router = APIRouter(prefix="/farms", tags=["Farms"])
 
-_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")  # 농장 설정 변경 한정 (Section D)
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 농장 설정 변경 한정 (Section D)
 
 
 @router.get("", response_model=list[FarmResponse])

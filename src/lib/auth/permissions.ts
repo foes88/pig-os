@@ -2,14 +2,17 @@
 // canEntry: OWNER/MANAGER/WORKER(입력) · canManage: OWNER/MANAGER(운영관리) · canOwn: OWNER만(소유자 전용).
 // 소유자 전용 = 멤버 임명/역할변경 · 과금/구독 · 계정/농장 삭제. VIEWER/VET = 읽기전용.
 
+// 조직롤(총판/대리점/업체)은 자기 서브트리 농장에서 풀 운영권한 — 백엔드 effective_farm_role이
+// 서브트리를 강제(F1)하고, farm_roles[활성농장]에 조직롤이 담겨 useActiveRole로 게이팅된다.
+const ORG = ["VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN"];
 const ENTRY = new Set([
-  "FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "OWNER", "MANAGER", "WORKER", "SUPER_ADMIN",
+  "FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "OWNER", "MANAGER", "WORKER", "SUPER_ADMIN", ...ORG,
 ]);
 const MANAGE = new Set([
-  "FARM_OWNER", "FARM_MANAGER", "OWNER", "MANAGER", "SUPER_ADMIN",
+  "FARM_OWNER", "FARM_MANAGER", "OWNER", "MANAGER", "SUPER_ADMIN", ...ORG,
 ]);
 const OWN = new Set([
-  "FARM_OWNER", "OWNER", "SUPER_ADMIN",
+  "FARM_OWNER", "OWNER", "SUPER_ADMIN", ...ORG,
 ]);
 
 /**

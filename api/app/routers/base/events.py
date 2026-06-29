@@ -47,9 +47,9 @@ from app.services import event_service, insight_service
 router = APIRouter(prefix="/farms/{farm_id}/events", tags=["Events"])
 
 # 이벤트 삭제(상태 롤백 동반)는 OWNER/MANAGER만. 일상 입력(POST)·수정(PATCH)은 WORKER 허용. (Section D)
-_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")
 # 일상 입력/수정 = WORKER 이상 (VIEWER/VET/API_CLIENT 읽기전용 차단) — Section D2
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")
 
 
 async def _attach_insights(db, farm, event_type: str, event) -> list:
