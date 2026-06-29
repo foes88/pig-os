@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import ConflictError, UnauthorizedError, ValidationError
+from app.core.permissions import get_farm_access
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -89,8 +90,9 @@ async def authenticate(db: AsyncSession, username: str, password: str) -> User:
 
 
 async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
-    farm_rows = await db.scalars(select(UserFarm).where(UserFarm.user_id == user.id))
-    farm_ids = [str(uf.farm_id) for uf in farm_rows]
+    # 멀티팜: 접근 가능 농장(총판은 하위 전체) + 농장별 role. 멤버십만 보던 기존 로직을
+    # get_farm_access로 교체(조직레벨 사용자도 하위 농장 전환 가능).
+    farm_ids, farm_roles = await get_farm_access(user, db)
 
     access = create_access_token(user.id, user.org_id, [user.role])
     refresh = create_refresh_token(user.id)
@@ -113,6 +115,7 @@ async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
         email=user.email or "",
         role=user.role,
         farm_ids=farm_ids,
+        farm_roles=farm_roles,
     )
 
 

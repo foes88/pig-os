@@ -205,6 +205,36 @@ async def effective_farm_role(user: User, farm_id: UUID, db: AsyncSession) -> st
     return rows[0][0] or sys_role  # role_override 우선, NULL이면 시스템 롤 폴백
 
 
+async def get_farm_access(
+    user: User, db: AsyncSession
+) -> tuple[list[str], dict[str, str]]:
+    """farm 앱용 (접근 가능 농장ID 목록, 농장별 유효 role 맵).
+
+    - SUPER_ADMIN: ([], {}) — 전 농장 동일 권한 + 관리자 콘솔 사용. 전 농장 ID를
+      토큰/응답에 싣지 않는다(페이로드 비대화 방지). 프론트는 전역 role로 폴백.
+    - 조직레벨(VENDOR/DISTRIBUTOR/DEALER_ADMIN): org 서브트리 농장 전체 → 동일 sys_role.
+      (총판/대리점이 하위 농장을 모두 전환·관리)
+    - 농장레벨: user_farms 멤버십 농장 → role_override(없으면 sys_role).
+
+    멀티팜에서 프론트 게이팅이 '활성 농장 기준 역할'로 판정하도록 farm_roles를 제공한다.
+    """
+    sys_role = effective_system_role(user)
+    if sys_role == "SUPER_ADMIN":
+        return [], {}
+    accessible = await get_accessible_farm_ids(user, db)
+    if not accessible:
+        return [], {}
+    ids = [str(f) for f in accessible]
+    if sys_role in ORG_LEVEL_ROLES:
+        return ids, {i: sys_role for i in ids}
+    rows = await db.execute(
+        text("SELECT farm_id, role_override FROM user_farms WHERE user_id = :uid"),
+        {"uid": user.id},
+    )
+    override = {str(r[0]): r[1] for r in rows.fetchall()}
+    return ids, {i: (override.get(i) or sys_role) for i in ids}
+
+
 def is_org_admin(user: User) -> bool:
     return effective_system_role(user) in ORG_LEVEL_ROLES
 

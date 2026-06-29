@@ -1,8 +1,7 @@
 from fastapi import APIRouter
-from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep
-from app.db.models.platform import UserFarm
+from app.core.permissions import get_farm_access
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -62,9 +61,8 @@ async def password_reset_confirm(body: PasswordResetConfirm, db: DbDep):
 
 @router.get("/me", response_model=MeResponse)
 async def me(current_user: CurrentUser, db: DbDep):
-    farm_rows = await db.scalars(
-        select(UserFarm).where(UserFarm.user_id == current_user.id)
-    )
+    # 멀티팜: 접근 가능 농장 + 농장별 role (issue_tokens와 동일 소스).
+    farm_ids, farm_roles = await get_farm_access(current_user, db)
     return MeResponse(
         id=str(current_user.id),
         name=current_user.name,
@@ -73,5 +71,6 @@ async def me(current_user: CurrentUser, db: DbDep):
         role=current_user.role,
         org_id=str(current_user.org_id) if current_user.org_id else None,
         language=current_user.language,
-        farm_ids=[str(uf.farm_id) for uf in farm_rows],
+        farm_ids=farm_ids,
+        farm_roles=farm_roles,
     )

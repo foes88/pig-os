@@ -33,6 +33,7 @@ class LoginResponse(TokenResponse):
     email: str
     role: str
     farm_ids: list[str]
+    farm_roles: dict[str, str] = {}  # farm_id → 농장별 유효 role (멀티팜 게이팅용)
 
 
 class OnboardingCompleteRequest(BaseModel):
@@ -69,6 +70,7 @@ class MeResponse(BaseModel):
     org_id: str | None
     language: str
     farm_ids: list[str]
+    farm_roles: dict[str, str] = {}  # farm_id → 농장별 유효 role (멀티팜 게이팅용)
 
 
 class PasswordResetRequest(BaseModel):
