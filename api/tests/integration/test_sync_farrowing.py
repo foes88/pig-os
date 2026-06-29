@@ -91,7 +91,7 @@ async def test_sync_weaning_persists(db: AsyncSession, test_farm: Farm, test_sow
             )],
             weanings=[SyncWeaning(
                 id=uuid4(), sow_id=test_sow.id, weaning_date="2026-05-16",
-                weaned_count=11, avg_weight_kg=6.4, client_created_at=now,
+                weaned_count=12, avg_weight_kg=6.4, client_created_at=now,
             )],
         ),
     )
@@ -104,9 +104,10 @@ async def test_sync_weaning_persists(db: AsyncSession, test_farm: Farm, test_sow
     )
     assert weaning is not None
     assert weaning.farrowing_id is not None              # NOT NULL FK auto-linked
+    assert weaning.breeding_cycle_id is not None         # C4: 사이클 연결됨
     assert weaning.avg_weaning_weight_kg == 6.4          # avg_weight_kg -> avg_weaning_weight_kg
     await db.refresh(test_sow)
-    assert test_sow.status == "OPEN"                     # weaning advanced status
+    assert test_sow.status == "OPEN"                     # 전량이유 → 공태 복귀
 
 
 async def test_sync_reproductive_cull_sets_valid_status(db: AsyncSession, test_farm: Farm, test_sow: Sow):

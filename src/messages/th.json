@@ -14,6 +14,7 @@
     "delete": "ลบ",
     "qtyError": "ปริมาณต้องมากกว่า 0",
     "saveError": "บันทึกไม่สำเร็จ",
+    "deleteError": "ลบไม่สำเร็จ",
     "noFarm": "กรุณาเลือกฟาร์มก่อน"
   },
   "prrsReport": {

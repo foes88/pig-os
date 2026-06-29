@@ -26,6 +26,7 @@ from app.schemas.admin_user import (
     PilotSignupRow,
 )
 from app.schemas.common import PagedResponse, PageMeta
+from app.services.auth_service import normalize_username
 from app.services.farm_service import _generate_farm_code
 
 router = APIRouter(
@@ -233,7 +234,8 @@ async def approve_pilot_signup(
         raise ConflictError(f"User already exists for {p.email}")
 
     # username = email 로컬파트(충돌 시 id 접미). 파일럿 승인은 저볼륨.
-    base_username = (p.email.split("@")[0] or "user")[:40]
+    # H3: 소문자·공백제거 정규화(authenticate와 동일 규칙) — 대소문자 footgun 차단.
+    base_username = normalize_username(p.email.split("@")[0] or "user")[:40]
     username = base_username
     if await db.scalar(select(User).where(User.username == username)):
         username = f"{base_username}_{uuid4().hex[:8]}"

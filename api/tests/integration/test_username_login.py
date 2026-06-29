@@ -50,6 +50,23 @@ async def test_duplicate_email_rejected(db: AsyncSession):
         await auth_service.register(db, _reg(username="user2", email="same@pigos.io"))
 
 
+async def test_username_case_insensitive_login(db: AsyncSession):
+    """H3: 대문자/공백 섞어 가입해도 소문자로 정규화 → 어떤 케이스로도 로그인."""
+    user, _ = await auth_service.register(db, _reg(username="Farmer1", email="c@pigos.io"))
+    assert user.username == "farmer1"  # 저장 시 정규화
+    # 입력 케이스 무관 로그인
+    for attempt in ("farmer1", "FARMER1", "  Farmer1  "):
+        got = await auth_service.authenticate(db, attempt, "Test1234!")
+        assert got.id == user.id
+
+
+async def test_username_case_insensitive_duplicate(db: AsyncSession):
+    """H3: 'Admin'과 'admin'은 같은 계정 — 대소문자만 다른 중복 차단."""
+    await auth_service.register(db, _reg(username="Owner", email="d@pigos.io"))
+    with pytest.raises(ConflictError):
+        await auth_service.register(db, _reg(username="owner", email="e@pigos.io"))
+
+
 def test_login_schema_requires_username():
     """LoginRequest는 username 기반(email EmailStr 강제 제거)."""
     from app.schemas.auth import LoginRequest

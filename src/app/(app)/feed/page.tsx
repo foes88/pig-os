@@ -7,12 +7,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { localToday } from "@/lib/date";
 import { feedApi, type CreateFeedRecordRequest } from "@/lib/api/endpoints/feed";
 import { useAuthStore } from "@/store/auth.store";
-import { canEntry } from "@/lib/auth/permissions";
+import { canEntry, canManage } from "@/lib/auth/permissions";
 
 export default function FeedPage() {
   const t = useTranslations("feed");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const canWrite = canEntry(useAuthStore((s) => s.user?.role));
+  const role = useAuthStore((s) => s.user?.role);
+  const canWrite = canEntry(role);
+  const canDelete = canManage(role);  // 백엔드 DELETE는 OWNER/MANAGER만 (WORKER 제외)
   const queryClient = useQueryClient();
 
   const [recordDate, setRecordDate] = useState(localToday());
@@ -39,7 +41,11 @@ export default function FeedPage() {
 
   const delMut = useMutation({
     mutationFn: (id: string) => feedApi.delete(farmId!, id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["feed", farmId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed", farmId] });
+      setErr(null);
+    },
+    onError: () => setErr(t("deleteError")),
   });
 
   if (!farmId) {
@@ -110,7 +116,7 @@ export default function FeedPage() {
                   <th className="text-left px-4 py-2">{t("recordDate")}</th>
                   <th className="text-left px-4 py-2">{t("feedType")}</th>
                   <th className="text-right px-4 py-2">{t("quantityKg")}</th>
-                  {canWrite && <th className="px-4 py-2" />}
+                  {canDelete && <th className="px-4 py-2" />}
                 </tr>
               </thead>
               <tbody>
@@ -119,10 +125,10 @@ export default function FeedPage() {
                     <td className="px-4 py-2 font-mono">{r.record_date}</td>
                     <td className="px-4 py-2">{r.feed_type ?? "—"}</td>
                     <td className="px-4 py-2 text-right font-mono">{r.quantity_kg}</td>
-                    {canWrite && (
+                    {canDelete && (
                       <td className="px-4 py-2 text-right">
-                        <button onClick={() => delMut.mutate(r.id)}
-                                className="text-xs text-danger hover:underline">{t("delete")}</button>
+                        <button onClick={() => delMut.mutate(r.id)} disabled={delMut.isPending}
+                                className="text-xs text-danger hover:underline disabled:opacity-50">{t("delete")}</button>
                       </td>
                     )}
                   </tr>

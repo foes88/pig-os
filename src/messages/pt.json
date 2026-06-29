@@ -14,6 +14,7 @@
     "delete": "Excluir",
     "qtyError": "A quantidade deve ser maior que 0.",
     "saveError": "Falha ao salvar.",
+    "deleteError": "Falha ao excluir.",
     "noFarm": "Selecione uma fazenda primeiro."
   },
   "prrsReport": {

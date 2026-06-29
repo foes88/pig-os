@@ -14,6 +14,7 @@
     "delete": "Delete",
     "qtyError": "Quantity must be greater than 0.",
     "saveError": "Failed to save.",
+    "deleteError": "Failed to delete.",
     "noFarm": "Select a farm first."
   },
   "prrsReport": {

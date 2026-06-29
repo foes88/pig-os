@@ -14,6 +14,7 @@
     "delete": "Xóa",
     "qtyError": "Số lượng phải lớn hơn 0.",
     "saveError": "Lưu thất bại.",
+    "deleteError": "Xóa thất bại.",
     "noFarm": "Vui lòng chọn trại trước."
   },
   "prrsReport": {

@@ -40,7 +40,7 @@ from app.db.models.events import (
 from app.db.models.health import HealthEvent, Removal
 from app.db.models.ops import PeriodLock, SyncLog
 from app.db.models.platform import AuditLog, Farm
-from app.db.models.sow import Sow
+from app.db.models.sow import BreedingCycle, PigletGroup, Sow
 from app.schemas.sync import (
     ServerChanges,
     SyncAccepted,
@@ -56,7 +56,11 @@ from app.schemas.sync import (
     SyncResponse,
     SyncWeaning,
 )
-from app.services.event_service import _calc_piglet_adjustments, apply_terminal_reproductive
+from app.services.event_service import (
+    _calc_piglet_adjustments,
+    _get_open_cycle,
+    apply_terminal_reproductive,
+)
 from app.validators.base import ValidationError
 from app.validators.farrowing import validate_farrowing
 
@@ -193,8 +197,19 @@ async def _process_mating(
 
     # 7. All checks passed — write (unless dry_run)
     if not dry_run:
+        # C4: REST record_mating 미러 — 활성 사이클 있으면 재사용, 없으면 신규 생성 후 연결.
+        # breeding_cycle_id 누락 시 parity별 KPI(P1/P2 ABA 등)에서 동기화 데이터가 전량 누락됨.
+        cycle = await _get_open_cycle(db, sow.id)
+        if not cycle:
+            cycle = BreedingCycle(
+                farm_id=farm_id, sow_id=sow.id, parity=(sow.parity or 0) + 1,
+                started_at=datetime.combine(event_date, datetime.min.time()).replace(tzinfo=UTC),
+            )
+            db.add(cycle)
+            await db.flush()
         mating = Mating(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            breeding_cycle_id=cycle.id,
             mating_date=event_date, mating_type=item.mating_type,
             boar_id=item.boar_id, semen_batch=item.semen_batch,
             mating_number=item.mating_number, notes=item.notes,
@@ -202,6 +217,7 @@ async def _process_mating(
         db.add(mating)
         db.add(_audit(farm_id, "mating", item.id, "CREATE", item.model_dump(mode="json")))
         sow.status = "PREGNANT"
+        cycle.cycle_status = "MATED"
 
     return SyncAccepted(id=item.id, entity="mating", action="created"), None, None
 
@@ -335,16 +351,23 @@ async def _process_farrowing(
                 detail={"sow_id": str(item.sow_id), "message": "No mating to attach farrowing to"},
             ), None
         # 모델 컬럼명: stillborn / mummified / farrowing_ease (sync 입력은 born_dead / mummies / farrowing_type).
+        # C4: breeding_cycle_id 연결(교배의 사이클 상속) + nursing_head 초기화 — REST record_farrowing 미러.
         farrowing = Farrowing(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id, mating_id=mating.id,
+            breeding_cycle_id=mating.breeding_cycle_id,
             farrowing_date=event_date, total_born=item.total_born,
             born_alive=item.born_alive, stillborn=item.born_dead,
-            mummified=item.mummies, farrowing_ease=item.farrowing_type, notes=item.notes,
+            mummified=item.mummies, nursing_head=item.born_alive,
+            farrowing_ease=item.farrowing_type, notes=item.notes,
         )
         db.add(farrowing)
         db.add(_audit(farm_id, "farrowing", item.id, "CREATE", item.model_dump(mode="json")))
         sow.status = "LACTATING"
         sow.parity = (sow.parity or 0) + 1
+        if mating.breeding_cycle_id:
+            cycle = await db.get(BreedingCycle, mating.breeding_cycle_id)
+            if cycle:
+                cycle.cycle_status = "FARROWED"
 
     return SyncAccepted(id=item.id, entity="farrowing", action="created"), None, None
 
@@ -452,14 +475,43 @@ async def _process_weaning(
                 },
             ), None
         # 모델 컬럼명: avg_weaning_weight_kg (sync 입력은 avg_weight_kg).
+        # H1/C4: breeding_cycle_id 연결 + 부분이유 상태머신 + PigletGroup 생성 — REST record_weaning 미러.
+        nursing_days = (event_date - farrowing.farrowing_date).days
         weaning = Weaning(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing.id,
+            breeding_cycle_id=farrowing.breeding_cycle_id,
             weaning_date=event_date, weaned_count=item.weaned_count,
+            weaning_age_days=nursing_days if nursing_days >= 0 else None,
             avg_weaning_weight_kg=item.avg_weight_kg, notes=item.notes,
         )
         db.add(weaning)
         db.add(_audit(farm_id, "weaning", item.id, "CREATE", item.model_dump(mode="json")))
-        sow.status = "OPEN"
+        await db.flush()
+
+        # 잔여 포유두수 0 → 이유 완료(공태 복귀 + 사이클 종료). 잔여>0(부분이유) → LACTATING 유지.
+        remaining_after = remaining - item.weaned_count
+        if remaining_after <= 0:
+            sow.status = "OPEN"
+            if farrowing.breeding_cycle_id:
+                cycle = await db.get(BreedingCycle, farrowing.breeding_cycle_id)
+                if cycle:
+                    cycle.cycle_status = "WEANED"
+                    cycle.ended_at = datetime.now(UTC)
+        # else: 부분이유 — 모돈 LACTATING 유지, 사이클 FARROWED 유지
+
+        # 이유된 자돈을 그룹으로 추적(PSY→MSY 사슬 연결). 이유 1건 = 자돈그룹 1개.
+        if item.weaned_count > 0:
+            code = f"WG-{event_date:%y%m%d}-{str(item.id)[:8]}"  # VARCHAR(30) 안전
+            exists = await db.scalar(
+                select(PigletGroup).where(
+                    PigletGroup.farm_id == farm_id, PigletGroup.group_code == code
+                )
+            )
+            if not exists:
+                db.add(PigletGroup(
+                    farm_id=farm_id, group_code=code, weaning_date=event_date,
+                    head_count_in=item.weaned_count, notes=f"auto: weaning {sow.ear_tag}",
+                ))
 
     return SyncAccepted(id=item.id, entity="weaning", action="created"), None, None
 

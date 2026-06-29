@@ -15,6 +15,7 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.core.security import hash_password
 from app.db.models.platform import AuditLog, User, UserFarm
 from app.schemas.member import MemberCreate, MemberResponse, MemberUpdate
+from app.services.auth_service import normalize_username
 
 router = APIRouter(prefix="/farms", tags=["Members"])
 
@@ -53,14 +54,15 @@ async def list_members(farm: FarmDep, db: DbDep):
 async def create_member(
     body: MemberCreate, farm: FarmDep, db: DbDep, current_user: CurrentUser
 ):
-    if await db.scalar(select(User).where(User.username == body.username)):
-        raise ConflictError(f"Username '{body.username}' already taken")
+    username = normalize_username(body.username)
+    if await db.scalar(select(User).where(User.username == username)):
+        raise ConflictError(f"Username '{username}' already taken")
     if await db.scalar(select(User).where(User.email == body.email)):
         raise ConflictError(f"User with email {body.email} already exists")
 
     user = User(
         org_id=farm.org_id,
-        username=body.username,
+        username=username,
         email=body.email,
         name=body.name,
         password_hash=hash_password(body.password),

@@ -39,8 +39,16 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+def normalize_username(username: str) -> str:
+    """username 정규화 — 앞뒤 공백 제거 + 소문자.
+    'Admin'/'admin'/' admin ' 가 같은 계정으로 취급되도록(대소문자 footgun 차단, H3).
+    생성·로그인·중복검사 모든 경로에서 동일 적용해야 일관성 유지."""
+    return username.strip().lower()
+
+
 async def register(db: AsyncSession, req: RegisterRequest) -> tuple[User, Organization]:
-    if await db.scalar(select(User).where(User.username == req.username)):
+    username = normalize_username(req.username)
+    if await db.scalar(select(User).where(User.username == username)):
         raise ConflictError("Username already taken")
     if await db.scalar(select(User).where(User.email == req.email)):
         raise ConflictError("Email already registered")
@@ -55,7 +63,7 @@ async def register(db: AsyncSession, req: RegisterRequest) -> tuple[User, Organi
 
     user = User(
         org_id=org.id,
-        username=req.username,
+        username=username,
         email=req.email,
         name=req.name,
         password_hash=hash_password(req.password),
@@ -69,7 +77,9 @@ async def register(db: AsyncSession, req: RegisterRequest) -> tuple[User, Organi
 
 
 async def authenticate(db: AsyncSession, username: str, password: str) -> User:
-    user = await db.scalar(select(User).where(User.username == username, User.active.is_(True)))
+    user = await db.scalar(
+        select(User).where(User.username == normalize_username(username), User.active.is_(True))
+    )
     if not user or not verify_password(password, user.password_hash):
         raise UnauthorizedError("Invalid credentials")
 
@@ -109,7 +119,8 @@ async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
 async def complete_onboarding(
     db: AsyncSession, req: OnboardingCompleteRequest
 ) -> OnboardingCompleteResponse:
-    if await db.scalar(select(User).where(User.username == req.username)):
+    username = normalize_username(req.username)
+    if await db.scalar(select(User).where(User.username == username)):
         raise ConflictError("Username already taken")
     if await db.scalar(select(User).where(User.email == req.email)):
         raise ConflictError("Email already registered")
@@ -120,7 +131,7 @@ async def complete_onboarding(
 
     user = User(
         org_id=org.id,
-        username=req.username,
+        username=username,
         email=req.email,
         name=req.name,
         password_hash=hash_password(req.password),
