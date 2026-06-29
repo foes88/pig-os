@@ -1593,6 +1593,7 @@
     "auditColEntity": "Đối tượng",
     "auditColChange": "Thay đổi",
     "navOrgs": "Tổ chức",
+    "navMasterData": "Dữ liệu mã",
     "orgsTitle": "Cây tổ chức",
     "orgsSubtitle": "Nhà cung cấp → tổng đại lý → đại lý → trại",
     "orgsEmpty": "Chưa có tổ chức",

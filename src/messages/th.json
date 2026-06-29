@@ -1593,6 +1593,7 @@
     "auditColEntity": "เอนทิตี",
     "auditColChange": "การเปลี่ยนแปลง",
     "navOrgs": "องค์กร",
+    "navMasterData": "ข้อมูลรหัส",
     "orgsTitle": "ผังองค์กร",
     "orgsSubtitle": "ลำดับชั้น ผู้ผลิต → ผู้จัดจำหน่าย → ตัวแทน → ฟาร์ม",
     "orgsEmpty": "ไม่มีองค์กร",

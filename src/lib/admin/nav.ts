@@ -6,6 +6,7 @@ import {
   LifeBuoy,
   SlidersHorizontal,
   ScrollText,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", labelKey: "navOverview", icon: LayoutDashboard, status: "ready" },
   { href: "/admin/users", labelKey: "navMembers", icon: Users, status: "ready" },
   { href: "/admin/orgs", labelKey: "navOrgs", icon: Network, status: "ready" },
+  { href: "/admin/master-data", labelKey: "navMasterData", icon: Database, status: "ready" },
   { href: "/admin/announcements", labelKey: "navAnnouncements", icon: Megaphone, status: "ready" },
   { href: "/admin/support", labelKey: "navSupport", icon: LifeBuoy, status: "ready" },
   { href: "/admin/rules", labelKey: "navRules", icon: SlidersHorizontal, status: "ready" },

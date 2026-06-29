@@ -1593,6 +1593,7 @@
     "auditColEntity": "대상",
     "auditColChange": "변경",
     "navOrgs": "조직",
+    "navMasterData": "코드데이터",
     "orgsTitle": "조직 트리",
     "orgsSubtitle": "업체 → 총판 → 대리점 → 농장 계층",
     "orgsEmpty": "조직 없음",

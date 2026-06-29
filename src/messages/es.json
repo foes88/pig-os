@@ -1593,6 +1593,7 @@
     "auditColEntity": "Entidad",
     "auditColChange": "Cambio",
     "navOrgs": "Organizaciones",
+    "navMasterData": "Datos de código",
     "orgsTitle": "Árbol de organización",
     "orgsSubtitle": "Proveedor → distribuidor → concesionario → granja",
     "orgsEmpty": "Sin organizaciones",

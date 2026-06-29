@@ -8,9 +8,10 @@ from app.routers.admin.admin import router as core_router
 from app.routers.admin.audit import router as audit_router
 from app.routers.admin.benchmarks import router as benchmarks_router
 from app.routers.admin.content import router as content_router
+from app.routers.admin.master_data import router as master_data_router
 from app.routers.admin.orgs import router as orgs_router
 from app.routers.admin.rules import router as rules_router
 from app.routers.admin.users import router as users_router
 
 __all__ = ["core_router", "users_router", "content_router", "rules_router", "audit_router",
-           "orgs_router", "benchmarks_router"]
+           "orgs_router", "benchmarks_router", "master_data_router"]

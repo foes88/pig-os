@@ -1593,6 +1593,7 @@
     "auditColEntity": "Entity",
     "auditColChange": "Change",
     "navOrgs": "Organizations",
+    "navMasterData": "Code Data",
     "orgsTitle": "Organization tree",
     "orgsSubtitle": "Vendor → distributor → dealer → farm hierarchy",
     "orgsEmpty": "No organizations",

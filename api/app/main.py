@@ -114,6 +114,7 @@ from app.routers.admin import audit_router as admin_audit_router  # noqa: E402
 from app.routers.admin import benchmarks_router as admin_benchmarks_router  # noqa: E402
 from app.routers.admin import content_router as admin_content_router  # noqa: E402
 from app.routers.admin import core_router as admin_core_router  # noqa: E402
+from app.routers.admin import master_data_router as admin_master_data_router  # noqa: E402
 from app.routers.admin import orgs_router as admin_orgs_router  # noqa: E402
 from app.routers.admin import rules_router as admin_rules_router  # noqa: E402
 from app.routers.admin import users_router as admin_users_router  # noqa: E402
@@ -127,6 +128,7 @@ app.include_router(admin_rules_router,  prefix=V1)
 app.include_router(admin_audit_router,  prefix=V1)
 app.include_router(admin_orgs_router,   prefix=V1)
 app.include_router(admin_benchmarks_router, prefix=V1)
+app.include_router(admin_master_data_router, prefix=V1)
 app.include_router(base_announcements.router, prefix=V1)
 app.include_router(base_support.router, prefix=V1)
 

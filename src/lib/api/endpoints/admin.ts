@@ -101,4 +101,14 @@ export const adminApi = {
     apiClient.patch<AdminOrgRow>(`${BASE}/orgs/${orgId}`, body).then((r) => r.data),
   reassignFarm: (farmId: string, orgId: string) =>
     apiClient.patch<AdminOrgFarm>(`${BASE}/farms/${farmId}/org`, { org_id: orgId }).then((r) => r.data),
+
+  // 코드/마스터 데이터 CRUD (G4): kind = diseases|vaccines|medications|event-definitions
+  masterList: (kind: string) =>
+    apiClient.get<Record<string, unknown>[]>(`${BASE}/master/${kind}`).then((r) => r.data),
+  masterCreate: (kind: string, body: Record<string, unknown>) =>
+    apiClient.post<Record<string, unknown>>(`${BASE}/master/${kind}`, body).then((r) => r.data),
+  masterUpdate: (kind: string, pk: string, body: Record<string, unknown>) =>
+    apiClient.patch<Record<string, unknown>>(`${BASE}/master/${kind}/${encodeURIComponent(pk)}`, body).then((r) => r.data),
+  masterDelete: (kind: string, pk: string) =>
+    apiClient.delete(`${BASE}/master/${kind}/${encodeURIComponent(pk)}`).then((r) => r.data),
 };
