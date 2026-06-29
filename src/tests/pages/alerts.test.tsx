@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithClient } from "../test-utils";
 
-vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k }));
+vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k, useLocale: () => "en" }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/alerts" }));
 vi.mock("next/link", () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/store/auth.store", () => ({
@@ -31,7 +31,7 @@ describe("AlertsPage", () => {
 
   it("shows an overdue sow row after data loads", async () => {
     renderWithClient(<AlertsPage />);
-    expect(await screen.findByText("A-001")).toBeInTheDocument();
+    expect(await screen.findByText(/A-001/)).toBeInTheDocument();  // 행은 "A-001 · status" 한 노드
   });
 
   it("shows a cull candidate after data loads", async () => {

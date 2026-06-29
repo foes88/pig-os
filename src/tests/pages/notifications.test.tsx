@@ -3,8 +3,8 @@ import { screen } from "@testing-library/react";
 
 import { renderWithClient } from "../test-utils";
 
-vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("next-intl", () => ({ useTranslations: () => (k: string) => k, useLocale: () => "en" }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => "/notifications" }));
 vi.mock("@/store/auth.store", () => ({
   useAuthStore: (sel: (s: { activeFarmId: string | null }) => unknown) => sel({ activeFarmId: "farm-1" }),
 }));
