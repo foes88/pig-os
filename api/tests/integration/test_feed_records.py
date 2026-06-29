@@ -56,6 +56,20 @@ def test_quantity_must_be_positive():
         FeedRecordCreate(record_date=date(2026, 6, 1), quantity_kg=-5)
 
 
+def test_unit_cost_upper_bound():
+    """M4: unit_cost가 DB Numeric(10,4) 상한 초과 → 스키마 422(500 방지)."""
+    with pytest.raises(Exception):
+        FeedRecordCreate(record_date=date(2026, 6, 1), quantity_kg=10, unit_cost=2_000_000)
+
+
+def test_future_record_date_rejected():
+    """M5: 미래일자 record_date → 스키마 거부."""
+    from datetime import timedelta
+    future = date.today() + timedelta(days=2)
+    with pytest.raises(Exception):
+        FeedRecordCreate(record_date=future, quantity_kg=10)
+
+
 async def test_period_lock_blocks_feed(db: AsyncSession, test_farm: Farm, test_user: User):
     db.add(PeriodLock(farm_id=test_farm.id, period_year=2026, period_month=3,
                       locked_by=test_user.id))
