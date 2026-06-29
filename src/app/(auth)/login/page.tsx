@@ -301,6 +301,7 @@ export default function LoginPage() {
           name: data.name,
           role: data.role,
           farm_ids: data.farm_ids,
+          farm_roles: data.farm_roles,
         },
         data.access_token,
         data.refresh_token,

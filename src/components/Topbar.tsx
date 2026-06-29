@@ -3,6 +3,7 @@
 import { Bell, Search } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { visibleLocales } from "@/i18n/config";
+import { FarmSwitcher } from "@/components/FarmSwitcher";
 
 import type { Locale } from "@/i18n/config";
 
@@ -43,6 +44,9 @@ export function Topbar({
 
   return (
     <header className="h-14 flex-shrink-0 bg-bg border-b border-border flex items-center px-5 gap-3">
+      {/* Farm switcher (멀티팜: 접근 가능 농장 전환) */}
+      <FarmSwitcher />
+
       {/* Search */}
       <div className="flex-1 max-w-[360px] relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
