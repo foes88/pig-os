@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
+from app.db.models.events import Farrowing, PigletEvent
 from app.db.models.sow import PigletGroup, PigletTransfer
 from app.validators.cross_fostering import (
     validate_cross_foster_distinct,
@@ -162,6 +163,34 @@ async def create_piglet_transfer(
         **body.model_dump(),
     )
     db.add(transfer)
+    await db.flush()
+    # 두수 정합(QA #5): /transfers는 PigletTransfer만 만들어 유효복당두수(_calc_piglet_adjustments는
+    # PigletEvent만 읽음)에 미반영 → 양자 후에도 source가 원래 두수만큼 이유 가능(이중계산).
+    # source 활성분만에 FOSTER_OUT, dest 활성분만에 FOSTER_IN 미러 생성해 이유두수에 반영.
+    src_far = await db.scalar(
+        select(Farrowing)
+        .where(Farrowing.sow_id == body.source_sow_id, Farrowing.farm_id == farm.id,
+               Farrowing.deleted_at.is_(None))
+        .order_by(Farrowing.farrowing_date.desc()).limit(1))
+    dst_far = await db.scalar(
+        select(Farrowing)
+        .where(Farrowing.sow_id == body.dest_sow_id, Farrowing.farm_id == farm.id,
+               Farrowing.deleted_at.is_(None))
+        .order_by(Farrowing.farrowing_date.desc()).limit(1))
+    if src_far:
+        db.add(PigletEvent(
+            farm_id=farm.id, farrowing_id=src_far.id, sow_id=body.source_sow_id,
+            event_date=body.transfer_date, event_type="FOSTER_OUT", piglet_count=body.piglet_count,
+            age_days=(body.transfer_date - src_far.farrowing_date).days,
+            target_sow_id=body.dest_sow_id, target_farrowing_id=(dst_far.id if dst_far else None),
+            notes=f"auto:transfer:{transfer.id}", created_by=current_user.id))
+    if dst_far:
+        db.add(PigletEvent(
+            farm_id=farm.id, farrowing_id=dst_far.id, sow_id=body.dest_sow_id,
+            event_date=body.transfer_date, event_type="FOSTER_IN", piglet_count=body.piglet_count,
+            age_days=(body.transfer_date - dst_far.farrowing_date).days,
+            target_sow_id=body.source_sow_id, target_farrowing_id=(src_far.id if src_far else None),
+            notes=f"auto:transfer:{transfer.id}", created_by=current_user.id))
     await db.commit()
     await db.refresh(transfer)
     return PigletTransferResponse.model_validate(transfer)
