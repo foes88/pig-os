@@ -8,11 +8,12 @@ import { localToday } from "@/lib/date";
 import { feedApi, type CreateFeedRecordRequest } from "@/lib/api/endpoints/feed";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry, canManage } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 
 export default function FeedPage() {
   const t = useTranslations("feed");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const role = useAuthStore((s) => s.user?.role);
+  const role = useActiveRole();
   const canWrite = canEntry(role);
   const canDelete = canManage(role);  // 백엔드 DELETE는 OWNER/MANAGER만 (WORKER 제외)
   const queryClient = useQueryClient();

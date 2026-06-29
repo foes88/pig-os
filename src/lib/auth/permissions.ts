@@ -12,6 +12,23 @@ const OWN = new Set([
   "FARM_OWNER", "OWNER", "SUPER_ADMIN",
 ]);
 
+/**
+ * 활성 농장 기준 유효 role. 멀티팜에서 농장마다 역할이 다를 수 있으므로
+ * farm_roles[activeFarmId]를 우선 사용하고, 없으면 전역 role로 폴백
+ * (SUPER_ADMIN·단일농장 사용자 등은 farm_roles가 비어 전역 role 사용).
+ * 백엔드 effective_farm_role과 동일 의미.
+ */
+export function effectiveRole(
+  user: { role?: string | null; farm_roles?: Record<string, string> } | null | undefined,
+  activeFarmId: string | null | undefined,
+): string | null {
+  if (!user) return null;
+  if (activeFarmId && user.farm_roles && user.farm_roles[activeFarmId]) {
+    return user.farm_roles[activeFarmId];
+  }
+  return user.role ?? null;
+}
+
 export function canEntry(role?: string | null): boolean {
   return !!role && ENTRY.has(role);
 }

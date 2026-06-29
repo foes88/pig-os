@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, X } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 import {
   boarsApi,
   type Boar,
@@ -54,7 +55,7 @@ const EMPTY_FORM: CreateBoarRequest = {
 export default function BoarsPage() {
   const t = useTranslations("boars");
   const activeFarmId = useAuthStore((s) => s.activeFarmId);
-  const canWrite = canEntry(useAuthStore((s) => s.user?.role));
+  const canWrite = canEntry(useActiveRole());
   const farmId = activeFarmId ?? "";
   const queryClient = useQueryClient();
 

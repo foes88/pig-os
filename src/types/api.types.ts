@@ -43,6 +43,7 @@ export interface LoginResponse {
   email: string;
   role: UserRole;
   farm_ids: string[];
+  farm_roles?: Record<string, UserRole>;  // farm_id → 농장별 role (멀티팜 게이팅)
 }
 
 export interface RefreshResponse {
@@ -57,6 +58,7 @@ export interface UserProfile {
   name: string;
   role: UserRole;
   farm_ids: string[];
+  farm_roles?: Record<string, UserRole>;  // farm_id → 농장별 role (멀티팜 게이팅)
 }
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────

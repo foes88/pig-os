@@ -18,6 +18,7 @@ import { InsightBanner } from "@/components/InsightBanner";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 import type {
   Sow,
   SowStatus,
@@ -119,7 +120,7 @@ export default function RecordPage() {
   const t = useTranslations("record");
   const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const role = useAuthStore((s) => s.user?.role);
+  const role = useActiveRole();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const sowIdParam = searchParams.get("sowId");

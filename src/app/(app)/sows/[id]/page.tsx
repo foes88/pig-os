@@ -12,6 +12,7 @@ import { apiError } from "@/lib/api/error";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { useAuthStore } from "@/store/auth.store";
 import { canManage } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 
 // 상태 배지 색상 (라벨은 sowStatus 키)
 const STATUS_CLS: Record<string, string> = {
@@ -32,7 +33,7 @@ export default function SowDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const canManageRole = canManage(useAuthStore((s) => s.user?.role));
+  const canManageRole = canManage(useActiveRole());
 
   const { data: sow, isLoading: sowLoading } = useQuery({
     queryKey: ["sow", farmId, id],

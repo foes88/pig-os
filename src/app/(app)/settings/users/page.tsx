@@ -8,6 +8,7 @@ import { membersApi, type CreateMemberRequest, type FarmRole, type Member } from
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { canOwn } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 import type { UserRole } from "@/types/api.types";
 
 const ROLES: FarmRole[] = ["FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "VET", "VIEWER"];
@@ -21,7 +22,7 @@ const ROLE_BADGE: Record<FarmRole, string> = {
 };
 
 // 멤버 관리는 소유자(OWNER) 전용 — MANAGER는 조회만(백엔드 require_farm_role과 일치).
-function canManageMembers(role: UserRole | undefined): boolean {
+function canManageMembers(role: string | null | undefined): boolean {
   return canOwn(role);
 }
 
@@ -35,7 +36,7 @@ export default function UsersPage() {
   const tErrors = useTranslations("errors");
   const tAlerts = useTranslations("alerts");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const myRole = useAuthStore((s) => s.user?.role);
+  const myRole = useActiveRole();
   const queryClient = useQueryClient();
   const [showAdd, setShowAdd] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);

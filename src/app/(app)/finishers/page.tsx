@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { finishersApi } from "@/lib/api/endpoints/finishers";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 import { finisherEntrySchema, finisherShipSchema, firstError } from "@/lib/validation/eventSchemas";
 import type {
   CreateFinisherGroupRequest,
@@ -18,7 +19,7 @@ import type {
 export default function FinishersPage() {
   const t = useTranslations("finishers");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const role = useAuthStore((s) => s.user?.role);
+  const role = useActiveRole();
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [shippingId, setShippingId] = useState<string | null>(null);

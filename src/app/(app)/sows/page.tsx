@@ -11,6 +11,7 @@ import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry, canManage } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 import { apiError } from "@/lib/api/error";
 import { ALERT_META, SEVERITY_PILL } from "@/lib/alerts/meta";
 import type { OverdueType } from "@/types/api.types";
@@ -49,7 +50,7 @@ export default function SowsPage() {
   const t = useTranslations("sows");
   const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const role = useAuthStore((s) => s.user?.role);
+  const role = useActiveRole();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<SowStatus | "ALL">("ALL");

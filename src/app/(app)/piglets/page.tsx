@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { pigletsApi } from "@/lib/api/endpoints/piglets";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 import type { CreatePigletGroupRequest, PigletGroupTransferOutRequest } from "@/types/api.types";
 
 // 전출 유형 → i18n 키 (piglets.ttXxx)
@@ -19,7 +20,7 @@ const TRANSFER_TYPE_KEY: Record<string, string> = {
 export default function PigletsPage() {
   const t = useTranslations("piglets");
   const farmId = useAuthStore((s) => s.activeFarmId);
-  const canWrite = canEntry(useAuthStore((s) => s.user?.role));
+  const canWrite = canEntry(useActiveRole());
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [transferId, setTransferId] = useState<string | null>(null);

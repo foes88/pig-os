@@ -28,13 +28,14 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       activeFarmId: null,
 
-      setAuth: (user, accessToken, refreshToken, farmId) =>
-        set({
-          user,
-          accessToken,
-          refreshToken,
-          activeFarmId: farmId ?? user.farm_ids[0] ?? null,
-        }),
+      setAuth: (user, accessToken, refreshToken, farmId) => {
+        // stale activeFarmId 보정: 명시값 > 기존값(접근가능할 때) > 첫 농장.
+        // 멤버십 회수/농장 삭제로 더는 접근 못 하는 농장을 가리키면 첫 농장으로 리셋.
+        const ids = user.farm_ids ?? [];
+        const desired = farmId ?? get().activeFarmId;
+        const active = desired && ids.includes(desired) ? desired : (ids[0] ?? null);
+        set({ user, accessToken, refreshToken, activeFarmId: active });
+      },
 
       setAccessToken: (token) => set({ accessToken: token }),
 

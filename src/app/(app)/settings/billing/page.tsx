@@ -1,7 +1,7 @@
 "use client";
 import { useTranslations } from "next-intl";
-import { useAuthStore } from "@/store/auth.store";
 import { canOwn } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 
 const INVOICES = [
   ["2026-05-15", "$179.00"],
@@ -11,7 +11,7 @@ const INVOICES = [
 
 export default function BillingPage() {
   const t = useTranslations("billing");
-  const isOwner = canOwn(useAuthStore((s) => s.user?.role));
+  const isOwner = canOwn(useActiveRole());
 
   // 과금/구독은 소유자 전용
   if (!isOwner) {

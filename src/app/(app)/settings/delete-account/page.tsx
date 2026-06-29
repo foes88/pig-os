@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useAuthStore } from "@/store/auth.store";
 import { canOwn } from "@/lib/auth/permissions";
+import { useActiveRole } from "@/lib/auth/useActiveRole";
 
 export default function DeleteAccountPage() {
   const t = useTranslations("deleteAccount");
@@ -11,7 +11,7 @@ export default function DeleteAccountPage() {
   const router = useRouter();
   const confirmWord = t("confirmWord");
   const canDelete = confirm === confirmWord;
-  const isOwner = canOwn(useAuthStore((s) => s.user?.role));
+  const isOwner = canOwn(useActiveRole());
 
   // 계정/농장 삭제는 소유자 전용
   if (!isOwner) {
