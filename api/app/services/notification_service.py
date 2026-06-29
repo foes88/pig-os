@@ -191,6 +191,7 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
             Notification.user_id,
             Notification.alert_type,
             Notification.related_entity_id,
+            Notification.severity,
         ).where(
             Notification.user_id.in_(recipients),
             Notification.farm_id == farm_id,  # farm 스코프 — 다농장 소유자의 KPI 알림(관련 엔티티 없음) 충돌 방지
@@ -198,13 +199,15 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
             Notification.read_at.is_(None),
         )
     )
-    existing = {(r[0], r[1], r[2]) for r in existing_rows.all()}
+    # M1: 멱등 키에 severity 포함 — WARNING 미읽음 상태에서 CRITICAL로 승격되면
+    # 별개 키가 되어 에스컬레이션 알림이 생성됨(같은 심각도 반복만 억제).
+    existing = {(r[0], r[1], r[2], r[3]) for r in existing_rows.all()}
 
     now = datetime.now(UTC)
     created = 0
     for uid in recipients:
         for it in items:
-            key = (uid, it["alert_type"], it["related_entity_id"])
+            key = (uid, it["alert_type"], it["related_entity_id"], it["severity"])
             if key in existing:
                 continue
             db.add(Notification(

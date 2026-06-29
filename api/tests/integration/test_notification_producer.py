@@ -54,6 +54,27 @@ async def test_create_from_alerts_is_idempotent(db, test_farm, test_user, test_s
     assert second == 0
 
 
+async def test_severity_escalation_creates_new_notification(db, test_farm, test_user, test_sow):
+    """M1 — 미읽음 알림의 심각도가 바뀌면(WARNING→CRITICAL 승격) 억제되지 않고 재알림."""
+    from sqlalchemy import update as _update
+
+    today = await _setup_overdue(db, test_farm, test_user, test_sow)
+    first = await notification_service.create_from_alerts(db, test_farm.id, today=today)
+    assert first >= 1
+
+    # 기존 미읽음 알림의 severity를 임의로 낮춰 '과거 낮은 심각도' 상태를 모사.
+    await db.execute(
+        _update(Notification)
+        .where(Notification.user_id == test_user.id, Notification.read_at.is_(None))
+        .values(severity="INFO")
+    )
+    await db.flush()
+
+    # 재실행 — 생산되는 심각도가 INFO와 다르면 새 알림 생성(키에 severity 포함, M1).
+    second = await notification_service.create_from_alerts(db, test_farm.id, today=today)
+    assert second >= 1  # 심각도 승격분이 억제되지 않고 재생성됨
+
+
 async def test_no_recipients_no_notifications(db, test_farm, test_sow):
     """OWNER/MANAGER 멤버가 없으면 생성 0건."""
     today = date(2026, 6, 1)
