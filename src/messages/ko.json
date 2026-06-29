@@ -338,7 +338,9 @@
     "LACTATING": "포유",
     "ACCIDENT": "사고",
     "CULLED": "도태",
-    "DEAD": "폐사"
+    "DEAD": "폐사",
+    "SOLD": "판매",
+    "TRANSFER": "전출"
   },
   "alerts": {
     "title": "관리 알림",

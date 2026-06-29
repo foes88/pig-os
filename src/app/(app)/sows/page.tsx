@@ -10,7 +10,8 @@ import { sowsApi } from "@/lib/api/endpoints/sows";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
-import { canEntry } from "@/lib/auth/permissions";
+import { canEntry, canManage } from "@/lib/auth/permissions";
+import { apiError } from "@/lib/api/error";
 import { ALERT_META, SEVERITY_PILL } from "@/lib/alerts/meta";
 import type { OverdueType } from "@/types/api.types";
 import { sowEntrySchema, firstError } from "@/lib/validation/eventSchemas";
@@ -222,14 +223,18 @@ export default function SowsPage() {
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setEditTarget(sow)}
-                            title={t("editTooltip")}
-                            className="p-1.5 rounded-md text-text3 hover:text-text hover:bg-bg2 transition"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                          {sow.status !== "CULLED" && sow.status !== "DEAD" && (
+                          {/* 수정=입력권한(canEntry, 백엔드 PATCH _ENTRY_ROLES) */}
+                          {canEntry(role) && (
+                            <button
+                              onClick={() => setEditTarget(sow)}
+                              title={t("editTooltip")}
+                              className="p-1.5 rounded-md text-text3 hover:text-text hover:bg-bg2 transition"
+                            >
+                              <Pencil size={13} />
+                            </button>
+                          )}
+                          {/* 도폐사=관리권한(canManage, 백엔드 cull _MANAGE_ROLES — WORKER 제외) */}
+                          {canManage(role) && sow.status !== "CULLED" && sow.status !== "DEAD" && (
                             <button
                               onClick={() => setCullTarget(sow)}
                               title={t("removalTooltip")}
@@ -356,8 +361,7 @@ function EditSowModal({
       }),
     onSuccess,
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof msg === "string" ? msg : t("editFailed"));
+      setError(apiError(err, t("editFailed")));
     },
   });
 
@@ -512,14 +516,15 @@ function CullSowModal({
     removal_type: "CULLED",
     removal_date: localToday(),
   });
+  // 글로벌 SaaS — 통화 하드코딩(KRW) 금지(C14). 사용자가 선택, 기본 USD.
+  const [currency, setCurrency] = useState("USD");
   const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: () => sowsApi.cull(farmId, sow.id, form),
     onSuccess,
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof msg === "string" ? msg : t("cullFailed"));
+      setError(apiError(err, t("cullFailed")));
     },
   });
 
@@ -594,19 +599,36 @@ function CullSowModal({
                 />
               </Field>
               <Field label={t("fSalePrice")}>
-                <input
-                  type="number"
-                  min={0}
-                  value={form.sale_price ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      sale_price: e.target.value ? Number(e.target.value) : undefined,
-                      sale_currency: e.target.value ? "KRW" : undefined,
-                    }))
-                  }
-                  className="input"
-                />
+                <div className="flex gap-1.5">
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.sale_price ?? ""}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        sale_price: e.target.value ? Number(e.target.value) : undefined,
+                        sale_currency: e.target.value ? currency : undefined,
+                      }))
+                    }
+                    className="input flex-1"
+                  />
+                  <select
+                    value={currency}
+                    onChange={(e) => {
+                      setCurrency(e.target.value);
+                      setForm((f) => ({
+                        ...f,
+                        sale_currency: f.sale_price ? e.target.value : undefined,
+                      }));
+                    }}
+                    className="input w-20"
+                  >
+                    {["USD", "KRW", "CNY", "VND", "BRL", "EUR", "THB", "MXN"].map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
               </Field>
             </div>
           )}
@@ -663,8 +685,7 @@ function AddSowModal({
     mutationFn: () => sowsApi.create(farmId, form),
     onSuccess,
     onError: (err: unknown) => {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(typeof msg === "string" ? msg : t("regFailed"));
+      setError(apiError(err, t("regFailed")));
     },
   });
 

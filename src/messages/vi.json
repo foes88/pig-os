@@ -338,7 +338,9 @@
     "LACTATING": "Nuôi con",
     "ACCIDENT": "Sự cố",
     "CULLED": "Loại thải",
-    "DEAD": "Chết"
+    "DEAD": "Chết",
+    "SOLD": "Đã bán",
+    "TRANSFER": "Đã chuyển"
   },
   "alerts": {
     "title": "Cảnh báo",

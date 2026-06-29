@@ -338,7 +338,9 @@
     "LACTATING": "Lactante",
     "ACCIDENT": "Accidente",
     "CULLED": "Descartada",
-    "DEAD": "Muerta"
+    "DEAD": "Muerta",
+    "SOLD": "Vendida",
+    "TRANSFER": "Transferida"
   },
   "alerts": {
     "title": "Alertas",

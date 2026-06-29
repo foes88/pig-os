@@ -338,7 +338,9 @@
     "LACTATING": "哺乳",
     "ACCIDENT": "事故",
     "CULLED": "淘汰",
-    "DEAD": "死亡"
+    "DEAD": "死亡",
+    "SOLD": "已售",
+    "TRANSFER": "已转出"
   },
   "alerts": {
     "title": "管理提醒",

@@ -34,7 +34,9 @@ export default function FinishersPage() {
 
   const PER_PAGE = 20;
   const totalPages = Math.max(1, Math.ceil(groups.length / PER_PAGE));
-  const paged = groups.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // 목록이 줄거나(출하/삭제·필터 토글) 현재 page가 범위를 넘으면 빈 화면이 됨 → 클램프(H1).
+  const safePage = Math.min(page, totalPages);
+  const paged = groups.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
   if (!farmId) {
     return (
@@ -53,7 +55,7 @@ export default function FinishersPage() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setActiveOnly((v) => !v)}
+              onClick={() => { setActiveOnly((v) => !v); setPage(1); }}
               className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${
                 activeOnly ? "bg-primary text-white" : "bg-surface border-border text-text2"
               }`}
@@ -124,7 +126,7 @@ export default function FinishersPage() {
                             <div>
                               <div className="text-[10px] text-text3">{t("mortality")}</div>
                               <div className={`font-medium ${mortality > 0 ? "text-danger" : "text-success"}`}>
-                                {mortality}{t("headUnit")}
+                                {Math.max(0, mortality)}{t("headUnit")}
                               </div>
                             </div>
                           )}
@@ -132,22 +134,24 @@ export default function FinishersPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setEditingId(g.id)}
-                      className="border border-border text-text2 px-3 py-2 rounded-lg text-xs font-semibold hover:border-primary transition"
-                    >
-                      {t("edit")}
-                    </button>
-                    {isActive && (
+                  {canEntry(role) && (
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setShippingId(g.id)}
-                        className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber-500/90 transition"
+                        onClick={() => setEditingId(g.id)}
+                        className="border border-border text-text2 px-3 py-2 rounded-lg text-xs font-semibold hover:border-primary transition"
                       >
-                        {t("ship")}
+                        {t("edit")}
                       </button>
-                    )}
-                  </div>
+                      {isActive && (
+                        <button
+                          onClick={() => setShippingId(g.id)}
+                          className="bg-amber-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-amber-500/90 transition"
+                        >
+                          {t("ship")}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -156,11 +160,11 @@ export default function FinishersPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-3 text-xs text-text3">
-            <span>{t("pageInfo", { n: groups.length, p: page, tp: totalPages })}</span>
+            <span>{t("pageInfo", { n: groups.length, p: safePage, tp: totalPages })}</span>
             <div className="flex gap-1.5">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              <button onClick={() => setPage(Math.max(1, safePage - 1))} disabled={safePage <= 1}
                 className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">{t("prev")}</button>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              <button onClick={() => setPage(Math.min(totalPages, safePage + 1))} disabled={safePage >= totalPages}
                 className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary">{t("next")}</button>
             </div>
           </div>

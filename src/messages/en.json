@@ -338,7 +338,9 @@
     "LACTATING": "Lactating",
     "ACCIDENT": "RTS/Accident",
     "CULLED": "Culled",
-    "DEAD": "Dead"
+    "DEAD": "Dead",
+    "SOLD": "Sold",
+    "TRANSFER": "Transferred"
   },
   "alerts": {
     "title": "Alerts",
