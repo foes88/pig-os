@@ -1,5 +1,13 @@
 # PigOS 진행 상황
 
+## [현재상태 2026-06-30] — V&V/UAT 하드닝 라운드 (로컬 커밋만, push 미실시)
+- **적대적 버그헌트 → 재현테스트+회귀 게이트 후 1변수=1커밋** 원칙으로 결함 수정 진행 중.
+- 최근 수정(커밋): `1e0f9d5` #7 이벤트 모델 `updated_at` 추가(오프라인 sync pull이 서버측 수정·소프트삭제 감지 — 양방향 동기화 누락 결함) · `e026320` G4 마스터데이터 제네릭 CRUD 타입/제약 위반 **500→422** + JSONB·ARRAY 손상저장 차단.
+- 직전 라운드 커밋: BUG-ACC-SYNC-RBAC(sync route role 게이팅), F1/F2 조직롤 서브트리, ACC-R2 members 게이팅, M2/M4/M5 보고서 타임존·기간채움, sync 원자성·중복키.
+- **백엔드 회귀 752 pass**(py3.14 정식 로컬DB), ruff clean. 프론트 62 pass(Node 22.11).
+- 진행 중: KPI/보고서·기간잠금 / 인증·크로스테넌트 / 프론트 화면단 3개 영역 적대적 헌트 → 결과 트리아지 예정.
+- 제약 유지: push/배포는 사람 명시 승인 시만(현재 push=0), 수치 임의생성 0, 로컬 docker DB만.
+
 ## [현재상태 2026-06-24] — Rule Engine 40종 + D1~D4 + 배포준비 + UAT (origin/main 푸시 완료)
 - **Rule Engine 8→40종**: 피그플랜 136룰 본문 재검증(handoff/pigplan-rules/) 기반. 번식·자돈·비육·모돈군·웅돈·손실·종합·건강 + 임신감정/MSY/배치. 국가 차등은 seed(default_metric_values, `if country==` 0), AI Insight(LLM Renderer) 7개어.
 - **신규 입력기능**: D1 임신감정(pregnancy-check 풀스택+conception.rate_low) · D2 자돈폐사 사유/일령(룰2+mortality 리포트 일령분해) · D3 MSY · D4 배치(AIAO).
