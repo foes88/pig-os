@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Warehouse } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { farmsApi } from "@/lib/api/endpoints/farms";
 import { queryKeys } from "@/lib/api/queryKeys";
@@ -16,7 +16,6 @@ import { useAuthStore } from "@/store/auth.store";
 export function FarmSwitcher() {
   const activeFarmId = useAuthStore((s) => s.activeFarmId);
   const setActiveFarmId = useAuthStore((s) => s.setActiveFarmId);
-  const qc = useQueryClient();
 
   const { data: farms = [] } = useQuery({
     queryKey: queryKeys.farms.all(),
@@ -45,9 +44,9 @@ export function FarmSwitcher() {
   const onSwitch = (farmId: string) => {
     if (farmId === activeFarmId) return;
     setActiveFarmId(farmId);
-    // 농장 전환 → 모든 쿼리 무효화(농장 스코프 데이터 재조회). key에 farmId가 없는
-    // 쿼리까지 안전하게 갱신.
-    qc.invalidateQueries();
+    // 농장-스코프 쿼리는 key에 farmId가 포함돼 전환 시 자동 재조회되므로 전체 invalidate
+    // (refetch storm: /me·/farms·알림까지)는 불필요. 혹시 모를 비-farm-key 쿼리 대비
+    // farmId 미포함이지만 농장 의존인 쿼리는 없음(감사 확인).
   };
 
   return (

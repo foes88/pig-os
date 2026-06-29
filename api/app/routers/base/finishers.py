@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.ops import FinisherGroup
 from app.schemas.finisher import (
     FinisherGroupCreate,
@@ -106,6 +106,12 @@ async def ship_finisher_group(
     if group.end_date is not None:
         raise ConflictError("Group already shipped")
 
+    # H1: 출하일은 입식일 이후여야 함(음수 사육일수 → 음수 ADG/일수로 KPI 오염 방지).
+    if group.start_date is not None and body.end_date < group.start_date:
+        raise ValidationError(
+            f"end_date ({body.end_date}) cannot be before start_date ({group.start_date})"
+        )
+
     # P0-BE-12: 출하 두수 ≤ 잔여(입식) 두수, 출하체중 범위·입식체중 초과 검증
     validate_finisher_not_shipped(shipped_at=group.end_date)
     validate_finisher_event_count(
@@ -159,6 +165,15 @@ async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm:
         raise NotFoundError(f"Finisher group {group_id} not found")
     for k, v in body.model_dump(exclude_unset=True).items():
         setattr(group, k, v)
+    # H5: 수정 후 정합성 — 입식두수 < 출하두수(이미 출하됨)면 음수 폐사율 발생 → 차단.
+    if group.head_count_out is not None and group.head_count_in is not None \
+            and group.head_count_in < group.head_count_out:
+        raise ValidationError(
+            f"head_count_in ({group.head_count_in}) cannot be lower than "
+            f"shipped head_count_out ({group.head_count_out})"
+        )
+    if group.end_date is not None and group.start_date is not None and group.end_date < group.start_date:
+        raise ValidationError("end_date cannot be before start_date")
     await db.commit()
     await db.refresh(group)
     return FinisherGroupResponse.model_validate(group)

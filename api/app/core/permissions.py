@@ -190,8 +190,13 @@ async def effective_farm_role(user: User, farm_id: UUID, db: AsyncSession) -> st
     전역 user.system_role만 보던 require_role의 멀티팜 역할 혼선(finding #2)을 해소한다.
     """
     sys_role = effective_system_role(user)
-    if sys_role == "SUPER_ADMIN" or sys_role in ORG_LEVEL_ROLES:
+    if sys_role == "SUPER_ADMIN":
         return sys_role
+    if sys_role in ORG_LEVEL_ROLES:
+        # F1: 조직롤(총판/대리점/업체)은 '자기 org 서브트리' 농장에만 권한.
+        # 과거엔 farm_id 무관하게 sys_role을 반환(타 조직 농장 접근 가능, FarmDep에만 의존).
+        # 헬퍼 자체에서 서브트리를 강제해 require_farm_role 단독 사용 시에도 안전.
+        return sys_role if await can_access_farm(user, farm_id, db) else None
     result = await db.execute(
         text(
             "SELECT role_override FROM user_farms "

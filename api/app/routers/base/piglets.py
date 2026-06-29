@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.sow import PigletGroup, PigletTransfer
 from app.schemas.piglet import (
     PigletGroupCreate,
@@ -98,7 +98,14 @@ async def record_deaths(
     if not group:
         raise NotFoundError(f"Piglet group {group_id} not found")
 
-    group.head_count_dead = (group.head_count_dead or 0) + body.head_count_dead
+    # H2: 누적 폐사 + 전출이 그룹 보유두수를 넘지 못함(음수 재고 방지).
+    new_dead = (group.head_count_dead or 0) + body.head_count_dead
+    if new_dead + (group.head_count_out or 0) > group.head_count_in:
+        raise ValidationError(
+            f"Total deaths ({new_dead}) + transferred ({group.head_count_out or 0}) "
+            f"cannot exceed group head count ({group.head_count_in})"
+        )
+    group.head_count_dead = new_dead
     if body.notes:
         group.notes = body.notes
     await db.commit()
@@ -126,6 +133,14 @@ async def transfer_out_piglet_group(
         raise NotFoundError(f"Piglet group {group_id} not found")
     if group.transfer_date is not None:
         raise ConflictError("Group already transferred out")
+
+    # H3: 전출 두수가 잔여(보유 - 폐사)를 넘지 못함.
+    available = group.head_count_in - (group.head_count_dead or 0)
+    if body.head_count_out > available:
+        raise ValidationError(
+            f"head_count_out ({body.head_count_out}) exceeds remaining ({available} "
+            f"= in {group.head_count_in} - dead {group.head_count_dead or 0})"
+        )
 
     group.transfer_date = body.transfer_date
     group.transfer_type = body.transfer_type
@@ -156,6 +171,22 @@ async def create_piglet_transfer(
     # 직접 piglet_events 경로엔 self-check가 있었으나 이 transfers 엔드포인트엔 누락이었음.
     validate_cross_foster_distinct(body.source_sow_id, body.dest_sow_id)
     validate_cross_fostering(transfer_count=body.piglet_count)
+    # H4: 양자 출처 분만이 지정되면, 실산두수보다 많이 양자 보낼 수 없음(말도 안 되는 입력 차단).
+    if body.source_farrowing_id is not None:
+        from app.db.models.events import Farrowing
+        src = await db.scalar(
+            select(Farrowing).where(
+                Farrowing.id == body.source_farrowing_id,
+                Farrowing.farm_id == farm.id,
+                Farrowing.deleted_at.is_(None),
+            )
+        )
+        if not src:
+            raise NotFoundError("source_farrowing_id not found in this farm")
+        if body.piglet_count > src.born_alive:
+            raise ValidationError(
+                f"piglet_count ({body.piglet_count}) exceeds source litter born_alive ({src.born_alive})"
+            )
     transfer = PigletTransfer(
         farm_id=farm.id,
         created_by=current_user.id,

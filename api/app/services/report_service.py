@@ -16,6 +16,7 @@ from uuid import UUID
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import NotFoundError
 from app.db.models.events import (
     Farrowing,
     Mating,
@@ -446,22 +447,29 @@ async def get_grow_finish_report(
 
 
 async def get_sow_history(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> list[dict]:
+    # M2: 모돈이 이 농장 소속인지 먼저 검증 — farm_id 경로파라미터가 장식이 되어
+    # 타 농장 모돈 이력이 조회되던 크로스테넌트 누수 차단. + 서브쿼리도 farm_id로 스코프.
+    sow_in_farm = await db.scalar(
+        select(Sow.id).where(Sow.id == sow_id, Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+    )
+    if not sow_in_farm:
+        raise NotFoundError("Sow not found in this farm")
     cycles = list(await db.scalars(
         select(BreedingCycle).where(BreedingCycle.sow_id == sow_id, BreedingCycle.farm_id == farm_id)
     ))
     matings = (await db.execute(
         select(Mating.breeding_cycle_id, Mating.mating_date, Mating.boar_id).where(
-            Mating.sow_id == sow_id, Mating.deleted_at.is_(None))
+            Mating.sow_id == sow_id, Mating.farm_id == farm_id, Mating.deleted_at.is_(None))
     )).all()
     farrowings = (await db.execute(
         select(Farrowing.breeding_cycle_id, Farrowing.farrowing_date, Farrowing.total_born,
                Farrowing.born_alive, Farrowing.stillborn, Farrowing.mummified).where(
-            Farrowing.sow_id == sow_id, Farrowing.deleted_at.is_(None))
+            Farrowing.sow_id == sow_id, Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None))
     )).all()
     weanings = (await db.execute(
         select(Weaning.breeding_cycle_id, Weaning.weaning_date, Weaning.weaned_count,
                Weaning.weaning_age_days).where(
-            Weaning.sow_id == sow_id, Weaning.deleted_at.is_(None))
+            Weaning.sow_id == sow_id, Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None))
     )).all()
 
     return build_sow_history(

@@ -32,19 +32,25 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, accessToken, refreshToken, farmId) => {
         // stale activeFarmId 보정: 명시값 > 기존값(접근가능할 때) > 첫 농장.
         // 멤버십 회수/농장 삭제로 더는 접근 못 하는 농장을 가리키면 첫 농장으로 리셋.
+        // farm_ids가 비면(super_admin 등 — /farms는 전체 반환) 기존 선택을 보존(스위처가 설정).
         const ids = user.farm_ids ?? [];
         const desired = farmId ?? get().activeFarmId;
-        const active = desired && ids.includes(desired) ? desired : (ids[0] ?? null);
+        const active = ids.length === 0
+          ? desired ?? null
+          : desired && ids.includes(desired) ? desired : ids[0];
         set({ user, accessToken, refreshToken, activeFarmId: active });
       },
 
       setAccessToken: (token) => set({ accessToken: token }),
 
       // /me 재조회로 사용자(역할·farm_roles·접근농장) 최신화 + stale activeFarmId 보정.
+      // farm_ids가 비면(super_admin 등 — /farms는 전체 반환) 기존 선택 보존(스위처가 설정).
       setUser: (user) => {
         const ids = user.farm_ids ?? [];
         const cur = get().activeFarmId;
-        const active = cur && ids.includes(cur) ? cur : (ids[0] ?? null);
+        const active = ids.length === 0
+          ? cur
+          : cur && ids.includes(cur) ? cur : ids[0];
         set({ user, activeFarmId: active });
       },
 
