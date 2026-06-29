@@ -10,15 +10,21 @@ dry_run=true: validate everything, write nothing.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_db, get_farm_context
+from app.core.dependencies import get_db, get_farm_context, require_farm_role
 from app.db.models.platform import Farm
 from app.schemas.sync import SyncRequest, SyncResponse
 from app.services.sync_service import process_sync
 
 router = APIRouter(prefix="/farms", tags=["Sync"])
 
+# sync는 오프라인 데이터 입력(교배/분만/이유 등 insert + 상태변경) → 쓰기 권한 필요.
+# 과거엔 get_farm_context(멤버십)만 있어 VIEWER/VET가 sync로 write 가능했음(BUG-ACC-SYNC-RBAC).
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN",
+                "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")
 
-@router.post("/{farm_id}/sync", response_model=SyncResponse)
+
+@router.post("/{farm_id}/sync", response_model=SyncResponse,
+             dependencies=[require_farm_role(*_ENTRY_ROLES)])
 async def sync(
     body: SyncRequest,
     farm: Farm = Depends(get_farm_context),  # validates JWT + farm membership
