@@ -35,6 +35,7 @@ class HealthEvent(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())  # #7: 서버측 수정분 pull 감지
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
