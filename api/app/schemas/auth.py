@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
 
-
 USERNAME_PATTERN = r"^[a-zA-Z0-9_.-]{3,50}$"  # 영숫자·_.- 3~50자
 
 

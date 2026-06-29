@@ -2,7 +2,7 @@
 Feed 입력 경로 테스트 (handoff/FINDING_feed_input_gap.md 해소).
 create→영속·FCR 합산 입력원 / 다중대상 거부 / quantity_kg>0 / 월마감 잠금 423.
 """
-from datetime import date, datetime, timezone
+from datetime import date
 
 import pytest
 from sqlalchemy import func, select
@@ -74,3 +74,56 @@ async def test_delete_soft(db: AsyncSession, test_farm: Farm, test_user: User):
     await feed_service.delete_feed_record(db, test_farm.id, rec.id)
     got = await db.scalar(select(FeedRecord).where(FeedRecord.id == rec.id))
     assert got.deleted_at is not None
+
+
+# ── C6: 대상 농장 소속 검증 (크로스테넌트 차단) ────────────────────────────────
+async def _make_group(db, farm, code="FG-T1") -> "FinisherGroup":  # noqa: F821
+    from app.db.models.ops import FinisherGroup
+    g = FinisherGroup(farm_id=farm.id, group_code=code, start_date=date(2026, 1, 1),
+                      head_count_in=100)
+    db.add(g)
+    await db.flush()
+    return g
+
+
+async def test_feed_valid_group_in_farm_passes(db: AsyncSession, test_farm: Farm, test_user: User):
+    g = await _make_group(db, test_farm)
+    rec = await feed_service.create_feed_record(
+        db, test_farm.id, test_user.id,
+        FeedRecordCreate(record_date=date(2026, 6, 1), quantity_kg=300, group_id=g.id))
+    assert rec.group_id == g.id
+
+
+async def test_feed_nonexistent_group_rejected(db: AsyncSession, test_farm: Farm, test_user: User):
+    from uuid import uuid4
+
+    from app.core.exceptions import NotFoundError
+    with pytest.raises(NotFoundError):
+        await feed_service.create_feed_record(
+            db, test_farm.id, test_user.id,
+            FeedRecordCreate(record_date=date(2026, 6, 1), quantity_kg=300, group_id=uuid4()))
+
+
+async def test_feed_cross_tenant_group_rejected(
+    db: AsyncSession, test_farm: Farm, test_org, test_user: User
+):
+    """타 농장 group_id로 사료 입력 시 NotFoundError — 크로스테넌트 오염 차단."""
+    from app.core.exceptions import NotFoundError
+    from app.db.models.platform import Farm as FarmModel
+    other = FarmModel(org_id=test_org.id, farm_code="OTHER-1", name="Other Farm",
+                      country="KR", timezone="Asia/Seoul")
+    db.add(other)
+    await db.flush()
+    other_group = await _make_group(db, other, code="FG-OTHER")
+    with pytest.raises(NotFoundError):
+        await feed_service.create_feed_record(
+            db, test_farm.id, test_user.id,
+            FeedRecordCreate(record_date=date(2026, 6, 1), quantity_kg=300,
+                             group_id=other_group.id))
+
+
+async def test_feed_sow_in_farm_passes(db: AsyncSession, test_farm: Farm, test_sow, test_user: User):
+    rec = await feed_service.create_feed_record(
+        db, test_farm.id, test_user.id,
+        FeedRecordCreate(record_date=date(2026, 6, 1), quantity_kg=10, sow_id=test_sow.id))
+    assert rec.sow_id == test_sow.id

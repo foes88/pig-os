@@ -486,6 +486,8 @@
     "empty": "구성원이 없습니다",
     "modalTitle": "구성원 추가",
     "fName": "이름",
+    "fUsername": "로그인 아이디",
+    "usernameHint": "3~50자: 영문·숫자·_ . -",
     "fEmail": "이메일",
     "fPassword": "초기 비밀번호",
     "fRole": "역할",

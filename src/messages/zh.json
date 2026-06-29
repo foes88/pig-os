@@ -486,6 +486,8 @@
     "empty": "暂无成员",
     "modalTitle": "添加成员",
     "fName": "姓名",
+    "fUsername": "登录账号",
+    "usernameHint": "3-50个字符：字母、数字、_ . -",
     "fEmail": "邮箱",
     "fPassword": "初始密码",
     "fRole": "角色",

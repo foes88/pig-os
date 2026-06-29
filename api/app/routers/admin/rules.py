@@ -3,7 +3,6 @@
 엔진 규칙(RuleRegistry)을 나열하고, 임계값·활성여부를 DB(rule_configs)로 오버라이드.
 배포 없이 운영자가 조정. require_super_admin. 변경은 AuditLog.
 """
-from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -15,6 +14,7 @@ from app.db.models.platform import AuditLog
 from app.db.models.rule_config import RuleConfig
 from app.engine import RuleEngine  # noqa: F401  (ensure engine import side-effects)
 from app.engine.rule_engine import RuleRegistry
+
 # 규칙 등록 보장(임포트 부작용)
 from app.engine.rules import base as _b  # noqa: F401
 from app.engine.rules import batch as _bt  # noqa: F401

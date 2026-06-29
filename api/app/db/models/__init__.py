@@ -6,7 +6,6 @@ from app.db.models.benchmark import (  # noqa: F401
     KpiDefinition,
     SourceObservation,
 )
-from app.db.models.operational_default import OperationalDefault  # noqa: F401
 from app.db.models.config import (  # noqa: F401
     ComplianceProfile,
     DefaultMetricValue,
@@ -15,6 +14,11 @@ from app.db.models.config import (  # noqa: F401
     MarketPriceReference,
     RegionDefault,
     ScopeKpiRecommendation,
+)
+from app.db.models.content import (  # noqa: F401
+    Announcement,
+    SupportReply,
+    SupportTicket,
 )
 from app.db.models.events import (  # noqa: F401
     Farrowing,
@@ -31,6 +35,7 @@ from app.db.models.master import (  # noqa: F401
     MedicationCatalog,
     VaccineCatalog,
 )
+from app.db.models.operational_default import OperationalDefault  # noqa: F401
 from app.db.models.ops import (  # noqa: F401
     ApiKey,
     Device,
@@ -43,13 +48,7 @@ from app.db.models.ops import (  # noqa: F401
     SyncLog,
     Task,
 )
-from app.db.models.content import (  # noqa: F401
-    Announcement,
-    SupportReply,
-    SupportTicket,
-)
 from app.db.models.pilot_signup import PilotSignup  # noqa: F401
-from app.db.models.rule_config import RuleConfig  # noqa: F401
 from app.db.models.platform import (  # noqa: F401
     AddonSubscription,
     AuditLog,
@@ -60,4 +59,5 @@ from app.db.models.platform import (  # noqa: F401
     User,
     UserFarm,
 )
+from app.db.models.rule_config import RuleConfig  # noqa: F401
 from app.db.models.sow import Boar, BreedingCycle, Building, Sow  # noqa: F401

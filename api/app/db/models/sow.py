@@ -16,6 +16,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -114,9 +115,12 @@ class BreedingCycle(Base):
     __table_args__ = (
         Index("idx_bc_farm_sow", "farm_id", "sow_id"),
         Index("idx_bc_sow_parity", "sow_id", "parity"),
-        # Partial unique index (DDL only — defined in migration):
-        # CREATE UNIQUE INDEX idx_one_active_cycle ON breeding_cycles (sow_id)
-        # WHERE cycle_status NOT IN ('WEANED', 'FAILED');
+        # Partial unique: 모돈 1두당 활성 사이클 1건 (이중 활성사이클 차단, C3)
+        # 마이그레이션 c9f1a3b5d7e2 와 동일 — 모델이 create_all 단일 소스.
+        Index(
+            "idx_one_active_cycle", "sow_id", unique=True,
+            postgresql_where=text("cycle_status NOT IN ('WEANED', 'FAILED')"),
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)

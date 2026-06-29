@@ -11,10 +11,6 @@ from sqlalchemy import select
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.sow import PigletGroup, PigletTransfer
-from app.validators.cross_fostering import (
-    validate_cross_foster_distinct,
-    validate_cross_fostering,
-)
 from app.schemas.piglet import (
     PigletGroupCreate,
     PigletGroupDeathRecord,
@@ -22,6 +18,10 @@ from app.schemas.piglet import (
     PigletGroupTransferOut,
     PigletTransferCreate,
     PigletTransferResponse,
+)
+from app.validators.cross_fostering import (
+    validate_cross_foster_distinct,
+    validate_cross_fostering,
 )
 
 router = APIRouter(prefix="/farms/{farm_id}/piglets", tags=["Piglets"])

@@ -90,9 +90,10 @@ class Weaning(Base):
     __tablename__ = "weanings"
     __table_args__ = (
         Index("idx_weanings_farm_sow", "farm_id", "sow_id"),
-        # Partial unique: one weaning per farrowing (in migration)
-        # CREATE UNIQUE INDEX idx_one_weaning_per_farrowing ON weanings (farrowing_id)
-        # WHERE farrowing_id IS NOT NULL AND deleted_at IS NULL;
+        # NOTE: 분만당 이유 1건 unique 인덱스는 두지 않는다. 부분이유(partial weaning)는
+        # 한 분만에 대해 이유 이벤트가 여러 건 생기는 것을 허용하므로(일부 먼저, 나머지 나중)
+        # farrowing_id 단일 unique 는 기능과 모순된다. 과다이유(sum>litter) 방어는
+        # record_weaning 의 remaining 검사(앱 레벨)로 처리. (구 주석의 stale 불변식 폐기)
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)

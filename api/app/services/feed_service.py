@@ -12,8 +12,36 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationError
 from app.db.models.health import FeedRecord
+from app.db.models.ops import FinisherGroup
+from app.db.models.sow import Building, Sow
 from app.schemas.feed import FeedRecordCreate
 from app.services.event_service import _ensure_period_unlocked
+
+
+async def _ensure_target_in_farm(db: AsyncSession, farm_id: UUID, body: FeedRecordCreate) -> None:
+    """사료 대상(sow/group/building)이 해당 농장 소속인지 검증 — 크로스테넌트 오염 차단."""
+    if body.sow_id is not None:
+        ok = await db.scalar(
+            select(Sow.id).where(Sow.id == body.sow_id, Sow.farm_id == farm_id)
+        )
+        if not ok:
+            raise NotFoundError(f"Sow {body.sow_id} not found in this farm")
+    if body.group_id is not None:
+        ok = await db.scalar(
+            select(FinisherGroup.id).where(
+                FinisherGroup.id == body.group_id, FinisherGroup.farm_id == farm_id
+            )
+        )
+        if not ok:
+            raise NotFoundError(f"Finisher group {body.group_id} not found in this farm")
+    if body.building_id is not None:
+        ok = await db.scalar(
+            select(Building.id).where(
+                Building.id == body.building_id, Building.farm_id == farm_id
+            )
+        )
+        if not ok:
+            raise NotFoundError(f"Building {body.building_id} not found in this farm")
 
 
 async def create_feed_record(
@@ -23,6 +51,8 @@ async def create_feed_record(
     targets = [t for t in (body.sow_id, body.group_id, body.building_id) if t is not None]
     if len(targets) > 1:
         raise ValidationError("Specify at most one target among sow_id / group_id / building_id")
+    # 대상이 해당 농장 소속인지 검증 (크로스테넌트 차단)
+    await _ensure_target_in_farm(db, farm_id, body)
     # 월마감 잠금 검사 (잠긴 기간이면 PeriodLockedError → 423)
     await _ensure_period_unlocked(db, farm_id, body.record_date)
 

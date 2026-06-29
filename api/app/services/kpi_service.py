@@ -11,19 +11,19 @@ from uuid import UUID
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.db.models.health import HealthEvent
 from app.db.models.master import DiseaseCode
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
-from app.core.config import settings
 from app.engine import RuleContext, RuleEngine, StructuredResult
-from app.engine.threshold_resolver import load_operational_defaults_map
 from app.engine.rules import (
     base as _base_rules,  # ensure rules are registered  # noqa: F401
 )
 from app.engine.rules import (
     disease as _disease_rules,  # noqa: F401
 )
+from app.engine.threshold_resolver import load_operational_defaults_map
 from app.schemas.kpi import Alert, DashboardKpi, KpiBenchmark, KpiTrend, NpdBreakdown, PsyDetail
 from app.services.rule_config_service import load_rule_configs
 
@@ -252,11 +252,13 @@ async def build_herd_kpis(
         "AND end_date IS NOT NULL AND head_count_out IS NOT NULL "
         "AND avg_exit_weight_kg IS NOT NULL AND avg_entry_weight_kg IS NOT NULL "
         "AND end_date BETWEEN :s AND :e"), p)).one()
+    # 비육 FCR용 사료: 입력일(record_date) 기준 기간 합산. 모돈(sow_id) 사료는 번식군이므로 제외,
+    # 비육군/건물/농장단위(group_id NULL 포함) 사료는 모두 포함 — UI는 group_id 없이 입력하므로
+    # JOIN 강제 시 전량 누락됐던 버그(C5) 수정.
     feed = (await db.execute(text(
-        "SELECT coalesce(sum(fr.quantity_kg),0) FROM feed_records fr "
-        "JOIN finisher_groups g ON g.id = fr.group_id AND g.deleted_at IS NULL "
-        "WHERE fr.farm_id=:fid AND fr.deleted_at IS NULL "
-        "AND g.end_date IS NOT NULL AND g.end_date BETWEEN :s AND :e"), p)).scalar() or 0
+        "SELECT coalesce(sum(quantity_kg),0) FROM feed_records "
+        "WHERE farm_id=:fid AND deleted_at IS NULL AND sow_id IS NULL "
+        "AND record_date BETWEEN :s AND :e"), p)).scalar() or 0
     herd = (await db.execute(text(
         "SELECT count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT')) active, "
         "count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT') AND parity >= 7) hp "

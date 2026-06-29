@@ -13,6 +13,7 @@ export interface Member {
 
 export interface CreateMemberRequest {
   name: string;
+  username: string;
   email: string;
   password: string;
   role: FarmRole;

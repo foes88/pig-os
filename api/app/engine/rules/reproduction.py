@@ -47,7 +47,7 @@ def _cfg_default(ctx: RuleContext, rule_id: str, default_w: float, default_c: fl
 def _resolve(ctx: RuleContext, rule_id: str, kpi: str, default_w: float, default_c: float) -> tuple[float, float]:
     """A-하이브리드 임계 해소. flag ON: rule_config→operational_defaults→code.
     flag OFF: 기존 경로 유지(benchmark > rule_config > code) — 동작 변화 0."""
-    from app.engine.threshold_resolver import governance_enabled, gov_resolve_thresholds
+    from app.engine.threshold_resolver import gov_resolve_thresholds, governance_enabled
     if governance_enabled():
         w, c, _ = gov_resolve_thresholds(ctx, rule_id, default_w, default_c)
         return w, c

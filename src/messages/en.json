@@ -486,6 +486,8 @@
     "empty": "No members yet",
     "modalTitle": "Add member",
     "fName": "Name",
+    "fUsername": "Login ID",
+    "usernameHint": "3-50 chars: letters, numbers, _ . -",
     "fEmail": "Email",
     "fPassword": "Initial password",
     "fRole": "Role",

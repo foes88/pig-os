@@ -3,7 +3,6 @@
 AuditLog 조회. 운영자 변경(회원상태·공지·문의·규칙 등)을 추적. require_super_admin.
 """
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel

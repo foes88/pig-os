@@ -178,6 +178,7 @@ async def record_mating(
     req: MatingCreate,
 ) -> Mating:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+    await _ensure_period_unlocked(db, farm_id, req.mating_date)
 
     # 교배 가능 상태 + 웅돈 순서 검증 (P0-BE-9: boar 슬롯 인자 전달)
     validate_mating(
@@ -280,6 +281,7 @@ async def record_farrowing(
     req: FarrowingCreate,
 ) -> Farrowing:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+    await _ensure_period_unlocked(db, farm_id, req.farrowing_date)
 
     # 교배 기록 검증 — mating_id 미지정 시 해당 모돈의 '최근 미분만 교배' 자동 조회
     # (UI 계약: 분만 탭에서 교배 선택 없이 저장 가능)
@@ -402,6 +404,7 @@ async def record_weaning(
     req: WeaningCreate,
 ) -> Weaning:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+    await _ensure_period_unlocked(db, farm_id, req.weaning_date)
 
     if req.farrowing_id:
         farrowing = await db.scalar(
@@ -580,6 +583,7 @@ async def record_reproductive_event(
     req: ReproductiveEventCreate,
 ) -> ReproductiveEvent:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+    await _ensure_period_unlocked(db, farm_id, req.event_date)
 
     # P0-BE-10: 임신 중 도폐사(CULLED/DEAD) 시 사유(notes) 필수
     if sow.status == "PREGNANT" and req.event_type in ("CULLED", "DEAD") and not req.notes:
@@ -615,6 +619,7 @@ async def record_pregnancy_check(
 ) -> PregnancyCheck:
     """임신감정 기록. PREGNANT 모돈만 대상. 음성(NEGATIVE)=공태 → ACCIDENT 전이(EMPTY와 동일)."""
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+    await _ensure_period_unlocked(db, farm_id, req.check_date)
 
     # 임신감정은 교배 후 PREGNANT 모돈에서만
     if sow.status != "PREGNANT":
@@ -660,6 +665,7 @@ async def record_piglet_event(
     req: PigletEventCreate,
 ) -> PigletEvent:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
+    await _ensure_period_unlocked(db, farm_id, req.event_date)
 
     if req.farrowing_id:
         farrowing = await db.scalar(

@@ -486,6 +486,8 @@
     "empty": "Chưa có thành viên",
     "modalTitle": "Thêm thành viên",
     "fName": "Tên",
+    "fUsername": "ID đăng nhập",
+    "usernameHint": "3-50 ký tự: chữ, số, _ . -",
     "fEmail": "Email",
     "fPassword": "Mật khẩu ban đầu",
     "fRole": "Vai trò",

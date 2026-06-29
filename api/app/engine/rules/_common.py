@@ -39,7 +39,7 @@ def resolve(
     A-하이브리드(flag ON): rule_config → operational_defaults → code default.
     옛 default_metric_values(benchmark)는 threshold source에서 제외(§14.6). flag OFF는 기존 경로 유지.
     """
-    from app.engine.threshold_resolver import governance_enabled, gov_resolve_thresholds
+    from app.engine.threshold_resolver import gov_resolve_thresholds, governance_enabled
     if governance_enabled():
         w, c, _ = gov_resolve_thresholds(ctx, rule_id, default_w, default_c)
         return w, c

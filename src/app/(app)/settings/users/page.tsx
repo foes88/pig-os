@@ -222,6 +222,7 @@ function AddMemberModal({
   const tErrors = useTranslations("errors");
   const [form, setForm] = useState<CreateMemberRequest>({
     name: "",
+    username: "",
     email: "",
     password: "",
     role: "FARM_WORKER",
@@ -235,7 +236,10 @@ function AddMemberModal({
     onError: (err) => setError(getErrorMessage(err, tErrors("generic"))),
   });
 
-  const valid = Boolean(form.name.trim() && form.email.trim() && form.password.length >= 8);
+  const usernameValid = /^[a-zA-Z0-9_.-]{3,50}$/.test(form.username.trim());
+  const valid = Boolean(
+    form.name.trim() && usernameValid && form.email.trim() && form.password.length >= 8,
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -261,6 +265,15 @@ function AddMemberModal({
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               className="input"
+            />
+          </Field>
+          <Field label={`${t("fUsername")} (${t("usernameHint")})`}>
+            <input
+              value={form.username}
+              onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+              className="input"
+              autoComplete="off"
+              placeholder="worker1"
             />
           </Field>
           <Field label={t("fEmail")}>
