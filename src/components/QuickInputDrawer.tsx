@@ -60,7 +60,8 @@ export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawe
     } else if (id === "finisher") {
       router.push("/finishers");
     } else if (id === "foster") {
-      router.push("/record?tab=foster");
+      // 양자(cross-fostering)=PigletTransfer → 자돈 페이지 소관(record에 foster 패널 없음).
+      router.push("/piglets");
     }
   };
 

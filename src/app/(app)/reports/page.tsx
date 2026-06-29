@@ -105,19 +105,23 @@ export default function ReportsPage() {
     enabled: !!farmId,
   });
 
+  // 백엔드 trend는 3개 KPI를 항상 함께 반환(kpi 파라미터 무시) → query key에서 trendKpi 제외해
+  // 탭 전환 시 동일 데이터 재요청 방지(M1). 차트/테이블이 클라에서 trendKpi로 골라 표시.
   const { data: trend = [] } = useQuery({
-    queryKey: ["kpi", "trend", farmId, trendKpi, months],
+    queryKey: ["kpi", "trend", farmId, months],
     queryFn: () => kpiApi.trend(farmId!, trendKpi, months),
     enabled: !!farmId,
   });
 
   const activeKpi = KPI_LIST.find((k) => k.key === trendKpi)!;
 
-  // 현재 추세 데이터를 CSV로 내려받기 (의존성 없이 직접 생성)
+  // 현재 추세 데이터를 CSV로 내려받기 (의존성 없이 직접 생성).
+  // 화면 테이블과 동일하게 3개 KPI 전부 + 1자리 포맷으로 내보낸다(H2: 컬럼 누락/생키 헤더 수정).
+  const fmt1 = (v: number | null | undefined) => (v != null ? v.toFixed(1) : "");
   const exportCsv = () => {
     if (trend.length === 0) return;
-    const header = ["period", trendKpi];
-    const rows = trend.map((r) => [r.period, String(r[trendKpi] ?? "")]);
+    const header = [t("colPeriod"), "PSY", "NPD", `${t("kpiFarrowingRate")} (%)`];
+    const rows = trend.map((r) => [r.period, fmt1(r.psy), fmt1(r.npd), fmt1(r.farrowing_rate)]);
     const csv = [header, ...rows]
       .map((cols) => cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\r\n");
@@ -127,7 +131,7 @@ export default function ReportsPage() {
     const start = trend[0]?.period ?? "";
     const end = trend[trend.length - 1]?.period ?? "";
     a.href = url;
-    a.download = `pigos_report_${farmId}_${trendKpi}_${start}_${end}.csv`;
+    a.download = `pigos_report_${farmId}_${start}_${end}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -39,7 +39,7 @@ export default function Dashboard() {
   const farmId = useAuthStore((s) => s.activeFarmId);
   const user = useAuthStore((s) => s.user);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.kpi.dashboard(farmId ?? ""),
     queryFn: () => kpiApi.dashboard(farmId!),
     enabled: !!farmId,
@@ -72,6 +72,12 @@ export default function Dashboard() {
 
       {isLoading && <div className="text-center py-20 text-text3 text-sm">{t("loading")}</div>}
       {!farmId && <div className="text-center py-20 text-text3 text-sm">{t("selectFarm")}</div>}
+      {isError && farmId && !isLoading && (
+        <div className="rounded-2xl border border-danger/30 bg-danger/5 py-16 text-center">
+          <p className="font-bold text-danger">{t("loadError")}</p>
+          <p className="text-xs text-text3 mt-1">{t("loadErrorDesc")}</p>
+        </div>
+      )}
 
       {data && (() => {
         const psyT = psyTier(data.psy);

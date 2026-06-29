@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, PiggyBank } from "lucide-react";
@@ -107,13 +108,26 @@ function Stepper({
 
 const PAGE_SIZE = 50;
 
+// 딥링크(?tab=) 별칭 → EventType. 알림 액션·QuickInputDrawer가 보내는 값 흡수.
+const TAB_ALIASES: Record<string, EventType> = {
+  farrowing: "farrowing", mating: "mating", weaning: "weaning",
+  preg_check: "preg_check", repro: "repro", cull: "cull",
+  piglet_death: "piglet_death",
+};
+
 export default function RecordPage() {
   const t = useTranslations("record");
   const tStatus = useTranslations("sowStatus");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const role = useAuthStore((s) => s.user?.role);
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const sowIdParam = searchParams.get("sowId");
   const [selectedSow, setSelectedSow] = useState<Sow | null>(null);
-  const [eventType, setEventType] = useState<EventType>("farrowing");
+  // 딥링크로 들어온 탭은 초기값으로 반영(알림→교배/이유 입력 워크플로 복구, C2).
+  const [eventType, setEventType] = useState<EventType>(
+    (tabParam && TAB_ALIASES[tabParam]) || "farrowing",
+  );
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
   const [visible, setVisible] = useState(PAGE_SIZE);
@@ -136,6 +150,13 @@ export default function RecordPage() {
   const allSows = useMemo(() => sowData?.items ?? [], [sowData]);
   const sows = useMemo(() => allSows.slice(0, visible), [allSows, visible]);
   const hasMore = allSows.length > visible;
+
+  // 딥링크 ?sowId= → 로드된 목록에서 해당 모돈 자동 선택(알림 액션 연결, C2).
+  useEffect(() => {
+    if (!sowIdParam || selectedSow) return;
+    const found = allSows.find((s) => s.id === sowIdParam);
+    if (found) setSelectedSow(found);
+  }, [sowIdParam, allSows, selectedSow]);
 
   const handleSaved = (msg: string, sowId: string, goNext: boolean, insights?: EventInsight[]) => {
     setDoneIds((prev) => new Set([...prev, sowId]));

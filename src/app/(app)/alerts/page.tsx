@@ -27,7 +27,7 @@ export default function AlertsPage() {
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [tab, setTab] = useState<"all" | Severity>("all");
 
-  const { data: overdue, isLoading } = useQuery({
+  const { data: overdue, isLoading, isError } = useQuery({
     queryKey: queryKeys.alerts.overdue(farmId ?? ""),
     queryFn: () => alertsApi.overdue(farmId!),
     enabled: !!farmId,
@@ -100,6 +100,11 @@ export default function AlertsPage() {
       {/* Signal cards */}
       {isLoading ? (
         <div className="space-y-2.5">{[1, 2, 3].map((i) => <div key={i} className="h-20 bg-border rounded-2xl animate-pulse" />)}</div>
+      ) : isError ? (
+        <div className="border border-danger/30 bg-danger/5 rounded-2xl py-14 text-center">
+          <p className="font-bold text-danger">{t("loadError")}</p>
+          <p className="text-xs text-text3 mt-1">{t("loadErrorDesc")}</p>
+        </div>
       ) : signals.length === 0 ? (
         <div className="border border-border rounded-2xl py-14 text-center">
           <p className="font-bold text-text">{t("emptyOverdueTitle")} 👏</p>
