@@ -705,6 +705,21 @@ async def _process_piglet_event(
                 ), None
             farrowing_id = farrowing.id
 
+        # 두수 정합: DEATH/FOSTER_OUT는 현재 포유두수 초과 불가(REST record_piglet_event 동일).
+        # sync 누락 시 포유두수 음수→이유두수 공식 깨짐(QA #8). born_alive+foster_in-foster_out-deaths.
+        if item.event_type in ("DEATH", "FOSTER_OUT"):
+            far = await db.get(Farrowing, farrowing_id)
+            if far is not None:
+                fi, fo, dd = await _calc_piglet_adjustments(db, farrowing_id)
+                nursing = far.born_alive + fi - fo - dd
+                if item.piglet_count > nursing:
+                    return None, SyncRejected(
+                        id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+                        detail={"field": "piglet_count",
+                                "message": f"{item.event_type} ({item.piglet_count}) exceeds nursing count ({nursing})",
+                                "value": item.piglet_count},
+                    ), None
+
         event = PigletEvent(
             id=item.id, farm_id=farm_id, sow_id=sow.id,
             farrowing_id=farrowing_id,
