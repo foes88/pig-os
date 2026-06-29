@@ -8,6 +8,7 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { buildReproCsvRows } from "@/lib/reports/csv";
+import { escapeCsvCell } from "@/lib/utils/csv";
 import type { KpiTrend } from "@/types/api.types";
 
 // label/unit은 렌더 시 t()로 해석 (모듈 레벨이라 키만 보관). 색은 Forest 토큰 클래스(raw hex 금지).
@@ -123,7 +124,7 @@ export default function ReportsPage() {
     const header = [t("colPeriod"), "PSY", "NPD", `${t("kpiFarrowingRate")} (%)`];
     const rows = buildReproCsvRows(trend);
     const csv = [header, ...rows]
-      .map((cols) => cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .map((cols) => cols.map(escapeCsvCell).join(","))
       .join("\r\n");
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
