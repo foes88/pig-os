@@ -40,7 +40,7 @@ from app.db.models.events import (
 from app.db.models.health import HealthEvent, Removal
 from app.db.models.ops import PeriodLock, SyncLog
 from app.db.models.platform import AuditLog, Farm
-from app.db.models.sow import Sow
+from app.db.models.sow import Boar, Sow
 from app.schemas.sync import (
     ServerChanges,
     SyncAccepted,
@@ -152,6 +152,19 @@ async def _process_mating(
         return None, SyncRejected(
             id=item.id, entity="mating", reason="VALIDATION_FAILED", detail=invalid,
         ), None
+
+    # 4c. boar_id 농장 소유 검증 — REST record_mating(Boar.farm_id==farm_id)과 동일. sync 누락 시
+    #     타농장 boar_id 첨부 수락(교차테넌트 dangling FK). QA ws_feature_boar 발견.
+    if item.boar_id is not None:
+        boar = await db.scalar(
+            select(Boar).where(Boar.id == item.boar_id, Boar.farm_id == farm_id)
+        )
+        if not boar:
+            return None, SyncRejected(
+                id=item.id, entity="mating", reason="VALIDATION_FAILED",
+                detail={"field": "boar_id", "value": str(item.boar_id),
+                        "message": "boar_id is not a valid boar in this farm"},
+            ), None
 
     # 5. Sow status check — valid states for mating (SCREEN_MENU_SPEC 상태 정의)
     valid_for_mating = ("GILT", "OPEN", "ACCIDENT")
