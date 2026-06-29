@@ -2,10 +2,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Query
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import NotFoundError, ValidationError
+from app.db.models.events import Farrowing, Mating, ReproductiveEvent, Weaning
 from app.db.models.health import Removal
 from app.db.models.platform import AuditLog
 from app.db.models.sow import Sow
@@ -233,5 +234,14 @@ async def delete_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
     )
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
-    sow.deleted_at = datetime.now(UTC)
+    now = datetime.now(UTC)
+    sow.deleted_at = now
+    # 캐스케이드 soft-delete — 삭제 모돈의 번식 이벤트가 events 조회·보고서에 dangling 잔존하면
+    # born_alive_sum 등 수치가 오염된다(QA ws_crud_delete 발견). 모돈 삭제 = 그 이벤트도 제거.
+    for Model in (Mating, Farrowing, Weaning, ReproductiveEvent):
+        await db.execute(
+            update(Model)
+            .where(Model.sow_id == sow_id, Model.deleted_at.is_(None))
+            .values(deleted_at=now)
+        )
     await db.commit()
