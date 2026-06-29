@@ -101,6 +101,17 @@ def _is_future_date(event_date: date) -> bool:
     return event_date > date.today() + timedelta(days=_FUTURE_DATE_TOLERANCE_DAYS)
 
 
+def _dup_time_diff_seconds(client_dt: datetime, server_dt: datetime | None) -> float | None:
+    """클라/서버 생성시각 차이(초). tz 안전: aware는 UTC로 변환(astimezone), naive는 UTC로 간주.
+    server_dt=None(같은 배치 내 직전 삽입으로 server_default 미반영)이면 None → 비교 불가.
+    과거 `.replace(tzinfo=UTC)`는 오프셋을 무시(relabel)해 +09:00을 9h 어긋나게 했음(#4)."""
+    if server_dt is None:
+        return None
+    c = client_dt if client_dt.tzinfo else client_dt.replace(tzinfo=UTC)
+    s = server_dt if server_dt.tzinfo else server_dt.replace(tzinfo=UTC)
+    return abs((c.astimezone(UTC) - s.astimezone(UTC)).total_seconds())
+
+
 def _audit(farm_id: UUID, entity_type: str, entity_id: UUID, action: str, new_value: dict) -> AuditLog:
     return AuditLog(
         farm_id=farm_id,
@@ -180,8 +191,8 @@ async def _process_mating(
         )
     )
     if dup:
-        time_diff = abs((item.client_created_at.replace(tzinfo=UTC) - dup.created_at).total_seconds())
-        if time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
+        time_diff = _dup_time_diff_seconds(item.client_created_at, dup.created_at)
+        if time_diff is not None and time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
             return SyncAccepted(id=item.id, entity="mating", action="merged"), None, None
         return None, None, SyncConflict(
             id=item.id, entity="mating", conflict_type="DUPLICATE_EVENT",
@@ -320,8 +331,8 @@ async def _process_farrowing(
         )
     )
     if dup:
-        time_diff = abs((item.client_created_at.replace(tzinfo=UTC) - dup.created_at).total_seconds())
-        if time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
+        time_diff = _dup_time_diff_seconds(item.client_created_at, dup.created_at)
+        if time_diff is not None and time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
             return SyncAccepted(id=item.id, entity="farrowing", action="merged"), None, None
         return None, None, SyncConflict(
             id=item.id, entity="farrowing", conflict_type="DUPLICATE_EVENT",
@@ -418,8 +429,8 @@ async def _process_weaning(
         )
     )
     if dup:
-        time_diff = abs((item.client_created_at.replace(tzinfo=UTC) - dup.created_at).total_seconds())
-        if time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
+        time_diff = _dup_time_diff_seconds(item.client_created_at, dup.created_at)
+        if time_diff is not None and time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
             return SyncAccepted(id=item.id, entity="weaning", action="merged"), None, None
         return None, None, SyncConflict(
             id=item.id, entity="weaning", conflict_type="DUPLICATE_EVENT",
@@ -913,18 +924,23 @@ async def process_sync(
 
             for items, processor in processors:
                 for item in items:
+                    # #8: 항목별 savepoint — 한 항목의 DB에러(IntegrityError 등)가 트랜잭션을
+                    # aborted 상태로 만들어 배치의 나머지 항목까지 연쇄 실패시키는 것을 차단
+                    # (스펙의 '한 레코드 실패해도 나머지 정상 처리' 원자성 보장).
                     try:
-                        acc, rej, con = await processor(db, farm.id, item, req.dry_run)
-                        if acc: accepted.append(acc)
-                        if rej: rejected.append(rej)
-                        if con: conflicts.append(con)
-                    except Exception as e:
+                        async with db.begin_nested():
+                            acc, rej, con = await processor(db, farm.id, item, req.dry_run)
+                    except Exception as e:  # noqa: BLE001 — 항목 격리(savepoint 롤백 후 다음 항목 계속)
                         rejected.append(SyncRejected(
                             id=item.id,
                             entity=item.__class__.__name__,
                             reason="INTERNAL_ERROR",
                             detail={"error": str(e)},
                         ))
+                        continue
+                    if acc: accepted.append(acc)
+                    if rej: rejected.append(rej)
+                    if con: conflicts.append(con)
 
             # Persist conflict queue for unresolved conflicts
             if conflicts and not req.dry_run:

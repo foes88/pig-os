@@ -72,7 +72,7 @@ export default function OnboardingPage() {
   ];
 
   const mutation = useMutation({
-    mutationFn: () => authApi.onboard(form),
+    mutationFn: () => authApi.onboard({ ...form, language: lang }),  // M3: 감지된 로케일 전송
     onSuccess: (data) => {
       setAuth(
         { id: data.user_id, username: form.username, email: form.email, name: form.name, role: "FARM_OWNER", farm_ids: [data.farm_id] },

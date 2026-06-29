@@ -47,6 +47,7 @@ class OnboardingCompleteRequest(BaseModel):
     farm_type: str = Field(default="FARROW_TO_FINISH")
     sow_count: int | None = Field(default=None, ge=1)
     timezone: str = Field(default="UTC")
+    language: str = Field(default="en")  # 온보딩 로케일 보존(M3: 하드코딩 "en" 제거)
 
 
 class OnboardingCompleteResponse(BaseModel):

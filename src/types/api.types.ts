@@ -86,6 +86,7 @@ export interface OnboardingRequest {
   farm_type?: "SOW_FARM" | "FARROW_TO_FINISH" | "NURSERY" | "FINISHER" | "BOAR_STUD";
   sow_count?: number;
   timezone?: string;
+  language?: string;  // 온보딩 로케일 보존(M3)
 }
 
 export interface OnboardingResponse {

@@ -139,7 +139,7 @@ async def complete_onboarding(
         name=req.name,
         password_hash=hash_password(req.password),
         role="FARM_OWNER",
-        language="en",
+        language=req.language,  # M3: 온보딩 로케일 보존(하드코딩 "en" 제거)
     )
     db.add(user)
     await db.flush()
