@@ -82,3 +82,62 @@ async def test_master_create_requires_pk(client: AsyncClient, db: AsyncSession, 
     r = await client.post("/api/v1/admin/master/medications", headers=_h(admin),
                           json={"antibiotic_class": "PENICILLIN"})  # active_substance(PK) 누락
     assert r.status_code == 422
+
+
+# --- G4 하드닝: 제네릭 CRUD 타입/제약 위반은 500이 아닌 422 (버그헌터 P1) ---
+
+async def test_master_string_into_numeric_422(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    """숫자 컬럼에 문자열 → 과거 raw 500. 이제 422."""
+    admin = await _mk(db, test_org, "SUPER_ADMIN")
+    await db.flush()
+    r = await client.post("/api/v1/admin/master/diseases", headers=_h(admin), json={
+        "disease_code": f"QA-{uuid.uuid4().hex[:5]}", "label_en": "x", "category": "VIRAL",
+        "typical_mortality_pct": "not-a-number"})
+    assert r.status_code == 422, r.text
+
+
+async def test_master_string_into_integer_422(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    admin = await _mk(db, test_org, "SUPER_ADMIN")
+    await db.flush()
+    r = await client.post("/api/v1/admin/master/vaccines", headers=_h(admin), json={
+        "vaccine_code": f"QA-{uuid.uuid4().hex[:5]}", "label_en": "x", "withdrawal_days": "abc"})
+    assert r.status_code == 422, r.text
+
+
+async def test_master_missing_not_null_422(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    """NOT NULL(category) 누락 → 과거 IntegrityError 500. 이제 commit 캐치로 422."""
+    admin = await _mk(db, test_org, "SUPER_ADMIN")
+    await db.flush()
+    r = await client.post("/api/v1/admin/master/diseases", headers=_h(admin), json={
+        "disease_code": f"QA-{uuid.uuid4().hex[:5]}", "label_en": "x"})  # category 누락
+    assert r.status_code == 422, r.text
+
+
+async def test_master_numeric_overflow_422(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    """Numeric 자릿수 초과 → 과거 500. 이제 422."""
+    admin = await _mk(db, test_org, "SUPER_ADMIN")
+    await db.flush()
+    r = await client.post("/api/v1/admin/master/diseases", headers=_h(admin), json={
+        "disease_code": f"QA-{uuid.uuid4().hex[:5]}", "label_en": "x", "category": "VIRAL",
+        "typical_mortality_pct": 999999999})
+    assert r.status_code == 422, r.text
+
+
+async def test_master_jsonb_must_be_object_422(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    """JSONB 컬럼에 bare 문자열 → 과거 201 저장(손상). 이제 422."""
+    admin = await _mk(db, test_org, "SUPER_ADMIN")
+    await db.flush()
+    r = await client.post("/api/v1/admin/master/diseases", headers=_h(admin), json={
+        "disease_code": f"QA-{uuid.uuid4().hex[:5]}", "label_en": "x", "category": "VIRAL",
+        "regional_prevalence": "justastring"})
+    assert r.status_code == 422, r.text
+
+
+async def test_master_array_must_be_list_422(client: AsyncClient, db: AsyncSession, test_org: Organization):
+    """ARRAY 컬럼에 dict → 과거 201(키만 추출 저장). 이제 422."""
+    admin = await _mk(db, test_org, "SUPER_ADMIN")
+    await db.flush()
+    r = await client.post("/api/v1/admin/master/vaccines", headers=_h(admin), json={
+        "vaccine_code": f"QA-{uuid.uuid4().hex[:5]}", "label_en": "x",
+        "approved_regions": {"not": "a list"}})
+    assert r.status_code == 422, r.text
