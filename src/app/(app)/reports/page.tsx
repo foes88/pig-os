@@ -7,6 +7,7 @@ import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { buildReproCsvRows } from "@/lib/reports/csv";
 import type { KpiTrend } from "@/types/api.types";
 
 // label/unit은 렌더 시 t()로 해석 (모듈 레벨이라 키만 보관). 색은 Forest 토큰 클래스(raw hex 금지).
@@ -117,11 +118,10 @@ export default function ReportsPage() {
 
   // 현재 추세 데이터를 CSV로 내려받기 (의존성 없이 직접 생성).
   // 화면 테이블과 동일하게 3개 KPI 전부 + 1자리 포맷으로 내보낸다(H2: 컬럼 누락/생키 헤더 수정).
-  const fmt1 = (v: number | null | undefined) => (v != null ? v.toFixed(1) : "");
   const exportCsv = () => {
     if (trend.length === 0) return;
     const header = [t("colPeriod"), "PSY", "NPD", `${t("kpiFarrowingRate")} (%)`];
-    const rows = trend.map((r) => [r.period, fmt1(r.psy), fmt1(r.npd), fmt1(r.farrowing_rate)]);
+    const rows = buildReproCsvRows(trend);
     const csv = [header, ...rows]
       .map((cols) => cols.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
       .join("\r\n");

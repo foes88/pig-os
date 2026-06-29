@@ -92,7 +92,7 @@ async function _doRefresh(): Promise<string> {
     { refresh_token: refreshToken }
   );
 
-  // Update stored access token
+  // Update stored access token (localStorage: 요청 인터셉터가 직접 읽음)
   try {
     const raw = localStorage.getItem("pigos-auth");
     if (raw) {
@@ -102,6 +102,13 @@ async function _doRefresh(): Promise<string> {
     }
   } catch {
     // Ignore storage errors
+  }
+  // Zustand 인메모리 상태도 동기화 — 안 하면 useAuthStore(s=>s.accessToken) 구독 컴포넌트가
+  // 새로고침 전까지 만료 토큰을 들고 있음(Finding 4). 순환참조 회피 위해 지연 import.
+  if (typeof window !== "undefined") {
+    import("@/store/auth.store").then(({ useAuthStore }) =>
+      useAuthStore.getState().setAccessToken(data.access_token),
+    ).catch(() => { /* ignore */ });
   }
 
   return data.access_token;
@@ -123,5 +130,11 @@ function _clearAuth() {
   // 세션쿠키도 삭제 — 안 지우면 middleware가 /login→/ 로 되튕겨 무한 새로고침 루프 발생.
   if (typeof document !== "undefined") {
     document.cookie = "pigos_session=; path=/; max-age=0; SameSite=Lax";
+  }
+  // Zustand 인메모리 상태도 비움(localStorage만 비우면 isAuthenticated()가 잠깐 true 유지).
+  if (typeof window !== "undefined") {
+    import("@/store/auth.store").then(({ useAuthStore }) =>
+      useAuthStore.getState().clearAuth(),
+    ).catch(() => { /* ignore */ });
   }
 }

@@ -2,6 +2,7 @@ import { apiClient } from "@/lib/api/client";
 import type {
   LoginRequest,
   LoginResponse,
+  MeResponse,
   OnboardingRequest,
   OnboardingResponse,
   RefreshResponse,
@@ -12,6 +13,8 @@ const BASE = "/api/v1/auth";
 export const authApi = {
   login: (body: LoginRequest) =>
     apiClient.post<LoginResponse>(`${BASE}/login`, body).then((r) => r.data),
+
+  me: () => apiClient.get<MeResponse>(`${BASE}/me`).then((r) => r.data),
 
   refresh: (refreshToken: string) =>
     apiClient

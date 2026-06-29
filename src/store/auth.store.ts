@@ -15,6 +15,7 @@ interface AuthState {
     farmId?: string
   ) => void;
   setAccessToken: (token: string) => void;
+  setUser: (user: UserProfile) => void;
   setActiveFarmId: (farmId: string) => void;
   clearAuth: () => void;
   isAuthenticated: () => boolean;
@@ -38,6 +39,14 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setAccessToken: (token) => set({ accessToken: token }),
+
+      // /me 재조회로 사용자(역할·farm_roles·접근농장) 최신화 + stale activeFarmId 보정.
+      setUser: (user) => {
+        const ids = user.farm_ids ?? [];
+        const cur = get().activeFarmId;
+        const active = cur && ids.includes(cur) ? cur : (ids[0] ?? null);
+        set({ user, activeFarmId: active });
+      },
 
       setActiveFarmId: (farmId) => set({ activeFarmId: farmId }),
 

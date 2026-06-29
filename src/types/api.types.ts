@@ -61,6 +61,18 @@ export interface UserProfile {
   farm_roles?: Record<string, UserRole>;  // farm_id → 농장별 role (멀티팜 게이팅)
 }
 
+export interface MeResponse {
+  id: string;
+  name: string;
+  username: string;
+  email: string | null;
+  role: UserRole;
+  org_id: string | null;
+  language: string;
+  farm_ids: string[];
+  farm_roles?: Record<string, UserRole>;
+}
+
 // ─── Onboarding ───────────────────────────────────────────────────────────────
 
 export interface OnboardingRequest {

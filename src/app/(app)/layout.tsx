@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 import { notificationsApi } from "@/lib/api/endpoints/notifications";
+import { authApi } from "@/lib/api/endpoints/auth";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { Sidebar } from "@/components/Sidebar";
@@ -53,6 +54,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.refresh();
   };
   const farmId = useAuthStore((s) => s.activeFarmId);
+  const setUser = useAuthStore((s) => s.setUser);
+  const isAuthed = useAuthStore((s) => !!s.accessToken);
+
+  // 앱 진입 시 /me 재조회 → 역할·farm_roles·접근 농장 최신화(서버측 권한 변경 반영,
+  // stale activeFarmId 보정). 로그인 시점 고정값으로 굳지 않게.
+  const { data: me } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => authApi.me(),
+    enabled: isAuthed,
+    staleTime: 5 * 60 * 1000,
+  });
+  useEffect(() => {
+    if (!me) return;
+    setUser({
+      id: me.id, username: me.username, email: me.email ?? "", name: me.name,
+      role: me.role, farm_ids: me.farm_ids, farm_roles: me.farm_roles,
+    });
+  }, [me, setUser]);
+
   const { data: notifUnread } = useQuery({
     queryKey: queryKeys.notifications.unread(farmId ?? ""),
     queryFn: () => notificationsApi.list({ farmId: farmId!, limit: 0 }),
