@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "Đang tải...",
     "notFound": "Không tìm thấy nái.",
+    "deleteError": "Xóa bản ghi thất bại.",
     "back": "Danh sách nái",
     "parityUnit": "Lứa {n}",
     "parityLabel": "Lứa",

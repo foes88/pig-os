@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2, X } from "lucide-react";
 import { eventsApi } from "@/lib/api/endpoints/events";
+import { apiError } from "@/lib/api/error";
 import { queryKeys } from "@/lib/api/queryKeys";
 import type {
   Farrowing,
@@ -89,13 +90,16 @@ export function RecentEventsSection({
     onChanged?.();
   };
 
+  const [delErr, setDelErr] = useState<string | null>(null);
   const del = useMutation({
     mutationFn: (e: UnifiedEvent) => {
       if (e.kind === "mating") return eventsApi.matings.remove(farmId, e.id);
       if (e.kind === "farrowing") return eventsApi.farrowings.remove(farmId, e.id);
       return eventsApi.weanings.remove(farmId, e.id);
     },
-    onSuccess: () => { setConfirmDel(null); invalidate(); },
+    onSuccess: () => { setConfirmDel(null); setDelErr(null); invalidate(); },
+    // 실패(423 월마감잠금/409 충돌 등) 시 백엔드의 구체 사유를 표시 — 조용한 실패 방지(C5).
+    onError: (e) => setDelErr(apiError(e, t("deleteError"))),
   });
 
   const isLoading = matings.isLoading || farrowings.isLoading || weanings.isLoading;
@@ -140,8 +144,8 @@ export function RecentEventsSection({
       {confirmDel && (
         <ConfirmDeleteModal
           busy={del.isPending}
-          error={del.isError ? t("deleteError") : null}
-          onCancel={() => setConfirmDel(null)}
+          error={delErr}
+          onCancel={() => { setConfirmDel(null); setDelErr(null); }}
           onConfirm={() => del.mutate(confirmDel)}
         />
       )}

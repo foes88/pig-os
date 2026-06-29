@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "불러오는 중...",
     "notFound": "모돈을 찾을 수 없습니다.",
+    "deleteError": "기록 삭제에 실패했습니다.",
     "back": "모돈 목록",
     "parityUnit": "{n}산",
     "parityLabel": "산차",

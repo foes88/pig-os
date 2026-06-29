@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "กำลังโหลด...",
     "notFound": "ไม่พบแม่สุกร",
+    "deleteError": "ลบบันทึกไม่สำเร็จ",
     "back": "รายชื่อแม่สุกร",
     "parityUnit": "ครอก {n}",
     "parityLabel": "ครอกที่",

@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "Carregando...",
     "notFound": "Matriz não encontrada.",
+    "deleteError": "Falha ao excluir o registro.",
     "back": "Lista de matrizes",
     "parityUnit": "P{n}",
     "parityLabel": "Parto",

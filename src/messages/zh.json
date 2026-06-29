@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "加载中...",
     "notFound": "未找到母猪。",
+    "deleteError": "删除记录失败。",
     "back": "母猪列表",
     "parityUnit": "{n}胎",
     "parityLabel": "胎次",

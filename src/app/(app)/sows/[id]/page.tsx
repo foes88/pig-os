@@ -8,6 +8,7 @@ import { Baby, Sprout, Syringe } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { eventsApi } from "@/lib/api/endpoints/events";
 import { farmsApi } from "@/lib/api/endpoints/farms";
+import { apiError } from "@/lib/api/error";
 import { RecentEventsSection } from "@/components/RecentEventsSection";
 import { useAuthStore } from "@/store/auth.store";
 import { canManage } from "@/lib/auth/permissions";
@@ -70,9 +71,11 @@ export default function SowDetailPage() {
     qc.invalidateQueries({ queryKey: ["weanings", farmId, id] });
     qc.invalidateQueries({ queryKey: ["sow", farmId, id] });
   };
-  const delMating = useMutation({ mutationFn: (eid: string) => eventsApi.matings.remove(farmId!, eid), onSuccess: invalidate });
-  const delFarrowing = useMutation({ mutationFn: (eid: string) => eventsApi.farrowings.remove(farmId!, eid), onSuccess: invalidate });
-  const delWeaning = useMutation({ mutationFn: (eid: string) => eventsApi.weanings.remove(farmId!, eid), onSuccess: invalidate });
+  // 삭제 실패(423 월마감잠금/409 충돌 등) 시 구체 사유 표시 — 조용한 실패 방지(C5).
+  const onDelErr = (e: unknown) => alert(apiError(e, t("deleteError")));
+  const delMating = useMutation({ mutationFn: (eid: string) => eventsApi.matings.remove(farmId!, eid), onSuccess: invalidate, onError: onDelErr });
+  const delFarrowing = useMutation({ mutationFn: (eid: string) => eventsApi.farrowings.remove(farmId!, eid), onSuccess: invalidate, onError: onDelErr });
+  const delWeaning = useMutation({ mutationFn: (eid: string) => eventsApi.weanings.remove(farmId!, eid), onSuccess: invalidate, onError: onDelErr });
 
   const deleteLatest = (cycle: { mating: { id: string }; farrowing?: { id: string }; weaning?: { id: string } }) => {
     if (cycle.weaning) {

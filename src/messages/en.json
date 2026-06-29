@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "Loading...",
     "notFound": "Sow not found.",
+    "deleteError": "Failed to delete the record.",
     "back": "Sow list",
     "parityUnit": "P{n}",
     "parityLabel": "Parity",

@@ -709,6 +709,7 @@
   "sowDetail": {
     "loading": "Cargando...",
     "notFound": "Cerda no encontrada.",
+    "deleteError": "Error al eliminar el registro.",
     "back": "Lista de cerdas",
     "parityUnit": "P{n}",
     "parityLabel": "Parto",
