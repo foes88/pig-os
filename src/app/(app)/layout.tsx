@@ -29,25 +29,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [askAiOpen, setAskAiOpen] = useState(false);
   const [quickInputOpen, setQuickInputOpen] = useState(false);
   const router = useRouter();
-  const role = useAuthStore((s) => s.user?.role);
+  // 플랫폼 관리자 식별은 system_role 기준(admin/login 게이트와 동일). role은 농장 역할이라
+  // pilot 승인 운영자(role=FARM_OWNER/system_role=SUPER_ADMIN)를 못 알아봄(코드리뷰 #2).
+  const systemRole = useAuthStore((s) => s.user?.system_role);
 
   // chrome 언어를 next-intl 쿠키와 동기화. 비관리자가 ko 쿠키를 갖고 있으면 en으로 강제(한국어=관리자 전용).
-  // role 미하이드레이트(undefined) 시엔 클램프 보류 — 섣불리 admin의 ko 선택을 덮어쓰지 않도록 role 확정 후에만.
+  // 미하이드레이트(undefined) 시엔 클램프 보류 — 섣불리 admin의 ko 선택을 덮어쓰지 않도록 확정 후에만.
   useEffect(() => {
     let l = readLocaleCookie();
-    if (l === "ko" && role && !isPlatformAdmin(role)) {
+    if (l === "ko" && systemRole && !isPlatformAdmin(systemRole)) {
       l = "en";
       document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000; SameSite=Lax`;
       try { localStorage.setItem("pigos_lang", "en"); } catch { /* ignore */ }
       router.refresh();
     }
     setLang(l);
-  }, [role, router]);
+  }, [systemRole, router]);
 
   // 언어 변경: 쿠키 set(서버 next-intl) + localStorage + 새로고침(페이지 재렌더) + chrome 즉시 갱신
   const changeLang = (l: Locale) => {
     // 한국어는 플랫폼 관리자만 — 비관리자 시도는 무시(방어)
-    if (l === "ko" && !isPlatformAdmin(role)) return;
+    if (l === "ko" && !isPlatformAdmin(systemRole)) return;
     document.cookie = `NEXT_LOCALE=${l}; path=/; max-age=31536000; SameSite=Lax`;
     try { localStorage.setItem("pigos_lang", l); } catch { /* ignore */ }
     setLang(l);

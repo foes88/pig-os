@@ -37,9 +37,10 @@ export function Topbar({
   alertCount = 0,
 }: TopbarProps) {
   const t = LABELS[lang] ?? LABELS.en;
-  const role = useAuthStore((s) => s.user?.role);
+  // 한국어 가시성은 system_role 기준(농장 role이 아니라 플랫폼 권한 — 코드리뷰 #2).
+  const systemRole = useAuthStore((s) => s.user?.system_role);
   // 한국어는 플랫폼 관리자만. 현재 lang이 목록에 없으면(엣지) 깨지지 않게 포함.
-  const localeOpts = visibleLocales(role);
+  const localeOpts = visibleLocales(systemRole);
   const langOpts = localeOpts.includes(lang) ? localeOpts : [lang, ...localeOpts];
 
   return (
