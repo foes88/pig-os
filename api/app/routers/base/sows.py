@@ -6,8 +6,15 @@ from sqlalchemy import select, update
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import NotFoundError, ValidationError
-from app.db.models.events import Farrowing, Mating, ReproductiveEvent, Weaning
-from app.db.models.health import Removal
+from app.db.models.events import (
+    Farrowing,
+    Mating,
+    PigletEvent,
+    PregnancyCheck,
+    ReproductiveEvent,
+    Weaning,
+)
+from app.db.models.health import HealthEvent, Removal
 from app.db.models.platform import AuditLog
 from app.db.models.sow import Sow
 from app.schemas.common import PagedResponse, PageMeta
@@ -238,7 +245,10 @@ async def delete_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
     sow.deleted_at = now
     # 캐스케이드 soft-delete — 삭제 모돈의 번식 이벤트가 events 조회·보고서에 dangling 잔존하면
     # born_alive_sum 등 수치가 오염된다(QA ws_crud_delete 발견). 모돈 삭제 = 그 이벤트도 제거.
-    for Model in (Mating, Farrowing, Weaning, ReproductiveEvent):
+    # PigletEvent(양자/폐사)·PregnancyCheck·HealthEvent도 포함 — 누락 시 _calc_piglet_adjustments가
+    # 고아 양자이벤트를 읽어 양자상대 모돈의 effective litter/nursing 분모가 오염된다(QA B1 두수보존).
+    for Model in (Mating, Farrowing, Weaning, ReproductiveEvent,
+                  PigletEvent, PregnancyCheck, HealthEvent):
         await db.execute(
             update(Model)
             .where(Model.sow_id == sow_id, Model.deleted_at.is_(None))
