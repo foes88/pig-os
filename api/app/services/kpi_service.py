@@ -601,22 +601,36 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     # Sow counts
     counts = await _sow_counts(db, farm.id)
 
-    # Farrowing rate (year-to-date): farrowings / matings
+    # Farrowing rate — 코호트 기반(분만가능시점 지난 올해 교배 중 분만으로 이어진 비율).
+    # QA #6: 기존 YTD 독립카운트(올해분만수/올해교배수)는 분자가 작년 교배 산물(임신 ~114d)이라
+    # 분모(올해 교배)와 코호트 불일치 → >100%(계약 percent 0~100 위반). 교배는 분만 최대 1회라
+    # mating_id 링크로 코호트를 묶으면 distinct 분만교배수 ≤ 코호트교배수 → ≤100% 보장.
     from datetime import timedelta
 
     from app.db.models.events import Farrowing, Mating, Weaning
+    # 분만가능 최소 경과일: 이보다 최근 교배는 아직 분만 기회가 없어 코호트(분모)서 제외.
+    FR_GESTATION_DAYS = 110
+    fr_cutoff = today - timedelta(days=FR_GESTATION_DAYS)
+    # 분모: 올해 교배 중 분만가능시점이 지난 것(분만 기회가 있었던 교배만).
     mating_count = await db.scalar(
         select(func.count()).select_from(Mating).where(
             Mating.farm_id == farm.id,
             Mating.mating_date >= date(today.year, 1, 1),
+            Mating.mating_date <= fr_cutoff,
             Mating.deleted_at.is_(None),  # INTEG-2: soft-delete 제외(드리프트 방지)
         )
     )
+    # 분자: 그 코호트 교배가 분만으로 이어진 distinct 수(mating_id 링크, 분만 soft-delete 제외).
     farrowing_count = await db.scalar(
-        select(func.count()).select_from(Farrowing).where(
-            Farrowing.farm_id == farm.id,
-            Farrowing.farrowing_date >= date(today.year, 1, 1),
-            Farrowing.deleted_at.is_(None),  # INTEG-2: soft-delete 제외
+        select(func.count(func.distinct(Farrowing.mating_id)))
+        .select_from(Farrowing)
+        .join(Mating, Mating.id == Farrowing.mating_id)
+        .where(
+            Mating.farm_id == farm.id,
+            Mating.mating_date >= date(today.year, 1, 1),
+            Mating.mating_date <= fr_cutoff,
+            Mating.deleted_at.is_(None),
+            Farrowing.deleted_at.is_(None),
         )
     )
     farrowing_rate = (farrowing_count / mating_count * 100) if mating_count else None
