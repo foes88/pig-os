@@ -734,11 +734,13 @@ async def _process_piglet_event(
         ), None
 
     if not dry_run:
+        # 세션 autoflush=False → 같은 sync 배치의 직전 pending(farrowing·piglet_event) 가시화.
+        # explicit farrowing_id 경로도 _calc_piglet_adjustments(SELECT) 전에 flush 필요(QA M1):
+        # 같은 배치 다건 FOSTER_IN/DEATH가 직전 건을 못 봐 nursing 과소/과대계산되는 것 방지.
+        await db.flush()
         # Resolve farrowing_id: explicit or auto-lookup latest for this sow.
-        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
         farrowing_id = item.farrowing_id
         if farrowing_id is None:
-            await db.flush()
             farrowing = await db.scalar(
                 select(Farrowing)
                 .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
