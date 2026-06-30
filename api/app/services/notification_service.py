@@ -15,6 +15,7 @@ from app.db.models.ops import Notification
 
 # 목록에 노출하는 채널 (전송 추적 로그 제외)
 _INAPP_TYPES = ("IN_APP",)
+_SEVERITY_RANK = {"INFO": 0, "WARNING": 1, "CRITICAL": 2}  # 승격 판정용(높을수록 심각)
 
 
 async def _unread_count(db: AsyncSession, user_id: UUID, farm_id: UUID | None) -> int:
@@ -188,6 +189,7 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
     # 멱등: 수신자들의 기존 미읽음 IN_APP 알림 키 집합 선적재
     existing_rows = await db.execute(
         select(
+            Notification.id,
             Notification.user_id,
             Notification.alert_type,
             Notification.related_entity_id,
@@ -201,13 +203,20 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
     )
     # M1: 멱등 키에 severity 포함 — WARNING 미읽음 상태에서 CRITICAL로 승격되면
     # 별개 키가 되어 에스컬레이션 알림이 생성됨(같은 심각도 반복만 억제).
-    existing = {(r[0], r[1], r[2], r[3]) for r in existing_rows.all()}
+    existing: set = set()
+    unread_by_base: dict[tuple, list[tuple]] = {}  # (uid, alert_type, entity) → [(id, severity)]
+    for nid, uid_, atype, ent, sev in existing_rows.all():
+        existing.add((uid_, atype, ent, sev))
+        unread_by_base.setdefault((uid_, atype, ent), []).append((nid, sev))
 
     now = datetime.now(UTC)
     created = 0
+    superseded_ids: list[UUID] = []
     for uid in recipients:
         for it in items:
-            key = (uid, it["alert_type"], it["related_entity_id"], it["severity"])
+            sev = it["severity"]
+            base = (uid, it["alert_type"], it["related_entity_id"])
+            key = (*base, sev)
             if key in existing:
                 continue
             db.add(Notification(
@@ -217,14 +226,25 @@ async def create_from_alerts(db: AsyncSession, farm_id: UUID, today=None) -> int
                 title=it["title"],
                 body=it["body"],
                 alert_type=it["alert_type"],
-                severity=it["severity"],
+                severity=sev,
                 related_entity_type=it["related_entity_type"],
                 related_entity_id=it["related_entity_id"],
                 sent_at=now,
             ))
             existing.add(key)
             created += 1
+            # 승격 시 같은 대상의 '더 낮은 심각도' 미읽음은 읽음 처리(중복 unread 방지, P3).
+            new_rank = _SEVERITY_RANK.get(sev, 1)
+            for nid, osev in unread_by_base.get(base, []):
+                if _SEVERITY_RANK.get(osev, 1) < new_rank:
+                    superseded_ids.append(nid)
 
+    if superseded_ids:
+        await db.execute(
+            update(Notification)
+            .where(Notification.id.in_(superseded_ids), Notification.read_at.is_(None))
+            .values(read_at=now)
+        )
     if created:
         await db.commit()
     return created

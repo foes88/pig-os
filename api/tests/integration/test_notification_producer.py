@@ -75,6 +75,31 @@ async def test_severity_escalation_creates_new_notification(db, test_farm, test_
     assert second >= 1  # 심각도 승격분이 억제되지 않고 재생성됨
 
 
+async def test_escalation_supersedes_lower_severity_unread(db, test_farm, test_user, test_sow):
+    """R2 P3 — 승격(낮은 심각도→높은 심각도) 시 옛 낮은 심각도 미읽음은 읽음 처리(중복 unread 방지)."""
+    from sqlalchemy import update as _update
+
+    today = await _setup_overdue(db, test_farm, test_user, test_sow)
+    assert await notification_service.create_from_alerts(db, test_farm.id, today=today) >= 1
+
+    # 기존 미읽음을 INFO로 낮춰 '과거 낮은 심각도' 모사 → 재실행 시 WARNING으로 승격
+    await db.execute(
+        _update(Notification)
+        .where(Notification.user_id == test_user.id, Notification.read_at.is_(None))
+        .values(severity="INFO")
+    )
+    await db.flush()
+    assert await notification_service.create_from_alerts(db, test_farm.id, today=today) >= 1
+
+    rows = (await db.execute(
+        select(Notification.severity, Notification.read_at).where(
+            Notification.user_id == test_user.id, Notification.farm_id == test_farm.id)
+    )).all()
+    assert not [r for r in rows if r[0] == "INFO" and r[1] is None], \
+        "승격 시 옛 INFO 미읽음은 읽음 처리돼야 함(중복 unread 방지)"
+    assert [r for r in rows if r[0] == "WARNING" and r[1] is None], "승격된 WARNING 미읽음 존재"
+
+
 async def test_no_recipients_no_notifications(db, test_farm, test_sow):
     """OWNER/MANAGER 멤버가 없으면 생성 0건."""
     today = date(2026, 6, 1)
