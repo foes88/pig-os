@@ -336,8 +336,9 @@ async def build_herd_kpis(
         "BIRTH_WEIGHT":        round(_f(far.abw), 2) if far.abw is not None else None,
         "WEANING_WEIGHT":      round(_f(wea.aww), 2) if wea.aww is not None else None,
         "WEANING_AGE":         round(_f(wea.aage), 1) if wea.aage is not None else None,
-        "ADG":                 round(gain / pigdays * 1000, 1) if pigdays else None,
-        "FCR":                 round(float(feed) / gain, 3) if gain else None,
+        # 증체(gain)는 생물학적으로 ≥0 — 음수면(데이터/수정 오류) 음수 ADG/FCR 불가능값 → None(QA 사료리뷰 Medium).
+        "ADG":                 round(gain / pigdays * 1000, 1) if (pigdays and gain and gain > 0) else None,
+        "FCR":                 round(float(feed) / gain, 3) if (gain and gain > 0) else None,
         "FINISH_MORTALITY":    _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
         # 모돈군 구조(롤링 window 제거율 = 연간 근사, window=365)
         "CULLING_RATE":        _rate(float(removed.culled), active_herd),

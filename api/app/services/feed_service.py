@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationError
 from app.db.models.health import FeedRecord
+from app.db.models.ops import FinisherGroup
+from app.db.models.sow import Building, Sow
 from app.schemas.feed import FeedRecordCreate
 from app.services.event_service import _ensure_period_unlocked
 
@@ -23,6 +25,18 @@ async def create_feed_record(
     targets = [t for t in (body.sow_id, body.group_id, body.building_id) if t is not None]
     if len(targets) > 1:
         raise ValidationError("Specify at most one target among sow_id / group_id / building_id")
+    # 멀티테넌트 무결성(QA 사료리뷰 High): 대상(sow/group/building)이 이 농장 소속인지 검증.
+    # 미검증 시 타농장 group_id가 FCR 분자(SUM quantity_kg)에 합산돼 수치 오염 + 존재 누설.
+    if body.sow_id is not None and not await db.scalar(select(Sow.id).where(
+            Sow.id == body.sow_id, Sow.farm_id == farm_id, Sow.deleted_at.is_(None))):
+        raise NotFoundError("sow_id not found in this farm")
+    if body.group_id is not None and not await db.scalar(select(FinisherGroup.id).where(
+            FinisherGroup.id == body.group_id, FinisherGroup.farm_id == farm_id,
+            FinisherGroup.deleted_at.is_(None))):
+        raise NotFoundError("group_id not found in this farm")
+    if body.building_id is not None and not await db.scalar(select(Building.id).where(
+            Building.id == body.building_id, Building.farm_id == farm_id)):
+        raise NotFoundError("building_id not found in this farm")
     # 월마감 잠금 검사 (잠긴 기간이면 PeriodLockedError → 423)
     await _ensure_period_unlocked(db, farm_id, body.record_date)
 

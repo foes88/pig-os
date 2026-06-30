@@ -166,6 +166,11 @@ async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm:
             f"head_count_in ({group.head_count_in}) cannot be less than already-shipped "
             f"head_count_out ({group.head_count_out})"
         )
+    # 출하완료 그룹의 입식체중을 출하체중 이상으로 올리면 음수 증체→음수 FCR/ADG → 재검증(QA 사료리뷰 Medium).
+    if (group.end_date is not None and group.avg_exit_weight_kg is not None
+            and group.avg_entry_weight_kg is not None):
+        validate_finisher_exit_weight(avg_exit_weight_kg=group.avg_exit_weight_kg,
+                                      avg_entry_weight_kg=group.avg_entry_weight_kg)
     await db.commit()
     await db.refresh(group)
     return FinisherGroupResponse.model_validate(group)
