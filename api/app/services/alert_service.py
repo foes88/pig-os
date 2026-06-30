@@ -267,17 +267,18 @@ async def get_cull_candidates(db: AsyncSession, farm_id: UUID, today: date | Non
     last_mating = await _latest_date_map(db, farm_id, Mating, Mating.mating_date)
 
     # Latest weaning weaned_count per sow.
+    # 오름차순 정렬 → 각 모돈의 마지막 행이 최신. 동일 weaning_date는 created_at·id로
+    # 결정적으로 tie-break(과거엔 fetch 순서 의존이라 last_weaned_count가 들쭉날쭉했음).
     wean_rows = (
         await db.execute(
-            select(Weaning.sow_id, Weaning.weaning_date, Weaning.weaned_count).where(
-                Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None)
-            )
+            select(Weaning.sow_id, Weaning.weaning_date, Weaning.weaned_count)
+            .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None))
+            .order_by(Weaning.weaning_date, Weaning.created_at, Weaning.id)
         )
     ).all()
     last_weaned: dict[UUID, tuple[date, int]] = {}
     for sid, wdate, wcount in wean_rows:
-        if sid not in last_weaned or wdate > last_weaned[sid][0]:
-            last_weaned[sid] = (wdate, wcount)
+        last_weaned[sid] = (wdate, wcount)
 
     # RTS events (for consecutive-since-last-farrowing count).
     rts_rows = (

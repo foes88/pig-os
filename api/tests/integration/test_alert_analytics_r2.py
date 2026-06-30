@@ -12,10 +12,11 @@ from zoneinfo import ZoneInfo
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.models.events import Farrowing, Mating, Weaning
 from app.db.models.health import HealthEvent
 from app.db.models.platform import Farm, Organization
 from app.db.models.sow import Sow
-from app.services.alert_service import _farm_today
+from app.services.alert_service import _farm_today, get_cull_candidates
 from app.services.analytics_service import prrs_by_genetics
 
 pytestmark = pytest.mark.anyio
@@ -64,3 +65,32 @@ async def test_prrs_excludes_soft_deleted_sow(db: AsyncSession, test_org: Organi
     for row in report["rows"]:
         assert row["total_sows"] >= row["affected_sows"]
         assert row.get("incidence_rate", 0) <= 100.0
+
+
+# ── P3: 동일날짜 이유 tie-break 결정성(cull aged_low_performer) ─────────
+async def test_last_weaned_tiebreak_deterministic(db: AsyncSession, test_org: Organization):
+    farm = await _farm(db, test_org, "Asia/Seoul")
+    sow = Sow(farm_id=farm.id, ear_tag="C-1", parity=8, status="OPEN",
+              entry_date=datetime(2020, 1, 1, tzinfo=UTC), entry_type="GILT")
+    db.add(sow)
+    await db.flush()  # sow.id 확정 후 참조
+    m = Mating(farm_id=farm.id, sow_id=sow.id, mating_date=date(2026, 1, 1),
+               mating_type="AI", mating_number=1)
+    db.add(m)
+    await db.flush()
+    f = Farrowing(farm_id=farm.id, sow_id=sow.id, mating_id=m.id, farrowing_date=date(2026, 4, 1),
+                  total_born=16, born_alive=15, stillborn=1, mummified=0, nursing_head=15)
+    db.add(f)
+    await db.flush()
+    # 동일 이유일, count 상이 — 나중에 생성된(더 늦은 created_at) 8두가 '최신'이어야 함
+    db.add(Weaning(farm_id=farm.id, sow_id=sow.id, farrowing_id=f.id, weaning_date=date(2026, 4, 22),
+                   weaned_count=15, created_at=datetime(2026, 4, 22, 9, 0, tzinfo=UTC)))
+    db.add(Weaning(farm_id=farm.id, sow_id=sow.id, farrowing_id=f.id, weaning_date=date(2026, 4, 22),
+                   weaned_count=8, created_at=datetime(2026, 4, 22, 18, 0, tzinfo=UTC)))
+    await db.flush()
+
+    cands = await get_cull_candidates(db, farm.id)
+    me = next((c for c in cands if str(c.get("sow_id")) == str(sow.id)), None)
+    # 최신 이유두수=8(<9) + parity 8(>7) → aged_low_performer 권고. 15두가 채택됐다면 미권고.
+    assert me is not None and "aged_low_performer" in me.get("reasons", []), \
+        "동일날짜 이유 tie-break이 최신(8두)을 결정적으로 선택해야 함"
