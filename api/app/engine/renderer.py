@@ -281,6 +281,71 @@ _ACTION_KO.update({
     "interpret_weekly_kpis_with_batch_cycle_in_mind": "주간 KPI를 배치 주기 감안해 해석",
 })
 
+# QA i18n 보강: 룰이 emit하나 맵에 누락돼 ko/en 모두 Title-Case raw로 노출되던 코드 보강.
+# (WSI/RTS/PWMR/conception/data-quality/health 계열). 가드: test_renderer_i18n_complete.
+_CAUSE_EN.update({
+    "elevated_return_to_service_rate":           "Elevated return-to-service rate",
+    "high_weaning_to_mating_interval":           "High weaning-to-mating interval",
+    "insufficient_weaning_records":              "Insufficient weaning records",
+    "low_litters_per_sow_per_year":              "Low litters per sow per year",
+    "no_active_sows_registered_in_system":       "No active sows registered in the system",
+    "prolonged_weaning_to_service_interval":     "Prolonged weaning-to-service interval",
+    "repeat_breeding_failures":                  "Repeat breeding failures",
+})
+_CAUSE_KO.update({
+    "elevated_return_to_service_rate":           "재발정율(재교배율) 상승",
+    "high_weaning_to_mating_interval":           "이유~교배 간격 과다",
+    "insufficient_weaning_records":              "이유 기록 부족",
+    "low_litters_per_sow_per_year":              "모돈당 연간 산차수 저조",
+    "no_active_sows_registered_in_system":       "시스템에 등록된 활성 모돈 없음",
+    "prolonged_weaning_to_service_interval":     "이유~재교배 간격 지연",
+    "repeat_breeding_failures":                  "반복 교배 실패",
+})
+_ACTION_EN.update({
+    "audit_heat_detection_and_insemination_timing":     "Audit heat detection and insemination timing",
+    "audit_sow_body_condition_score":                   "Audit sow body condition score",
+    "audit_weaning_to_mating_interval":                 "Audit weaning-to-mating interval",
+    "check_boar_libido_and_semen_quality":              "Check boar libido and semen quality",
+    "check_semen_handling_and_boar_fertility":          "Check semen handling and boar fertility",
+    "complete_sow_inventory_entry_via_onboarding":      "Complete sow inventory entry via onboarding",
+    "complete_weaning_data_entry_for_current_year":     "Complete weaning data entry for the current year",
+    "consult_veterinarian_for_disease_screening":       "Consult a veterinarian for disease screening",
+    "implement_biosecurity_level_3_protocol":           "Implement biosecurity level 3 protocol",
+    "improve_colostrum_intake_and_cross_fostering":     "Improve colostrum intake and cross-fostering",
+    "improve_post_weaning_heat_detection":              "Improve post-weaning heat detection",
+    "improve_transition_feed_intake":                   "Improve transition feed intake",
+    "increase_biosecurity_monitoring":                  "Increase biosecurity monitoring",
+    "isolate_affected_animals_immediately":             "Isolate affected animals immediately",
+    "notify_veterinary_authority":                      "Notify the veterinary authority",
+    "report_to_national_veterinary_authority":          "Report to the national veterinary authority",
+    "review_crushing_prevention_and_creep_management":  "Review crushing prevention and creep management",
+    "review_heat_detection_accuracy":                   "Review heat detection accuracy",
+    "review_lactation_feed_intake":                     "Review lactation feed intake",
+    "verify_animal_origin_and_import_health_certificates": "Verify animal origin and import health certificates",
+})
+_ACTION_KO.update({
+    "audit_heat_detection_and_insemination_timing":     "발정 탐지·수정 적기 점검",
+    "audit_sow_body_condition_score":                   "모돈 신체충실지수(BCS) 점검",
+    "audit_weaning_to_mating_interval":                 "이유~교배 간격 점검",
+    "check_boar_libido_and_semen_quality":              "웅돈 성욕·정액 품질 점검",
+    "check_semen_handling_and_boar_fertility":          "정액 취급·웅돈 수정능력 점검",
+    "complete_sow_inventory_entry_via_onboarding":      "온보딩으로 모돈 재고 입력 완료",
+    "complete_weaning_data_entry_for_current_year":     "당해 연도 이유 데이터 입력 완료",
+    "consult_veterinarian_for_disease_screening":       "수의사 상담 통한 질병 검사",
+    "implement_biosecurity_level_3_protocol":           "차단방역 레벨 3 프로토콜 시행",
+    "improve_colostrum_intake_and_cross_fostering":     "초유 섭취·양자(포유) 관리 개선",
+    "improve_post_weaning_heat_detection":              "이유 후 발정 탐지 개선",
+    "improve_transition_feed_intake":                   "전환기 사료 섭취 개선",
+    "increase_biosecurity_monitoring":                  "차단방역 모니터링 강화",
+    "isolate_affected_animals_immediately":             "감염 의심 개체 즉시 격리",
+    "notify_veterinary_authority":                      "방역 당국 신고",
+    "report_to_national_veterinary_authority":          "국가 방역 당국 신고",
+    "review_crushing_prevention_and_creep_management":  "압사 예방·자돈 보온구역(크립) 관리 점검",
+    "review_heat_detection_accuracy":                   "발정 탐지 정확도 점검",
+    "review_lactation_feed_intake":                     "포유기 사료 섭취 점검",
+    "verify_animal_origin_and_import_health_certificates": "개체 원산지·수입 검역증명서 확인",
+})
+
 
 def _label(mapping: dict[str, str], code: str) -> str:
     return mapping.get(code, code.replace("_", " ").title())
