@@ -553,6 +553,12 @@ async def _process_reproductive(
             id=item.id, entity="reproductive_event", reason="VALIDATION_FAILED",
             detail={"field": "event_type", "message": "invalid event_type", "value": item.event_type},
         ), None
+    # QA #14: 임신모돈 도태/폐사 시 사유(notes) 필수 (REST record_reproductive_event 동일). sync 누락분.
+    if sow.status == "PREGNANT" and item.event_type in ("CULLED", "DEAD") and not item.notes:
+        return None, SyncRejected(
+            id=item.id, entity="reproductive_event", reason="VALIDATION_FAILED",
+            detail={"field": "notes", "message": "A reason (notes) is required when culling/removing a pregnant sow"},
+        ), None
 
     if not dry_run:
         event = ReproductiveEvent(
