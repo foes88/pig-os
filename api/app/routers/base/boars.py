@@ -87,6 +87,12 @@ async def update_boar(
         raise NotFoundError(f"Boar {boar_id} not found")
 
     updated = body.model_dump(exclude_none=True)
+    # ear_tag 변경 시 유니크 재검증(create와 동일) — 미검증 시 UniqueConstraint 위반이 409 아닌 500 누설(QA 웅돈리뷰 High).
+    if "ear_tag" in updated and updated["ear_tag"] != boar.ear_tag:
+        dup = await db.scalar(select(Boar).where(
+            Boar.farm_id == farm.id, Boar.ear_tag == updated["ear_tag"], Boar.id != boar.id))
+        if dup:
+            raise ConflictError(f"Boar with ear_tag '{updated['ear_tag']}' already exists")
     for k, v in updated.items():
         setattr(boar, k, v)
 
