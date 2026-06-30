@@ -37,6 +37,8 @@ router = APIRouter(
 
 _SYSTEM_ROLES = {"SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN",
                  "FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "VET", "VIEWER"}
+# 파일럿 온보딩으로는 플랫폼 운영자(SUPER_ADMIN)를 만들 수 없음 — 권한상승 경로 차단(P1).
+_PILOT_GRANTABLE_ROLES = _SYSTEM_ROLES - {"SUPER_ADMIN"}
 
 
 def _row_to_member(u: User, org_name: str | None, farm_count: int) -> AdminMemberRow:
@@ -144,6 +146,17 @@ async def update_member_status(
     if not u:
         raise NotFoundError("Member not found")
 
+    # 관리자 콘솔 영구 락아웃 방지(P1): 마지막 활성 SUPER_ADMIN 또는 자기 자신은 비활성화 불가.
+    if body.active is False and u.system_role == "SUPER_ADMIN":
+        if u.id == admin.id:
+            raise ValidationError("You cannot deactivate your own super-admin account")
+        other_active_supers = await db.scalar(
+            select(func.count()).select_from(User).where(
+                User.system_role == "SUPER_ADMIN", User.active.is_(True), User.id != u.id)
+        ) or 0
+        if other_active_supers == 0:
+            raise ValidationError("Cannot deactivate the last active super admin")
+
     before: dict = {}
     after: dict = {}
     if body.approval_status is not None:
@@ -226,8 +239,9 @@ async def approve_pilot_signup(
         raise ConflictError("Already onboarded")
     if len(body.initial_password) < 8:
         raise ValidationError("initial_password must be at least 8 characters")
-    if body.system_role not in _SYSTEM_ROLES:
-        raise ValidationError(f"Invalid system_role. Allowed: {', '.join(sorted(_SYSTEM_ROLES))}")
+    if body.system_role not in _PILOT_GRANTABLE_ROLES:
+        raise ValidationError(
+            f"Invalid system_role. Allowed: {', '.join(sorted(_PILOT_GRANTABLE_ROLES))}")
 
     existing = await db.scalar(select(User).where(User.email == p.email))
     if existing:
@@ -277,7 +291,8 @@ async def approve_pilot_signup(
             user_id=admin.id, farm_id=farm.id, action="CREATE",
             entity_type="pilot_approval", entity_id=user.id,
             old_value={"signup_status": "pending"},
-            new_value={"signup_status": "onboarded", "user_id": str(user.id)},
+            new_value={"signup_status": "onboarded", "user_id": str(user.id),
+                       "granted_system_role": body.system_role},  # P2: 부여 권한 감사 기록
         )
     )
     await db.commit()

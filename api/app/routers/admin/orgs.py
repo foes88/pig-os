@@ -117,6 +117,14 @@ async def _descendant_ids(db, org_id: UUID) -> set[UUID]:
     return {r[0] for r in rows.fetchall()}
 
 
+def _as_uuid(value: str, field: str) -> UUID:
+    """클라 문자열 UUID 파싱 — 잘못된 형식은 500이 아닌 422(P2)."""
+    try:
+        return UUID(value)
+    except (ValueError, TypeError, AttributeError) as e:
+        raise ValidationError(f"{field} must be a valid UUID") from e
+
+
 def _row(o: Organization, fc: int = 0, uc: int = 0) -> AdminOrgRow:
     return AdminOrgRow(
         id=str(o.id), name=o.name, org_type=o.org_type, org_level=o.org_level,
@@ -132,7 +140,7 @@ async def create_org(body: AdminOrgCreate, db: DbDep, admin: SuperAdmin) -> Admi
         raise ValidationError(f"Invalid org_type. Allowed: {', '.join(sorted(_ORG_TYPES))}")
     parent_id: UUID | None = None
     if body.parent_org_id:
-        parent_id = UUID(body.parent_org_id)
+        parent_id = _as_uuid(body.parent_org_id, "parent_org_id")
         if not await db.get(Organization, parent_id):
             raise NotFoundError("Parent org not found")
     org = Organization(
@@ -170,7 +178,7 @@ async def update_org(org_id: UUID, body: AdminOrgUpdate, db: DbDep, admin: Super
         if new_parent is None:
             org.parent_org_id = None
         else:
-            pid = UUID(new_parent)
+            pid = _as_uuid(new_parent, "parent_org_id")
             if pid == org_id or pid in await _descendant_ids(db, org_id):
                 raise ConflictError("Cannot set parent to self or a descendant (cycle)")
             if not await db.get(Organization, pid):
@@ -190,7 +198,7 @@ async def reassign_farm(farm_id: UUID, body: FarmReassign, db: DbDep, admin: Sup
     farm = await db.get(Farm, farm_id)
     if not farm:
         raise NotFoundError("Farm not found")
-    target = UUID(body.org_id)
+    target = _as_uuid(body.org_id, "org_id")
     if not await db.get(Organization, target):
         raise NotFoundError("Target org not found")
     before = str(farm.org_id)
