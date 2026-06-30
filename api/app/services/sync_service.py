@@ -57,8 +57,15 @@ from app.schemas.sync import (
     SyncWeaning,
 )
 from app.services.event_service import (
+    GESTATION_MAX_DAYS,
+    GESTATION_MIN_DAYS,
+    MAX_MATING_PER_CYCLE,
+    NURSING_MAX_DAYS,
+    NURSING_MIN_DAYS,
     _calc_piglet_adjustments,
+    _check_wean_compliance,
     _get_open_cycle,
+    _last_weaning_date,
     apply_terminal_reproductive,
 )
 from app.validators.base import ValidationError
@@ -225,29 +232,54 @@ async def _process_mating(
             },
         )
 
+    # F4: 재교배일 < 직전 이유일 차단 — REST validate_mating_after_last_weaning 미러.
+    last_wean = await _last_weaning_date(db, item.sow_id)
+    if last_wean is not None and event_date < last_wean:
+        return None, SyncRejected(
+            id=item.id, entity="mating", reason="VALIDATION_FAILED",
+            detail={"field": "mating_date",
+                    "message": f"mating_date {event_date} is before last weaning {last_wean}"},
+        ), None
+
     # 7. All checks passed — write (unless dry_run)
     if not dry_run:
         # C4: REST record_mating 미러 — 활성 사이클 있으면 재사용, 없으면 신규 생성 후 연결.
         # breeding_cycle_id 누락 시 parity별 KPI(P1/P2 ABA 등)에서 동기화 데이터가 전량 누락됨.
+        await db.flush()  # 같은 배치 직전 교배(pending) 가시화 → 사이클당 교배횟수 정확 산정
         cycle = await _get_open_cycle(db, sow.id)
-        if not cycle:
+        if cycle:
+            # F3: 기존 사이클 재교배 — 교배횟수 상한 + mating_count 유지(REST record_mating 미러).
+            existing_matings = await db.scalar(
+                select(func.count()).select_from(Mating).where(
+                    Mating.breeding_cycle_id == cycle.id, Mating.deleted_at.is_(None))
+            ) or 0
+            if existing_matings >= MAX_MATING_PER_CYCLE:
+                return None, SyncRejected(
+                    id=item.id, entity="mating", reason="VALIDATION_FAILED",
+                    detail={"message":
+                            f"Cannot record more than {MAX_MATING_PER_CYCLE} matings per breeding cycle"},
+                ), None
+            mating_number = existing_matings + 1
+        else:
             cycle = BreedingCycle(
                 farm_id=farm_id, sow_id=sow.id, parity=(sow.parity or 0) + 1,
                 started_at=datetime.combine(event_date, datetime.min.time()).replace(tzinfo=UTC),
             )
             db.add(cycle)
             await db.flush()
+            mating_number = 1
         mating = Mating(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
             breeding_cycle_id=cycle.id,
             mating_date=event_date, mating_type=item.mating_type,
             boar_id=item.boar_id, semen_batch=item.semen_batch,
-            mating_number=item.mating_number, notes=item.notes,
+            mating_number=mating_number, notes=item.notes,  # 클라값 대신 서버 산정(REST 동일)
         )
         db.add(mating)
         db.add(_audit(farm_id, "mating", item.id, "CREATE", item.model_dump(mode="json")))
         sow.status = "PREGNANT"
         cycle.cycle_status = "MATED"
+        cycle.mating_count = mating_number
 
     return SyncAccepted(id=item.id, entity="mating", action="created"), None, None
 
@@ -383,6 +415,15 @@ async def _process_farrowing(
                 id=item.id, entity="farrowing", reason="MATING_NOT_FOUND",
                 detail={"sow_id": str(item.sow_id), "message": "No mating to attach farrowing to"},
             ), None
+        # F1: 임신기간 100~130일 검증 — REST record_farrowing 미러(분만일>교배일도 min>=100이 보장).
+        gestation = (event_date - mating.mating_date).days
+        if not (GESTATION_MIN_DAYS <= gestation <= GESTATION_MAX_DAYS):
+            return None, SyncRejected(
+                id=item.id, entity="farrowing", reason="VALIDATION_FAILED",
+                detail={"field": "farrowing_date", "gestation_days": gestation,
+                        "message": (f"Gestation {gestation} days outside "
+                                    f"{GESTATION_MIN_DAYS}~{GESTATION_MAX_DAYS} range")},
+            ), None
         # 모델 컬럼명: stillborn / mummified / farrowing_ease (sync 입력은 born_dead / mummies / farrowing_type).
         # C4: breeding_cycle_id 연결(교배의 사이클 상속) + nursing_head 초기화 — REST record_farrowing 미러.
         farrowing = Farrowing(
@@ -485,6 +526,29 @@ async def _process_weaning(
                 id=item.id, entity="weaning", reason="NO_ACTIVE_FARROWING",
                 detail={"sow_id": str(item.sow_id), "message": "No farrowing to attach weaning to"},
             ), None
+        # F2: 이유일>분만일 순서 + 포유기간 10~60일 + 국가별 최소 이유일령 — REST record_weaning 미러.
+        # (기존엔 음수 일령을 null로 저장만 하고 거부하지 않았음 → 채널 간 데이터 불일치.)
+        nursing_days = (event_date - farrowing.farrowing_date).days
+        if nursing_days < 0:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={"field": "weaning_date",
+                        "message": f"weaning_date {event_date} is before farrowing {farrowing.farrowing_date}"},
+            ), None
+        if not (NURSING_MIN_DAYS <= nursing_days <= NURSING_MAX_DAYS):
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={"field": "weaning_date", "nursing_days": nursing_days,
+                        "message": (f"Nursing period {nursing_days} days outside "
+                                    f"{NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range")},
+            ), None
+        try:
+            await _check_wean_compliance(db, farm_id, nursing_days)
+        except ValidationError as e:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={"field": "weaning_date", "message": e.detail},
+            ), None
         # B4: 이유두수 ≤ 잔여 유효복당 (born_alive + 양자전입 − 양자전출 − 폐사 − 기존이유합).
         # 직접 REST(event_service)와 동일 규칙. 처리순서 재정렬 덕에 같은 배치 양자/폐사가 먼저
         # 반영되어, 양자 받은 nurse sow가 자기 born_alive보다 많이 이유해도 오거부되지 않는다.
@@ -512,12 +576,12 @@ async def _process_weaning(
             ), None
         # 모델 컬럼명: avg_weaning_weight_kg (sync 입력은 avg_weight_kg).
         # H1/C4: breeding_cycle_id 연결 + 부분이유 상태머신 + PigletGroup 생성 — REST record_weaning 미러.
-        nursing_days = (event_date - farrowing.farrowing_date).days
+        # nursing_days는 위 F2 검증에서 이미 산정(>=0 보장).
         weaning = Weaning(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing.id,
             breeding_cycle_id=farrowing.breeding_cycle_id,
             weaning_date=event_date, weaned_count=item.weaned_count,
-            weaning_age_days=nursing_days if nursing_days >= 0 else None,
+            weaning_age_days=nursing_days,
             avg_weaning_weight_kg=item.avg_weight_kg, notes=item.notes,
         )
         db.add(weaning)
