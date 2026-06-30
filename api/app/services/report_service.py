@@ -134,8 +134,11 @@ def build_reproduction_rows(
         ba_sum = sum(t for t in x["ba"] if t is not None)
         fr = round(x["farrowings"] / x["matings"] * 100, 1) if x["matings"] else None
         rts_rate = round(x["rts"] / x["matings"] * 100, 1) if x["matings"] else None
+        # pwmr_b(복평균 기반 이유전 폐사율): 분자(분만복 avg_tb)·분모코호트(이유복 avg_weaned)가 달라
+        # avg_weaned>avg_tb(양자전입·코호트 스큐)면 음수가 나올 수 있다 — 폐사율은 정의상 ≥0이므로
+        # 0으로 floor(불가능값 노출 방지, QA 보고서리뷰 #3). 정확지표는 코호트 일관한 pwmr_a 사용.
         pwmr_b = (
-            round((avg_tb - avg_weaned) / avg_tb * 100, 1)
+            round(max(0.0, avg_tb - avg_weaned) / avg_tb * 100, 1)
             if avg_tb and avg_weaned is not None and avg_tb > 0
             else None
         )
