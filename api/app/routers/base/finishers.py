@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.ops import FinisherGroup
 from app.schemas.finisher import (
     FinisherGroupCreate,
@@ -159,6 +159,13 @@ async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm:
         raise NotFoundError(f"Finisher group {group_id} not found")
     for k, v in body.model_dump(exclude_unset=True).items():
         setattr(group, k, v)
+    # 두수보존: 출하완료 그룹의 입식두수를 이미 출하한 두수 미만으로 낮추면 음수 폐사율·음수 재고
+    # → 차단(ship 경로 validate_finisher_event_count와 동일 불변식, PATCH 미러 누락 QA 비육리뷰).
+    if group.head_count_out is not None and group.head_count_out > group.head_count_in:
+        raise ValidationError(
+            f"head_count_in ({group.head_count_in}) cannot be less than already-shipped "
+            f"head_count_out ({group.head_count_out})"
+        )
     await db.commit()
     await db.refresh(group)
     return FinisherGroupResponse.model_validate(group)
