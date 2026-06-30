@@ -387,7 +387,9 @@ async def get_daily_report(db: AsyncSession, farm_id: UUID, day: date) -> dict:
     )).one()
     removals = await db.scalar(
         select(func.count()).select_from(Removal)
-        .where(Removal.farm_id == farm_id, Removal.removal_date == day)
+        # deleted_at IS NULL — 같은 파일 종합일보(:578)·도태보고(:692)와 일관(QA 보고서리뷰 #1 방어).
+        .where(Removal.farm_id == farm_id, Removal.removal_date == day,
+               Removal.deleted_at.is_(None))
     )
     herd_rows = (await db.execute(
         select(Sow.status, func.count()).where(Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
