@@ -30,6 +30,11 @@ class HealthEvent(Base):
     treatment: Mapped[str | None] = mapped_column(String(200))
     drug_code: Mapped[str | None] = mapped_column(String(50))
     dose_ml: Mapped[float | None] = mapped_column(Numeric(8, 2))
+    # QA #5 (MIGRATION-PENDING a1c3e5b7d9f2): sync가 notes에 보존하던 백신/약물 정식 컬럼화.
+    # dose_mg는 질량(mg)으로 dose_ml(부피)과 단위 불호환 → 별도 컬럼.
+    vaccine_code: Mapped[str | None] = mapped_column(String(50))
+    active_substance: Mapped[str | None] = mapped_column(String(100))
+    dose_mg: Mapped[float | None] = mapped_column(Numeric(8, 2))
     withdrawal_days: Mapped[int | None] = mapped_column(Integer)
     head_count: Mapped[int | None] = mapped_column(Integer)
     notes: Mapped[str | None] = mapped_column(Text)

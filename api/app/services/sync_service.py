@@ -675,19 +675,15 @@ async def _process_health_event(
     if not dry_run:
         # QA #9: SyncHealthEvent(vaccine_code/active_substance/dose_mg)를 HealthEvent 모델(해당 컬럼 부재)에
         # 직접 전달 + event_type(NOT NULL) 누락 → INTERNAL_ERROR(모든 건강기록 실패)였음.
-        # 모델 유효 필드로만 매핑: event_type 유도(DISEASE/OBSERVATION), 백신·약물·용량은 notes에 보존(무손실).
-        # 정식 컬럼화(vaccine_code 등)는 마이그레이션 필요 → ESCALATE(아침 사람결정, QA_FINDINGS #9).
+        # QA #5 (MIGRATION-PENDING a1c3e5b7d9f2): 백신/약물/용량을 정식 컬럼에 매핑(이전엔 notes 보존).
+        # event_type(NOT NULL) 유도. 마이그레이션 적용 후 활성화 — DB에 컬럼 있어야 동작.
         event_type = "DISEASE" if item.disease_code else "OBSERVATION"
-        _extra = [b for b in (
-            f"vaccine_code={item.vaccine_code}" if item.vaccine_code else None,
-            f"active_substance={item.active_substance}" if item.active_substance else None,
-            f"dose_mg={item.dose_mg}" if item.dose_mg is not None else None,
-        ) if b]
-        _notes = "; ".join(([item.notes] if item.notes else []) + _extra) or None
         event = HealthEvent(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
             event_date=event_date, event_type=event_type,
-            disease_code=item.disease_code, severity=item.severity, notes=_notes,
+            disease_code=item.disease_code, severity=item.severity, notes=item.notes,
+            vaccine_code=item.vaccine_code, active_substance=item.active_substance,
+            dose_mg=item.dose_mg,
         )
         db.add(event)
         db.add(_audit(farm_id, "health_event", item.id, "CREATE", item.model_dump(mode="json")))

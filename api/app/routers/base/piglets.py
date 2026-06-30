@@ -209,7 +209,9 @@ async def list_piglet_transfers(
     sow_id: UUID | None = Query(None, description="특정 모돈 필터"),
     limit: int = Query(50, ge=1, le=200),
 ):
-    q = select(PigletTransfer).where(PigletTransfer.farm_id == farm.id)
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): soft-delete된 transfer 제외(캐스케이드 후 dangling 방지).
+    q = select(PigletTransfer).where(
+        PigletTransfer.farm_id == farm.id, PigletTransfer.deleted_at.is_(None))
     if sow_id:
         q = q.where(
             (PigletTransfer.source_sow_id == sow_id) |

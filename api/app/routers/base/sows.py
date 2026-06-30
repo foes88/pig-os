@@ -16,7 +16,7 @@ from app.db.models.events import (
 )
 from app.db.models.health import HealthEvent, Removal
 from app.db.models.platform import AuditLog
-from app.db.models.sow import Sow
+from app.db.models.sow import PigletTransfer, Sow
 from app.schemas.common import PagedResponse, PageMeta
 from app.schemas.sow import (
     RemovalResponse,
@@ -262,4 +262,11 @@ async def delete_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
             .where(Model.sow_id == sow_id, Model.deleted_at.is_(None))
             .values(deleted_at=now)
         )
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): PigletTransfer는 source/dest_sow_id 참조 → 별도 캐스케이드.
+    await db.execute(
+        update(PigletTransfer)
+        .where((PigletTransfer.source_sow_id == sow_id) | (PigletTransfer.dest_sow_id == sow_id),
+               PigletTransfer.deleted_at.is_(None))
+        .values(deleted_at=now)
+    )
     await db.commit()

@@ -30,7 +30,7 @@ from app.db.models.events import (
 from app.db.models.health import Removal
 from app.db.models.master import MedicationCatalog
 from app.db.models.platform import AuditLog
-from app.db.models.sow import Boar, BreedingCycle, PigletGroup, Sow
+from app.db.models.sow import Boar, BreedingCycle, PigletGroup, PigletTransfer, Sow
 from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
@@ -977,6 +977,13 @@ async def delete_farrowing(db, farm_id, user_id, farrowing_id) -> None:
     await db.execute(
         update(PigletEvent)
         .where(PigletEvent.farrowing_id == f.id, PigletEvent.deleted_at.is_(None))
+        .values(deleted_at=datetime.now(UTC))
+    )
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): 분만 참조 PigletTransfer도 캐스케이드.
+    await db.execute(
+        update(PigletTransfer)
+        .where((PigletTransfer.source_farrowing_id == f.id) | (PigletTransfer.dest_farrowing_id == f.id),
+               PigletTransfer.deleted_at.is_(None))
         .values(deleted_at=datetime.now(UTC))
     )
     sow = await _get_active_sow(db, farm_id, f.sow_id)
