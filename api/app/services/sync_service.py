@@ -58,6 +58,10 @@ from app.schemas.sync import (
 )
 from app.services.event_service import _calc_piglet_adjustments, apply_terminal_reproductive
 from app.validators.base import ValidationError
+from app.validators.date_rules import (
+    validate_farrowing_after_mating,
+    validate_weaning_after_farrowing,
+)
 from app.validators.farrowing import validate_farrowing
 
 _FULL_SYNC_THRESHOLD_DAYS = 30
@@ -347,6 +351,14 @@ async def _process_farrowing(
                 id=item.id, entity="farrowing", reason="MATING_NOT_FOUND",
                 detail={"sow_id": str(item.sow_id), "message": "No mating to attach farrowing to"},
             ), None
+        # INV4: 분만일 > 교배일 (REST record_farrowing 동일). sync CREATE 누락분(QA #10) — 타임라인 역전 차단.
+        try:
+            validate_farrowing_after_mating(farrowing_date=event_date, mating_date=mating.mating_date)
+        except ValidationError as e:
+            return None, SyncRejected(
+                id=item.id, entity="farrowing", reason="VALIDATION_FAILED",
+                detail={"field": "farrowing_date", "message": e.detail},
+            ), None
         # 모델 컬럼명: stillborn / mummified / farrowing_ease (sync 입력은 born_dead / mummies / farrowing_type).
         farrowing = Farrowing(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id, mating_id=mating.id,
@@ -438,6 +450,14 @@ async def _process_weaning(
             return None, SyncRejected(
                 id=item.id, entity="weaning", reason="NO_ACTIVE_FARROWING",
                 detail={"sow_id": str(item.sow_id), "message": "No farrowing to attach weaning to"},
+            ), None
+        # INV4: 이유일 > 분만일 (REST record_weaning 동일). sync CREATE 누락분(QA #11) — 타임라인 역전 차단.
+        try:
+            validate_weaning_after_farrowing(weaning_date=event_date, farrowing_date=farrowing.farrowing_date)
+        except ValidationError as e:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={"field": "weaning_date", "message": e.detail},
             ), None
         # B4: 이유두수 ≤ 잔여 유효복당 (born_alive + 양자전입 − 양자전출 − 폐사 − 기존이유합).
         # 직접 REST(event_service)와 동일 규칙. 처리순서 재정렬 덕에 같은 배치 양자/폐사가 먼저
