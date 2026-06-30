@@ -154,7 +154,15 @@ async def update_sow(sow_id: UUID, body: SowUpdate, farm: FarmDep, db: DbDep):
     )
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
-    for k, v in body.model_dump(exclude_none=True).items():
+    updated = body.model_dump(exclude_none=True)
+    # ear_tag 변경 시 유니크 재검증(create_sow와 동일) — 미검증 시 활성 중복이표 또는 500 누설(QA 모돈 update 패리티).
+    if "ear_tag" in updated and updated["ear_tag"] != sow.ear_tag:
+        dup = await db.scalar(select(Sow).where(
+            Sow.farm_id == farm.id, Sow.ear_tag == updated["ear_tag"],
+            Sow.deleted_at.is_(None), Sow.id != sow.id))
+        if dup:
+            raise ValidationError(f"ear_tag '{updated['ear_tag']}' already exists in this farm")
+    for k, v in updated.items():
         setattr(sow, k, v)
     await db.commit()
     await db.refresh(sow)
