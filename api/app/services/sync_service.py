@@ -173,6 +173,13 @@ async def _process_mating(
                 detail={"field": "boar_id", "value": str(item.boar_id),
                         "message": "boar_id is not a valid boar in this farm"},
             ), None
+        # QA #13: REST record_mating은 boar.status=='ACTIVE'만 허용(도태/판매 boar 교배 금지). sync 누락분.
+        if boar.status != "ACTIVE":
+            return None, SyncRejected(
+                id=item.id, entity="mating", reason="VALIDATION_FAILED",
+                detail={"field": "boar_id", "value": str(item.boar_id),
+                        "message": f"Boar is '{boar.status}' and cannot be used for mating"},
+            ), None
 
     # 5. Sow status check — valid states for mating (SCREEN_MENU_SPEC 상태 정의)
     valid_for_mating = ("GILT", "OPEN", "ACCIDENT")
