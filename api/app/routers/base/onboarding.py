@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.schemas.auth import OnboardingCompleteRequest, OnboardingCompleteResponse
 from app.schemas.farm import FarmConfigSet, FarmCreate, FarmResponse, OnboardingStatus
 from app.services import auth_service, farm_service
@@ -40,7 +40,8 @@ async def create_farm(body: FarmCreate, db: DbDep, current_user: CurrentUser):
     return FarmResponse.model_validate(farm)
 
 
-@router.post("/farm/{farm_id}/config", response_model=dict)
+@router.post("/farm/{farm_id}/config", response_model=dict,
+             dependencies=[require_farm_role("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")])
 async def set_farm_config(
     farm_id: UUID,
     body: FarmConfigSet,

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError
 from app.db.models.events import Farrowing, PigletEvent
-from app.db.models.sow import PigletGroup, PigletTransfer
+from app.db.models.sow import PigletGroup, PigletTransfer, Sow
 from app.validators.cross_fostering import (
     validate_cross_foster_distinct,
     validate_cross_fostering,
@@ -157,6 +157,12 @@ async def create_piglet_transfer(
     # 직접 piglet_events 경로엔 self-check가 있었으나 이 transfers 엔드포인트엔 누락이었음.
     validate_cross_foster_distinct(body.source_sow_id, body.dest_sow_id)
     validate_cross_fostering(transfer_count=body.piglet_count)
+    # 멀티테넌트 무결성(QA 보안리뷰 M1): source/dest 모돈이 이 농장 소속 활성 모돈인지 검증.
+    # 정식 record_piglet_event 경로는 검증하나 이 transfers 경로는 누락 — 타 농장 sow_id 참조 행 방지.
+    for label, sid in (("source_sow_id", body.source_sow_id), ("dest_sow_id", body.dest_sow_id)):
+        if not await db.scalar(select(Sow.id).where(
+                Sow.id == sid, Sow.farm_id == farm.id, Sow.deleted_at.is_(None))):
+            raise NotFoundError(f"{label} {sid} not found in this farm")
     transfer = PigletTransfer(
         farm_id=farm.id,
         created_by=current_user.id,
