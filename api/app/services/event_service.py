@@ -14,7 +14,7 @@ PigPlan 로직 기반 핵심 규칙:
 from datetime import UTC, date, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, PeriodLockedError, ValidationError
@@ -964,6 +964,12 @@ async def delete_farrowing(db, farm_id, user_id, farrowing_id) -> None:
             Weaning.farrowing_id == f.id, Weaning.deleted_at.is_(None))):
         raise ConflictError("Cannot delete a farrowing that already has a weaning")
     f.deleted_at = datetime.now(UTC)
+    # 분만에 매달린 piglet_event(양자/폐사) 고아 방지 — 함께 soft-delete(QA H2, delete_sow 캐스케이드와 일관).
+    await db.execute(
+        update(PigletEvent)
+        .where(PigletEvent.farrowing_id == f.id, PigletEvent.deleted_at.is_(None))
+        .values(deleted_at=datetime.now(UTC))
+    )
     sow = await _get_active_sow(db, farm_id, f.sow_id)
     sow.status = rollback_status_on_delete("farrowing")
     sow.parity = max(0, sow.parity - 1)  # undo the increment from record_farrowing
