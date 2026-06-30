@@ -854,6 +854,13 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
             Mating.deleted_at.is_(None), Mating.id != m.id))
         if dup:
             raise ConflictError("A mating is already recorded for this sow on this date")
+    # 수정 시에도 모돈 생존기간(입사~퇴출) 재검증(record_mating과 동일) — 입사 이전 교배 차단(QA M3).
+    if "mating_date" in data and data["mating_date"]:
+        _s = await _get_active_sow(db, farm_id, m.sow_id)
+        validate_event_within_sow_lifespan(
+            event_date=m.mating_date, entry_date=_as_date(_s.entry_date),
+            exit_date=_as_date(_s.exit_date), event_name="Mating",
+        )
     # audit new_value는 JSONB — date 객체 직렬화 불가. mode="json"으로 ISO 문자열화(날짜수정 500 근인).
     await _audit(db, user_id, farm_id, "UPDATE", "matings", m.id, body.model_dump(mode="json", exclude_unset=True))
     await db.commit(); await db.refresh(m)
@@ -923,6 +930,13 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
                 raise ValidationError(
                     f"Gestation period {_gest} days is outside {GESTATION_MIN_DAYS}~{GESTATION_MAX_DAYS} range"
                 )
+    # 수정 시에도 모돈 생존기간 재검증(record_farrowing과 동일) — 입사前/퇴출後 분만 차단(QA M3).
+    if "farrowing_date" in data:
+        _sf = await _get_active_sow(db, farm_id, f.sow_id)
+        validate_event_within_sow_lifespan(
+            event_date=f.farrowing_date, entry_date=_as_date(_sf.entry_date),
+            exit_date=_as_date(_sf.exit_date), event_name="Farrowing",
+        )
     # 견고화: 실산 축소가 기존 이유두수 합/양자 정합성을 깨면 차단(두수 꼬임 방지)
     if "born_alive" in data:
         fi, fo, deaths = await _calc_piglet_adjustments(db, f.id)
@@ -994,6 +1008,12 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
                 )
             await _check_wean_compliance(db, farm_id, _nursing)
             w.weaning_age_days = _nursing
+            # 수정 시에도 모돈 생존기간 재검증(record_weaning과 동일) — 입사前/퇴출後 이유 차단(QA M3).
+            _sw = await _get_active_sow(db, farm_id, w.sow_id)
+            validate_event_within_sow_lifespan(
+                event_date=w.weaning_date, entry_date=_as_date(_sw.entry_date),
+                exit_date=_as_date(_sw.exit_date), event_name="Weaning",
+            )
             foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
             effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
             # 견고화: 부분이유 형제 합계까지 고려(이 이유 + 다른 이유들 ≤ 유효복당)
