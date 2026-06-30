@@ -645,6 +645,15 @@ async def record_pregnancy_check(
 
     # 음성 = 공태(EMPTY) → ACCIDENT 전이 + 진행 사이클 FAILED (재교배 대기)
     if req.result == "NEGATIVE":
+        # 공태 ReproductiveEvent(EMPTY)도 적재 — 직접 EMPTY 기록 경로와 데이터모델 일치(QA 알림리뷰 H-1).
+        # 미적재 시 alert_service의 last_rts/consecutive_rts(ReproductiveEvent만 조회)가 못 찾아
+        # 재교배 과기한 알림·반복RTS 도태권고가 영구 누락된다.
+        db.add(ReproductiveEvent(
+            farm_id=farm_id, sow_id=req.sow_id, mating_id=req.mating_id,
+            event_date=req.check_date, event_type="EMPTY",
+            notes="auto: pregnancy check NEGATIVE", created_by=user_id,
+        ))
+        await db.flush()
         await apply_terminal_reproductive(db, sow, "EMPTY", req.check_date, farm_id)
 
     await _audit(db, user_id, farm_id, "CREATE", "pregnancy_checks", event.id, req.model_dump(mode="json"))

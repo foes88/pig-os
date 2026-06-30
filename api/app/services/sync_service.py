@@ -628,6 +628,14 @@ async def _process_pregnancy_check(
         db.add(_audit(farm_id, "pregnancy_check", item.id, "CREATE", item.model_dump(mode="json")))
         # 음성(NEGATIVE)=공태(EMPTY) → ACCIDENT 전이 + 사이클 FAILED(재교배 대기). REST와 동일 헬퍼.
         if item.result == "NEGATIVE":
+            # 공태 ReproductiveEvent(EMPTY)도 적재 — REST record_pregnancy_check와 동일(QA 알림리뷰 H-1).
+            # 미적재 시 alert_service last_rts/consecutive_rts가 못 찾아 재교배 과기한·반복RTS 도태 알림 누락.
+            db.add(ReproductiveEvent(
+                farm_id=farm_id, sow_id=item.sow_id, mating_id=item.mating_id,
+                event_date=check_date, event_type="EMPTY",
+                notes="auto: pregnancy check NEGATIVE",
+            ))
+            await db.flush()
             await apply_terminal_reproductive(db, sow, "EMPTY", check_date, farm_id)
 
     return SyncAccepted(id=item.id, entity="pregnancy_check", action="created"), None, None
