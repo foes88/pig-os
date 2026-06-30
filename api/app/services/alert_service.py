@@ -14,15 +14,28 @@ falling back to PigPlan defaults.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import date, datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.config import FarmConfig
 from app.db.models.events import Farrowing, Mating, ReproductiveEvent, Weaning
+from app.db.models.platform import Farm
 from app.db.models.sow import Sow
+
+
+async def _farm_today(db: AsyncSession, farm_id: UUID) -> date:
+    """농장 타임존 기준 '오늘'. UTC 서버 날짜를 그대로 쓰면 비-UTC 농장이 날짜 경계
+    (예: KST 00:00–09:00)에서 하루 어긋나 days-overdue가 1일 과소계산됨(M5와 동일 클래스)."""
+    tz = await db.scalar(select(Farm.timezone).where(Farm.id == farm_id))
+    try:
+        return datetime.now(ZoneInfo(tz or "UTC")).date()
+    except Exception:  # noqa: BLE001 — 알 수 없는 tz는 UTC 폴백
+        return datetime.now(ZoneInfo("UTC")).date()
+
 
 # Reproductive events that count as a "return to service" (non-productive).
 RTS_EVENT_TYPES = ("RETURN_TO_ESTRUS", "ABORTION", "EMPTY", "INFERTILE")
@@ -170,7 +183,7 @@ async def get_overdue_sows(
     db: AsyncSession, farm_id: UUID, today: date | None = None
 ) -> list[dict]:
     th = await _load_thresholds(db, farm_id)
-    today = today or datetime.now(UTC).date()
+    today = today or await _farm_today(db, farm_id)
 
     sows = list(
         await db.scalars(
@@ -239,7 +252,7 @@ async def get_overdue_sows(
 
 async def get_cull_candidates(db: AsyncSession, farm_id: UUID, today: date | None = None) -> list[dict]:
     th = await _load_thresholds(db, farm_id)
-    today = today or datetime.now(UTC).date()
+    today = today or await _farm_today(db, farm_id)
 
     sows = list(
         await db.scalars(

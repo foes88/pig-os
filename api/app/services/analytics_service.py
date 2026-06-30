@@ -45,6 +45,7 @@ async def prrs_by_genetics(db: AsyncSession, farm_id: UUID) -> dict:
         .where(
             HealthEvent.farm_id == farm_id,
             HealthEvent.deleted_at.is_(None),
+            Sow.deleted_at.is_(None),  # 분모(sow_rows)와 동일하게 소프트삭제 모돈 제외 → 발생률 >100% 방지
             HealthEvent.disease_code.ilike(_PRRS_PREFIX),
         )
         .group_by(Sow.breed, Sow.breed_company, Sow.genetics_id)
