@@ -56,7 +56,11 @@ from app.schemas.sync import (
     SyncResponse,
     SyncWeaning,
 )
-from app.services.event_service import _calc_piglet_adjustments, apply_terminal_reproductive
+from app.services.event_service import (
+    MAX_NURSING_COUNT,
+    _calc_piglet_adjustments,
+    apply_terminal_reproductive,
+)
 from app.validators.base import ValidationError
 from app.validators.date_rules import (
     validate_farrowing_after_mating,
@@ -747,6 +751,20 @@ async def _process_piglet_event(
                         id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
                         detail={"field": "piglet_count",
                                 "message": f"{item.event_type} ({item.piglet_count}) exceeds nursing count ({nursing})",
+                                "value": item.piglet_count},
+                    ), None
+        # QA #12: FOSTER_IN 과혼잡 — 양자전입 후 포유두수 ≤ MAX_NURSING(REST record_piglet_event 동일).
+        # sync 누락 시 한 모돈 60+마리 포유 수락(O5 재고 정합 위반). born_alive+fi+count-fo-dd.
+        elif item.event_type == "FOSTER_IN":
+            far = await db.get(Farrowing, farrowing_id)
+            if far is not None:
+                fi, fo, dd = await _calc_piglet_adjustments(db, farrowing_id)
+                nursing_after = far.born_alive + fi + item.piglet_count - fo - dd
+                if nursing_after > MAX_NURSING_COUNT:
+                    return None, SyncRejected(
+                        id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+                        detail={"field": "piglet_count",
+                                "message": f"FOSTER_IN → nursing {nursing_after} exceeds max {MAX_NURSING_COUNT}",
                                 "value": item.piglet_count},
                     ), None
 
