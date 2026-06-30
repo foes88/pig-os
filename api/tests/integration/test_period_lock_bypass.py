@@ -145,3 +145,18 @@ async def test_update_weaning_move_into_locked_blocked(
             db, test_farm.id, test_user.id, w.id,
             WeaningUpdate(weaning_date=date(2026, 3, 1)))
     assert ei.value.status_code == 423
+
+
+# ── ④ 자돈 그룹 — 코드리뷰 #4 (piglets 라우터 잠금 누락) ─────────────
+async def test_piglet_group_create_in_locked_period_blocked(
+    client: AsyncClient, db: AsyncSession, test_org: Organization, test_farm: Farm,
+    test_user: User,
+):
+    await _lock(db, test_farm, test_user, y=2026, m=3)
+    sa = await _super(db, test_org)
+    await db.flush()
+    r = await client.post(
+        f"/api/v1/farms/{test_farm.id}/piglets", headers=_h(sa),
+        json={"group_code": f"PG-{uuid.uuid4().hex[:5]}", "weaning_date": "2026-03-15",
+              "head_count_in": 20})
+    assert r.status_code == 423, r.text
