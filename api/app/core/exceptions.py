@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError
 
 
 class PigOSError(Exception):
@@ -58,3 +59,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         if isinstance(exc, AddonNotSubscribedError):
             body["addon_code"] = exc.addon_code
         return JSONResponse(status_code=exc.status_code, content=body)
+
+    @app.exception_handler(IntegrityError)
+    async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+        # DB 제약 위반(unique/FK/NOT NULL) backstop — 앱레벨 선검사 누락·동시성 TOCTOU 경합 시
+        # 500(내부에러 노출) 대신 409 CONFLICT로 일관 응답(QA 온보딩 H2). 세션은 get_db 종료 시 롤백.
+        return JSONResponse(
+            status_code=409,
+            content={"code": "CONFLICT", "detail": "Resource conflict or constraint violation"},
+        )
