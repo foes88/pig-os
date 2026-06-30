@@ -549,12 +549,18 @@ async def get_comprehensive_daily_report(db: AsyncSession, farm_id: UUID, day: d
         f = (await db.execute(
             select(func.count(), func.coalesce(func.sum(Farrowing.total_born), 0),
                    func.coalesce(func.sum(Farrowing.born_alive), 0), func.coalesce(func.sum(Farrowing.stillborn), 0),
-                   func.coalesce(func.sum(Farrowing.mummified), 0), func.avg(Farrowing.avg_birth_weight_kg))
+                   func.coalesce(func.sum(Farrowing.mummified), 0),
+                   # 두수 가중평균 SUM(체중×생존)/SUM(생존) — 복크기 다를 때 두당 출생체중 정확(QA B). NULL복 제외.
+                   func.sum(Farrowing.avg_birth_weight_kg * Farrowing.born_alive) / func.nullif(
+                       func.sum(case((Farrowing.avg_birth_weight_kg.isnot(None), Farrowing.born_alive), else_=0)), 0))
             .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None), *_rng(Farrowing.farrowing_date, monthly))
         )).one()
         w = (await db.execute(
             select(func.count(), func.coalesce(func.sum(Weaning.weaned_count), 0),
-                   func.avg(Weaning.avg_weaning_weight_kg), func.avg(Weaning.weaning_age_days))
+                   # 두수 가중평균 SUM(체중×이유두수)/SUM(이유두수) — 두당 이유체중 정확(QA B). NULL복 제외.
+                   func.sum(Weaning.avg_weaning_weight_kg * Weaning.weaned_count) / func.nullif(
+                       func.sum(case((Weaning.avg_weaning_weight_kg.isnot(None), Weaning.weaned_count), else_=0)), 0),
+                   func.avg(Weaning.weaning_age_days))
             .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None), *_rng(Weaning.weaning_date, monthly))
         )).one()
         pd = (await db.execute(

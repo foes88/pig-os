@@ -55,27 +55,30 @@ async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict
 
 
 async def calculate_psy(db: AsyncSession, farm_id: UUID, year: int) -> PsyDetail | None:
-    """Annual PSY from v_farm_psy DB view."""
-    row = await db.execute(
-        text(
-            """
-            SELECT avg_sow_count, total_weaned, psy
-            FROM v_farm_psy
-            WHERE farm_id = :farm_id
-              AND EXTRACT(YEAR FROM year_start) = :year
-            """
-        ),
-        {"farm_id": str(farm_id), "year": year},
-    )
-    result = row.fetchone()
-    if not result:
+    """연간 PSY — 상시모돈두수(avg_inventory_sow) 분모 (QA A: SSOT 확정).
+
+    기존 v_farm_psy 뷰는 분모가 '그해 이유한 모돈 distinct수'라 비활동·미이유 모돈을 제외해 PSY 과대.
+    상시 모돈 인벤토리(현 비삭제 모돈 두수) / 그해 총이유두수로 교정.
+    (avg_sow_count 필드명은 스키마 호환 유지 — 값은 상시 인벤토리.)
+    """
+    from app.db.models.events import Weaning
+    inv = await db.scalar(
+        select(func.count()).select_from(Sow).where(
+            Sow.farm_id == farm_id, Sow.deleted_at.is_(None))
+    ) or 0
+    if not inv:
         return None
+    weaned = await db.scalar(
+        select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+            Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None),
+            func.extract("year", Weaning.weaning_date) == year)
+    ) or 0
     return PsyDetail(
         farm_id=farm_id,
         year=year,
-        avg_sow_count=result.avg_sow_count or 0,
-        total_weaned=result.total_weaned or 0,
-        psy=float(result.psy) if result.psy else None,
+        avg_sow_count=int(inv),
+        total_weaned=int(weaned),
+        psy=round(float(weaned) / inv, 1),
         benchmark_avg=None,
         target_value=None,
     )

@@ -60,15 +60,17 @@ ORG_TREE_CTE = """
 def effective_system_role(user: User) -> str:
     """Return the explicit system role, or map legacy roles safely.
 
-    Unrecognized values fail-safe to FARM_OWNER; always returns from _KNOWN_ROLES.
+    Unrecognized values fail-safe to VIEWER(읽기전용) — 권한 5개(OWNER/MANAGER/WORKER/VET/VIEWER)로
+    닫혀있어 미인식 값은 손상/예기치못한 값이므로 fail-open(FARM_OWNER write)이 아닌 fail-closed로(QA 보안 L1).
+    always returns from _KNOWN_ROLES.
     """
     system_role = (user.system_role or "").strip()
     if system_role:
-        return system_role if system_role in _KNOWN_ROLES else "FARM_OWNER"
+        return system_role if system_role in _KNOWN_ROLES else "VIEWER"
 
     legacy_role = (user.role or "").strip()
-    mapped = LEGACY_SYSTEM_ROLE_MAP.get(legacy_role, legacy_role or "FARM_OWNER")
-    return mapped if mapped in _KNOWN_ROLES else "FARM_OWNER"
+    mapped = LEGACY_SYSTEM_ROLE_MAP.get(legacy_role, legacy_role or "VIEWER")
+    return mapped if mapped in _KNOWN_ROLES else "VIEWER"
 
 
 async def get_accessible_org_ids(user: User, db: AsyncSession) -> set[UUID]:
