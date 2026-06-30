@@ -568,6 +568,12 @@ async def apply_terminal_reproductive(
         sow.exit_date = datetime.combine(event_date, datetime.min.time()).replace(tzinfo=UTC)
         sow.deleted_at = now
         db.add(Removal(farm_id=farm_id, sow_id=sow.id, removal_date=event_date, removal_type=ev))
+        # F5: 진행 중이던 번식 사이클을 종료(FAILED). 미종료 시 모돈이 사라져도 사이클이
+        # 영구 'MATED/FARROWED(open)'로 남아 open-cycle·번식 분석을 오염시킴(사고 분기와 동일 처리).
+        cycle = await _get_open_cycle(db, sow.id)
+        if cycle:
+            cycle.cycle_status = "FAILED"
+            cycle.ended_at = now
     elif ev in _REPRO_ACCIDENT:
         sow.status = "ACCIDENT"
         cycle = await _get_open_cycle(db, sow.id)

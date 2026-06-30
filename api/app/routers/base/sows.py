@@ -17,7 +17,7 @@ from app.schemas.sow import (
     SowResponse,
     SowUpdate,
 )
-from app.services.event_service import _ensure_period_unlocked
+from app.services.event_service import _ensure_period_unlocked, _get_open_cycle
 
 router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 
@@ -199,6 +199,13 @@ async def cull_sow(
     sow.status = body.removal_type
     sow.exit_date = now
     sow.deleted_at = now
+
+    # F5: 진행 중이던 번식 사이클 종료(FAILED). 미종료 시 모돈 제거 후에도 사이클이
+    # 영구 open으로 남아 open-cycle·번식 분석 오염(apply_terminal_reproductive와 동일).
+    open_cycle = await _get_open_cycle(db, sow.id)
+    if open_cycle:
+        open_cycle.cycle_status = "FAILED"
+        open_cycle.ended_at = now
 
     # removals ?대젰
     removal = Removal(
