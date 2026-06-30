@@ -69,7 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     if (!me) return;
     setUser({
       id: me.id, username: me.username, email: me.email ?? "", name: me.name,
-      role: me.role, farm_ids: me.farm_ids, farm_roles: me.farm_roles,
+      role: me.role, system_role: me.system_role, farm_ids: me.farm_ids, farm_roles: me.farm_roles,
     });
   }, [me, setUser]);
 

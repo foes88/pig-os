@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
-import { isPlatformAdmin } from "@/i18n/config";
 import { ADMIN_NAV } from "@/lib/admin/nav";
 
 // 운영자 어드민 셸 — SUPER_ADMIN 전용. 고객 앱 셸((app))과 분리된 자체 chrome.
@@ -36,7 +35,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   // 로그인했으나 비관리자 → 접근거부(루프 안전: redirect 안 함). 로그아웃 제공.
-  if (!isPlatformAdmin(user.role)) {
+  // 백엔드 require_super_admin과 동일 기준: system_role === SUPER_ADMIN.
+  // (role 컬럼은 pilot 승인 운영자처럼 FARM_OWNER일 수 있어 권한기준이 아님 — half-render 방지.)
+  if (user.system_role !== "SUPER_ADMIN") {
     const logout = () => {
       clearAuth();
       document.cookie = "pigos_session=; path=/; max-age=0; SameSite=Lax";

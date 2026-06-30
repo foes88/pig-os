@@ -42,6 +42,7 @@ export interface LoginResponse {
   username: string;
   email: string;
   role: UserRole;
+  system_role?: UserRole;  // 플랫폼 권한 기준(백엔드 effective_system_role) — 관리자 UI 게이팅
   farm_ids: string[];
   farm_roles?: Record<string, UserRole>;  // farm_id → 농장별 role (멀티팜 게이팅)
 }
@@ -57,6 +58,7 @@ export interface UserProfile {
   email: string;
   name: string;
   role: UserRole;
+  system_role?: UserRole;  // 플랫폼 권한 기준 — 관리자 UI 게이팅
   farm_ids: string[];
   farm_roles?: Record<string, UserRole>;  // farm_id → 농장별 role (멀티팜 게이팅)
 }
@@ -67,6 +69,7 @@ export interface MeResponse {
   username: string;
   email: string | null;
   role: UserRole;
+  system_role?: UserRole;  // 플랫폼 권한 기준 — 관리자 UI 게이팅
   org_id: string | null;
   language: string;
   farm_ids: string[];

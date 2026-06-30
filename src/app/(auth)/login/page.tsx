@@ -300,6 +300,7 @@ export default function LoginPage() {
           email: data.email,
           name: data.name,
           role: data.role,
+          system_role: data.system_role,
           farm_ids: data.farm_ids,
           farm_roles: data.farm_roles,
         },
@@ -309,7 +310,8 @@ export default function LoginPage() {
       );
       document.cookie = `pigos_session=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       // 운영자(SUPER_ADMIN)는 admin 콘솔로. 일반 사용자는 next 또는 대시보드(/).
-      const dest = data.role === "SUPER_ADMIN" ? "/admin" : (searchParams.get("next") ?? "/");
+      // 백엔드 권한기준(system_role)으로 판정 — role 컬럼은 FARM_OWNER여도 system_role이 운영자일 수 있음.
+      const dest = data.system_role === "SUPER_ADMIN" ? "/admin" : (searchParams.get("next") ?? "/");
       router.replace(dest);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;

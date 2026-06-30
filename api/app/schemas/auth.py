@@ -32,6 +32,7 @@ class LoginResponse(TokenResponse):
     username: str
     email: str
     role: str
+    system_role: str = "FARM_OWNER"  # 플랫폼 권한 기준(백엔드 effective_system_role) — 관리자 UI 게이팅용
     farm_ids: list[str]
     farm_roles: dict[str, str] = {}  # farm_id → 농장별 유효 role (멀티팜 게이팅용)
 
@@ -68,6 +69,7 @@ class MeResponse(BaseModel):
     username: str
     email: str | None
     role: str
+    system_role: str = "FARM_OWNER"  # 플랫폼 권한 기준(백엔드 effective_system_role) — 관리자 UI 게이팅용
     org_id: str | None
     language: str
     farm_ids: list[str]
