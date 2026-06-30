@@ -11,10 +11,17 @@
   - `4900815` F1 sync 멱등성 by-id 교차농장 PK → ID_CONFLICT 거부(무성 데이터 손실·PK충돌 차단).
   - `ddc378a` F2 리프레시 토큰 재사용 패밀리 회수(OWASP) + F3 로그인 타이밍 평준화(더미 bcrypt).
   - `08e7732` 양자(cross-foster) 출처/대상 모돈 농장 소속 검증.
-- **게이트 GREEN**: 백엔드 회귀 **770 pass**(py3.14 정식 로컬DB), ruff clean. 프론트 **66 pass**(Node 22.11.0).
-- 적대적 헌터 3R1(KPI/잠금·인증/크로스테넌트·프론트) 결론: **크로스테넌트 누수 P0/P1 0건**(격리 견고), 발견 결함은 위 8커밋으로 처리.
-- 진행 중: R2 헌트 3개(번식 비즈니스로직/상태전이·notifications/analytics/chat·관리자콘솔) → 결과 트리아지 예정.
-- 보류(정보성·제품판단): 마스터데이터 도메인검증(음수 등 P3), KPI 스냅샷 잡 미가동 latent(P3), period-lock create/unlock API 부재(feature-gap).
+- **R2 라운드 추가 커밋 8건**(헌트 3개: KPI/잠금·번식로직·관리자콘솔):
+  - `386e010` alert days-overdue 농장 tz 적용(UTC 1일 과소계산) + analytics PRRS 소프트삭제 모돈 분자 제외(>100% 방지).
+  - `57dd8a8` cull last_weaned 동일날짜 tie-break 결정성.
+  - `0243b36` KPI 알림 승격 시 옛 낮은 심각도 미읽음 supersede(중복 unread 방지).
+  - `aa49ca8` **관리자 보안 4종**: pilot 승인 SUPER_ADMIN 발급 차단(권한상승) + 마지막/자기 super_admin 비활성화 락아웃 차단 + 승인 감사에 권한기록 + orgs UUID 500→422.
+  - `963cc8d` 프론트 admin 게이트를 백엔드 require_super_admin 기준(system_role)과 일치(half-render 차단).
+  - `e1034fc` **F5** 도폐사/종료 시 진행 BreedingCycle FAILED 종료(고아 사이클 방지, cull_sow+apply_terminal 2경로).
+  - `e933a08` **F1-F4** 오프라인 sync에 REST 번식 검증 패리티(임신기간 100~130/이유 날짜순서/포유 10~60/국가 이유일령/사이클당 교배상한5/재교배>이유일).
+- **게이트 GREEN**: 백엔드 회귀 **790 pass**(py3.14 정식 로컬DB), ruff clean. 프론트 **66 pass**(Node 22.11.0).
+- 2라운드(헌터 6개) 결론: **크로스테넌트 누수 P0/P1 0건**(격리 견고). 최대 위험군은 ① 월마감 잠금 우회 ② 관리자 권한상승/락아웃 ③ sync 검증 누락 — 모두 처리.
+- 보류(정보성·제품판단, P3/feature-gap): 마스터데이터 도메인검증(음수 등), 일부 alert 임계값 비설정, KPI 스냅샷 잡 미가동 latent, period-lock create/unlock API 부재, rule_config/master 감사 entity_id(문자열PK), 마스터데이터 UI 일부 컬럼, LLM 쿼터 TOCTOU, parity vs cycle.parity divergence.
 - 제약 유지: push/배포는 사람 명시 승인 시만(현재 push=0), 수치 임의생성 0, 로컬 docker DB만.
 
 ## [현재상태 2026-06-24] — Rule Engine 40종 + D1~D4 + 배포준비 + UAT (origin/main 푸시 완료)
