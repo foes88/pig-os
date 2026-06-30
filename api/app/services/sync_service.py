@@ -912,11 +912,16 @@ async def _pull_server_changes(
             out[f] = str(v) if isinstance(v, UUID) else v
         return out
 
+    # updated_at 추가(#7)로 소프트삭제도 since 윈도우에 잡힘 → 전 이벤트 타입의 tombstone 전파.
+    # repro/health/piglet 누락 시 서버측 삭제가 모바일에 영구 stale로 남음(코드리뷰 #1).
     deleted = (
         [str(s.id) for s in sows if s.deleted_at and s.deleted_at >= since] +
         [str(m.id) for m in matings if m.deleted_at and m.deleted_at >= since] +
         [str(f.id) for f in farrowings if f.deleted_at and f.deleted_at >= since] +
-        [str(w.id) for w in weanings if w.deleted_at and w.deleted_at >= since]
+        [str(w.id) for w in weanings if w.deleted_at and w.deleted_at >= since] +
+        [str(r.id) for r in repro if r.deleted_at and r.deleted_at >= since] +
+        [str(h.id) for h in health if h.deleted_at and h.deleted_at >= since] +
+        [str(p.id) for p in piglet_evs if p.deleted_at and p.deleted_at >= since]
     )
 
     return ServerChanges(
