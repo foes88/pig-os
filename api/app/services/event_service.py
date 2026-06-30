@@ -915,6 +915,14 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
         _m = await db.get(Mating, f.mating_id)
         validate_farrowing_after_mating(farrowing_date=f.farrowing_date,
                                         mating_date=_m.mating_date if _m else None)
+        # 수정 시에도 임신기간 범위(record_farrowing과 동일) 재검증 — 순서만으론 166일 같은
+        # 비현실 임신기간이 통과해 KPI·코호트 오염(QA H1: 등록은 검증, 수정은 누락).
+        if _m:
+            _gest = (f.farrowing_date - _m.mating_date).days
+            if not (GESTATION_MIN_DAYS <= _gest <= GESTATION_MAX_DAYS):
+                raise ValidationError(
+                    f"Gestation period {_gest} days is outside {GESTATION_MIN_DAYS}~{GESTATION_MAX_DAYS} range"
+                )
     # 견고화: 실산 축소가 기존 이유두수 합/양자 정합성을 깨면 차단(두수 꼬임 방지)
     if "born_alive" in data:
         fi, fo, deaths = await _calc_piglet_adjustments(db, f.id)
@@ -965,6 +973,11 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
     # V7 정합성: 수정 시에도 이유두수 재검증(유효 복당두수·상한 초과 차단)
     if w.weaned_count > MAX_WEANED_COUNT:
         raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
+    # 수정 시에도 이유체중 유효범위(record_weaning과 동일) 재검증(QA H3: 등록은 검증, 수정은 누락).
+    if w.avg_weaning_weight_kg is not None and not (2.0 <= w.avg_weaning_weight_kg <= 12.0):
+        raise ValidationError(
+            f"Average weaning weight {w.avg_weaning_weight_kg}kg is outside the valid range (2~12kg)"
+        )
     if w.farrowing_id:
         farrowing = await db.get(Farrowing, w.farrowing_id)
         # 수정 시 날짜순서(INV4) 재검증 — 이유일을 분만 前으로 못 옮김(QA ws_update 발견).
@@ -972,6 +985,15 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
             validate_weaning_after_farrowing(weaning_date=w.weaning_date,
                                              farrowing_date=farrowing.farrowing_date)
         if farrowing:
+            # 수정 시에도 포유기간 범위·국가 컴플라이언스 재검증 + 파생 일령 재계산(QA H2:
+            # 등록은 검증, 수정은 누락 → 포유 61일·법정 미달 이유가 통과하던 것 차단).
+            _nursing = (w.weaning_date - farrowing.farrowing_date).days
+            if not (NURSING_MIN_DAYS <= _nursing <= NURSING_MAX_DAYS):
+                raise ValidationError(
+                    f"Nursing period {_nursing} days is outside {NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range"
+                )
+            await _check_wean_compliance(db, farm_id, _nursing)
+            w.weaning_age_days = _nursing
             foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
             effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
             # 견고화: 부분이유 형제 합계까지 고려(이 이유 + 다른 이유들 ≤ 유효복당)
