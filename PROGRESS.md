@@ -22,6 +22,9 @@
 - **게이트 GREEN**: 백엔드 회귀 **790 pass**(py3.14 정식 로컬DB), ruff clean. 프론트 **66 pass**(Node 22.11.0).
 - 2라운드(헌터 6개) 결론: **크로스테넌트 누수 P0/P1 0건**(격리 견고). 최대 위험군은 ① 월마감 잠금 우회 ② 관리자 권한상승/락아웃 ③ sync 검증 누락 — 모두 처리.
 - 보류(정보성·제품판단, P3/feature-gap): 마스터데이터 도메인검증(음수 등), 일부 alert 임계값 비설정, KPI 스냅샷 잡 미가동 latent, period-lock create/unlock API 부재, rule_config/master 감사 entity_id(문자열PK), 마스터데이터 UI 일부 컬럼, LLM 쿼터 TOCTOU, parity vs cycle.parity divergence.
+- **코드리뷰(8파인더) 후속 4커밋**: `0be833a` #1 sync deleted_ids에 repro/health/piglet 소프트삭제 전파(#7 미완성분) · `d60f97b` #4 piglets 날짜이벤트 월마감 잠금 · `bc42ffc` #2 ko 로케일 게이트 system_role 일치 · `b2b4794` #3 admin-org 15키 5로케일 실번역.
+- **최종 게이트 GREEN**: 백엔드 **792 pass**, 프론트 **66 pass**, tsc 0, ruff clean. origin/main 대비 **54커밋 ahead**(전부 미푸시).
+- 코드리뷰 잔여(사람 판단, 미수정): kpi_service FCR 사료(record_date)·증체(end_date) 윈도우 불일치(기존 latent), master_data `_check_type` 이색타입 방어, sync mating COUNT 중복(cycle.mating_count 존재), 구조 리팩터(sync 검증 인라인 복제→공유 validator, 잠금 분산→공통 enforcement, 전역 SQLAlchemyError 핸들러).
 - 제약 유지: push/배포는 사람 명시 승인 시만(현재 push=0), 수치 임의생성 0, 로컬 docker DB만.
 
 ## [현재상태 2026-06-24] — Rule Engine 40종 + D1~D4 + 배포준비 + UAT (origin/main 푸시 완료)
