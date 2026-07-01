@@ -30,3 +30,21 @@ def test_without_litter_ids_falls_back_to_per_row():
     rows = build_reproduction_rows("monthly", [], [], weanings, [], [])
     r = next(x for x in rows if x["period"] == "2026-05")
     assert r["total_weanings"] == 2 and r["avg_weaned"] == 9.0
+
+
+def test_pwmr_b_is_per_litter_not_mismatched_sets():
+    # 같은 버킷 분만 2복(tb 14,12) + 그 복들의 총 이유(11,9)
+    farrowings = [(date(2026, 5, 5), 14, 13), (date(2026, 5, 8), 12, 11)]
+    rows = build_reproduction_rows("monthly", [], farrowings, [], [], [],
+                                   farrowing_weaned=[11, 9])
+    r = next(x for x in rows if x["period"] == "2026-05")
+    # 복단위: (14-11)/14=21.43, (12-9)/12=25.0 → avg 23.2 (무관 세트 평균 아님)
+    assert r["pwmr_b"] == 23.2
+
+
+def test_pwmr_b_none_when_no_litter_weaned():
+    farrowings = [(date(2026, 5, 5), 14, 13)]
+    rows = build_reproduction_rows("monthly", [], farrowings, [], [], [],
+                                   farrowing_weaned=[None])  # 아직 이유 안 된 복
+    r = next(x for x in rows if x["period"] == "2026-05")
+    assert r["pwmr_b"] is None

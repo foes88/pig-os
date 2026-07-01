@@ -93,6 +93,7 @@ def build_reproduction_rows(
     mating_types: list[str] | None = None,            # parallel to matings (AI/NATURAL)
     stillborn: list[int] | None = None,               # parallel to farrowings
     mummified: list[int] | None = None,               # parallel to farrowings
+    farrowing_weaned: list[int | None] | None = None,  # parallel to farrowings — 그 복의 총 이유두수(#7 pwmr_b 복단위)
     fill_periods: list[str] | None = None,            # 빈 기간도 행 생성(M4, group_by="period"만)
 ) -> list[dict]:
     """기간별(period) 또는 품종별(breed) 번식성적 집계.
@@ -114,6 +115,7 @@ def build_reproduction_rows(
             key,
             {"matings": 0, "farrowings": 0, "rts": 0,
              "tb": [], "ba": [], "weaned_litters": {}, "lact": [], "deaths": 0,
+             "pwmrb": [],  # 복단위 (tb-weaned)/tb (#7)
              "sb": 0, "mum": 0, "m1": 0, "m2": 0, "m3plus": 0, "ai": 0, "nat": 0},
         )
 
@@ -141,6 +143,11 @@ def build_reproduction_rows(
             x["sb"] += stillborn[i] or 0
         if mummified and i < len(mummified):
             x["mum"] += mummified[i] or 0
+        # #7: 이 복의 총 이유두수로 복단위 손실률 — 분만/이유를 같은 복끼리 비교(무관 세트 평균 방지).
+        if farrowing_weaned and i < len(farrowing_weaned):
+            fw = farrowing_weaned[i]
+            if fw is not None and tb and tb > 0:
+                x["pwmrb"].append((tb - fw) / tb * 100)
     for i, (d, wc, lact) in enumerate(weanings):
         breed = weaning_breeds[i] if weaning_breeds and i < len(weaning_breeds) else None
         x = b(gkey(d, breed))
@@ -174,11 +181,15 @@ def build_reproduction_rows(
         ba_sum = sum(t for t in x["ba"] if t is not None)
         fr = round(x["farrowings"] / x["matings"] * 100, 1) if x["matings"] else None
         rts_rate = round(x["rts"] / x["matings"] * 100, 1) if x["matings"] else None
-        pwmr_b = (
-            round((avg_tb - avg_weaned) / avg_tb * 100, 1)
-            if avg_tb and avg_weaned is not None and avg_tb > 0
-            else None
-        )
+        # #7: 복단위 손실 데이터가 있으면 복단위 평균(분만↔이유 같은 복). 없으면(구 호출) 기존 근사식.
+        if farrowing_weaned is not None:
+            pwmr_b = round(sum(x["pwmrb"]) / len(x["pwmrb"]), 1) if x["pwmrb"] else None
+        else:
+            pwmr_b = (
+                round((avg_tb - avg_weaned) / avg_tb * 100, 1)
+                if avg_tb and avg_weaned is not None and avg_tb > 0
+                else None
+            )
         denom_a = total_weaned + x["deaths"]
         pwmr_a = round(x["deaths"] / denom_a * 100, 1) if denom_a > 0 else None
         sb_rate = round(x["sb"] / tb_sum * 100, 1) if tb_sum > 0 else None
@@ -360,11 +371,19 @@ async def get_reproduction_report(
     )).all()
     frows = (await db.execute(
         select(Farrowing.farrowing_date, Farrowing.total_born, Farrowing.born_alive,
-               Farrowing.stillborn, Farrowing.mummified, Sow.breed)
+               Farrowing.stillborn, Farrowing.mummified, Sow.breed, Farrowing.id)
         .join(Sow, Farrowing.sow_id == Sow.id)
         .where(Farrowing.farm_id == farm_id, Farrowing.deleted_at.is_(None),
                Farrowing.farrowing_date >= start, Farrowing.farrowing_date <= end)
     )).all()
+    # #7 pwmr_b 복단위: 각 분만(litter)의 총 이유두수 — 기간 무관 전량(이유가 다음 달로 넘어가도 귀속).
+    wsum_by_farrowing = (await db.execute(
+        select(Weaning.farrowing_id, func.coalesce(func.sum(Weaning.weaned_count), 0))
+        .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None),
+               Weaning.farrowing_id.in_([r[6] for r in frows]) if frows else False)
+        .group_by(Weaning.farrowing_id)
+    )).all() if frows else []
+    weaned_by_farrowing = {fid: int(s) for fid, s in wsum_by_farrowing}
     wrows = (await db.execute(
         select(Weaning.weaning_date, Weaning.weaned_count, Weaning.weaning_age_days, Sow.breed,
                Weaning.farrowing_id)
@@ -401,6 +420,7 @@ async def get_reproduction_report(
         farrowing_breeds=[r[5] for r in frows],
         stillborn=[r[3] for r in frows],
         mummified=[r[4] for r in frows],
+        farrowing_weaned=[weaned_by_farrowing.get(r[6]) for r in frows],  # #7 복단위 pwmr_b
         weaning_breeds=[r[3] for r in wrows],
         weaning_litter_ids=[str(r[4]) if r[4] is not None else None for r in wrows],  # #5 복단위 집계
         rts_breeds=[r[1] for r in rrows],
