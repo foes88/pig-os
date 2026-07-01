@@ -9,9 +9,23 @@ import pytest
 from httpx import AsyncClient
 
 from app.core.security import create_access_token
+from app.db.models.config import DefaultMetricValue
 from app.db.models.platform import User, UserFarm
 
 pytestmark = pytest.mark.asyncio
+
+
+async def _seed_metric(db, metric_code="STILLBORN_RATE", direction="above",
+                       warning=8.0, critical=12.0):
+    """프로드처럼 SYSTEM 기본행 시드 — override 방향검증(M1)이 상속할 direction 제공.
+    integration conftest는 create_all(스키마만, 시드 마이그레이션 미실행)이라 필요."""
+    db.add(DefaultMetricValue(
+        scope_type="system", scope_code="SYSTEM", metric_code=metric_code,
+        warning_threshold=warning, critical_threshold=critical,
+        alert_direction=direction, unit_code="%",
+        confidence="high", is_proxy=False, source_ref="test_seed",
+    ))
+    await db.flush()
 
 
 async def _member(db, user, farm):
@@ -41,6 +55,7 @@ async def test_worker_can_read_but_cannot_override(client: AsyncClient, db, test
 
 async def test_owner_can_override(client: AsyncClient, db, test_user, test_farm):
     # test_user 기본 system_role = FARM_OWNER
+    await _seed_metric(db)  # STILLBORN_RATE=above (warning<critical 유효)
     headers = await _member(db, test_user, test_farm)
     r = await client.patch(
         f"/api/v1/farms/{test_farm.id}/thresholds/STILLBORN_RATE",
@@ -70,6 +85,7 @@ async def test_per_farm_role_isolation(client: AsyncClient, db, test_org, test_u
 
     from app.db.models.platform import Farm
 
+    await _seed_metric(db)  # STILLBORN_RATE=above (warning<critical 유효)
     farm_b = Farm(org_id=test_org.id, farm_code=f"TEST-{_uuid.uuid4().hex[:6].upper()}",
                   name="Farm B", country="KR", timezone="Asia/Seoul")
     db.add(farm_b)
