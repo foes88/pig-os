@@ -1,11 +1,11 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.platform import AuditLog
 from app.db.models.sow import Boar
 from app.schemas.boar import BoarCreate, BoarResponse, BoarUpdate
@@ -37,6 +37,9 @@ async def create_boar(body: BoarCreate, farm: FarmDep, db: DbDep, current_user: 
     )
     if existing:
         raise ConflictError(f"Boar with ear_tag '{body.ear_tag}' already exists")
+    # 미래 입식일 거부(QA UAT) — 아직 오지 않은 날짜에 웅돈 입식 불가.
+    if body.entry_date > date.today():
+        raise ValidationError(f"entry_date {body.entry_date} cannot be in the future")
 
     boar = Boar(
         farm_id=farm.id,
