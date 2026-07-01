@@ -65,7 +65,11 @@ def create_tables():
             CREATE OR REPLACE VIEW v_sow_npd AS
             SELECT s.id AS sow_id, s.farm_id, w.id AS weaning_id, w.weaning_date,
                    m_next.mating_date AS next_mating_date,
-                   m_next.mating_date - w.weaning_date AS wei_days
+                   CASE
+                       WHEN m_next.mating_date IS NOT NULL THEN LEAST(60, m_next.mating_date - w.weaning_date)
+                       WHEN w.weaning_date <= CURRENT_DATE - 60 THEN 60
+                       ELSE NULL
+                   END AS wei_days
             FROM sows s
             JOIN weanings w ON w.sow_id = s.id AND w.deleted_at IS NULL
             LEFT JOIN LATERAL (
