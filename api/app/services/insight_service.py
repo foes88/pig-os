@@ -23,6 +23,60 @@ from app.engine.rule_engine import Severity
 from app.engine.rules.base import _severity_from_bench
 from app.schemas.insight import EventInsight
 
+# ── 알림 i18n ────────────────────────────────────────────────────────────────
+# IN_APP 알림 body는 서버가 굽는 유일한 렌더 지점(앱 배너는 클라이언트 렌더).
+# 과거 "기준" + 한국어 unit이 하드코딩돼 비한국어 사용자에게도 한국어가 샜다.
+# 수신자 user.language(en/ko/zh/es/vi/th/pt)로 연결어·단위를 현지화한다.
+# metric_code·severity는 언어중립 식별자로 유지(코드 그대로).
+_NOTIF_LANGS = ("en", "ko", "zh", "es", "vi", "th", "pt")
+
+# 연결어("임계 기준")
+_NOTIF_THRESHOLD_WORD = {
+    "en": "threshold", "ko": "기준", "zh": "阈值", "es": "umbral",
+    "vi": "ngưỡng", "th": "เกณฑ์", "pt": "limite",
+}
+
+# 중립 unit 토큰 → 언어별 표기. 기호단위(%, kg, g/day, ratio, 통화)는 통과.
+_NOTIF_UNIT = {
+    "piglets/litter": {
+        "en": "/litter", "ko": "두/복", "zh": "头/窝", "es": "/camada",
+        "vi": "/lứa", "th": "/ครอก", "pt": "/leitegada",
+    },
+    "piglets/sow/year": {
+        "en": "/sow/yr", "ko": "두/모돈/년", "zh": "头/母猪/年", "es": "/cerda/año",
+        "vi": "/nái/năm", "th": "/แม่/ปี", "pt": "/matriz/ano",
+    },
+    "days": {
+        "en": "d", "ko": "일", "zh": "天", "es": "d",
+        "vi": "ngày", "th": "วัน", "pt": "d",
+    },
+}
+
+
+def _fmt_num(v) -> str:
+    """정수는 정수로, 소수는 소수 1자리(불필요한 .0 제거)."""
+    if v is None:
+        return ""
+    return str(int(v)) if float(v).is_integer() else f"{float(v):.1f}"
+
+
+def _notif_unit(unit: str, lang: str) -> str:
+    return _NOTIF_UNIT.get(unit, {}).get(lang, unit or "")
+
+
+def _notif_texts(insight: EventInsight, lang: str) -> tuple[str, str]:
+    """(title, body) — 수신자 언어로 현지화. metric_code·severity는 코드 유지."""
+    lang = lang if lang in _NOTIF_LANGS else "en"
+    u = _notif_unit(insight.unit or "", lang)
+    tw = _NOTIF_THRESHOLD_WORD.get(lang, "threshold")
+    title = f"{insight.metric_code} {insight.severity}"
+    body = (
+        f"{insight.metric_code} {insight.severity}: "
+        f"{_fmt_num(insight.value)}{u} ({tw} {_fmt_num(insight.threshold)}{u})"
+    )
+    return title, body
+
+
 # scope 우선순위: 농장 > 지역(국가) > 시스템(글로벌). effective_metric_values()와 동일 체인.
 _SCOPE_RANK = {"farm": 0, "region": 1, "market": 2, "system": 3}
 
@@ -219,6 +273,7 @@ async def persist_insights(db: AsyncSession, farm: Farm, sow_id: UUID | None,
     """WARNING↑ insight를 농장 OWNER/MANAGER에게 IN_APP 알림으로 적재.
     멱등: 같은 (user, INSIGHT_{metric}, sow)의 미읽음 알림 있으면 skip."""
     from app.db.models.ops import Notification
+    from app.db.models.platform import User
     from app.services import notification_service
 
     serious = [i for i in insights if i.severity in ("WARNING", "CRITICAL")]
@@ -227,6 +282,12 @@ async def persist_insights(db: AsyncSession, farm: Farm, sow_id: UUID | None,
     recipients = await notification_service.farm_recipients(db, farm.id)
     if not recipients:
         return
+
+    # 수신자별 언어 — 알림 body를 각자 언어로 렌더(한국어 하드코딩 leak 제거).
+    lang_rows = await db.execute(
+        select(User.id, User.language).where(User.id.in_(recipients))
+    )
+    langs = {uid: (lang or "en") for uid, lang in lang_rows.all()}
 
     alert_types = [f"INSIGHT_{i.metric_code}" for i in serious]
     existing_rows = await db.execute(
@@ -240,15 +301,16 @@ async def persist_insights(db: AsyncSession, farm: Farm, sow_id: UUID | None,
 
     created = 0
     for uid in recipients:
+        lang = langs.get(uid, "en")
         for i in serious:
             atype = f"INSIGHT_{i.metric_code}"
             key = (uid, atype, sow_id)
             if key in existing:
                 continue
+            title, body = _notif_texts(i, lang)
             db.add(Notification(
                 farm_id=farm.id, user_id=uid, type="IN_APP",
-                title=f"{i.metric_code} {i.severity}",
-                body=f"{i.metric_code} {i.severity}: {i.value}{i.unit} (기준 {i.threshold}{i.unit})",
+                title=title, body=body,
                 alert_type=atype, severity=i.severity,
                 related_entity_type="sow", related_entity_id=sow_id,
             ))
