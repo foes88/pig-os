@@ -195,7 +195,8 @@ async def event_ledger(
             if _in_range(m.mating_date):
                 entries.append(LedgerEntry(id=str(m.id), kind="mating", event_date=m.mating_date.isoformat(),
                                            sow_id=str(m.sow_id), ear_tag=tags.get(m.sow_id),
-                                           summary=f"{m.mating_type} #{m.mating_number}"))
+                                           summary=f"{m.mating_type} #{m.mating_number}",
+                                           subtype=m.mating_type, count=m.mating_number))
     if kind in (None, "farrowing"):
         for f in await db.scalars(select(Farrowing).where(Farrowing.farm_id == farm.id, Farrowing.deleted_at.is_(None))):
             if _in_range(f.farrowing_date):
@@ -207,23 +208,26 @@ async def event_ledger(
             if _in_range(w.weaning_date):
                 entries.append(LedgerEntry(id=str(w.id), kind="weaning", event_date=w.weaning_date.isoformat(),
                                            sow_id=str(w.sow_id), ear_tag=tags.get(w.sow_id),
-                                           summary=f"weaned {w.weaned_count}"))
+                                           summary=f"weaned {w.weaned_count}", count=w.weaned_count))
     if kind in (None, "reproductive"):
         for r in await db.scalars(select(ReproductiveEvent).where(ReproductiveEvent.farm_id == farm.id, ReproductiveEvent.deleted_at.is_(None))):
             if _in_range(r.event_date):
                 entries.append(LedgerEntry(id=str(r.id), kind="reproductive", event_date=r.event_date.isoformat(),
-                                           sow_id=str(r.sow_id), ear_tag=tags.get(r.sow_id), summary=r.event_type))
+                                           sow_id=str(r.sow_id), ear_tag=tags.get(r.sow_id),
+                                           summary=r.event_type, subtype=r.event_type))
     if kind in (None, "piglet"):
         for p in await db.scalars(select(PigletEvent).where(PigletEvent.farm_id == farm.id, PigletEvent.deleted_at.is_(None))):
             if _in_range(p.event_date):
                 entries.append(LedgerEntry(id=str(p.id), kind="piglet", event_date=p.event_date.isoformat(),
                                            sow_id=str(p.sow_id), ear_tag=tags.get(p.sow_id),
-                                           summary=f"{p.event_type} {p.piglet_count}"))
+                                           summary=f"{p.event_type} {p.piglet_count}",
+                                           subtype=p.event_type, count=p.piglet_count))
     if kind in (None, "removal"):
         for rm in await db.scalars(select(Removal).where(Removal.farm_id == farm.id)):
             if _in_range(rm.removal_date):
                 entries.append(LedgerEntry(id=str(rm.id), kind="removal", event_date=rm.removal_date.isoformat(),
-                                           sow_id=str(rm.sow_id), ear_tag=tags.get(rm.sow_id), summary=rm.removal_type))
+                                           sow_id=str(rm.sow_id), ear_tag=tags.get(rm.sow_id),
+                                           summary=rm.removal_type, subtype=rm.removal_type))
 
     entries.sort(key=lambda e: e.event_date, reverse=True)
     return entries[:limit]

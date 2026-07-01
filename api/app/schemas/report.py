@@ -90,7 +90,10 @@ class LedgerEntry(BaseModel):
     event_date: str      # ISO date
     sow_id: str | None = None
     ear_tag: str | None = None
-    summary: str
+    summary: str         # 서버 baked 표시문(하위호환·웹). 클라는 subtype/count로 현지화 선호.
+    # 구조화 필드 — 클라이언트가 문구를 현지화(계약 '문구는 프론트 i18n'). 없으면 summary 폴백.
+    subtype: str | None = None   # 원시 enum 코드: mating_type/event_type/removal_type
+    count: int | None = None     # mating_number/piglet_count/weaned_count 등
 
 
 class GrowFinishRow(BaseModel):
