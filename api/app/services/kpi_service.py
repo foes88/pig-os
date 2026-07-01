@@ -229,6 +229,25 @@ async def _all_benchmarks(db: AsyncSession, farm: Farm) -> dict[str, dict]:
     return out
 
 
+async def _cohort_farrowing_rate(db: AsyncSession, farm_id: UUID, ref: date) -> float | None:
+    """스펙 §4 코호트 분만율: ref 기준 110~150일 전 '초교배(mating_number=1)' 중 분만 성공 비율.
+    교배 후 115일 내 폐사한 모돈은 분모에서 제외. 표본 0이면 None(날조 금지).
+    비코호트(같은 기간 farrowings/matings — 서로 다른 개체)로 인한 두수변동 왜곡을 제거한다."""
+    lo, hi = ref - timedelta(days=150), ref - timedelta(days=110)  # 코호트 창(경계는 Python 계산)
+    row = (await db.execute(text(
+        "SELECT count(DISTINCT m.id) mated, count(DISTINCT f.id) farrowed "
+        "FROM matings m "
+        "LEFT JOIN farrowings f ON f.mating_id = m.id AND f.deleted_at IS NULL "
+        "WHERE m.farm_id = :fid AND m.deleted_at IS NULL AND m.mating_number = 1 "
+        "AND m.mating_date BETWEEN :lo AND :hi "
+        "AND NOT EXISTS (SELECT 1 FROM removals r WHERE r.sow_id = m.sow_id "
+        "AND r.removal_type = 'DEAD' "
+        "AND r.removal_date BETWEEN m.mating_date AND m.mating_date + 115)"),
+        {"fid": str(farm_id), "lo": lo, "hi": hi})).one()
+    mated = int(row.mated)
+    return round(int(row.farrowed) / mated * 100, 1) if mated else None
+
+
 async def build_herd_kpis(
     db: AsyncSession, farm: Farm, window_days: int = 365
 ) -> dict[str, float | None]:
@@ -350,7 +369,7 @@ async def build_herd_kpis(
     active_herd = float(herd.active) if herd.active else 0.0
     return {
         # 캐논 metric_code(default_metric_values 시드와 정합 → 국가별 benchmark 자동 적용)
-        "FARROWING_RATE":      _rate(float(far.c), float(matings)),
+        "FARROWING_RATE":      await _cohort_farrowing_rate(db, farm.id, today),  # #4 코호트(스펙 §4)
         "RTS_RATE":            _rate(float(rts), float(matings)),
         "ABORTION_RATE":       _rate(float(abo), float(matings)),
         "STILLBORN_RATE":      _rate(float(far.sb) if far.sb else 0.0, tb),
