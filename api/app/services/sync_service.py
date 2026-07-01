@@ -59,6 +59,7 @@ from app.schemas.sync import (
 from app.services.event_service import (
     MAX_NURSING_COUNT,
     _calc_piglet_adjustments,
+    _get_open_cycle,
     apply_terminal_reproductive,
 )
 from app.validators.base import ValidationError
@@ -561,8 +562,14 @@ async def _process_reproductive(
         ), None
 
     if not dry_run:
+        # QA C: mating_id/breeding_cycle_id 순방향 링크(REST record_reproductive_event와 동일).
+        _cycle = await _get_open_cycle(db, sow.id)
+        _mid = await db.scalar(select(Mating.id).where(
+            Mating.sow_id == sow.id, Mating.deleted_at.is_(None))
+            .order_by(Mating.mating_date.desc()).limit(1))
         event = ReproductiveEvent(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            mating_id=_mid, breeding_cycle_id=(_cycle.id if _cycle else None),
             event_type=item.event_type, event_date=event_date, notes=item.notes,
         )
         db.add(event)

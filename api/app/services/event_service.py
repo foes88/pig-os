@@ -585,10 +585,17 @@ async def record_reproductive_event(
     if sow.status == "PREGNANT" and req.event_type in ("CULLED", "DEAD") and not req.notes:
         raise ValidationError("A reason (notes) is required when culling/removing a pregnant sow")
 
+    # QA C: mating_id/breeding_cycle_id 순방향 링크 — 미제공 시 sow의 열린 사이클·최근 교배에서 채움.
+    # 향후 RTS/ABORTION rate 코호트 정합(옵션A)의 전제(링크 신뢰성 확보). 없으면 NULL 유지.
+    _cycle = await _get_open_cycle(db, sow.id)
+    _mating_id = req.mating_id or await db.scalar(
+        select(Mating.id).where(Mating.sow_id == sow.id, Mating.deleted_at.is_(None))
+        .order_by(Mating.mating_date.desc()).limit(1))
     event = ReproductiveEvent(
         farm_id=farm_id,
         sow_id=req.sow_id,
-        mating_id=req.mating_id,
+        mating_id=_mating_id,
+        breeding_cycle_id=(_cycle.id if _cycle else None),
         event_date=req.event_date,
         event_type=req.event_type,
         detected_method=req.detected_method,

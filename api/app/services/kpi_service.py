@@ -321,13 +321,19 @@ async def build_herd_kpis(
     def _rate(num: float, den: float) -> float | None:
         return round(num / den * 100, 1) if den else None
 
+    def _rate100(num: float, den: float) -> float | None:
+        # 분자(이벤트 event_date 윈도)와 분모(matings mating_date 윈도) 코호트 불일치로 >100% 가능한
+        # rate(FARROWING/RTS/ABORTION) 불가능값 클램프(QA C 즉시안전). 근본 코호트정합은 mating_id 백필후 옵션A.
+        r = _rate(num, den)
+        return min(100.0, r) if r is not None else None
+
     pwmr = _rate(deaths, wsum + deaths)
     active_herd = float(herd.active) if herd.active else 0.0
     return {
         # 캐논 metric_code(default_metric_values 시드와 정합 → 국가별 benchmark 자동 적용)
-        "FARROWING_RATE":      _rate(float(far.c), float(matings)),
-        "RTS_RATE":            _rate(float(rts), float(matings)),
-        "ABORTION_RATE":       _rate(float(abo), float(matings)),
+        "FARROWING_RATE":      _rate100(float(far.c), float(matings)),
+        "RTS_RATE":            _rate100(float(rts), float(matings)),
+        "ABORTION_RATE":       _rate100(float(abo), float(matings)),
         "STILLBORN_RATE":      _rate(float(far.sb) if far.sb else 0.0, tb),
         "MUMMIFIED_RATE":      _rate(float(far.mum) if far.mum else 0.0, tb),
         "PRE_WEANING_MORTALITY": pwmr,
