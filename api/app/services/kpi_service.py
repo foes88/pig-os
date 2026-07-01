@@ -55,27 +55,53 @@ async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict
 
 
 async def calculate_psy(db: AsyncSession, farm_id: UUID, year: int) -> PsyDetail | None:
-    """Annual PSY from v_farm_psy DB view."""
+    """연간 PSY = SUM(weaned_count) / AVG(활성 모돈 재고) — KPI 스펙 §1.
+
+    분모는 해당 연도 12개월 각 월초의 활성 모돈수 평균(입식~퇴출 윈도우). 옛 v_farm_psy 뷰는
+    분모를 '그 해 이유한 모돈수'로 잘못 계산해 PSY를 과대평가했음(뷰 사용 중단).
+    엣지: 이유 0건 → PSY=0(NULL 아님) / 활성 재고 0 → PSY=NULL.
+    """
     row = await db.execute(
         text(
             """
-            SELECT avg_sow_count, total_weaned, psy
-            FROM v_farm_psy
-            WHERE farm_id = :farm_id
-              AND EXTRACT(YEAR FROM year_start) = :year
+            WITH months AS (
+                SELECT generate_series(make_date(:year,1,1), make_date(:year,12,1),
+                                       interval '1 month')::date AS m
+            ),
+            inv AS (
+                SELECT mo.m, COUNT(s.id) AS cnt
+                FROM months mo
+                LEFT JOIN sows s ON s.farm_id = :farm_id
+                    AND s.entry_date <= mo.m
+                    AND (s.deleted_at IS NULL
+                         OR (s.exit_date IS NOT NULL AND s.exit_date >= mo.m))
+                GROUP BY mo.m
+            ),
+            num AS (
+                SELECT COALESCE(SUM(w.weaned_count), 0) AS total_weaned
+                FROM weanings w
+                WHERE w.farm_id = :farm_id AND w.deleted_at IS NULL
+                  AND EXTRACT(YEAR FROM w.weaning_date) = :year
+            )
+            SELECT (SELECT AVG(cnt) FROM inv) AS avg_sow_count,
+                   (SELECT total_weaned FROM num) AS total_weaned
             """
         ),
         {"farm_id": str(farm_id), "year": year},
     )
     result = row.fetchone()
-    if not result:
-        return None
+    avg_inv = float(result.avg_sow_count) if result and result.avg_sow_count else 0.0
+    total_weaned = int(result.total_weaned) if result and result.total_weaned else 0
+    if avg_inv <= 0:
+        # 활성 모돈 0두 → PSY NULL + 경고(스펙 §1 엣지)
+        return PsyDetail(farm_id=farm_id, year=year, avg_sow_count=0, total_weaned=total_weaned,
+                         psy=None, benchmark_avg=None, target_value=None)
     return PsyDetail(
         farm_id=farm_id,
         year=year,
-        avg_sow_count=result.avg_sow_count or 0,
-        total_weaned=result.total_weaned or 0,
-        psy=float(result.psy) if result.psy else None,
+        avg_sow_count=round(avg_inv, 2),
+        total_weaned=total_weaned,
+        psy=round(total_weaned / avg_inv, 2),  # 이유 0 → 0.0 (NULL 아님)
         benchmark_avg=None,
         target_value=None,
     )

@@ -62,7 +62,7 @@ class _KpiValueInternal(BaseModel):
 class PsyDetail(BaseModel):
     farm_id: UUID
     year: int
-    avg_sow_count: int
+    avg_sow_count: float  # 월별 활성 모돈 재고 평균(소수 가능) — 스펙 §1
     total_weaned: int
     psy: float | None
     benchmark_avg: float | None
