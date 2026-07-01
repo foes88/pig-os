@@ -58,6 +58,24 @@ def create_tables():
         )
     Base.metadata.drop_all(_sync_engine)
     Base.metadata.create_all(_sync_engine)
+    # KPI 뷰는 마이그레이션으로만 생기고 create_all엔 없음 → get_trend/NPD가 참조하는 v_sow_npd를
+    # 테스트에서도 생성해 운영과 동일 스키마로 검증(과거엔 뷰 부재로 get_trend가 미검증이었음).
+    with _sync_engine.begin() as conn:
+        conn.exec_driver_sql("""
+            CREATE OR REPLACE VIEW v_sow_npd AS
+            SELECT s.id AS sow_id, s.farm_id, w.id AS weaning_id, w.weaning_date,
+                   m_next.mating_date AS next_mating_date,
+                   m_next.mating_date - w.weaning_date AS wei_days
+            FROM sows s
+            JOIN weanings w ON w.sow_id = s.id AND w.deleted_at IS NULL
+            LEFT JOIN LATERAL (
+                SELECT m.mating_date FROM matings m
+                WHERE m.sow_id = s.id AND m.mating_date > w.weaning_date
+                  AND m.mating_date <= (w.weaning_date + INTERVAL '60 days') AND m.deleted_at IS NULL
+                ORDER BY m.mating_date LIMIT 1
+            ) m_next ON TRUE
+            WHERE s.deleted_at IS NULL
+        """)
     yield
     _sync_engine.dispose()
 

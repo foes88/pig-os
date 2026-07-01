@@ -530,16 +530,23 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
                     - make_interval(months => s))::date AS m
                 FROM generate_series(0, :months - 1) AS s
             ),
-            sow_cnt AS (
-                SELECT COUNT(*)::float AS n
-                FROM sows
-                WHERE farm_id = :farm_id AND deleted_at IS NULL
+            inv_by_month AS (
+                -- 월별 활성 모돈 재고(입식~퇴출 윈도우) — PSY 분모(스펙 §1). 과거 전체 sows COUNT는 오류.
+                SELECT mo.m, COUNT(s.id)::float AS n
+                FROM months mo
+                LEFT JOIN sows s ON s.farm_id = :farm_id
+                    AND s.entry_date <= mo.m
+                    AND (s.deleted_at IS NULL
+                         OR (s.exit_date IS NOT NULL AND s.exit_date >= mo.m))
+                GROUP BY mo.m
             ),
             weans_by_month AS (
+                -- 분자는 이유 '건수'가 아니라 이유 '자돈수' 합계(스펙 §1). 과거 COUNT(*)는 ~복당두수배 과소.
                 SELECT date_trunc('month', weaning_date)::date AS m,
-                       COUNT(*)::float AS cnt
+                       SUM(weaned_count)::float AS cnt
                 FROM weanings
                 WHERE farm_id = :farm_id
+                  AND deleted_at IS NULL
                   AND weaning_date >= (date_trunc('month', CURRENT_DATE)
                       - make_interval(months => :months - 1))
                 GROUP BY 1
@@ -575,8 +582,8 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
             SELECT
                 to_char(months.m, 'YYYY-MM') AS period,
                 CASE
-                    WHEN sow_cnt.n > 0 AND weans_by_month.cnt IS NOT NULL
-                    THEN ROUND(((weans_by_month.cnt / sow_cnt.n) * 12)::numeric, 1)
+                    WHEN inv_by_month.n > 0 AND weans_by_month.cnt IS NOT NULL
+                    THEN ROUND(((weans_by_month.cnt / inv_by_month.n) * 12)::numeric, 1)
                     ELSE NULL
                 END AS psy,
                 ROUND(npd_by_month.avg_npd::numeric, 1) AS npd,
@@ -588,7 +595,7 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
                     ELSE NULL
                 END AS farrowing_rate
             FROM months
-            CROSS JOIN sow_cnt
+            LEFT JOIN inv_by_month     ON inv_by_month.m     = months.m
             LEFT JOIN weans_by_month   ON weans_by_month.m   = months.m
             LEFT JOIN farrows_by_month ON farrows_by_month.m = months.m
             LEFT JOIN matings_by_month ON matings_by_month.m = months.m
