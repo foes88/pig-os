@@ -297,13 +297,16 @@ async def build_herd_kpis(
         "AND end_date IS NOT NULL AND head_count_out IS NOT NULL "
         "AND avg_exit_weight_kg IS NOT NULL AND avg_entry_weight_kg IS NOT NULL "
         "AND end_date BETWEEN :s AND :e"), p)).one()
-    # 비육 FCR용 사료: 입력일(record_date) 기준 기간 합산. 모돈(sow_id) 사료는 번식군이므로 제외,
-    # 비육군/건물/농장단위(group_id NULL 포함) 사료는 모두 포함 — UI는 group_id 없이 입력하므로
-    # JOIN 강제 시 전량 누락됐던 버그(C5) 수정.
+    # 비육 FCR용 사료(스펙 §5): CLOSED 그룹(gain과 동일 대상)의 '그룹당 전생애' 사료 합.
+    # 과거엔 record_date 윈도우로 농장 전체 사료를 합산해 gain(end_date 윈도우)과 대상/기간이
+    # 어긋났음 — CLOSED 그룹이 창 밖 달에 먹은 사료는 빠지고, 아직 미출하(open) 그룹이 지금 먹는
+    # 사료는 gain 없이 포함돼 FCR이 왜곡. 이제 gain과 같은 CLOSED 그룹에 group_id로 귀속된
+    # 사료만 전생애 합산(보고서 경로와 동일). group_id 미태깅 사료는 귀속 불가라 제외.
     feed = (await db.execute(text(
-        "SELECT coalesce(sum(quantity_kg),0) FROM feed_records "
-        "WHERE farm_id=:fid AND deleted_at IS NULL AND sow_id IS NULL "
-        "AND record_date BETWEEN :s AND :e"), p)).scalar() or 0
+        "SELECT coalesce(sum(fr.quantity_kg),0) FROM feed_records fr "
+        "JOIN finisher_groups g ON g.id = fr.group_id "
+        "WHERE fr.farm_id=:fid AND fr.deleted_at IS NULL AND g.deleted_at IS NULL "
+        "AND g.end_date IS NOT NULL AND g.end_date BETWEEN :s AND :e"), p)).scalar() or 0
     herd = (await db.execute(text(
         "SELECT count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT')) active, "
         "count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT') AND parity >= 7) hp "
@@ -384,7 +387,7 @@ async def build_herd_kpis(
         "WEANING_WEIGHT":      round(_f(wea.aww), 2) if wea.aww is not None else None,
         "WEANING_AGE":         round(_f(wea.aage), 1) if wea.aage is not None else None,
         "ADG":                 round(gain / pigdays * 1000, 1) if pigdays else None,
-        "FCR":                 round(float(feed) / gain, 3) if gain else None,
+        "FCR":                 round(float(feed) / gain, 3) if gain and float(feed) > 0 else None,
         "FINISH_MORTALITY":    _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
         # 모돈군 구조(롤링 window 제거율 = 연간 근사, window=365)
         "CULLING_RATE":        _rate(float(removed.culled), active_herd),
