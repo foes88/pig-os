@@ -175,7 +175,9 @@ class TestGrowFinishRows:
 
 class TestSowHistory:
     def test_completed_and_in_progress(self):
-        cycles = [{"cycle_id": "c1", "parity": 1}, {"cycle_id": "c2", "parity": 2}]
+        # 완료 판정은 cycle_status(WEANED) 기준(#6) — 운영 wrapper가 cycle_status를 전달.
+        cycles = [{"cycle_id": "c1", "parity": 1, "status": "WEANED"},
+                  {"cycle_id": "c2", "parity": 2, "status": "MATED"}]
         matings = [
             {"cycle_id": "c1", "date": date(2026, 1, 1), "boar_id": "b1"},
             {"cycle_id": "c2", "date": date(2026, 5, 1), "boar_id": "b2"},

@@ -86,6 +86,7 @@ def build_reproduction_rows(
     mating_breeds: list[str | None] | None = None,    # parallel to matings
     farrowing_breeds: list[str | None] | None = None, # parallel to farrowings
     weaning_breeds: list[str | None] | None = None,   # parallel to weanings
+    weaning_litter_ids: list[str | None] | None = None,  # parallel to weanings — 복(farrowing) 키(#5 부분이유 집계)
     rts_breeds: list[str | None] | None = None,       # parallel to rts
     death_breeds: list[str | None] | None = None,     # parallel to deaths
     mating_numbers: list[int] | None = None,          # parallel to matings (1~5)
@@ -111,8 +112,8 @@ def build_reproduction_rows(
     def b(key: str) -> dict:
         return buckets.setdefault(
             key,
-            {"matings": 0, "farrowings": 0, "weanings": 0, "rts": 0,
-             "tb": [], "ba": [], "weaned": [], "lact": [], "deaths": 0,
+            {"matings": 0, "farrowings": 0, "rts": 0,
+             "tb": [], "ba": [], "weaned_litters": {}, "lact": [], "deaths": 0,
              "sb": 0, "mum": 0, "m1": 0, "m2": 0, "m3plus": 0, "ai": 0, "nat": 0},
         )
 
@@ -142,7 +143,12 @@ def build_reproduction_rows(
             x["mum"] += mummified[i] or 0
     for i, (d, wc, lact) in enumerate(weanings):
         breed = weaning_breeds[i] if weaning_breeds and i < len(weaning_breeds) else None
-        x = b(gkey(d, breed)); x["weanings"] += 1; x["weaned"].append(wc); x["lact"].append(lact)
+        x = b(gkey(d, breed))
+        # 부분이유(#5): 같은 복(farrowing)의 여러 이유를 복단위로 합산. litter_id 미전달 시 행 자체를 1복으로(구동작).
+        lid = weaning_litter_ids[i] if weaning_litter_ids and i < len(weaning_litter_ids) else None
+        litter_key = lid if lid is not None else f"__row{i}"
+        x["weaned_litters"][litter_key] = x["weaned_litters"].get(litter_key, 0) + (wc or 0)
+        x["lact"].append(lact)
     for i, d in enumerate(rts):
         breed = rts_breeds[i] if rts_breeds and i < len(rts_breeds) else None
         b(gkey(d, breed))["rts"] += 1
@@ -159,8 +165,11 @@ def build_reproduction_rows(
     for key in sorted(buckets):
         x = buckets[key]
         avg_tb = _avg(x["tb"])
-        avg_weaned = _avg(x["weaned"])
-        total_weaned = sum(w for w in x["weaned"] if w is not None)
+        # 복(litter)단위 집계: 부분이유 여러 건을 한 복으로 합산해 평균/복수를 낸다(#5).
+        litter_sums = list(x["weaned_litters"].values())
+        total_weanings = len(litter_sums)          # 이유 '복' 수(이유 '건'수 아님)
+        avg_weaned = _avg(litter_sums)              # 복당 이유두수 평균
+        total_weaned = sum(litter_sums)
         tb_sum = sum(t for t in x["tb"] if t is not None)
         ba_sum = sum(t for t in x["ba"] if t is not None)
         fr = round(x["farrowings"] / x["matings"] * 100, 1) if x["matings"] else None
@@ -179,7 +188,7 @@ def build_reproduction_rows(
             "period": key,
             "total_matings": x["matings"],
             "total_farrowings": x["farrowings"],
-            "total_weanings": x["weanings"],
+            "total_weanings": total_weanings,
             "fr": fr,
             "avg_tb": avg_tb,
             "avg_ba": _avg(x["ba"]),
@@ -304,15 +313,21 @@ def build_sow_history(
     for m in matings:
         m_by.setdefault(m["cycle_id"], []).append(m)
     f_by = {f["cycle_id"]: f for f in farrowings}
-    w_by = {w["cycle_id"]: w for w in weanings}
+    # 부분이유(#6): 사이클당 이유가 여러 건일 수 있어 dict가 아니라 리스트로 모아 합산.
+    w_by: dict = {}
+    for w in weanings:
+        w_by.setdefault(w["cycle_id"], []).append(w)
 
     out = []
     for c in sorted(cycles, key=lambda c: c["parity"]):
         cid = c["cycle_id"]
         ms = sorted(m_by.get(cid, []), key=lambda m: m["date"])
         f = f_by.get(cid)
-        w = w_by.get(cid)
-        completed = w is not None
+        ws = sorted(w_by.get(cid, []), key=lambda w: w["date"])
+        last_w = ws[-1] if ws else None
+        total_weaned = sum(w["weaned"] for w in ws if w["weaned"] is not None) if ws else None
+        # 완료 판정은 사이클 상태(WEANED) 기준 — 첫 부분이유에 '완료' 오표기 방지.
+        completed = c.get("status") == "WEANED"
         out.append({
             "parity": c["parity"],
             "mating_date": ms[0]["date"].isoformat() if ms else None,
@@ -322,9 +337,9 @@ def build_sow_history(
             "ba": f["ba"] if f else None,
             "sb": f["sb"] if f else None,
             "mum": f["mum"] if f else None,
-            "weaned": w["weaned"] if w else None,
-            "weaning_date": w["date"].isoformat() if w else None,
-            "lactation_days": w["lactation_days"] if w else None,
+            "weaned": total_weaned,                                    # 부분이유 합산
+            "weaning_date": last_w["date"].isoformat() if last_w else None,  # 최종 이유일
+            "lactation_days": last_w["lactation_days"] if last_w else None,
             "status": "completed" if completed else "in_progress",
         })
     return out
@@ -351,7 +366,8 @@ async def get_reproduction_report(
                Farrowing.farrowing_date >= start, Farrowing.farrowing_date <= end)
     )).all()
     wrows = (await db.execute(
-        select(Weaning.weaning_date, Weaning.weaned_count, Weaning.weaning_age_days, Sow.breed)
+        select(Weaning.weaning_date, Weaning.weaned_count, Weaning.weaning_age_days, Sow.breed,
+               Weaning.farrowing_id)
         .join(Sow, Weaning.sow_id == Sow.id)
         .where(Weaning.farm_id == farm_id, Weaning.deleted_at.is_(None),
                Weaning.weaning_date >= start, Weaning.weaning_date <= end)
@@ -386,6 +402,7 @@ async def get_reproduction_report(
         stillborn=[r[3] for r in frows],
         mummified=[r[4] for r in frows],
         weaning_breeds=[r[3] for r in wrows],
+        weaning_litter_ids=[str(r[4]) if r[4] is not None else None for r in wrows],  # #5 복단위 집계
         rts_breeds=[r[1] for r in rrows],
         death_breeds=[r[2] for r in drows],
         # M4: 기간 단위 보고서는 빈 기간도 연속으로 채움(트렌드와 일치).
