@@ -233,12 +233,19 @@ async def build_herd_kpis(
         "avg(weaning_age_days) aage, avg(avg_weaning_weight_kg) aww "
         "FROM weanings WHERE farm_id=:fid AND deleted_at IS NULL "
         "AND weaning_date BETWEEN :s AND :e"), p)).one()
+    # QA C 옵션A: 분자를 윈도 교배 코호트에 링크된 distinct 교배수로(mating_id 순방향링크+백필 완료 전제).
+    # distinct(RTS/유산 교배) ⊆ 윈도 교배수 → 구조적 ≤100% + 분자/분모 동일 코호트(mating_date 윈도).
+    # (기존 event_date 카운트는 과거교배 산물이 분모와 불일치해 과대·>100% 유발.)
     rts = (await db.execute(text(
-        "SELECT count(*) FROM reproductive_events WHERE farm_id=:fid AND deleted_at IS NULL "
-        "AND event_type='RETURN_TO_ESTRUS' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+        "SELECT count(DISTINCT re.mating_id) FROM reproductive_events re "
+        "JOIN matings m ON m.id = re.mating_id "
+        "WHERE re.farm_id=:fid AND re.deleted_at IS NULL AND re.event_type='RETURN_TO_ESTRUS' "
+        "AND m.deleted_at IS NULL AND m.mating_date BETWEEN :s AND :e"), p)).scalar() or 0
     abo = (await db.execute(text(
-        "SELECT count(*) FROM reproductive_events WHERE farm_id=:fid AND deleted_at IS NULL "
-        "AND event_type='ABORTION' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0
+        "SELECT count(DISTINCT re.mating_id) FROM reproductive_events re "
+        "JOIN matings m ON m.id = re.mating_id "
+        "WHERE re.farm_id=:fid AND re.deleted_at IS NULL AND re.event_type='ABORTION' "
+        "AND m.deleted_at IS NULL AND m.mating_date BETWEEN :s AND :e"), p)).scalar() or 0
     deaths = (await db.execute(text(
         "SELECT coalesce(sum(piglet_count),0) FROM piglet_events WHERE farm_id=:fid "
         "AND deleted_at IS NULL AND event_type='DEATH' AND event_date BETWEEN :s AND :e"), p)).scalar() or 0

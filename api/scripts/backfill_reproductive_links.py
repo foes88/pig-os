@@ -16,13 +16,17 @@ from app.db.session import AsyncSessionLocal
 
 _BACKFILL_SQL = text("""
     UPDATE reproductive_events re
-    SET mating_id = m.id, breeding_cycle_id = m.breeding_cycle_id
-    FROM LATERAL (
-        SELECT id, breeding_cycle_id FROM matings
-        WHERE sow_id = re.sow_id AND deleted_at IS NULL AND mating_date <= re.event_date
-        ORDER BY mating_date DESC LIMIT 1
-    ) m
+    SET mating_id = (
+            SELECT m.id FROM matings m
+            WHERE m.sow_id = re.sow_id AND m.deleted_at IS NULL AND m.mating_date <= re.event_date
+            ORDER BY m.mating_date DESC LIMIT 1),
+        breeding_cycle_id = (
+            SELECT m.breeding_cycle_id FROM matings m
+            WHERE m.sow_id = re.sow_id AND m.deleted_at IS NULL AND m.mating_date <= re.event_date
+            ORDER BY m.mating_date DESC LIMIT 1)
     WHERE re.mating_id IS NULL AND re.deleted_at IS NULL
+      AND EXISTS (SELECT 1 FROM matings m2
+                  WHERE m2.sow_id = re.sow_id AND m2.deleted_at IS NULL AND m2.mating_date <= re.event_date)
 """)
 
 _COUNT_SQL = text("SELECT count(*) FROM reproductive_events WHERE mating_id IS NULL AND deleted_at IS NULL")
