@@ -237,10 +237,31 @@ def _hash_reset_token(raw: str) -> str:
 
 
 async def _deliver_reset_token(email: str, raw: str) -> None:
-    """토큰 전달 — 현재는 로그(운영자 중개 임시). TODO: SMTP/SES/SMS로 교체.
-    운영(production)에선 raw 토큰을 평문 로그에 남기지 않는다(운영자 콘솔/메일 채널 필요)."""
-    if settings.is_production:
-        logger.warning("[PASSWORD-RESET] 토큰 발급(%s) — 전달 채널 미설정(운영자 조치 필요)", email)
+    """재설정 토큰 전달. SMTP 설정 시 이메일 발송, 미설정 시 로그 폴백(운영자 중개).
+    운영에서 SMTP 미설정이면 raw 토큰을 평문 로그에 남기지 않는다(자격증명/토큰 노출 금지)."""
+    from app.services.email_service import send_email
+
+    link = f"{settings.app_base_url.rstrip('/')}/forgot-password?token={raw}"
+    sent = await send_email(
+        to=email,
+        subject="PigOS — Password reset / 비밀번호 재설정",
+        text_body=(
+            "A password reset was requested for your PigOS account.\n"
+            f"Reset link (valid 30 min, one-time): {link}\n\n"
+            "If you didn't request this, ignore this email.\n"
+            "본 요청을 하지 않았다면 이 메일을 무시하세요."
+        ),
+        html_body=(
+            f'<p>A password reset was requested for your PigOS account.</p>'
+            f'<p><a href="{link}">Reset your password</a> (valid 30 min, one-time)</p>'
+            f'<p style="color:#64748b;font-size:12px">If you didn\'t request this, ignore this email.<br>'
+            f'본 요청을 하지 않았다면 이 메일을 무시하세요.</p>'
+        ),
+    )
+    if sent:
+        logger.info("[PASSWORD-RESET] reset email sent to %s", email)
+    elif settings.is_production:
+        logger.warning("[PASSWORD-RESET] 토큰 발급(%s) — SMTP 미설정, 전달 채널 필요(운영자 조치)", email)
     else:
         logger.warning("[PASSWORD-RESET][dev] %s 토큰=%s (TTL 30분, 1회용)", email, raw)
 
