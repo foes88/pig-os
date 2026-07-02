@@ -92,7 +92,7 @@ export default function MortalityReportPage() {
       ) : (
         <>
           <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="rounded-2xl border border-red-200 bg-red-soft px-4 py-3">
+            <div className="rounded-2xl border border-danger/40 bg-red-soft px-4 py-3">
               <div className="text-[11px] text-danger font-bold">{t("preWeanRate")}</div>
               <div className="text-3xl font-extrabold font-mono text-danger mt-1">
                 {data?.preweaning_mortality_rate != null ? `${data.preweaning_mortality_rate}%` : "—"}

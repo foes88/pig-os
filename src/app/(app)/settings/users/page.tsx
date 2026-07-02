@@ -89,7 +89,7 @@ export default function UsersPage() {
       {!canManage && <p className="text-xs text-text3 mb-5">{t("onlyManagers")}</p>}
 
       {rowError && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-soft px-4 py-3 text-xs font-medium text-danger">
+        <div className="mb-4 rounded-xl border border-danger/40 bg-red-soft px-4 py-3 text-xs font-medium text-danger">
           {rowError}
         </div>
       )}

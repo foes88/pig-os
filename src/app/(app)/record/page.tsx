@@ -51,12 +51,12 @@ const STATUS_BADGE: Record<SowStatus, string> = {
   GILT:      "bg-cyan-50 text-cyan-600 border-cyan-100",
   OPEN:      "bg-green-soft text-success border-success/30",
   PREGNANT:  "bg-green-soft text-success border-success/30",
-  LACTATING: "bg-green-soft text-success border-green-100",
+  LACTATING: "bg-green-soft text-success border-success/30",
   ACCIDENT:  "bg-orange-50 text-orange-600 border-orange-100",
-  CULLED:    "bg-red-soft text-danger border-red-100",
+  CULLED:    "bg-red-soft text-danger border-danger/30",
   DEAD:      "bg-gray-100 text-gray-400 border-gray-200",
   SOLD:      "bg-emerald-50 text-emerald-600 border-emerald-100",
-  TRANSFER:  "bg-amber-soft text-warning border-amber-100",
+  TRANSFER:  "bg-amber-soft text-warning border-warning/30",
 };
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
@@ -268,7 +268,7 @@ export default function RecordPage() {
       {/* ── RIGHT: Event drawer ──────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {lastSaved && (
-          <div className="mx-6 mt-4 px-4 py-2.5 bg-green-soft border border-green-200 rounded-xl text-sm text-success font-medium flex items-center gap-1.5">
+          <div className="mx-6 mt-4 px-4 py-2.5 bg-green-soft border border-success/30 rounded-xl text-sm text-success font-medium flex items-center gap-1.5">
             <Check size={15} /> {lastSaved}
           </div>
         )}

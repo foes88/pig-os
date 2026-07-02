@@ -74,13 +74,13 @@ export default function TasksPage() {
 
       {isLoading && <div className="text-center text-text3 py-20">{t("loading")}</div>}
       {isError && (
-        <div className="bg-red-soft border border-red-200 rounded-xl p-4 text-sm text-red-700">
+        <div className="bg-red-soft border border-danger/40 rounded-xl p-4 text-sm text-red-700">
           {t("loadError")}
         </div>
       )}
 
       {data && tasks.length === 0 && (
-        <div className="bg-green-soft border border-green-200 rounded-xl p-6 text-sm text-success text-center">
+        <div className="bg-green-soft border border-success/30 rounded-xl p-6 text-sm text-success text-center">
           {t("allClear")}
         </div>
       )}

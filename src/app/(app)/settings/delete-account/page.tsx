@@ -40,7 +40,7 @@ export default function DeleteAccountPage() {
             <div className="text-xs text-text3 mt-0.5">{t("irreversible")}</div>
           </div>
         </div>
-        <div className="bg-red-soft border border-red-100 rounded-xl p-4 mb-5">
+        <div className="bg-red-soft border border-danger/30 rounded-xl p-4 mb-5">
           <div className="text-xs font-bold text-danger mb-2">{t("lostTitle")}</div>
           {[t("l1"), t("l2"), t("l3"), t("l4")].map((x, i) => (
             <div key={i} className="text-xs text-text2 flex items-center gap-2 py-1">

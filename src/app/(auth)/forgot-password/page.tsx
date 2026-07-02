@@ -138,7 +138,7 @@ export default function ForgotPasswordPage() {
 
       {done ? (
         <div className="space-y-4">
-          <p className="text-sm text-slate-700 bg-green-soft border border-green-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-slate-700 bg-green-soft border border-success/30 rounded-lg px-4 py-3">
             {isConfirm ? t.resetOk : t.sent}
           </p>
           <Link href="/login" className="block text-center text-sm font-semibold text-[#2563EB] hover:underline">

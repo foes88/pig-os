@@ -414,7 +414,7 @@ export default function LoginPage() {
 
               {/* Server error */}
               {serverError && (
-                <div className="flex items-start gap-2.5 bg-red-soft border border-red-200
+                <div className="flex items-start gap-2.5 bg-red-soft border border-danger/40
                   rounded-lg px-4 py-3">
                   <svg className="w-4 h-4 text-danger mt-0.5 shrink-0" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" strokeWidth="2"

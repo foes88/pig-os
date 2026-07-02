@@ -47,7 +47,7 @@ const CATEGORIES: { value: Category; labelKey: string }[] = [
 ];
 
 const TAG_STYLE: Record<AddonCard["tag"], string> = {
-  free:        "bg-green-soft text-success border-green-200",
+  free:        "bg-green-soft text-success border-success/30",
   beta:        "bg-green-soft text-success border-success/30",
   coming_soon: "bg-bg2 text-text3 border-border",
 };

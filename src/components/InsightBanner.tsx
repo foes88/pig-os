@@ -124,9 +124,9 @@ function Badges({ ins, t, small }: { ins: EventInsight; t: ReturnType<typeof use
 }
 
 const CONF_CLS: Record<string, string> = {
-  high: "border-green-200 text-success",
-  medium: "border-amber-200 text-warning",
-  low: "border-red-200 text-danger",
+  high: "border-success/30 text-success",
+  medium: "border-warning/40 text-warning",
+  low: "border-danger/40 text-danger",
 };
 
 // ── 슬롯 (추후 데이터 들어오면 채움. 가상수치면 Demo 배지) ───────────────────

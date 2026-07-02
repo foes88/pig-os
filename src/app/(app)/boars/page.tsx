@@ -24,10 +24,10 @@ const STATUS_KEY: Record<string, string> = {
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  ACTIVE:      "bg-green-soft text-success border-green-100",
-  CULLED:      "bg-red-soft text-danger border-red-100",
+  ACTIVE:      "bg-green-soft text-success border-success/30",
+  CULLED:      "bg-red-soft text-danger border-danger/30",
   DEAD:        "bg-gray-100 text-gray-400 border-gray-200",
-  TRANSFERRED: "bg-amber-soft text-warning border-amber-100",
+  TRANSFERRED: "bg-amber-soft text-warning border-warning/30",
 };
 
 const BREEDS = ["Duroc", "Landrace", "Yorkshire", "Berkshire", "Pietrain", "Hampshire"];
@@ -420,7 +420,7 @@ export default function BoarsPage() {
               </div>
 
               {formError && (
-                <div className="bg-red-soft border border-red-200 rounded-lg px-3.5 py-2.5 text-sm text-danger">
+                <div className="bg-red-soft border border-danger/40 rounded-lg px-3.5 py-2.5 text-sm text-danger">
                   {formError}
                 </div>
               )}

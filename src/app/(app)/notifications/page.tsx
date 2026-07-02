@@ -17,8 +17,8 @@ const PAGE_SIZE = 20;
 
 // 색상만 보관, 라벨은 notifications.sevXxx 키
 const SEVERITY_STYLES: Record<Alert["severity"], { bg: string; dot: string; key: string }> = {
-  CRITICAL: { bg: "bg-red-soft border-red-200",   dot: "bg-danger",   key: "sevCritical" },
-  WARNING:  { bg: "bg-amber-soft border-amber-200", dot: "bg-warning",  key: "sevWarning" },
+  CRITICAL: { bg: "bg-red-soft border-danger/40",   dot: "bg-danger",   key: "sevCritical" },
+  WARNING:  { bg: "bg-amber-soft border-warning/40", dot: "bg-warning",  key: "sevWarning" },
   INFO:     { bg: "bg-green-soft border-success/30",   dot: "bg-primary",  key: "sevInfo" },
   OK:       { bg: "bg-surface border-border",     dot: "bg-success",  key: "sevOk" },
 };

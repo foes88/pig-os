@@ -238,7 +238,7 @@ export default function SowDetailPage() {
                       {canManageRole && (
                         <button
                           onClick={() => deleteLatest({ mating, farrowing, weaning })}
-                          className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-soft"
+                          className="text-[10px] font-semibold text-danger border border-danger/40 rounded-md px-2 py-0.5 hover:bg-red-soft"
                         >
                           {t("deleteLatest")}
                         </button>

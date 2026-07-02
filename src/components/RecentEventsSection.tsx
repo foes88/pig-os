@@ -28,8 +28,8 @@ interface UnifiedEvent {
 
 const KIND_STYLE: Record<Kind, string> = {
   mating: "bg-green-soft text-success border-success/30",
-  farrowing: "bg-green-soft text-success border-green-200",
-  weaning: "bg-amber-soft text-amber-700 border-amber-200",
+  farrowing: "bg-green-soft text-success border-success/30",
+  weaning: "bg-amber-soft text-amber-700 border-warning/40",
 };
 
 /**
@@ -252,7 +252,7 @@ function EditModal({
           </>
         )}
 
-        {error && <div className="text-xs text-danger bg-red-soft border border-red-200 rounded-lg px-3 py-2">{error}</div>}
+        {error && <div className="text-xs text-danger bg-red-soft border border-danger/40 rounded-lg px-3 py-2">{error}</div>}
 
         <div className="flex gap-2 pt-1">
           <button onClick={onClose} className="flex-1 text-sm border border-border rounded-lg py-2 hover:bg-border transition">
@@ -276,7 +276,7 @@ function ConfirmDeleteModal({
   return (
     <Modal onClose={onCancel} title={t("deleteConfirmTitle")}>
       <p className="text-sm text-text2 mb-4">{t("deleteConfirmBody")}</p>
-      {error && <div className="text-xs text-danger bg-red-soft border border-red-200 rounded-lg px-3 py-2 mb-3">{error}</div>}
+      {error && <div className="text-xs text-danger bg-red-soft border border-danger/40 rounded-lg px-3 py-2 mb-3">{error}</div>}
       <div className="flex gap-2">
         <button onClick={onCancel} className="flex-1 text-sm border border-border rounded-lg py-2 hover:bg-border transition">
           {t("cancel")}
