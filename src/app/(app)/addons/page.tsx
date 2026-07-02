@@ -30,12 +30,12 @@ interface AddonCard {
 const ADDONS: AddonCard[] = [
   { key: "aiInsight", icon: BrainCircuit,    iconBg: "bg-green-soft",  iconColor: "text-success", tag: "beta",        category: "analytics" },
   { key: "autoTask",  icon: ListChecks,      iconBg: "bg-green-soft",    iconColor: "text-success",   tag: "coming_soon", category: "ops" },
-  { key: "feed",      icon: Package,         iconBg: "bg-amber-50",   iconColor: "text-amber-600",  tag: "coming_soon", category: "ops" },
+  { key: "feed",      icon: Package,         iconBg: "bg-amber-soft",   iconColor: "text-warning",  tag: "coming_soon", category: "ops" },
   { key: "iot",       icon: Thermometer,     iconBg: "bg-rose-50",    iconColor: "text-rose-500",   tag: "coming_soon", category: "iot" },
   { key: "export",    icon: FileSpreadsheet, iconBg: "bg-emerald-50", iconColor: "text-emerald-600",tag: "coming_soon", category: "analytics" },
   { key: "slaughter", icon: Link2,           iconBg: "bg-cyan-50",    iconColor: "text-cyan-600",   tag: "coming_soon", category: "integration" },
   { key: "qr",        icon: QrCode,          iconBg: "bg-slate-100",  iconColor: "text-slate-600",  tag: "coming_soon", category: "integration" },
-  { key: "dividend",  icon: TrendingUp,      iconBg: "bg-green-50",   iconColor: "text-green-600",  tag: "coming_soon", category: "analytics" },
+  { key: "dividend",  icon: TrendingUp,      iconBg: "bg-green-soft",   iconColor: "text-success",  tag: "coming_soon", category: "analytics" },
 ];
 
 const CATEGORIES: { value: Category; labelKey: string }[] = [
@@ -47,7 +47,7 @@ const CATEGORIES: { value: Category; labelKey: string }[] = [
 ];
 
 const TAG_STYLE: Record<AddonCard["tag"], string> = {
-  free:        "bg-green-50 text-green-700 border-green-200",
+  free:        "bg-green-soft text-success border-green-200",
   beta:        "bg-green-soft text-success border-success/30",
   coming_soon: "bg-bg2 text-text3 border-border",
 };

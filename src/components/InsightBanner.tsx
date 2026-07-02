@@ -17,7 +17,7 @@ export function InsightBanner({ insights, savedNoIssue }: { insights?: EventInsi
   // 경고/위험 없이 저장 완료 → 작은 정상 요약만 (#4)
   if (!insights || insights.length === 0) {
     return savedNoIssue ? (
-      <div className="flex items-center gap-1.5 text-[11px] text-green-600 px-2 py-1">
+      <div className="flex items-center gap-1.5 text-[11px] text-success px-2 py-1">
         <Info className="w-3 h-3" /> {t("allNormal")}
       </div>
     ) : null;
@@ -45,8 +45,8 @@ export function InsightBanner({ insights, savedNoIssue }: { insights?: EventInsi
 }
 
 const STYLE: Record<string, { box: string; icon: typeof Info; iconCls: string }> = {
-  CRITICAL: { box: "bg-red-50 border-red-300",    icon: AlertOctagon,  iconCls: "text-danger" },
-  WARNING:  { box: "bg-amber-50 border-amber-300", icon: AlertTriangle, iconCls: "text-warning" },
+  CRITICAL: { box: "bg-red-soft border-red-300",    icon: AlertOctagon,  iconCls: "text-danger" },
+  WARNING:  { box: "bg-amber-soft border-amber-300", icon: AlertTriangle, iconCls: "text-warning" },
   INFO:     { box: "bg-slate-50 border-slate-200",  icon: Info,          iconCls: "text-text3" },
 };
 
@@ -124,9 +124,9 @@ function Badges({ ins, t, small }: { ins: EventInsight; t: ReturnType<typeof use
 }
 
 const CONF_CLS: Record<string, string> = {
-  high: "border-green-200 text-green-600",
-  medium: "border-amber-200 text-amber-600",
-  low: "border-red-200 text-red-500",
+  high: "border-green-200 text-success",
+  medium: "border-amber-200 text-warning",
+  low: "border-red-200 text-danger",
 };
 
 // ── 슬롯 (추후 데이터 들어오면 채움. 가상수치면 Demo 배지) ───────────────────

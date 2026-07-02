@@ -130,7 +130,7 @@ export default function AdminMasterDataPage() {
                     <button onClick={() => setEditing(r)} title="수정"
                       className="p-1 rounded text-text3 hover:text-primary hover:bg-primary/5"><Pencil size={13} /></button>
                     <button onClick={() => { if (confirm(`삭제: ${r[kind.pk]} ?`)) del.mutate(String(r[kind.pk])); }}
-                      title="삭제" className="p-1 rounded text-text3 hover:text-danger hover:bg-red-50 ml-1"><Trash2 size={13} /></button>
+                      title="삭제" className="p-1 rounded text-text3 hover:text-danger hover:bg-red-soft ml-1"><Trash2 size={13} /></button>
                   </td>
                 </tr>
               ))}

@@ -199,7 +199,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
             <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} placeholder={t("phAvgWeanWeight")} className="input" />
           </Field>
         </div>
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.group_code || !form.head_count_in || mutation.isPending}
@@ -252,7 +252,7 @@ function TransferModal({ farmId, groupId, onClose, onSuccess }: { farmId: string
             <input type="number" step="0.1" min={0} value={form.avg_exit_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_exit_weight_kg: Number(e.target.value) || undefined }))} placeholder={t("phAvgWeight")} className="input" />
           </Field>
         </div>
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.head_count_out || mutation.isPending}

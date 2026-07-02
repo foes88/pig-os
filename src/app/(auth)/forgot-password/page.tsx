@@ -138,7 +138,7 @@ export default function ForgotPasswordPage() {
 
       {done ? (
         <div className="space-y-4">
-          <p className="text-sm text-slate-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-slate-700 bg-green-soft border border-green-200 rounded-lg px-4 py-3">
             {isConfirm ? t.resetOk : t.sent}
           </p>
           <Link href="/login" className="block text-center text-sm font-semibold text-[#2563EB] hover:underline">
@@ -157,7 +157,7 @@ export default function ForgotPasswordPage() {
             <input type="password" autoComplete="new-password" placeholder="••••••••"
               value={pw2} onChange={(e) => setPw2(e.target.value)} className={INPUT} required />
           </div>
-          {err && <p className="text-xs text-red-500">{err}</p>}
+          {err && <p className="text-xs text-danger">{err}</p>}
           <button type="submit" disabled={busy}
             className="w-full h-11 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50">
             {busy ? t.resetting : t.reset}
@@ -171,7 +171,7 @@ export default function ForgotPasswordPage() {
             <input type="email" autoComplete="email" placeholder="you@farm.com"
               value={email} onChange={(e) => setEmail(e.target.value)} className={INPUT} required />
           </div>
-          {err && <p className="text-xs text-red-500">{err}</p>}
+          {err && <p className="text-xs text-danger">{err}</p>}
           <button type="submit" disabled={busy}
             className="w-full h-11 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50">
             {busy ? t.sending : t.send}

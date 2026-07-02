@@ -19,12 +19,12 @@ const STATUS_CLS: Record<string, string> = {
   GILT:      "bg-cyan-50 text-cyan-600",
   OPEN:      "bg-slate-100 text-slate-600",
   PREGNANT:  "bg-green-soft text-success",
-  LACTATING: "bg-green-50 text-green-600",
+  LACTATING: "bg-green-soft text-success",
   ACCIDENT:  "bg-orange-50 text-orange-600",
-  CULLED:    "bg-red-50 text-red-500",
+  CULLED:    "bg-red-soft text-danger",
   DEAD:      "bg-gray-100 text-gray-500",
   SOLD:      "bg-emerald-50 text-emerald-600",
-  TRANSFER:  "bg-amber-50 text-amber-600",
+  TRANSFER:  "bg-amber-soft text-warning",
 };
 
 export default function SowDetailPage() {
@@ -229,8 +229,8 @@ export default function SowDetailPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        weaning ? "bg-green-50 text-green-600" :
-                        farrowing ? "bg-amber-50 text-amber-600" :
+                        weaning ? "bg-green-soft text-success" :
+                        farrowing ? "bg-amber-soft text-warning" :
                         "bg-green-soft text-success"
                       }`}>
                         {weaning ? t("cycleWeaned") : farrowing ? t("cycleNursing") : t("cyclePregnant")}
@@ -238,7 +238,7 @@ export default function SowDetailPage() {
                       {canManageRole && (
                         <button
                           onClick={() => deleteLatest({ mating, farrowing, weaning })}
-                          className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-50"
+                          className="text-[10px] font-semibold text-danger border border-red-200 rounded-md px-2 py-0.5 hover:bg-red-soft"
                         >
                           {t("deleteLatest")}
                         </button>

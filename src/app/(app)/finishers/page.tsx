@@ -96,7 +96,7 @@ export default function FinishersPage() {
                         <span className="font-mono font-bold text-text1">{g.group_code}</span>
                         {g.batch_name && <span className="text-xs text-text3">— {g.batch_name}</span>}
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          isActive ? "bg-green-50 text-green-600" : "bg-slate-100 text-slate-500"
+                          isActive ? "bg-green-soft text-success" : "bg-slate-100 text-slate-500"
                         }`}>
                           {isActive ? t("statusActive") : t("statusDone")}
                         </span>
@@ -260,7 +260,7 @@ function CreateGroupModal({ farmId, onClose, onSuccess }: { farmId: string; onCl
             <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} placeholder={t("phAvgEntryWeight")} className="input" />
           </Field>
         </div>
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={submit} disabled={!form.group_code || !form.head_count_in || mutation.isPending}
@@ -316,7 +316,7 @@ function ShipModal({ farmId, groupId, onClose, onSuccess }: { farmId: string; gr
             <input type="number" step="0.1" min={0} value={form.avg_exit_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_exit_weight_kg: Number(e.target.value) || undefined }))} placeholder={t("phAvgExitWeight")} className="input" />
           </Field>
         </div>
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={submit} disabled={!form.head_count_out || mutation.isPending}
@@ -363,7 +363,7 @@ function EditGroupModal({ farmId, group, onClose, onSuccess }: { farmId: string;
             <input type="number" step="0.1" min={0} value={form.avg_entry_weight_kg ?? ""} onChange={(e) => setForm((f) => ({ ...f, avg_entry_weight_kg: Number(e.target.value) || undefined }))} className="input" />
           </Field>
         </div>
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">{t("cancel")}</button>
           <button onClick={() => mutation.mutate()} disabled={!form.head_count_in || mutation.isPending}

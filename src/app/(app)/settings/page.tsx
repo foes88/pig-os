@@ -117,12 +117,12 @@ export default function SettingsPage() {
                 const inner = (
                   <>
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      item.danger ? "bg-red-50" : "bg-bg2"
+                      item.danger ? "bg-red-soft" : "bg-bg2"
                     }`}>
-                      <Icon size={15} className={item.danger ? "text-red-500" : "text-text2"} strokeWidth={1.8} />
+                      <Icon size={15} className={item.danger ? "text-danger" : "text-text2"} strokeWidth={1.8} />
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <div className={`text-[13px] font-semibold ${item.danger ? "text-red-500" : "text-text"}`}>
+                      <div className={`text-[13px] font-semibold ${item.danger ? "text-danger" : "text-text"}`}>
                         {item.label}
                       </div>
                       {item.desc && <div className="text-[11px] text-text3 mt-0.5">{item.desc}</div>}

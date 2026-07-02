@@ -35,13 +35,13 @@ export default function DataQualityPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="rounded-2xl border border-red-200 bg-red-soft px-4 py-3">
           <div className="flex items-center gap-2 text-danger text-xs font-bold">
             <AlertOctagon size={14} /> {t("critical")}
           </div>
           <div className="text-3xl font-extrabold font-mono text-danger mt-1">{critical.length}</div>
         </div>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <div className="rounded-2xl border border-amber-200 bg-amber-soft px-4 py-3">
           <div className="flex items-center gap-2 text-warning text-xs font-bold">
             <AlertTriangle size={14} /> {t("warning")}
           </div>
@@ -52,7 +52,7 @@ export default function DataQualityPage() {
       {isLoading ? (
         <p className="text-sm text-text3 py-10 text-center">{t("loading")}</p>
       ) : issues.length === 0 ? (
-        <div className="rounded-2xl border border-green-100 bg-green-50 px-6 py-12 text-center">
+        <div className="rounded-2xl border border-green-100 bg-green-soft px-6 py-12 text-center">
           <ShieldCheck size={40} className="text-success mx-auto mb-3" />
           <p className="text-sm font-semibold text-success">{t("allClear")}</p>
         </div>

@@ -74,13 +74,13 @@ export default function TasksPage() {
 
       {isLoading && <div className="text-center text-text3 py-20">{t("loading")}</div>}
       {isError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+        <div className="bg-red-soft border border-red-200 rounded-xl p-4 text-sm text-red-700">
           {t("loadError")}
         </div>
       )}
 
       {data && tasks.length === 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-sm text-green-700 text-center">
+        <div className="bg-green-soft border border-green-200 rounded-xl p-6 text-sm text-success text-center">
           {t("allClear")}
         </div>
       )}
@@ -130,7 +130,7 @@ function TaskRow({
         onClick={onDone}
         disabled={disabled}
         title={t("done")}
-        className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition disabled:opacity-50 flex-shrink-0"
+        className="p-1.5 rounded-lg text-success hover:bg-green-soft transition disabled:opacity-50 flex-shrink-0"
       >
         <Check className="w-4 h-4" />
       </button>

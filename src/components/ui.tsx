@@ -85,8 +85,8 @@ export function AIAction({
   actionHref?: string;
 }) {
   const priorityStyles = {
-    critical: { bg: "bg-red-50", text: "text-danger", Icon: AlertOctagon, label: "Critical" },
-    high: { bg: "bg-amber-50", text: "text-warning", Icon: Zap, label: "High" },
+    critical: { bg: "bg-red-soft", text: "text-danger", Icon: AlertOctagon, label: "Critical" },
+    high: { bg: "bg-amber-soft", text: "text-warning", Icon: Zap, label: "High" },
     medium: { bg: "bg-emerald-50", text: "text-primary", Icon: Lightbulb, label: "Optimization" },
     insight: { bg: "bg-green-soft", text: "text-purple", Icon: Sparkles, label: "Prediction" },
   };
@@ -103,7 +103,7 @@ export function AIAction({
       <div className="flex items-center gap-3">
         {impact && (
           <span className={`inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold px-2.5 py-1 rounded-md ${
-            impactNegative ? "bg-red-50 text-danger" : "bg-green-50 text-success"
+            impactNegative ? "bg-red-soft text-danger" : "bg-green-soft text-success"
           }`}>
             {impact}
           </span>
@@ -127,9 +127,9 @@ export function Tag({
   color?: "green" | "red" | "yellow" | "blue" | "purple";
 }) {
   const colors = {
-    green: "bg-green-50 text-success",
-    red: "bg-red-50 text-danger",
-    yellow: "bg-amber-50 text-warning",
+    green: "bg-green-soft text-success",
+    red: "bg-red-soft text-danger",
+    yellow: "bg-amber-soft text-warning",
     blue: "bg-green-soft text-blue",
     purple: "bg-green-soft text-purple",
   };

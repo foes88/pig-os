@@ -30,7 +30,7 @@ export default function DeleteAccountPage() {
       <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
       <div className="bg-surface border border-border rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-red-soft flex items-center justify-center shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
             </svg>
@@ -40,7 +40,7 @@ export default function DeleteAccountPage() {
             <div className="text-xs text-text3 mt-0.5">{t("irreversible")}</div>
           </div>
         </div>
-        <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-5">
+        <div className="bg-red-soft border border-red-100 rounded-xl p-4 mb-5">
           <div className="text-xs font-bold text-danger mb-2">{t("lostTitle")}</div>
           {[t("l1"), t("l2"), t("l3"), t("l4")].map((x, i) => (
             <div key={i} className="text-xs text-text2 flex items-center gap-2 py-1">

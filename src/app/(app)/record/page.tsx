@@ -51,12 +51,12 @@ const STATUS_BADGE: Record<SowStatus, string> = {
   GILT:      "bg-cyan-50 text-cyan-600 border-cyan-100",
   OPEN:      "bg-green-soft text-success border-success/30",
   PREGNANT:  "bg-green-soft text-success border-success/30",
-  LACTATING: "bg-green-50 text-green-600 border-green-100",
+  LACTATING: "bg-green-soft text-success border-green-100",
   ACCIDENT:  "bg-orange-50 text-orange-600 border-orange-100",
-  CULLED:    "bg-red-50 text-red-500 border-red-100",
+  CULLED:    "bg-red-soft text-danger border-red-100",
   DEAD:      "bg-gray-100 text-gray-400 border-gray-200",
   SOLD:      "bg-emerald-50 text-emerald-600 border-emerald-100",
-  TRANSFER:  "bg-amber-50 text-amber-600 border-amber-100",
+  TRANSFER:  "bg-amber-soft text-warning border-amber-100",
 };
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
@@ -236,7 +236,7 @@ export default function RecordPage() {
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold font-mono shrink-0 ${
-                    isDone ? "bg-green-100 text-green-600" : "bg-navy/10 text-navy"
+                    isDone ? "bg-green-100 text-success" : "bg-navy/10 text-navy"
                   }`}>
                     {isDone ? <Check size={14} /> : sow.ear_tag.slice(0, 2)}
                   </div>
@@ -268,7 +268,7 @@ export default function RecordPage() {
       {/* ── RIGHT: Event drawer ──────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {lastSaved && (
-          <div className="mx-6 mt-4 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium flex items-center gap-1.5">
+          <div className="mx-6 mt-4 px-4 py-2.5 bg-green-soft border border-green-200 rounded-xl text-sm text-success font-medium flex items-center gap-1.5">
             <Check size={15} /> {lastSaved}
           </div>
         )}

@@ -11,11 +11,11 @@ import type { ThresholdRow } from "@/types/api.types";
 
 const SCOPE_META: Record<string, { icon: typeof Globe; cls: string }> = {
   farm:    { icon: Building2, cls: "text-primary border-primary/30 bg-primary/5" },
-  country: { icon: Flag,      cls: "text-green-600 border-green-200 bg-green-50" },
+  country: { icon: Flag,      cls: "text-success border-green-200 bg-green-soft" },
   global:  { icon: Globe,     cls: "text-success border-success/30 bg-green-soft" },
 };
 const CONF_CLS: Record<string, string> = {
-  high: "text-green-600", medium: "text-amber-600", low: "text-red-500",
+  high: "text-success", medium: "text-warning", low: "text-danger",
 };
 
 export default function ThresholdsPage() {
@@ -73,7 +73,7 @@ export default function ThresholdsPage() {
                       <span className="font-semibold">{t.has(`m.${r.metric_code}`) ? t(`m.${r.metric_code}`) : r.metric_code}</span>
                       <span className="text-[10px] text-text3 ml-1.5">{r.direction === "above" ? "↑" : "↓"} {r.unit}</span>
                     </td>
-                    <td className="px-3 py-2.5 text-right font-mono text-amber-600">{r.warning ?? "-"}</td>
+                    <td className="px-3 py-2.5 text-right font-mono text-warning">{r.warning ?? "-"}</td>
                     <td className="px-3 py-2.5 text-right font-mono text-danger">{r.critical ?? "-"}</td>
                     <td className="px-3 py-2.5">
                       <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${sm.cls}`}>
@@ -89,7 +89,7 @@ export default function ThresholdsPage() {
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       {r.is_override && (
-                        <button onClick={() => reset.mutate(r.metric_code)} title={t("reset")} className="p-1 rounded text-text3 hover:text-danger hover:bg-red-50">
+                        <button onClick={() => reset.mutate(r.metric_code)} title={t("reset")} className="p-1 rounded text-text3 hover:text-danger hover:bg-red-soft">
                           <RotateCcw className="w-3.5 h-3.5" />
                         </button>
                       )}

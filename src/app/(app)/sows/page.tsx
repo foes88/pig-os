@@ -241,7 +241,7 @@ export default function SowsPage() {
                             <button
                               onClick={() => setCullTarget(sow)}
                               title={t("removalTooltip")}
-                              className="p-1.5 rounded-md text-text3 hover:text-red-500 hover:bg-red-50 transition"
+                              className="p-1.5 rounded-md text-text3 hover:text-danger hover:bg-red-soft transition"
                             >
                               <LogOut size={13} />
                             </button>
@@ -295,7 +295,7 @@ export default function SowsPage() {
                       {canManage(role) && sow.status !== "CULLED" && sow.status !== "DEAD" && (
                         <button
                           onClick={() => setCullTarget(sow)}
-                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md text-text2 hover:text-red-500 hover:bg-red-50 transition"
+                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md text-text2 hover:text-danger hover:bg-red-soft transition"
                         >
                           <LogOut size={13} /> {t("removalTooltip")}
                         </button>
@@ -523,7 +523,7 @@ function EditSowModal({
         </div>
 
         {isTerminal && <p className="text-[11px] text-text3 mt-3">{t("editTerminalNote")}</p>}
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
 
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">
@@ -698,7 +698,7 @@ function CullSowModal({
           </Field>
         </div>
 
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
 
         <div className="flex gap-2 mt-5">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm">
@@ -810,7 +810,7 @@ function AddSowModal({
           </Field>
         </div>
 
-        {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
+        {error && <p className="text-xs text-danger mt-3">{error}</p>}
 
         <div className="flex gap-2 mt-5">
           <button

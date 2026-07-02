@@ -9,7 +9,7 @@ export default function LegalPage() {
   return (
     <div className="max-w-3xl mx-auto px-7 py-6">
       <h1 className="text-xl font-extrabold tracking-tight mb-3">{t("title")}</h1>
-      <p className="text-xs text-text3 mb-5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{t("disclaimer")}</p>
+      <p className="text-xs text-text3 mb-5 bg-amber-soft border border-amber-200 rounded-lg px-3 py-2">{t("disclaimer")}</p>
       <div className="flex gap-2 mb-5">
         {([["terms", t("tabTerms")], ["privacy", t("tabPrivacy")]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setTab(k as "terms" | "privacy")}

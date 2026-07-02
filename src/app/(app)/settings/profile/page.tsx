@@ -22,7 +22,7 @@ export default function ProfilePage() {
       <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
 
       {saved && (
-        <div className="mb-4 px-4 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 font-medium">
+        <div className="mb-4 px-4 py-2.5 bg-green-soft border border-green-200 rounded-xl text-sm text-success font-medium">
           {t("saved")}
         </div>
       )}

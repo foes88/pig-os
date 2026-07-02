@@ -372,7 +372,7 @@ export default function LoginPage() {
                     ${errors.username ? "border-red-400" : "border-[#CBD5E1]"}`}
                 />
                 {errors.username && (
-                  <p className="text-xs text-red-500 mt-1">{t.errUsername}</p>
+                  <p className="text-xs text-danger mt-1">{t.errUsername}</p>
                 )}
               </div>
 
@@ -396,7 +396,7 @@ export default function LoginPage() {
                     ${errors.password ? "border-red-400" : "border-[#CBD5E1]"}`}
                 />
                 {errors.password && (
-                  <p className="text-xs text-red-500 mt-1">{t.errPassword}</p>
+                  <p className="text-xs text-danger mt-1">{t.errPassword}</p>
                 )}
               </div>
 
@@ -414,16 +414,16 @@ export default function LoginPage() {
 
               {/* Server error */}
               {serverError && (
-                <div className="flex items-start gap-2.5 bg-red-50 border border-red-200
+                <div className="flex items-start gap-2.5 bg-red-soft border border-red-200
                   rounded-lg px-4 py-3">
-                  <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24"
+                  <svg className="w-4 h-4 text-danger mt-0.5 shrink-0" viewBox="0 0 24 24"
                     fill="none" stroke="currentColor" strokeWidth="2"
                     strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/>
                     <line x1="12" y1="8" x2="12" y2="12"/>
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
-                  <p className="text-sm text-red-600">{serverError}</p>
+                  <p className="text-sm text-danger">{serverError}</p>
                 </div>
               )}
 

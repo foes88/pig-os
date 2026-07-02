@@ -68,7 +68,7 @@ export default function BillingPage() {
           <div key={i} className={`flex items-center py-3 ${i < INVOICES.length - 1 ? "border-b border-border" : ""}`}>
             <span className="text-sm font-mono text-text2 flex-1">{date}</span>
             <span className="text-sm font-bold font-mono text-text mr-4">{amount}</span>
-            <span className="text-[11px] font-semibold text-success bg-green-50 border border-green-100 px-2 py-0.5 rounded-md mr-4">{t("paid")}</span>
+            <span className="text-[11px] font-semibold text-success bg-green-soft border border-green-100 px-2 py-0.5 rounded-md mr-4">{t("paid")}</span>
             <button className="text-xs font-semibold text-primary hover:underline">{t("receipt")}</button>
           </div>
         ))}

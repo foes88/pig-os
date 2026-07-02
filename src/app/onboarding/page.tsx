@@ -210,7 +210,7 @@ export default function OnboardingPage() {
                 <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} data-testid="onb-confirm"
                   placeholder="••••••••" className={`fin ${confirmPw && form.password !== confirmPw ? "!border-red-400" : ""}`} />
                 {confirmPw && form.password !== confirmPw && (
-                  <p className="text-xs text-red-500 mt-1">{t.mismatch}</p>
+                  <p className="text-xs text-danger mt-1">{t.mismatch}</p>
                 )}
               </Field>
             </div>
@@ -249,14 +249,14 @@ export default function OnboardingPage() {
           )}
 
           {error && (
-            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mt-4">
-              <svg className="w-4 h-4 text-red-500 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
+            <div className="flex items-start gap-2.5 bg-red-soft border border-red-200 rounded-lg px-4 py-3 mt-4">
+              <svg className="w-4 h-4 text-danger mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 

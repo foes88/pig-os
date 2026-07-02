@@ -17,7 +17,7 @@ const ROLE_BADGE: Record<FarmRole, string> = {
   FARM_OWNER: "bg-green-soft text-success",
   FARM_MANAGER: "bg-green-soft text-success",
   FARM_WORKER: "bg-slate-100 text-slate-600",
-  VET: "bg-green-50 text-green-600",
+  VET: "bg-green-soft text-success",
   VIEWER: "bg-gray-100 text-gray-500",
 };
 
@@ -89,7 +89,7 @@ export default function UsersPage() {
       {!canManage && <p className="text-xs text-text3 mb-5">{t("onlyManagers")}</p>}
 
       {rowError && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-danger">
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-soft px-4 py-3 text-xs font-medium text-danger">
           {rowError}
         </div>
       )}
@@ -190,7 +190,7 @@ function MemberRow({
         )}
       </td>
       <td className="px-4 py-3">
-        <span className={`text-[11px] font-medium ${member.active ? "text-green-600" : "text-text3"}`}>
+        <span className={`text-[11px] font-medium ${member.active ? "text-success" : "text-text3"}`}>
           {member.active ? t("active") : t("inactive")}
         </span>
       </td>
