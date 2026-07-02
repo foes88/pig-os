@@ -687,25 +687,12 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     # Sow counts
     counts = await _sow_counts(db, farm.id)
 
-    # Farrowing rate (year-to-date): farrowings / matings
     from datetime import timedelta
 
     from app.db.models.events import Farrowing, Mating, Weaning
-    mating_count = await db.scalar(
-        select(func.count()).select_from(Mating).where(
-            Mating.farm_id == farm.id,
-            Mating.mating_date >= date(today.year, 1, 1),
-            Mating.deleted_at.is_(None),  # INTEG-2: soft-delete 제외(드리프트 방지)
-        )
-    )
-    farrowing_count = await db.scalar(
-        select(func.count()).select_from(Farrowing).where(
-            Farrowing.farm_id == farm.id,
-            Farrowing.farrowing_date >= date(today.year, 1, 1),
-            Farrowing.deleted_at.is_(None),  # INTEG-2: soft-delete 제외
-        )
-    )
-    farrowing_rate = (farrowing_count / mating_count * 100) if mating_count else None
+    # 분만율은 코호트(110~150일 전 초교배) 기준으로 통일 — build_herd_kpis/룰엔진과 동일 정의(스펙 §4).
+    # 과거엔 대시보드만 YTD farrowings/matings(비코호트)라 룰엔진(코호트)과 값이 어긋났음(C4).
+    farrowing_rate = await _cohort_farrowing_rate(db, farm.id, today)
     fr_bench = await _get_benchmark(db, "FARROWING_RATE", farm)
 
     # 이번주(월요일~오늘) 이벤트 건수 — soft-delete 제외

@@ -78,7 +78,27 @@ def create_tables():
                   AND m.mating_date <= (w.weaning_date + INTERVAL '60 days') AND m.deleted_at IS NULL
                 ORDER BY m.mating_date LIMIT 1
             ) m_next ON TRUE
-            WHERE s.deleted_at IS NULL
+        """)  # sow deleted_at 필터 없음(C2): 도태 모돈의 과거 이유 이력도 NPD 포함
+        # 벤치마크 해석 함수(마이그레이션 전용) — get_dashboard/_all_benchmarks가 참조. 없으면
+        # 대시보드/챗이 테스트에서 미검증이었음 → 운영과 동일 스키마로 생성.
+        conn.exec_driver_sql("""
+            CREATE OR REPLACE FUNCTION effective_metric_values(
+                p_farm_code varchar, p_region_code varchar, p_market_code varchar)
+            RETURNS TABLE(metric_code varchar, default_value numeric, benchmark_avg numeric,
+                benchmark_top25 numeric, target_value numeric, warning_threshold numeric,
+                critical_threshold numeric, alert_direction varchar, unit_code varchar, scope_type varchar)
+            LANGUAGE sql STABLE AS $$
+                SELECT DISTINCT ON (dmv.metric_code) dmv.metric_code, dmv.default_value,
+                    dmv.benchmark_avg, dmv.benchmark_top25, dmv.target_value, dmv.warning_threshold,
+                    dmv.critical_threshold, dmv.alert_direction, dmv.unit_code, dmv.scope_type
+                FROM default_metric_values dmv
+                WHERE (dmv.scope_type='farm' AND dmv.scope_code=p_farm_code)
+                   OR (dmv.scope_type='region' AND dmv.scope_code=p_region_code)
+                   OR (dmv.scope_type='market' AND dmv.scope_code=p_market_code)
+                   OR (dmv.scope_type='system' AND dmv.scope_code='SYSTEM')
+                ORDER BY dmv.metric_code, CASE dmv.scope_type WHEN 'farm' THEN 1 WHEN 'region' THEN 2
+                    WHEN 'market' THEN 3 WHEN 'system' THEN 4 ELSE 5 END
+            $$
         """)
     yield
     _sync_engine.dispose()
