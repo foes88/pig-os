@@ -295,3 +295,22 @@ class TestValidationGaps:
                                  json={"mating_date": "2027-12-31"})
         assert upd.status_code == 422, upd.text
         assert "future" in upd.text.lower()
+
+    async def test_sow_patch_status_transition_guard(
+        self, client: AsyncClient, db, test_user, test_farm, test_sow
+    ):
+        """PATCH로 LACTATING/PREGNANT 직접 설정 차단(이벤트로만). OPEN 등 보정은 허용."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "GILT"
+        await db.flush()
+        h = self._h(test_user)
+        base = f"/api/v1/farms/{test_farm.id}/sows/{test_sow.id}"
+        # 분만 없이 LACTATING 직접 → 차단
+        r1 = await client.patch(base, headers=h, json={"status": "LACTATING"})
+        assert r1.status_code == 422, r1.text
+        # 교배 없이 PREGNANT 직접 → 차단
+        r2 = await client.patch(base, headers=h, json={"status": "PREGNANT"})
+        assert r2.status_code == 422, r2.text
+        # OPEN 보정은 허용
+        r3 = await client.patch(base, headers=h, json={"status": "OPEN"})
+        assert r3.status_code == 200, r3.text

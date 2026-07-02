@@ -155,6 +155,13 @@ async def update_sow(sow_id: UUID, body: SowUpdate, farm: FarmDep, db: DbDep):
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
     updated = body.model_dump(exclude_none=True)
+    # 상태전이 가드: LACTATING/PREGNANT는 분만/교배 이벤트로만 도달 가능(분만 없는 포유·
+    # 교배 없는 임신 같은 물리 불가 상태를 PATCH로 만드는 것 차단). OPEN/GILT/ACCIDENT는
+    # 미기록 이벤트를 함의하지 않아 수동 보정 허용. (이벤트-구동 상태머신의 PATCH 우회 방지)
+    if updated.get("status") in ("LACTATING", "PREGNANT") and updated["status"] != sow.status:
+        raise ValidationError(
+            f"status '{updated['status']}' is set by mating/farrowing events, "
+            f"not by direct edit (record the event instead)")
     # ear_tag 변경 시 유니크 재검증(create_sow와 동일) — 미검증 시 활성 중복이표 또는 500 누설(QA 모돈 update 패리티).
     if "ear_tag" in updated and updated["ear_tag"] != sow.ear_tag:
         dup = await db.scalar(select(Sow).where(
