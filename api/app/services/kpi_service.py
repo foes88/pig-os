@@ -229,6 +229,28 @@ async def _all_benchmarks(db: AsyncSession, farm: Farm) -> dict[str, dict]:
     return out
 
 
+async def _avg_active_inventory(db: AsyncSession, farm_id: UUID, start: date, end: date) -> float:
+    """[start,end] 각 월초의 활성 모돈 재고 평균(입식~퇴출 윈도우) — 스펙 §1/§7 비율 분모.
+    현재 시점 활성두수(point-in-time)로 나누면 기간 중 입·퇴출을 반영 못 해 비율이 왜곡됨."""
+    months: list[date] = []
+    y, m = start.year, start.month
+    while (y, m) <= (end.year, end.month):
+        months.append(date(y, m, 1))
+        m += 1
+        if m > 12:
+            m, y = 1, y + 1
+    if not months:
+        return 0.0
+    v = (await db.execute(text(
+        "SELECT AVG(cnt) FROM (SELECT mo AS m, count(s.id) cnt "
+        "FROM unnest(CAST(:months AS date[])) mo "
+        "LEFT JOIN sows s ON s.farm_id = :fid AND s.entry_date <= mo "
+        "AND (s.deleted_at IS NULL OR (s.exit_date IS NOT NULL AND s.exit_date >= mo)) "
+        "GROUP BY mo) t"),
+        {"fid": str(farm_id), "months": months})).scalar()
+    return float(v) if v else 0.0
+
+
 async def _cohort_farrowing_rate(db: AsyncSession, farm_id: UUID, ref: date) -> float | None:
     """스펙 §4 코호트 분만율: ref 기준 110~150일 전 '초교배(mating_number=1)' 중 분만 성공 비율.
     교배 후 115일 내 폐사한 모돈은 분모에서 제외. 표본 0이면 None(날조 금지).
@@ -311,9 +333,12 @@ async def build_herd_kpis(
         "SELECT count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT')) active, "
         "count(*) FILTER (WHERE status IN ('GILT','OPEN','PREGNANT','LACTATING','ACCIDENT') AND parity >= 7) hp "
         "FROM sows WHERE farm_id=:fid AND deleted_at IS NULL"), p)).one()
+    # 도폐사는 removals 원장에서 집계(스펙 §7). 과거엔 sows에서 deleted_at IS NULL로 세서, 도폐사
+    # 모돈이 소프트삭제(deleted_at 설정)라 항상 0이 나왔음 — 모돈폐사율/도태율이 상시 0인 버그.
     removed = (await db.execute(text(
-        "SELECT count(*) FILTER (WHERE status='CULLED') culled, count(*) FILTER (WHERE status='DEAD') dead "
-        "FROM sows WHERE farm_id=:fid AND deleted_at IS NULL AND exit_date BETWEEN :s AND :e"), p)).one()
+        "SELECT count(*) FILTER (WHERE removal_type='CULLED') culled, "
+        "count(*) FILTER (WHERE removal_type='DEAD') dead "
+        "FROM removals WHERE farm_id=:fid AND removal_date BETWEEN :s AND :e"), p)).one()
     gilt_in = (await db.execute(text(
         "SELECT count(*) FROM sows WHERE farm_id=:fid AND deleted_at IS NULL "
         "AND entry_type='GILT' AND entry_date BETWEEN :s AND :e"), p)).scalar() or 0
@@ -370,6 +395,8 @@ async def build_herd_kpis(
 
     pwmr = _rate(deaths, wsum + deaths)
     active_herd = float(herd.active) if herd.active else 0.0
+    # 기간 비율(폐사/도태/교체/MSY) 분모 = 평균 재고(스펙 §1/§7). 구조 스냅샷(HIGH_PARITY)만 현재 활성두수 사용.
+    avg_inv = await _avg_active_inventory(db, farm.id, p["s"], p["e"])
     return {
         # 캐논 metric_code(default_metric_values 시드와 정합 → 국가별 benchmark 자동 적용)
         "FARROWING_RATE":      await _cohort_farrowing_rate(db, farm.id, today),  # #4 코호트(스펙 §4)
@@ -390,10 +417,10 @@ async def build_herd_kpis(
         "FCR":                 round(float(feed) / gain, 3) if gain and float(feed) > 0 else None,
         "FINISH_MORTALITY":    _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
         # 모돈군 구조(롤링 window 제거율 = 연간 근사, window=365)
-        "CULLING_RATE":        _rate(float(removed.culled), active_herd),
-        "SOW_MORTALITY":       _rate(float(removed.dead), active_herd),
+        "CULLING_RATE":        _rate(float(removed.culled), avg_inv),
+        "SOW_MORTALITY":       _rate(float(removed.dead), avg_inv),
         "HIGH_PARITY_RATIO":   _rate(float(herd.hp) if herd.hp else 0.0, active_herd),
-        "REPLACEMENT_RATE":    _rate(float(gilt_in), active_herd),
+        "REPLACEMENT_RATE":    _rate(float(gilt_in), avg_inv),
         # 2산차 슬럼프 = P1 실산 − P2 실산 (양쪽 데이터 있을 때만)
         "SECOND_LITTER_DROP":  (round(float(par[1]) - float(par[2]), 1)
                                 if par.get(1) is not None and par.get(2) is not None else None),
@@ -411,8 +438,8 @@ async def build_herd_kpis(
         "DEATH_AGE_0_3_RATIO": (_rate(float(pd.age0_3), float(pd.total))
                                 if pd.total and pd.total >= 5 else None),
         # MSY(D3) = 연간 출하두수(비육 완료 head_out) / 활성 모돈. 출하 데이터 없으면 None(오발화 방지)
-        "MSY":                 (round((float(gf.hout) if gf.hout else 0.0) / active_herd, 1)
-                                if active_herd and gf.hout else None),
+        "MSY":                 (round((float(gf.hout) if gf.hout else 0.0) / avg_inv, 1)
+                                if avg_inv and gf.hout else None),
         # 배치 요일집중도(D4) — 최다 요일 교배 비중 % (표본 ≥16)
         "BATCH_DOW_CONCENTRATION": (_rate(float(bdow.maxd), float(bdow.total))
                                     if bdow.total and bdow.total >= 16 else None),
