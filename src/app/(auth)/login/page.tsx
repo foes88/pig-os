@@ -221,7 +221,7 @@ function BrandPanel() {
         <div className="space-y-3">
           {[
             { icon: "◈", text: "27 yrs of field expertise" },
-            { icon: "◎", text: "5 global markets supported" },
+            { icon: "◎", text: "4 global markets supported" },
             { icon: "◉", text: "AI-powered KPI alerts" },
           ].map(({ icon, text }) => (
             <div key={text} className="flex items-center gap-3">
@@ -380,7 +380,7 @@ export default function LoginPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-sm font-medium text-slate-700">{t.password}</label>
-                  <a href="#" className="text-xs text-[#2563EB] hover:underline">
+                  <a href="/forgot-password" className="text-xs text-[#2563EB] hover:underline">
                     {t.forgotPassword}
                   </a>
                 </div>
