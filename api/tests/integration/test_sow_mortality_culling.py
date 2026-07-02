@@ -20,8 +20,9 @@ pytestmark = pytest.mark.anyio
 
 def _sow(farm, **kw):
     kw.setdefault("status", "OPEN")
+    kw.setdefault("entry_date", datetime(2025, 6, 1, tzinfo=UTC))
     return Sow(farm_id=farm.id, ear_tag=f"S-{uuid.uuid4().hex[:6].upper()}", parity=3,
-               entry_date=datetime(2025, 6, 1, tzinfo=UTC), entry_type="GILT", **kw)
+               entry_type="GILT", **kw)
 
 
 async def test_avg_inventory_counts_active_over_window(db: AsyncSession, test_farm: Farm):
@@ -51,3 +52,19 @@ async def test_mortality_culling_sourced_from_removals(db: AsyncSession, test_fa
     # 옛 코드: sows deleted_at IS NULL 필터라 removed=0 → 폐사율/도태율 0.0. 이제 removals에서 집계 → >0.
     assert k["SOW_MORTALITY"] is not None and k["SOW_MORTALITY"] > 0, k["SOW_MORTALITY"]
     assert k["CULLING_RATE"] is not None and k["CULLING_RATE"] > 0, k["CULLING_RATE"]
+
+
+async def test_young_farm_annual_rates_are_none(db: AsyncSession, test_farm: Farm):
+    """신생 농장(평균재고<1) — 연간 비율(도태/폐사/교체/PSY)이 폭발값 대신 None."""
+    from app.services.kpi_service import calculate_psy
+    now = datetime.now(UTC)
+    # 모돈 1두를 '어제' 입식(연중 대부분 미존재) → avg_inv≈0
+    s = _sow(test_farm, entry_date=now - timedelta(days=1))
+    db.add(s)
+    await db.flush()
+    db.add(Removal(farm_id=test_farm.id, sow_id=s.id, removal_date=date.today(), removal_type="CULLED"))
+    await db.flush()
+    k = await build_herd_kpis(db, test_farm)
+    assert k["CULLING_RATE"] is None and k["REPLACEMENT_RATE"] is None, (k["CULLING_RATE"], k["REPLACEMENT_RATE"])
+    p = await calculate_psy(db, test_farm.id, date.today().year)
+    assert p.psy is None, "신생 농장 PSY는 폭발값 대신 None"

@@ -92,10 +92,10 @@ async def calculate_psy(db: AsyncSession, farm_id: UUID, year: int) -> PsyDetail
     result = row.fetchone()
     avg_inv = float(result.avg_sow_count) if result and result.avg_sow_count else 0.0
     total_weaned = int(result.total_weaned) if result and result.total_weaned else 0
-    if avg_inv <= 0:
-        # 활성 모돈 0두 → PSY NULL + 경고(스펙 §1 엣지)
-        return PsyDetail(farm_id=farm_id, year=year, avg_sow_count=0, total_weaned=total_weaned,
-                         psy=None, benchmark_avg=None, target_value=None)
+    if avg_inv < 1:
+        # 활성 재고 <1두(신생 농장 등 연중 대부분 미존재) → 연율 산정 불가 → PSY NULL(폭발값 방지).
+        return PsyDetail(farm_id=farm_id, year=year, avg_sow_count=round(avg_inv, 2),
+                         total_weaned=total_weaned, psy=None, benchmark_avg=None, target_value=None)
     return PsyDetail(
         farm_id=farm_id,
         year=year,
@@ -397,6 +397,8 @@ async def build_herd_kpis(
     active_herd = float(herd.active) if herd.active else 0.0
     # 기간 비율(폐사/도태/교체/MSY) 분모 = 평균 재고(스펙 §1/§7). 구조 스냅샷(HIGH_PARITY)만 현재 활성두수 사용.
     avg_inv = await _avg_active_inventory(db, farm.id, p["s"], p["e"])
+    # 평균재고 <1두(신생 농장 등)면 연간 비율이 0에 가까운 분모로 폭발(1300% 등) → 분모 0 처리해 None 반환.
+    inv_denom = avg_inv if avg_inv >= 1 else 0.0
     return {
         # 캐논 metric_code(default_metric_values 시드와 정합 → 국가별 benchmark 자동 적용)
         "FARROWING_RATE":      await _cohort_farrowing_rate(db, farm.id, today),  # #4 코호트(스펙 §4)
@@ -417,10 +419,10 @@ async def build_herd_kpis(
         "FCR":                 round(float(feed) / gain, 3) if gain and float(feed) > 0 else None,
         "FINISH_MORTALITY":    _rate(hin - (float(gf.hout) if gf.hout else 0.0), hin),
         # 모돈군 구조(롤링 window 제거율 = 연간 근사, window=365)
-        "CULLING_RATE":        _rate(float(removed.culled), avg_inv),
-        "SOW_MORTALITY":       _rate(float(removed.dead), avg_inv),
+        "CULLING_RATE":        _rate(float(removed.culled), inv_denom),
+        "SOW_MORTALITY":       _rate(float(removed.dead), inv_denom),
         "HIGH_PARITY_RATIO":   _rate(float(herd.hp) if herd.hp else 0.0, active_herd),
-        "REPLACEMENT_RATE":    _rate(float(gilt_in), avg_inv),
+        "REPLACEMENT_RATE":    _rate(float(gilt_in), inv_denom),
         # 2산차 슬럼프 = P1 실산 − P2 실산 (양쪽 데이터 있을 때만)
         "SECOND_LITTER_DROP":  (round(float(par[1]) - float(par[2]), 1)
                                 if par.get(1) is not None and par.get(2) is not None else None),
@@ -438,8 +440,8 @@ async def build_herd_kpis(
         "DEATH_AGE_0_3_RATIO": (_rate(float(pd.age0_3), float(pd.total))
                                 if pd.total and pd.total >= 5 else None),
         # MSY(D3) = 연간 출하두수(비육 완료 head_out) / 활성 모돈. 출하 데이터 없으면 None(오발화 방지)
-        "MSY":                 (round((float(gf.hout) if gf.hout else 0.0) / avg_inv, 1)
-                                if avg_inv and gf.hout else None),
+        "MSY":                 (round((float(gf.hout) if gf.hout else 0.0) / inv_denom, 1)
+                                if inv_denom and gf.hout else None),
         # 배치 요일집중도(D4) — 최다 요일 교배 비중 % (표본 ≥16)
         "BATCH_DOW_CONCENTRATION": (_rate(float(bdow.maxd), float(bdow.total))
                                     if bdow.total and bdow.total >= 16 else None),
