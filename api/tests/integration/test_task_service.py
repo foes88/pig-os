@@ -83,3 +83,26 @@ class TestUpdate:
         assert updated.status == "DONE"
         assert updated.completed_at is not None
         assert updated.completed_by == test_user.id
+
+    async def test_complete_regenerate_complete_again(
+        self, db: AsyncSession, test_farm: Farm, test_user: User
+    ):
+        """회귀: 완료 → 다음 주기 재발생(재생성) → 재완료가 409 없이 성공해야.
+        과거 uq_task_open_per_sow_type가 status를 유니크 키에 포함해 같은 sow+type의
+        DONE 이력을 2개 못 가져 두 번째 완료가 IntegrityError(409)로 막혔음."""
+        sow = await _pregnant_overdue(db, test_farm)
+        await task_service.generate_tasks(db, test_farm.id)
+        t1 = [t for t in await _open_tasks(db, test_farm) if t.sow_id == sow.id][0]
+        await task_service.update_task(db, test_farm.id, t1.id, test_user.id, status="DONE")
+
+        await task_service.generate_tasks(db, test_farm.id)  # 재발생 → 새 OPEN task
+        open_again = [t for t in await _open_tasks(db, test_farm)
+                      if t.sow_id == sow.id and t.task_type == t1.task_type]
+        assert open_again, "재생성 시 새 OPEN task가 있어야"
+        t2 = open_again[0]
+        assert t2.id != t1.id
+
+        done2, _ = await task_service.update_task(
+            db, test_farm.id, t2.id, test_user.id, status="DONE",
+        )
+        assert done2.status == "DONE"
