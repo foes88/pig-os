@@ -238,3 +238,43 @@ class TestFosterOvercrowding:
                 PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id, target_sow_id=b.id,
                                   event_date=date(2024, 6, 1), event_type="FOSTER_IN", piglet_count=10),
             )
+
+
+class TestValidationGaps:
+    """CRUD 엣지 검증에서 발견한 갭 회귀(2026-07-02)."""
+
+    def _h(self, u):
+        return {"Authorization": f"Bearer {create_access_token(str(u.id), str(u.org_id), ['FARM_OWNER'])}"}
+
+    async def test_piglet_group_deaths_exceeds_headcount_blocked(
+        self, client: AsyncClient, db, test_user, test_farm
+    ):
+        """자돈그룹 누적 폐사두수가 입식두수를 넘으면 차단(과거: 무제한 수락)."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        await db.flush()
+        h = self._h(test_user)
+        import uuid as _u
+        gc = f"PG-{_u.uuid4().hex[:5].upper()}"
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/piglets", headers=h,
+                              json={"group_code": gc, "weaning_date": "2026-06-15", "head_count_in": 30})
+        assert r.status_code in (200, 201), r.text
+        gid = r.json()["id"]
+        over = await client.post(f"/api/v1/farms/{test_farm.id}/piglets/{gid}/deaths",
+                                 headers=h, json={"head_count_dead": 9999})
+        assert over.status_code == 422, over.text     # 30두 그룹에 9999 폐사 → 차단
+        ok = await client.post(f"/api/v1/farms/{test_farm.id}/piglets/{gid}/deaths",
+                               headers=h, json={"head_count_dead": 3})
+        assert ok.status_code in (200, 201), ok.text   # 정상 범위는 허용
+
+    async def test_mating_future_date_blocked(
+        self, client: AsyncClient, db, test_user, test_farm, test_sow
+    ):
+        """미래 교배일 차단(과거: 수락 → NPD·분만예정 KPI 왜곡)."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "OPEN"
+        await db.flush()
+        h = self._h(test_user)
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/events/matings", headers=h,
+                              json={"sow_id": str(test_sow.id), "mating_date": "2027-12-31", "mating_type": "AI"})
+        assert r.status_code == 422, r.text
+        assert "future" in r.text.lower()

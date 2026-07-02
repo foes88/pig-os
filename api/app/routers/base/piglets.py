@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.events import Farrowing, PigletEvent
 from app.db.models.sow import PigletGroup, PigletTransfer, Sow
 from app.validators.cross_fostering import (
@@ -99,7 +99,13 @@ async def record_deaths(
     if not group:
         raise NotFoundError(f"Piglet group {group_id} not found")
 
-    group.head_count_dead = (group.head_count_dead or 0) + body.head_count_dead
+    # 누적 폐사 + 이미 전출 ≤ 입식두수. (초과 폐사 입력 방지 — 데이터 무결성)
+    new_dead = (group.head_count_dead or 0) + body.head_count_dead
+    if new_dead + (group.head_count_out or 0) > group.head_count_in:
+        raise ValidationError(
+            f"Cumulative deaths ({new_dead}) + transferred out ({group.head_count_out or 0}) "
+            f"cannot exceed head count in ({group.head_count_in})")
+    group.head_count_dead = new_dead
     if body.notes:
         group.notes = body.notes
     await db.commit()
@@ -128,6 +134,11 @@ async def transfer_out_piglet_group(
     if group.transfer_date is not None:
         raise ConflictError("Group already transferred out")
 
+    # 전출두수 + 누적폐사 ≤ 입식두수. (가용 초과 전출 방지)
+    if body.head_count_out + (group.head_count_dead or 0) > group.head_count_in:
+        raise ValidationError(
+            f"Transferred out ({body.head_count_out}) + deaths ({group.head_count_dead or 0}) "
+            f"cannot exceed head count in ({group.head_count_in})")
     group.transfer_date = body.transfer_date
     group.transfer_type = body.transfer_type
     group.head_count_out = body.head_count_out

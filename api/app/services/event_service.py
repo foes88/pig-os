@@ -179,6 +179,10 @@ async def record_mating(
 ) -> Mating:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
 
+    # 미래 교배일 거부(웅돈 입식일과 동일 가드) — 미래일은 NPD·분만예정 KPI를 왜곡.
+    if req.mating_date > date.today():
+        raise ValidationError(f"mating_date {req.mating_date} cannot be in the future")
+
     # 교배 가능 상태 + 웅돈 순서 검증 (P0-BE-9: boar 슬롯 인자 전달)
     validate_mating(
         sow_status=sow.status,
