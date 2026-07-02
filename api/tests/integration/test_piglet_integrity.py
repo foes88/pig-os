@@ -278,3 +278,20 @@ class TestValidationGaps:
                               json={"sow_id": str(test_sow.id), "mating_date": "2027-12-31", "mating_type": "AI"})
         assert r.status_code == 422, r.text
         assert "future" in r.text.lower()
+
+    async def test_mating_update_future_date_blocked(
+        self, client: AsyncClient, db, test_user, test_farm, test_sow
+    ):
+        """PATCH도 미래 교배일 차단 — create엔 가드 있는데 update 누락하던 비대칭 마감."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "OPEN"
+        await db.flush()
+        h = self._h(test_user)
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/events/matings", headers=h,
+                              json={"sow_id": str(test_sow.id), "mating_date": "2026-02-01", "mating_type": "AI"})
+        assert r.status_code in (200, 201), r.text
+        mid = r.json()["id"]
+        upd = await client.patch(f"/api/v1/farms/{test_farm.id}/events/matings/{mid}", headers=h,
+                                 json={"mating_date": "2027-12-31"})
+        assert upd.status_code == 422, upd.text
+        assert "future" in upd.text.lower()

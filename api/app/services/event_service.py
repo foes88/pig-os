@@ -859,6 +859,9 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
     data = body.model_dump(exclude_unset=True)
     if "mating_date" in data and data["mating_date"]:
         await _ensure_period_unlocked(db, farm_id, data["mating_date"])
+        # 미래 교배일 거부 — record_mating과 동일 가드(PATCH 검증 비대칭 마감).
+        if data["mating_date"] > date.today():
+            raise ValidationError(f"mating_date {data['mating_date']} cannot be in the future")
     for k, v in data.items():
         setattr(m, k, v)
     # 견고화: 수정도 생성(record_mating)과 동일 제약 재검증
