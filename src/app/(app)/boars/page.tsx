@@ -203,7 +203,8 @@ export default function BoarsPage() {
         </div>
       ) : (
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+          {/* 데스크톱: 테이블 / 모바일(md 미만): 카드 — 현장 폰 가로스크롤 제거 */}
+          <table className="w-full text-sm hidden md:table">
             <thead>
               <tr className="border-b border-border bg-bg2">
                 <th className="text-left px-4 py-3 text-text3 font-medium">{t("thEarTag")}</th>
@@ -263,6 +264,51 @@ export default function BoarsPage() {
               ))}
             </tbody>
           </table>
+          {/* 모바일 카드 뷰 (md 미만) — 데스크톱 테이블과 동일 데이터 */}
+          <ul className="md:hidden divide-y divide-border">
+            {paged.map((boar: Boar) => {
+              const q = SEMEN_QUALITY_KEYS.find((x) => x.value === boar.semen_quality);
+              return (
+                <li key={boar.id} className="p-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono font-semibold text-text">{boar.ear_tag}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${STATUS_CLASS[boar.status] ?? "bg-gray-50 text-gray-500"}`}>
+                      {STATUS_KEY[boar.status] ? t(STATUS_KEY[boar.status]) : boar.status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-1 text-xs text-text2">
+                    <span>{t("thBreed")}: <span className="text-text1">{boar.breed ?? "—"}</span></span>
+                    <span>{t("thEntryDate")}: <span className="text-text1">{boar.entry_date.slice(0, 10)}</span></span>
+                    <span className="col-span-2">{t("thSemen")}: <span className="text-text1">{q ? t(q.key) : "—"}</span></span>
+                  </div>
+                  {canWrite && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => openEdit(boar)}
+                        className="flex items-center gap-1 text-xs px-2 py-1 rounded-md text-text2 hover:text-text hover:bg-bg2 transition"
+                      >
+                        <Pencil size={13} /> {t("editTooltip")}
+                      </button>
+                      {boar.status === "ACTIVE" && (
+                        <select
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) changeStatus(boar, e.target.value as Boar["status"]);
+                          }}
+                          className="text-xs border border-border rounded-md px-1.5 py-1 bg-surface text-text3 focus:outline-none"
+                        >
+                          <option value="">{t("changeStatus")}</option>
+                          <option value="CULLED">{t("statusCulled")}</option>
+                          <option value="DEAD">{t("statusDead")}</option>
+                          <option value="TRANSFERRED">{t("statusTransferred")}</option>
+                        </select>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border text-xs text-text3">
               <span>{t("pageInfo", { n: boars.length, p: page, tp: totalPages })}</span>

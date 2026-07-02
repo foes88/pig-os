@@ -175,7 +175,9 @@ export default function SowsPage() {
               )}
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <>
+            {/* 데스크톱: 테이블 / 모바일(md 미만): 카드 — 현장 폰 가로스크롤 제거 */}
+            <table className="w-full text-sm hidden md:table">
               <thead>
                 <tr className="border-b border-border bg-background text-text3 text-xs">
                   <th className="text-left px-4 py-3 font-medium">{t("thEarTag")}</th>
@@ -251,6 +253,59 @@ export default function SowsPage() {
                 })}
               </tbody>
             </table>
+
+            {/* 모바일 카드 뷰 (md 미만) — 데스크톱 테이블과 동일 데이터·동작 */}
+            <ul className="md:hidden divide-y divide-border">
+              {filtered.map((sow) => {
+                const cls = STATUS_CLS[sow.status] ?? "bg-gray-100 text-gray-500";
+                const rt = riskBySow.get(sow.id);
+                const m = rt ? ALERT_META[rt] : null;
+                return (
+                  <li
+                    key={sow.id}
+                    onClick={() => router.push(`/sows/${sow.id}`)}
+                    className="p-4 flex flex-col gap-2 cursor-pointer hover:bg-background/50 transition"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono font-bold text-text1">{sow.ear_tag}</span>
+                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${cls}`}>
+                        {tStatus(sow.status)}
+                      </span>
+                    </div>
+                    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs text-text2">
+                      <span>{t("thParity")}: <span className="font-mono text-text1">{t("parityUnit", { n: sow.parity })}</span></span>
+                      <span>{t("thBreed")}: <span className="text-text1">{sow.breed ?? "-"}</span></span>
+                      <span className="font-mono text-text3">{sow.entry_date.slice(0, 10)}</span>
+                      {m && (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${SEVERITY_PILL[m.severity]}`}>
+                          <AlertTriangle size={10} />
+                          {t(`riskShort.${rt}`)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                      {canEntry(role) && (
+                        <button
+                          onClick={() => setEditTarget(sow)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md text-text2 hover:text-text hover:bg-bg2 transition"
+                        >
+                          <Pencil size={13} /> {t("editTooltip")}
+                        </button>
+                      )}
+                      {canManage(role) && sow.status !== "CULLED" && sow.status !== "DEAD" && (
+                        <button
+                          onClick={() => setCullTarget(sow)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 rounded-md text-text2 hover:text-red-500 hover:bg-red-50 transition"
+                        >
+                          <LogOut size={13} /> {t("removalTooltip")}
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            </>
           )}
         </div>
 
