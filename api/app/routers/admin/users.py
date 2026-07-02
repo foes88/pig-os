@@ -4,22 +4,24 @@
 모든 라우트 require_super_admin. 상태변경은 AuditLog 기록.
 레거시 officers/UserInfo.do 복제 아님 — PigOS User/UserFarm/PilotSignup 기반.
 """
+import secrets
 from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 
 from app.core.dependencies import DbDep, SuperAdmin, require_super_admin
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.core.security import hash_password
 from app.db.models.pilot_signup import PilotSignup
-from app.db.models.platform import AuditLog, Farm, Organization, User, UserFarm
+from app.db.models.platform import AuditLog, Farm, Organization, RefreshToken, User, UserFarm
 from app.schemas.admin_user import (
     APPROVAL_STATUSES,
     AdminMemberDetail,
     AdminMemberFarm,
     AdminMemberRow,
+    AdminPasswordResetResult,
     MemberStatusUpdate,
     PilotApproveRequest,
     PilotApproveResult,
@@ -189,6 +191,37 @@ async def update_member_status(
     fc = await db.scalar(select(func.count()).select_from(UserFarm).where(UserFarm.user_id == u.id)) or 0
     org_name = await db.scalar(select(Organization.name).where(Organization.id == u.org_id)) if u.org_id else None
     return _row_to_member(u, org_name, fc)
+
+
+@router.post("/members/{member_id}/reset-password", response_model=AdminPasswordResetResult)
+async def reset_member_password(
+    member_id: UUID, db: DbDep, admin: SuperAdmin
+) -> AdminPasswordResetResult:
+    """운영자가 기존 사용자 비밀번호를 재설정 — 임시 비번 발급(무발송 환경 대응, 이메일 채널과 병행).
+
+    임시 비번을 새로 발급해 저장하고, 해당 사용자의 활성 리프레시 토큰을 전부 폐기(강제 재로그인).
+    임시 비번은 운영자에게만 반환(감사엔 평문 미기록). 사용자는 로그인 후 즉시 변경 권장.
+    """
+    u = await db.get(User, member_id)
+    if not u:
+        raise NotFoundError("Member not found")
+    temp = secrets.token_urlsafe(9)  # 약 12자 임시 비번
+    u.password_hash = hash_password(temp)
+    # 기존 세션 폐기 — 유출/분실 대응(재설정 후 옛 토큰 무효)
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == u.id, RefreshToken.revoked.is_(False))
+        .values(revoked=True)
+    )
+    db.add(AuditLog(
+        user_id=admin.id, farm_id=None, action="UPDATE", entity_type="admin_user",
+        entity_id=u.id, new_value={"password_reset": True},  # 평문 비번 미기록
+    ))
+    await db.commit()
+    return AdminPasswordResetResult(
+        user_id=str(u.id), email=u.email or "", temp_password=temp,
+        note="임시 비밀번호를 사용자에게 직접 전달하세요. 로그인 후 즉시 변경을 권장합니다.",
+    )
 
 
 # ─── 베타(파일럿) 가입 ──────────────────────────────────────────────────────────

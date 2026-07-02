@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Check, X, Power } from "lucide-react";
+import { Search, Check, X, Power, KeyRound } from "lucide-react";
 import { adminApi } from "@/lib/api/endpoints/admin";
 import type { AdminMemberRow, PilotSignupRow } from "@/types/api.types";
 
@@ -61,6 +61,13 @@ function MembersTab({ t }: { t: (k: string, v?: Record<string, string | number>)
     mutationFn: ({ id, body }: { id: string; body: { approval_status?: string; active?: boolean } }) =>
       adminApi.updateMemberStatus(id, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "members"] }),
+  });
+
+  const resetMut = useMutation({
+    mutationFn: (id: string) => adminApi.resetMemberPassword(id),
+    // 무발송 환경: 임시 비번을 운영자에게 표시 → 사용자에게 직접 전달(가입승인 UX와 동일 패턴).
+    onSuccess: (res) => window.alert(t("resetPwDone", { email: res.email, pw: res.temp_password })),
+    onError: () => window.alert(t("resetPwError")),
   });
 
   const rows = data?.items ?? [];
@@ -139,6 +146,9 @@ function MembersTab({ t }: { t: (k: string, v?: Record<string, string | number>)
                       <button onClick={() => mut.mutate({ id: m.id, body: { active: !m.active } })}
                         title={m.active ? t("actDeactivate") : t("actActivate")}
                         className={`p-1.5 rounded-md transition ${m.active ? "text-text3 hover:bg-bg2" : "text-warning hover:bg-amber-soft"}`}><Power size={14} /></button>
+                      <button onClick={() => { if (window.confirm(t("resetPwConfirm", { name: m.name }))) resetMut.mutate(m.id); }}
+                        title={t("actResetPw")}
+                        className="p-1.5 rounded-md text-text3 hover:bg-bg2 transition"><KeyRound size={14} /></button>
                     </div>
                   </td>
                 </tr>

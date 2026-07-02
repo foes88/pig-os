@@ -55,6 +55,13 @@ export const adminApi = {
   updateMemberStatus: (id: string, body: { approval_status?: string; active?: boolean }) =>
     apiClient.patch<AdminMemberRow>(`${BASE}/members/${id}/status`, body).then((r) => r.data),
 
+  resetMemberPassword: (id: string) =>
+    apiClient
+      .post<{ user_id: string; email: string; temp_password: string; note: string }>(
+        `${BASE}/members/${id}/reset-password`,
+      )
+      .then((r) => r.data),
+
   // 베타 가입
   pilotSignups: (params: { status?: string; page?: number; per_page?: number } = {}) =>
     apiClient.get<AdminPaged<PilotSignupRow>>(`${BASE}/pilot-signups`, { params }).then((r) => r.data),

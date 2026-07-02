@@ -61,3 +61,11 @@ class PilotApproveResult(BaseModel):
     email: str
     initial_password: str
     note: str
+
+
+class AdminPasswordResetResult(BaseModel):
+    """운영자가 기존 사용자 비밀번호를 재설정 → 임시 비번을 운영자에게 반환(무발송 환경 대응)."""
+    user_id: str
+    email: str
+    temp_password: str
+    note: str
