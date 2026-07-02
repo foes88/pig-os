@@ -55,6 +55,36 @@ async def test_send_failure_returns_false_not_raise(monkeypatch):
     assert await send_email("to@x.com", "s", "b") is False  # 예외 삼키고 False
 
 
+async def test_prefers_ses_when_configured(monkeypatch):
+    monkeypatch.setattr(settings, "ses_from_email", "noreply@pigos.io", raising=False)
+    captured: dict = {}
+
+    def fake_ses(to, subject, text_body, html_body):
+        captured.update(to=to, subject=subject)
+        return "msg-123"
+
+    # SES 경로 사용 확인 + SMTP는 호출 안 됨
+    monkeypatch.setattr("app.services.email_service._send_ses_sync", fake_ses)
+    monkeypatch.setattr("app.services.email_service._send_sync",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("SMTP should not be used")))
+    ok = await send_email("to@x.com", "S", "b", "<p>b</p>")
+    assert ok is True and captured["to"] == "to@x.com"
+
+
+async def test_ses_failure_falls_back_to_smtp(monkeypatch):
+    monkeypatch.setattr(settings, "ses_from_email", "noreply@pigos.io", raising=False)
+    monkeypatch.setattr(settings, "smtp_host", "smtp.test", raising=False)
+    monkeypatch.setattr(settings, "smtp_user", "u", raising=False)
+    monkeypatch.setattr(settings, "smtp_password", "pw", raising=False)
+    monkeypatch.setattr("app.services.email_service._send_ses_sync",
+                        lambda *a, **k: (_ for _ in ()).throw(OSError("SES down")))
+    used = {}
+    monkeypatch.setattr("app.services.email_service._send_sync",
+                        lambda *a, **k: used.update(smtp=True))
+    ok = await send_email("to@x.com", "S", "b")
+    assert ok is True and used.get("smtp") is True  # SES 실패 → SMTP 폴백
+
+
 async def test_deliver_reset_token_sends_link_with_token(monkeypatch):
     monkeypatch.setattr(settings, "app_base_url", "https://app.pigos.io", raising=False)
     captured: dict = {}

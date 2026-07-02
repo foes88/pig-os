@@ -30,7 +30,13 @@ class Settings(BaseSettings):
     # 서비스 계정 JSON 경로 (google-auth가 읽음). 미설정 시 푸시 비활성.
     fcm_credentials_path: str = ""
 
-    # SMTP 이메일 발송 (비밀번호 재설정 등). host+user+password 모두 설정돼야 전송, 아니면 graceful
+    # AWS SES 이메일 발송(권장, AWS 네이티브 — 인프라 서울리전). ses_from_email(SES 인증 발신주소)
+    # 설정 시 SES 우선. AWS 자격증명은 표준 체인(AWS_ACCESS_KEY_ID/SECRET env 또는 EC2/ECS IAM 롤)으로
+    # 해석 — 코드에 비밀값 0. pigsignal-collector의 SES 설정과 동일 컨벤션(AWS_REGION/SES_FROM_EMAIL).
+    aws_region: str = "ap-northeast-2"
+    ses_from_email: str = ""
+
+    # SMTP 이메일 발송 (SES 미설정 시 폴백). host+user+password 모두 설정돼야 전송, 아니면 graceful
     # skip(로그 폴백) — 비밀값은 env로만 주입(코드에 하드코딩 금지).
     smtp_host: str = ""
     smtp_port: int = 587
@@ -49,6 +55,11 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def ses_configured(self) -> bool:
+        """SES 인증 발신주소가 있으면 SES 사용(AWS 자격증명은 표준 체인/IAM 롤로 런타임 해석)."""
+        return bool(self.ses_from_email)
 
     @property
     def smtp_configured(self) -> bool:
