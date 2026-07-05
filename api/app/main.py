@@ -11,9 +11,11 @@ To add a new Addon:
   3. Restart → router appears automatically at /addons/<url_prefix>/
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from app.addons import AddonRegistry
 from app.core.config import settings
@@ -155,3 +157,9 @@ for addon in AddonRegistry.all():
 @app.get("/health", tags=["System"])
 async def health():
     return {"status": "ok", "version": app.version}
+
+
+@app.get("/legal/privacy", response_class=HTMLResponse, include_in_schema=False)
+async def privacy_policy():
+    # 앱 전용 개인정보처리방침(영/한). Play Console Data Safety와 정합. 정적 파일 서빙.
+    return HTMLResponse((Path(__file__).parent / "static" / "privacy.html").read_text(encoding="utf-8"))
