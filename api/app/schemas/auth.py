@@ -33,6 +33,7 @@ class LoginResponse(TokenResponse):
     username: str
     email: str
     role: str
+    system_role: str = "FARM_OWNER"  # 플랫폼 권한(admin 게이팅) — effective_system_role
     farm_ids: list[str]
 
 
@@ -67,6 +68,7 @@ class MeResponse(BaseModel):
     username: str
     email: str | None
     role: str
+    system_role: str = "FARM_OWNER"  # 플랫폼 권한(admin 게이팅) — effective_system_role
     org_id: str | None
     language: str
     farm_ids: list[str]

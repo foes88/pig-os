@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import ConflictError, UnauthorizedError, ValidationError
+from app.core.permissions import effective_system_role
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -102,6 +103,7 @@ async def issue_tokens(db: AsyncSession, user: User) -> LoginResponse:
         username=user.username,
         email=user.email or "",
         role=user.role,
+        system_role=effective_system_role(user),
         farm_ids=farm_ids,
     )
 

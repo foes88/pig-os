@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep
+from app.core.permissions import effective_system_role
 from app.db.models.platform import UserFarm
 from app.schemas.auth import (
     LoginRequest,
@@ -71,6 +72,7 @@ async def me(current_user: CurrentUser, db: DbDep):
         username=current_user.username,
         email=current_user.email,
         role=current_user.role,
+        system_role=effective_system_role(current_user),
         org_id=str(current_user.org_id) if current_user.org_id else None,
         language=current_user.language,
         farm_ids=[str(uf.farm_id) for uf in farm_rows],
