@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, PiggyBank } from "lucide-react";
 import { eventsApi } from "@/lib/api/endpoints/events";
+import { track } from "@/lib/analytics";
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import {
   farrowingSchema, weaningSchema, matingSchema, cullSchema, pigletEventSchema, firstError,
@@ -162,6 +163,7 @@ export default function RecordPage() {
   }, [sowIdParam, allSows, selectedSow]);
 
   const handleSaved = (msg: string, sowId: string, goNext: boolean, insights?: EventInsight[]) => {
+    track("event_added", { event_type: eventType });
     setDoneIds((prev) => new Set([...prev, sowId]));
     // 이벤트 저장 후 모돈 상태 배지·최근이벤트 레일이 stale로 남던 버그 수정:
     // sows 전체(목록+상세) + 해당 모돈 이벤트 쿼리 무효화(검색 파라미터 무관 prefix 매칭).

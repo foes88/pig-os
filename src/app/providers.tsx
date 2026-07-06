@@ -2,8 +2,10 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useUiStore } from "@/store/ui.store";
+import { useAuthStore } from "@/store/auth.store";
+import { track, identifyUser } from "@/lib/analytics";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -24,6 +26,13 @@ export function Providers({ children, messages, locale }: ProvidersProps) {
         },
       })
   );
+
+  useEffect(() => {
+    // 재방문 신호 + 지속 로그인 사용자 identify (계측; POSTHOG 키 없으면 no-op)
+    track("app_opened");
+    const u = useAuthStore.getState().user;
+    if (u?.id) identifyUser(u.id, { system_role: u.system_role });
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

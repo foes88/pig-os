@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pencil, LogOut, X, PiggyBank, ArrowRight, Search, AlertTriangle } from "lucide-react";
 import { sowsApi } from "@/lib/api/endpoints/sows";
+import { track } from "@/lib/analytics";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
@@ -739,7 +740,7 @@ function AddSowModal({
 
   const mutation = useMutation({
     mutationFn: () => sowsApi.create(farmId, form),
-    onSuccess,
+    onSuccess: () => { track("sow_added", { entry_type: form.entry_type }); onSuccess(); },
     onError: (err: unknown) => {
       setError(apiError(err, t("regFailed")));
     },

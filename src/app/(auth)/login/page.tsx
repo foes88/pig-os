@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { authApi } from "@/lib/api/endpoints/auth";
 import { useAuthStore } from "@/store/auth.store";
+import { identifyUser } from "@/lib/analytics";
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
 const LANGS = ["en", "ko", "zh", "es", "vi", "th", "pt"] as const;
@@ -309,6 +310,7 @@ export default function LoginPage() {
         data.farm_ids[0],
       );
       document.cookie = `pigos_session=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      identifyUser(data.user_id, { system_role: data.system_role });
       // 운영자(SUPER_ADMIN)는 admin 콘솔로. 일반 사용자는 next 또는 대시보드(/).
       // 백엔드 권한기준(system_role)으로 판정 — role 컬럼은 FARM_OWNER여도 system_role이 운영자일 수 있음.
       const dest = data.system_role === "SUPER_ADMIN" ? "/admin" : (searchParams.get("next") ?? "/");

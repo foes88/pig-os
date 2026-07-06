@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Card, PipeItem } from "@/components/ui";
 import Link from "next/link";
 import { Brain, ArrowRight, CheckCircle2, ListTodo } from "lucide-react";
@@ -11,6 +11,8 @@ import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { tasksApi } from "@/lib/api/endpoints/tasks";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
+import { useEffect } from "react";
+import { track } from "@/lib/analytics";
 import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
 import type { Alert, Task } from "@/types/api.types";
 
@@ -34,10 +36,63 @@ function alertTitle(a: Alert): string {
   return msg.toUpperCase().includes(kpi.toUpperCase()) ? msg : `${kpi} — ${msg}`;
 }
 
+// 신규 농장 온보딩 가이드 — 번식 데이터가 없어 KPI가 비어 있을 때 "다음 단계"를 안내.
+// (자족적 다국어 — 새 메시지 키 없이 7개 언어 인라인)
+const GS: Record<string, { title: string; sub: string; s1: string; s2: string; s2hint: string; cta: string }> = {
+  en: { title: "Getting started", sub: "A couple of steps to unlock your farm's insights.", s1: "Register your sows", s2: "Log breeding events", s2hint: "Add mating · farrowing · weaning to see PSY, farrowing rate and AI insights.", cta: "Start recording" },
+  ko: { title: "시작하기", sub: "농장 인사이트를 켜기 위한 몇 단계예요.", s1: "모돈 등록", s2: "번식 기록 입력", s2hint: "교배·분만·이유를 넣으면 PSY·분만율·AI 인사이트가 나옵니다.", cta: "기록하러 가기" },
+  zh: { title: "开始使用", sub: "开启农场洞察的几个步骤。", s1: "登记母猪", s2: "录入繁殖事件", s2hint: "添加配种·分娩·断奶即可查看 PSY、分娩率和 AI 洞察。", cta: "开始记录" },
+  es: { title: "Primeros pasos", sub: "Unos pasos para activar los análisis de tu granja.", s1: "Registra tus cerdas", s2: "Registra eventos reproductivos", s2hint: "Añade monta · parto · destete para ver PSY, tasa de parto e insights de IA.", cta: "Empezar a registrar" },
+  vi: { title: "Bắt đầu", sub: "Vài bước để mở khóa thông tin trang trại.", s1: "Đăng ký nái", s2: "Ghi sự kiện sinh sản", s2hint: "Thêm phối giống · đẻ · cai sữa để xem PSY, tỷ lệ đẻ và thông tin AI.", cta: "Bắt đầu ghi" },
+  th: { title: "เริ่มต้นใช้งาน", sub: "ไม่กี่ขั้นตอนเพื่อปลดล็อกข้อมูลเชิงลึกของฟาร์ม", s1: "ลงทะเบียนแม่สุกร", s2: "บันทึกเหตุการณ์ผสมพันธุ์", s2hint: "เพิ่มการผสม · คลอด · หย่านม เพื่อดู PSY อัตราการคลอด และ AI insights", cta: "เริ่มบันทึก" },
+  pt: { title: "Primeiros passos", sub: "Alguns passos para ativar os insights da sua granja.", s1: "Cadastre suas matrizes", s2: "Registre eventos reprodutivos", s2hint: "Adicione cobertura · parto · desmame para ver PSY, taxa de parto e insights de IA.", cta: "Começar a registrar" },
+};
+
+function StepDot({ done, n }: { done: boolean; n: number }) {
+  return done ? (
+    <CheckCircle2 size={20} className="text-success flex-shrink-0" />
+  ) : (
+    <span className="w-5 h-5 rounded-full border-2 border-primary/40 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0">{n}</span>
+  );
+}
+
+function GettingStarted({ locale, hasSow }: { locale: string; hasSow: boolean }) {
+  const c = GS[locale] ?? GS.en;
+  return (
+    <div className="rounded-2xl border border-primary/25 bg-primary-soft/30 p-6 mb-5">
+      <div className="flex items-center gap-2 mb-1">
+        <ListTodo size={18} className="text-primary" />
+        <h2 className="text-base font-bold">{c.title}</h2>
+      </div>
+      <p className="text-sm text-text2 mb-4">{c.sub}</p>
+      <ol className="space-y-3">
+        <li className="flex items-center gap-3">
+          <StepDot done={hasSow} n={1} />
+          <div className="flex-1 text-sm font-semibold">{c.s1}</div>
+          {!hasSow && <Link href="/sows" className="text-primary hover:underline"><ArrowRight size={16} /></Link>}
+        </li>
+        <li className="flex items-start gap-3">
+          <StepDot done={false} n={2} />
+          <div className="flex-1">
+            <div className="text-sm font-semibold">{c.s2}</div>
+            <div className="text-xs text-text3 mt-0.5">{c.s2hint}</div>
+          </div>
+        </li>
+      </ol>
+      <Link href="/record" className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-navy text-white text-sm font-semibold hover:opacity-90 transition">
+        {c.cta} <ArrowRight size={15} />
+      </Link>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const t = useTranslations("dashboard");
   const farmId = useAuthStore((s) => s.activeFarmId);
   const user = useAuthStore((s) => s.user);
+  const locale = useLocale();
+
+  useEffect(() => { track("dashboard_viewed"); }, []);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.kpi.dashboard(farmId ?? ""),
@@ -106,6 +161,7 @@ export default function Dashboard() {
 
         return (
           <>
+            {validCount === 0 && <GettingStarted locale={locale} hasSow={!!data.active_sows} />}
             {/* ── HERO: AI 운영 진단 ── */}
             <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary-soft/50 to-surface p-6 mb-5">
               <div className="flex items-start justify-between gap-4 mb-3">

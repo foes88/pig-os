@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { UserProfile } from "@/types/api.types";
+import { resetAnalytics } from "@/lib/analytics";
 
 interface AuthState {
   user: UserProfile | null;
@@ -56,8 +57,10 @@ export const useAuthStore = create<AuthState>()(
 
       setActiveFarmId: (farmId) => set({ activeFarmId: farmId }),
 
-      clearAuth: () =>
-        set({ user: null, accessToken: null, refreshToken: null, activeFarmId: null }),
+      clearAuth: () => {
+        resetAnalytics();
+        set({ user: null, accessToken: null, refreshToken: null, activeFarmId: null });
+      },
 
       isAuthenticated: () => {
         const { accessToken } = get();

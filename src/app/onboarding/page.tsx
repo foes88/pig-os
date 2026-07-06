@@ -7,6 +7,14 @@ import { useMutation } from "@tanstack/react-query";
 
 import { authApi } from "@/lib/api/endpoints/auth";
 import { useAuthStore } from "@/store/auth.store";
+import { track, identifyUser } from "@/lib/analytics";
+
+// 예약어 아이디 차단(백엔드 auth.py와 동일 규칙) — 사칭 방지, 즉시 피드백용.
+const RESERVED_UN = /^(admin|administrator|root|superuser|superadmin|super_admin|system|sysadmin|support|helpdesk|info|contact|moderator|mod|staff|operator|owner|master|official|security|billing|api|www|pigos|pigplan|wiselake|null|undefined)$/;
+function isReservedUsername(u: string): boolean {
+  const norm = u.trim().toLowerCase().replace(/0/g, "o").replace(/1/g, "i").replace(/3/g, "e").replace(/4/g, "a").replace(/5/g, "s").replace(/@/g, "a").replace(/\$/g, "s");
+  return RESERVED_UN.test(norm) || norm.startsWith("admin") || /administrator|pigos|wiselake|superadmin/.test(norm);
+}
 import type { OnboardingRequest } from "@/types/api.types";
 
 const COUNTRIES = [
@@ -81,6 +89,8 @@ export default function OnboardingPage() {
         data.farm_id,
       );
       document.cookie = `pigos_session=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      identifyUser(data.user_id, { country: form.country });
+      track("signup", { country: form.country });
       router.replace("/");
     },
     onError: (err: unknown) => {
@@ -97,6 +107,10 @@ export default function OnboardingPage() {
 
   const next = () => {
     setError(null);
+    if (step === 1 && isReservedUsername(form.username)) {
+      setError("This username is reserved and cannot be used.");
+      return;
+    }
     if (step < 2) setStep((s) => s + 1);
     else mutation.mutate();
   };
