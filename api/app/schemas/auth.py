@@ -1,6 +1,27 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 USERNAME_PATTERN = r"^[a-zA-Z0-9_.-]{3,50}$"  # 영숫자·_.- 3~50자
+
+# 사칭·혼동 방지 — 로그인 아이디로 쓸 수 없는 예약어(대소문자·leetspeak 무관)
+_RESERVED_USERNAMES = {
+    "admin", "administrator", "root", "superuser", "superadmin", "super_admin",
+    "system", "sysadmin", "support", "helpdesk", "info", "contact", "moderator",
+    "mod", "staff", "operator", "owner", "master", "official", "security",
+    "billing", "api", "www", "pigos", "pigplan", "wiselake", "null", "undefined",
+}
+_LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "@": "a", "$": "s"})
+
+
+def validate_username_not_reserved(v: str) -> str:
+    """예약어/브랜드/권한어 사칭 아이디 거부(admin·administrator·pigos 등, leet 변형 포함)."""
+    norm = v.strip().lower().translate(_LEET)
+    if (
+        norm in _RESERVED_USERNAMES
+        or norm.startswith("admin")
+        or any(b in norm for b in ("administrator", "pigos", "wiselake", "superadmin"))
+    ):
+        raise ValueError("This username is reserved and cannot be used")
+    return v
 
 
 class RegisterRequest(BaseModel):
@@ -12,6 +33,11 @@ class RegisterRequest(BaseModel):
     country: str = Field(..., min_length=2, max_length=2, description="ISO 3166-1 alpha-2")
     timezone: str = Field(default="UTC")
     language: str = Field(default="en")
+
+    @field_validator("username")
+    @classmethod
+    def _no_reserved_username(cls, v: str) -> str:
+        return validate_username_not_reserved(v)
 
 
 class LoginRequest(BaseModel):
@@ -49,6 +75,11 @@ class OnboardingCompleteRequest(BaseModel):
     sow_count: int | None = Field(default=None, ge=1)
     timezone: str = Field(default="UTC")
     language: str = Field(default="en")  # 온보딩 로케일 보존(M3: 하드코딩 "en" 제거)
+
+    @field_validator("username")
+    @classmethod
+    def _no_reserved_username(cls, v: str) -> str:
+        return validate_username_not_reserved(v)
 
 
 class OnboardingCompleteResponse(BaseModel):
