@@ -238,3 +238,79 @@ class TestFosterOvercrowding:
                 PigletEventCreate(sow_id=test_sow.id, farrowing_id=f.id, target_sow_id=b.id,
                                   event_date=date(2024, 6, 1), event_type="FOSTER_IN", piglet_count=10),
             )
+
+
+class TestValidationGaps:
+    """CRUD 엣지 검증에서 발견한 갭 회귀(2026-07-02)."""
+
+    def _h(self, u):
+        return {"Authorization": f"Bearer {create_access_token(str(u.id), str(u.org_id), ['FARM_OWNER'])}"}
+
+    async def test_piglet_group_deaths_exceeds_headcount_blocked(
+        self, client: AsyncClient, db, test_user, test_farm
+    ):
+        """자돈그룹 누적 폐사두수가 입식두수를 넘으면 차단(과거: 무제한 수락)."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        await db.flush()
+        h = self._h(test_user)
+        import uuid as _u
+        gc = f"PG-{_u.uuid4().hex[:5].upper()}"
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/piglets", headers=h,
+                              json={"group_code": gc, "weaning_date": "2026-06-15", "head_count_in": 30})
+        assert r.status_code in (200, 201), r.text
+        gid = r.json()["id"]
+        over = await client.post(f"/api/v1/farms/{test_farm.id}/piglets/{gid}/deaths",
+                                 headers=h, json={"head_count_dead": 9999})
+        assert over.status_code == 422, over.text     # 30두 그룹에 9999 폐사 → 차단
+        ok = await client.post(f"/api/v1/farms/{test_farm.id}/piglets/{gid}/deaths",
+                               headers=h, json={"head_count_dead": 3})
+        assert ok.status_code in (200, 201), ok.text   # 정상 범위는 허용
+
+    async def test_mating_future_date_blocked(
+        self, client: AsyncClient, db, test_user, test_farm, test_sow
+    ):
+        """미래 교배일 차단(과거: 수락 → NPD·분만예정 KPI 왜곡)."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "OPEN"
+        await db.flush()
+        h = self._h(test_user)
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/events/matings", headers=h,
+                              json={"sow_id": str(test_sow.id), "mating_date": "2027-12-31", "mating_type": "AI"})
+        assert r.status_code == 422, r.text
+        assert "future" in r.text.lower()
+
+    async def test_mating_update_future_date_blocked(
+        self, client: AsyncClient, db, test_user, test_farm, test_sow
+    ):
+        """PATCH도 미래 교배일 차단 — create엔 가드 있는데 update 누락하던 비대칭 마감."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "OPEN"
+        await db.flush()
+        h = self._h(test_user)
+        r = await client.post(f"/api/v1/farms/{test_farm.id}/events/matings", headers=h,
+                              json={"sow_id": str(test_sow.id), "mating_date": "2026-02-01", "mating_type": "AI"})
+        assert r.status_code in (200, 201), r.text
+        mid = r.json()["id"]
+        upd = await client.patch(f"/api/v1/farms/{test_farm.id}/events/matings/{mid}", headers=h,
+                                 json={"mating_date": "2027-12-31"})
+        assert upd.status_code == 422, upd.text
+        assert "future" in upd.text.lower()
+
+    async def test_sow_patch_status_transition_guard(
+        self, client: AsyncClient, db, test_user, test_farm, test_sow
+    ):
+        """PATCH로 LACTATING/PREGNANT 직접 설정 차단(이벤트로만). OPEN 등 보정은 허용."""
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "GILT"
+        await db.flush()
+        h = self._h(test_user)
+        base = f"/api/v1/farms/{test_farm.id}/sows/{test_sow.id}"
+        # 분만 없이 LACTATING 직접 → 차단
+        r1 = await client.patch(base, headers=h, json={"status": "LACTATING"})
+        assert r1.status_code == 422, r1.text
+        # 교배 없이 PREGNANT 직접 → 차단
+        r2 = await client.patch(base, headers=h, json={"status": "PREGNANT"})
+        assert r2.status_code == 422, r2.text
+        # OPEN 보정은 허용
+        r3 = await client.patch(base, headers=h, json={"status": "OPEN"})
+        assert r3.status_code == 200, r3.text

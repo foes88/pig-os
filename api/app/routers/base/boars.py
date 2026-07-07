@@ -1,11 +1,11 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Query
 from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.platform import AuditLog
 from app.db.models.sow import Boar
 from app.schemas.boar import BoarCreate, BoarResponse, BoarUpdate
@@ -37,6 +37,9 @@ async def create_boar(body: BoarCreate, farm: FarmDep, db: DbDep, current_user: 
     )
     if existing:
         raise ConflictError(f"Boar with ear_tag '{body.ear_tag}' already exists")
+    # 미래 입식일 거부(QA UAT) — 아직 오지 않은 날짜에 웅돈 입식 불가.
+    if body.entry_date > date.today():
+        raise ValidationError(f"entry_date {body.entry_date} cannot be in the future")
 
     boar = Boar(
         farm_id=farm.id,
@@ -87,6 +90,12 @@ async def update_boar(
         raise NotFoundError(f"Boar {boar_id} not found")
 
     updated = body.model_dump(exclude_none=True)
+    # ear_tag 변경 시 유니크 재검증(create와 동일) — 미검증 시 UniqueConstraint 위반이 409 아닌 500 누설(QA 웅돈리뷰 High).
+    if "ear_tag" in updated and updated["ear_tag"] != boar.ear_tag:
+        dup = await db.scalar(select(Boar).where(
+            Boar.farm_id == farm.id, Boar.ear_tag == updated["ear_tag"], Boar.id != boar.id))
+        if dup:
+            raise ConflictError(f"Boar with ear_tag '{updated['ear_tag']}' already exists")
     for k, v in updated.items():
         setattr(boar, k, v)
 

@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,8 +19,9 @@ from app.schemas.farm import (
 
 
 def _generate_farm_code(country: str, org_id: UUID) -> str:
-    suffix = str(org_id)[:6].upper()
-    return f"FARM-{country.upper()}-{suffix}"
+    # org+country만으로 결정하면 같은 org의 2번째 동일국가 농장이 farm_code UNIQUE 충돌→500 (QA 온보딩 B1).
+    # org 그룹핑(가독성) + 농장별 엔트로피로 유니크 보장.
+    return f"FARM-{country.upper()}-{str(org_id)[:6].upper()}-{uuid4().hex[:6].upper()}"
 
 
 async def create_farm(

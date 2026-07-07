@@ -14,7 +14,7 @@ PigPlan 로직 기반 핵심 규칙:
 from datetime import UTC, date, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, PeriodLockedError, ValidationError
@@ -30,7 +30,7 @@ from app.db.models.events import (
 from app.db.models.health import Removal
 from app.db.models.master import MedicationCatalog
 from app.db.models.platform import AuditLog
-from app.db.models.sow import Boar, BreedingCycle, PigletGroup, Sow
+from app.db.models.sow import Boar, BreedingCycle, PigletGroup, PigletTransfer, Sow
 from app.schemas.events import (
     FarrowingCreate,
     MatingCreate,
@@ -179,6 +179,10 @@ async def record_mating(
 ) -> Mating:
     sow = await _get_active_sow(db, farm_id, req.sow_id)
     await _ensure_period_unlocked(db, farm_id, req.mating_date)
+
+    # 미래 교배일 거부(웅돈 입식일과 동일 가드) — 미래일은 NPD·분만예정 KPI를 왜곡.
+    if req.mating_date > date.today():
+        raise ValidationError(f"mating_date {req.mating_date} cannot be in the future")
 
     # 교배 가능 상태 + 웅돈 순서 검증 (P0-BE-9: boar 슬롯 인자 전달)
     validate_mating(
@@ -595,10 +599,17 @@ async def record_reproductive_event(
     if sow.status == "PREGNANT" and req.event_type in ("CULLED", "DEAD") and not req.notes:
         raise ValidationError("A reason (notes) is required when culling/removing a pregnant sow")
 
+    # QA C: mating_id/breeding_cycle_id 순방향 링크 — 미제공 시 sow의 열린 사이클·최근 교배에서 채움.
+    # 향후 RTS/ABORTION rate 코호트 정합(옵션A)의 전제(링크 신뢰성 확보). 없으면 NULL 유지.
+    _cycle = await _get_open_cycle(db, sow.id)
+    _mating_id = req.mating_id or await db.scalar(
+        select(Mating.id).where(Mating.sow_id == sow.id, Mating.deleted_at.is_(None))
+        .order_by(Mating.mating_date.desc()).limit(1))
     event = ReproductiveEvent(
         farm_id=farm_id,
         sow_id=req.sow_id,
-        mating_id=req.mating_id,
+        mating_id=_mating_id,
+        breeding_cycle_id=(_cycle.id if _cycle else None),
         event_date=req.event_date,
         event_type=req.event_type,
         detected_method=req.detected_method,
@@ -656,6 +667,15 @@ async def record_pregnancy_check(
 
     # 음성 = 공태(EMPTY) → ACCIDENT 전이 + 진행 사이클 FAILED (재교배 대기)
     if req.result == "NEGATIVE":
+        # 공태 ReproductiveEvent(EMPTY)도 적재 — 직접 EMPTY 기록 경로와 데이터모델 일치(QA 알림리뷰 H-1).
+        # 미적재 시 alert_service의 last_rts/consecutive_rts(ReproductiveEvent만 조회)가 못 찾아
+        # 재교배 과기한 알림·반복RTS 도태권고가 영구 누락된다.
+        db.add(ReproductiveEvent(
+            farm_id=farm_id, sow_id=req.sow_id, mating_id=req.mating_id,
+            event_date=req.check_date, event_type="EMPTY",
+            notes="auto: pregnancy check NEGATIVE", created_by=user_id,
+        ))
+        await db.flush()
         await apply_terminal_reproductive(db, sow, "EMPTY", req.check_date, farm_id)
 
     await _audit(db, user_id, farm_id, "CREATE", "pregnancy_checks", event.id, req.model_dump(mode="json"))
@@ -851,6 +871,9 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
     data = body.model_dump(exclude_unset=True)
     if "mating_date" in data and data["mating_date"]:
         await _ensure_period_unlocked(db, farm_id, data["mating_date"])
+        # 미래 교배일 거부 — record_mating과 동일 가드(PATCH 검증 비대칭 마감).
+        if data["mating_date"] > date.today():
+            raise ValidationError(f"mating_date {data['mating_date']} cannot be in the future")
     for k, v in data.items():
         setattr(m, k, v)
     # 견고화: 수정도 생성(record_mating)과 동일 제약 재검증
@@ -866,6 +889,13 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
             Mating.deleted_at.is_(None), Mating.id != m.id))
         if dup:
             raise ConflictError("A mating is already recorded for this sow on this date")
+    # 수정 시에도 모돈 생존기간(입사~퇴출) 재검증(record_mating과 동일) — 입사 이전 교배 차단(QA M3).
+    if "mating_date" in data and data["mating_date"]:
+        _s = await _get_active_sow(db, farm_id, m.sow_id)
+        validate_event_within_sow_lifespan(
+            event_date=m.mating_date, entry_date=_as_date(_s.entry_date),
+            exit_date=_as_date(_s.exit_date), event_name="Mating",
+        )
     # audit new_value는 JSONB — date 객체 직렬화 불가. mode="json"으로 ISO 문자열화(날짜수정 500 근인).
     await _audit(db, user_id, farm_id, "UPDATE", "matings", m.id, body.model_dump(mode="json", exclude_unset=True))
     await db.commit(); await db.refresh(m)
@@ -925,6 +955,26 @@ async def update_farrowing(db, farm_id, user_id, farrowing_id, body) -> Farrowin
     validate_farrowing(total_born=f.total_born, born_alive=f.born_alive,
                        stillborn=f.stillborn, mummified=f.mummified,
                        avg_birth_weight_kg=f.avg_birth_weight_kg)
+    # 수정 시 날짜순서(INV4) 재검증 — 분만일을 교배 前으로 못 옮김(QA ws_update 발견: 등록은 검증, 수정은 누락).
+    if "farrowing_date" in data and f.mating_id:
+        _m = await db.get(Mating, f.mating_id)
+        validate_farrowing_after_mating(farrowing_date=f.farrowing_date,
+                                        mating_date=_m.mating_date if _m else None)
+        # 수정 시에도 임신기간 범위(record_farrowing과 동일) 재검증 — 순서만으론 166일 같은
+        # 비현실 임신기간이 통과해 KPI·코호트 오염(QA H1: 등록은 검증, 수정은 누락).
+        if _m:
+            _gest = (f.farrowing_date - _m.mating_date).days
+            if not (GESTATION_MIN_DAYS <= _gest <= GESTATION_MAX_DAYS):
+                raise ValidationError(
+                    f"Gestation period {_gest} days is outside {GESTATION_MIN_DAYS}~{GESTATION_MAX_DAYS} range"
+                )
+    # 수정 시에도 모돈 생존기간 재검증(record_farrowing과 동일) — 입사前/퇴출後 분만 차단(QA M3).
+    if "farrowing_date" in data:
+        _sf = await _get_active_sow(db, farm_id, f.sow_id)
+        validate_event_within_sow_lifespan(
+            event_date=f.farrowing_date, entry_date=_as_date(_sf.entry_date),
+            exit_date=_as_date(_sf.exit_date), event_name="Farrowing",
+        )
     # 견고화: 실산 축소가 기존 이유두수 합/양자 정합성을 깨면 차단(두수 꼬임 방지)
     if "born_alive" in data:
         fi, fo, deaths = await _calc_piglet_adjustments(db, f.id)
@@ -952,6 +1002,19 @@ async def delete_farrowing(db, farm_id, user_id, farrowing_id) -> None:
             Weaning.farrowing_id == f.id, Weaning.deleted_at.is_(None))):
         raise ConflictError("Cannot delete a farrowing that already has a weaning")
     f.deleted_at = datetime.now(UTC)
+    # 분만에 매달린 piglet_event(양자/폐사) 고아 방지 — 함께 soft-delete(QA H2, delete_sow 캐스케이드와 일관).
+    await db.execute(
+        update(PigletEvent)
+        .where(PigletEvent.farrowing_id == f.id, PigletEvent.deleted_at.is_(None))
+        .values(deleted_at=datetime.now(UTC))
+    )
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): 분만 참조 PigletTransfer도 캐스케이드.
+    await db.execute(
+        update(PigletTransfer)
+        .where((PigletTransfer.source_farrowing_id == f.id) | (PigletTransfer.dest_farrowing_id == f.id),
+               PigletTransfer.deleted_at.is_(None))
+        .values(deleted_at=datetime.now(UTC))
+    )
     sow = await _get_active_sow(db, farm_id, f.sow_id)
     sow.status = rollback_status_on_delete("farrowing")
     sow.parity = max(0, sow.parity - 1)  # undo the increment from record_farrowing
@@ -978,9 +1041,33 @@ async def update_weaning(db, farm_id, user_id, weaning_id, body) -> Weaning:
     # V7 정합성: 수정 시에도 이유두수 재검증(유효 복당두수·상한 초과 차단)
     if w.weaned_count > MAX_WEANED_COUNT:
         raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
+    # 수정 시에도 이유체중 유효범위(record_weaning과 동일) 재검증(QA H3: 등록은 검증, 수정은 누락).
+    if w.avg_weaning_weight_kg is not None and not (2.0 <= w.avg_weaning_weight_kg <= 12.0):
+        raise ValidationError(
+            f"Average weaning weight {w.avg_weaning_weight_kg}kg is outside the valid range (2~12kg)"
+        )
     if w.farrowing_id:
         farrowing = await db.get(Farrowing, w.farrowing_id)
+        # 수정 시 날짜순서(INV4) 재검증 — 이유일을 분만 前으로 못 옮김(QA ws_update 발견).
+        if "weaning_date" in data and farrowing:
+            validate_weaning_after_farrowing(weaning_date=w.weaning_date,
+                                             farrowing_date=farrowing.farrowing_date)
         if farrowing:
+            # 수정 시에도 포유기간 범위·국가 컴플라이언스 재검증 + 파생 일령 재계산(QA H2:
+            # 등록은 검증, 수정은 누락 → 포유 61일·법정 미달 이유가 통과하던 것 차단).
+            _nursing = (w.weaning_date - farrowing.farrowing_date).days
+            if not (NURSING_MIN_DAYS <= _nursing <= NURSING_MAX_DAYS):
+                raise ValidationError(
+                    f"Nursing period {_nursing} days is outside {NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range"
+                )
+            await _check_wean_compliance(db, farm_id, _nursing)
+            w.weaning_age_days = _nursing
+            # 수정 시에도 모돈 생존기간 재검증(record_weaning과 동일) — 입사前/퇴출後 이유 차단(QA M3).
+            _sw = await _get_active_sow(db, farm_id, w.sow_id)
+            validate_event_within_sow_lifespan(
+                event_date=w.weaning_date, entry_date=_as_date(_sw.entry_date),
+                exit_date=_as_date(_sw.exit_date), event_name="Weaning",
+            )
             foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
             effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
             # 견고화: 부분이유 형제 합계까지 고려(이 이유 + 다른 이유들 ≤ 유효복당)

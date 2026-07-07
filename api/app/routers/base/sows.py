@@ -2,13 +2,21 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Query
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import NotFoundError, ValidationError
-from app.db.models.health import Removal
+from app.db.models.events import (
+    Farrowing,
+    Mating,
+    PigletEvent,
+    PregnancyCheck,
+    ReproductiveEvent,
+    Weaning,
+)
+from app.db.models.health import HealthEvent, Removal
 from app.db.models.platform import AuditLog
-from app.db.models.sow import Sow
+from app.db.models.sow import PigletTransfer, Sow
 from app.schemas.common import PagedResponse, PageMeta
 from app.schemas.sow import (
     RemovalResponse,
@@ -147,7 +155,22 @@ async def update_sow(sow_id: UUID, body: SowUpdate, farm: FarmDep, db: DbDep):
     )
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
-    for k, v in body.model_dump(exclude_none=True).items():
+    updated = body.model_dump(exclude_none=True)
+    # 상태전이 가드: LACTATING/PREGNANT는 분만/교배 이벤트로만 도달 가능(분만 없는 포유·
+    # 교배 없는 임신 같은 물리 불가 상태를 PATCH로 만드는 것 차단). OPEN/GILT/ACCIDENT는
+    # 미기록 이벤트를 함의하지 않아 수동 보정 허용. (이벤트-구동 상태머신의 PATCH 우회 방지)
+    if updated.get("status") in ("LACTATING", "PREGNANT") and updated["status"] != sow.status:
+        raise ValidationError(
+            f"status '{updated['status']}' is set by mating/farrowing events, "
+            f"not by direct edit (record the event instead)")
+    # ear_tag 변경 시 유니크 재검증(create_sow와 동일) — 미검증 시 활성 중복이표 또는 500 누설(QA 모돈 update 패리티).
+    if "ear_tag" in updated and updated["ear_tag"] != sow.ear_tag:
+        dup = await db.scalar(select(Sow).where(
+            Sow.farm_id == farm.id, Sow.ear_tag == updated["ear_tag"],
+            Sow.deleted_at.is_(None), Sow.id != sow.id))
+        if dup:
+            raise ValidationError(f"ear_tag '{updated['ear_tag']}' already exists in this farm")
+    for k, v in updated.items():
         setattr(sow, k, v)
     await db.commit()
     await db.refresh(sow)
@@ -245,5 +268,24 @@ async def delete_sow(sow_id: UUID, farm: FarmDep, db: DbDep):
     )
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
-    sow.deleted_at = datetime.now(UTC)
+    now = datetime.now(UTC)
+    sow.deleted_at = now
+    # 캐스케이드 soft-delete — 삭제 모돈의 번식 이벤트가 events 조회·보고서에 dangling 잔존하면
+    # born_alive_sum 등 수치가 오염된다(QA ws_crud_delete 발견). 모돈 삭제 = 그 이벤트도 제거.
+    # PigletEvent(양자/폐사)·PregnancyCheck·HealthEvent도 포함 — 누락 시 _calc_piglet_adjustments가
+    # 고아 양자이벤트를 읽어 양자상대 모돈의 effective litter/nursing 분모가 오염된다(QA B1 두수보존).
+    for Model in (Mating, Farrowing, Weaning, ReproductiveEvent,
+                  PigletEvent, PregnancyCheck, HealthEvent):
+        await db.execute(
+            update(Model)
+            .where(Model.sow_id == sow_id, Model.deleted_at.is_(None))
+            .values(deleted_at=now)
+        )
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): PigletTransfer는 source/dest_sow_id 참조 → 별도 캐스케이드.
+    await db.execute(
+        update(PigletTransfer)
+        .where((PigletTransfer.source_sow_id == sow_id) | (PigletTransfer.dest_sow_id == sow_id),
+               PigletTransfer.deleted_at.is_(None))
+        .values(deleted_at=now)
+    )
     await db.commit()

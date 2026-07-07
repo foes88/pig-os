@@ -10,7 +10,12 @@ from sqlalchemy import select
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
+from app.db.models.events import Farrowing, PigletEvent
 from app.db.models.sow import PigletGroup, PigletTransfer, Sow
+from app.validators.cross_fostering import (
+    validate_cross_foster_distinct,
+    validate_cross_fostering,
+)
 from app.schemas.piglet import (
     PigletGroupCreate,
     PigletGroupDeathRecord,
@@ -19,15 +24,10 @@ from app.schemas.piglet import (
     PigletTransferCreate,
     PigletTransferResponse,
 )
-from app.services.event_service import _ensure_period_unlocked
-from app.validators.cross_fostering import (
-    validate_cross_foster_distinct,
-    validate_cross_fostering,
-)
 
 router = APIRouter(prefix="/farms/{farm_id}/piglets", tags=["Piglets"])
 
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 # ── Piglet Groups ─────────────────────────────────────────────────────────────
@@ -59,8 +59,6 @@ async def create_piglet_group(
     current_user: CurrentUser,
 ):
     """자돈 그룹 시작 (이유 후 그룹 등록) — 피그플랜 P03010100 자돈그룹시작"""
-    # 월마감 잠금: 이유일이 속한 월이 잠겨있으면 423 (MSY/일별보고서 입력 보호 — 코드리뷰 #4)
-    await _ensure_period_unlocked(db, farm.id, body.weaning_date)
     existing = await db.scalar(
         select(PigletGroup).where(
             PigletGroup.farm_id == farm.id,
@@ -101,13 +99,12 @@ async def record_deaths(
     if not group:
         raise NotFoundError(f"Piglet group {group_id} not found")
 
-    # H2: 누적 폐사 + 전출이 그룹 보유두수를 넘지 못함(음수 재고 방지).
+    # 누적 폐사 + 이미 전출 ≤ 입식두수. (초과 폐사 입력 방지 — 데이터 무결성)
     new_dead = (group.head_count_dead or 0) + body.head_count_dead
     if new_dead + (group.head_count_out or 0) > group.head_count_in:
         raise ValidationError(
-            f"Total deaths ({new_dead}) + transferred ({group.head_count_out or 0}) "
-            f"cannot exceed group head count ({group.head_count_in})"
-        )
+            f"Cumulative deaths ({new_dead}) + transferred out ({group.head_count_out or 0}) "
+            f"cannot exceed head count in ({group.head_count_in})")
     group.head_count_dead = new_dead
     if body.notes:
         group.notes = body.notes
@@ -137,17 +134,11 @@ async def transfer_out_piglet_group(
     if group.transfer_date is not None:
         raise ConflictError("Group already transferred out")
 
-    # 월마감 잠금: 전출일이 속한 월이 잠겨있으면 423 (코드리뷰 #4)
-    await _ensure_period_unlocked(db, farm.id, body.transfer_date)
-
-    # H3: 전출 두수가 잔여(보유 - 폐사)를 넘지 못함.
-    available = group.head_count_in - (group.head_count_dead or 0)
-    if body.head_count_out > available:
+    # 전출두수 + 누적폐사 ≤ 입식두수. (가용 초과 전출 방지)
+    if body.head_count_out + (group.head_count_dead or 0) > group.head_count_in:
         raise ValidationError(
-            f"head_count_out ({body.head_count_out}) exceeds remaining ({available} "
-            f"= in {group.head_count_in} - dead {group.head_count_dead or 0})"
-        )
-
+            f"Transferred out ({body.head_count_out}) + deaths ({group.head_count_dead or 0}) "
+            f"cannot exceed head count in ({group.head_count_in})")
     group.transfer_date = body.transfer_date
     group.transfer_type = body.transfer_type
     group.head_count_out = body.head_count_out
@@ -173,40 +164,50 @@ async def create_piglet_transfer(
     양자/대리모 기록.
     분만 기록과 별도 — PSY는 생물학적 산자 기준, 이유두수는 양자 반영 수 기준.
     """
-    # 월마감 잠금: 양자일이 속한 월이 잠겨있으면 423 (코드리뷰 #4)
-    await _ensure_period_unlocked(db, farm.id, body.transfer_date)
     # B6: 동일 모돈 양자 차단 + 1회 이전 두수 상한(양자 validator). piglet_count≥1은 스키마가 강제.
     # 직접 piglet_events 경로엔 self-check가 있었으나 이 transfers 엔드포인트엔 누락이었음.
     validate_cross_foster_distinct(body.source_sow_id, body.dest_sow_id)
     validate_cross_fostering(transfer_count=body.piglet_count)
-    # 데이터 정합성: 출처/대상 모돈이 이 농장 소속인지 검증(외부 UUID가 자기 행에 박히는 것 차단)
+    # 멀티테넌트 무결성(QA 보안리뷰 M1): source/dest 모돈이 이 농장 소속 활성 모돈인지 검증.
+    # 정식 record_piglet_event 경로는 검증하나 이 transfers 경로는 누락 — 타 농장 sow_id 참조 행 방지.
     for label, sid in (("source_sow_id", body.source_sow_id), ("dest_sow_id", body.dest_sow_id)):
-        ok = await db.scalar(select(Sow.id).where(
-            Sow.id == sid, Sow.farm_id == farm.id, Sow.deleted_at.is_(None)))
-        if not ok:
-            raise NotFoundError(f"{label} not found in this farm")
-    # H4: 양자 출처 분만이 지정되면, 실산두수보다 많이 양자 보낼 수 없음(말도 안 되는 입력 차단).
-    if body.source_farrowing_id is not None:
-        from app.db.models.events import Farrowing
-        src = await db.scalar(
-            select(Farrowing).where(
-                Farrowing.id == body.source_farrowing_id,
-                Farrowing.farm_id == farm.id,
-                Farrowing.deleted_at.is_(None),
-            )
-        )
-        if not src:
-            raise NotFoundError("source_farrowing_id not found in this farm")
-        if body.piglet_count > src.born_alive:
-            raise ValidationError(
-                f"piglet_count ({body.piglet_count}) exceeds source litter born_alive ({src.born_alive})"
-            )
+        if not await db.scalar(select(Sow.id).where(
+                Sow.id == sid, Sow.farm_id == farm.id, Sow.deleted_at.is_(None))):
+            raise NotFoundError(f"{label} {sid} not found in this farm")
     transfer = PigletTransfer(
         farm_id=farm.id,
         created_by=current_user.id,
         **body.model_dump(),
     )
     db.add(transfer)
+    await db.flush()
+    # 두수 정합(QA #5): /transfers는 PigletTransfer만 만들어 유효복당두수(_calc_piglet_adjustments는
+    # PigletEvent만 읽음)에 미반영 → 양자 후에도 source가 원래 두수만큼 이유 가능(이중계산).
+    # source 활성분만에 FOSTER_OUT, dest 활성분만에 FOSTER_IN 미러 생성해 이유두수에 반영.
+    src_far = await db.scalar(
+        select(Farrowing)
+        .where(Farrowing.sow_id == body.source_sow_id, Farrowing.farm_id == farm.id,
+               Farrowing.deleted_at.is_(None))
+        .order_by(Farrowing.farrowing_date.desc()).limit(1))
+    dst_far = await db.scalar(
+        select(Farrowing)
+        .where(Farrowing.sow_id == body.dest_sow_id, Farrowing.farm_id == farm.id,
+               Farrowing.deleted_at.is_(None))
+        .order_by(Farrowing.farrowing_date.desc()).limit(1))
+    if src_far:
+        db.add(PigletEvent(
+            farm_id=farm.id, farrowing_id=src_far.id, sow_id=body.source_sow_id,
+            event_date=body.transfer_date, event_type="FOSTER_OUT", piglet_count=body.piglet_count,
+            age_days=(body.transfer_date - src_far.farrowing_date).days,
+            target_sow_id=body.dest_sow_id, target_farrowing_id=(dst_far.id if dst_far else None),
+            notes=f"auto:transfer:{transfer.id}", created_by=current_user.id))
+    if dst_far:
+        db.add(PigletEvent(
+            farm_id=farm.id, farrowing_id=dst_far.id, sow_id=body.dest_sow_id,
+            event_date=body.transfer_date, event_type="FOSTER_IN", piglet_count=body.piglet_count,
+            age_days=(body.transfer_date - dst_far.farrowing_date).days,
+            target_sow_id=body.source_sow_id, target_farrowing_id=(src_far.id if src_far else None),
+            notes=f"auto:transfer:{transfer.id}", created_by=current_user.id))
     await db.commit()
     await db.refresh(transfer)
     return PigletTransferResponse.model_validate(transfer)
@@ -219,7 +220,9 @@ async def list_piglet_transfers(
     sow_id: UUID | None = Query(None, description="특정 모돈 필터"),
     limit: int = Query(50, ge=1, le=200),
 ):
-    q = select(PigletTransfer).where(PigletTransfer.farm_id == farm.id)
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): soft-delete된 transfer 제외(캐스케이드 후 dangling 방지).
+    q = select(PigletTransfer).where(
+        PigletTransfer.farm_id == farm.id, PigletTransfer.deleted_at.is_(None))
     if sow_id:
         q = q.where(
             (PigletTransfer.source_sow_id == sow_id) |

@@ -8,6 +8,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import ValidationError
 from app.db.models.config import DefaultMetricValue
 from app.db.models.platform import Farm
 
@@ -67,6 +68,15 @@ async def set_override(
     effective = {e["metric_code"]: e for e in await list_effective(db, farm)}.get(metric_code)
     direction = effective["direction"] if effective else "below"
     unit = effective["unit"] if effective else ""
+    # 방향 일관성 검증(QA 룰엔진 M1): warning/critical 둘 다 주어지면 메트릭 방향과 정합해야.
+    # below(낮을수록 나쁨)=critical≤warning, above(높을수록 나쁨)=critical≥warning. 역전 시 severity 오분류.
+    if warning is not None and critical is not None:
+        if direction == "below" and critical > warning:
+            raise ValidationError(
+                f"For a 'below' metric, critical ({critical}) must be <= warning ({warning})")
+        if direction == "above" and critical < warning:
+            raise ValidationError(
+                f"For an 'above' metric, critical ({critical}) must be >= warning ({warning})")
     if farm_row:
         farm_row.warning_threshold = warning
         farm_row.critical_threshold = critical

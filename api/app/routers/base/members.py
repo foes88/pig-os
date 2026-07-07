@@ -111,9 +111,10 @@ async def update_member(
 
     changed: dict = {}
     if body.role is not None:
+        # 농장 멤버 역할은 farm-scoped role_override만 갱신(QA 보안리뷰 M2).
+        # 전역 user.role/system_role를 덮어쓰면 멀티팜 유저의 타농장 유효권한(role_override NULL 폴백)이
+        # 동반 변경되는 누출 → 제거. 응답은 _to_response가 role_override 우선 표시.
         link.role_override = body.role
-        user.role = body.role
-        user.system_role = body.role  # 농장권한은 role_override 기준; system_role은 조직/레거시 일관 유지
         changed["role"] = body.role
     if body.active is not None:
         user.active = body.active

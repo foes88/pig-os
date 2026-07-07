@@ -200,3 +200,5 @@ class PigletTransfer(Base):
     notes: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # QA #4 (MIGRATION-PENDING a1c3e5b7d9f2): 삭제경로 캐스케이드용 soft-delete.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -13,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.core.dependencies import CurrentUser, DbDep, FarmDep
+from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role, require_role
 from app.schemas.auth import OnboardingCompleteRequest, OnboardingCompleteResponse
 from app.schemas.farm import FarmConfigSet, FarmCreate, FarmResponse, OnboardingStatus
 from app.services import auth_service, farm_service
@@ -30,17 +30,21 @@ async def onboarding_complete(body: OnboardingCompleteRequest, db: DbDep):
     return await auth_service.complete_onboarding(db, body)
 
 
-@router.post("/farm", response_model=FarmResponse, status_code=201)
+@router.post("/farm", response_model=FarmResponse, status_code=201,
+             dependencies=[require_role(
+                 "FARM_OWNER", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN", "SUPER_ADMIN")])
 async def create_farm(body: FarmCreate, db: DbDep, current_user: CurrentUser):
     """
-    Create a farm and link it to the current user.
-    farm_code is auto-generated: FARM-{COUNTRY}-{ORG_PREFIX}
+    Create a farm and link it to the current user (caller becomes FARM_OWNER).
+    org-스코프 작업 — 농장소유주/조직관리자만(QA 보안 H3: VIEWER/WORKER 등 무권한 생성 차단).
+    farm_code is auto-generated: FARM-{COUNTRY}-{ORG_PREFIX}-{RAND}.
     """
     farm = await farm_service.create_farm(db, current_user.org_id, current_user.id, body)
     return FarmResponse.model_validate(farm)
 
 
-@router.post("/farm/{farm_id}/config", response_model=dict)
+@router.post("/farm/{farm_id}/config", response_model=dict,
+             dependencies=[require_farm_role("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")])
 async def set_farm_config(
     farm_id: UUID,
     body: FarmConfigSet,

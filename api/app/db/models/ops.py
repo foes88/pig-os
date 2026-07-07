@@ -252,8 +252,11 @@ class Task(Base):
         Index("idx_tasks_farm_status", "farm_id", "status"),
         Index("idx_tasks_assigned", "assigned_to", "status",
               postgresql_where="status = 'OPEN'"),
-        UniqueConstraint("farm_id", "sow_id", "task_type", "status",
-                         name="uq_task_open_per_sow_type"),
+        # OPEN 작업만 (farm,sow,task_type) 중복 방지. status를 키에 넣으면
+        # 같은 sow+type의 DONE 이력을 2개 못 가져 '완료→재발생→재완료'가 409로 막힘.
+        # → OPEN 한정 partial unique로 교정(완료/취소 이력은 무제한 허용).
+        Index("uq_task_open_per_sow_type", "farm_id", "sow_id", "task_type",
+              unique=True, postgresql_where="status = 'OPEN'"),
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
