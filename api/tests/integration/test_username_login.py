@@ -62,9 +62,9 @@ async def test_username_case_insensitive_login(db: AsyncSession):
 
 async def test_username_case_insensitive_duplicate(db: AsyncSession):
     """H3: 'Admin'과 'admin'은 같은 계정 — 대소문자만 다른 중복 차단."""
-    await auth_service.register(db, _reg(username="Owner", email="d@pigos.io"))
+    await auth_service.register(db, _reg(username="Grower", email="d@pigos.io"))
     with pytest.raises(ConflictError):
-        await auth_service.register(db, _reg(username="owner", email="e@pigos.io"))
+        await auth_service.register(db, _reg(username="grower", email="e@pigos.io"))
 
 
 def test_login_schema_requires_username():
