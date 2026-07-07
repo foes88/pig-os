@@ -1626,6 +1626,10 @@
     "orgHideFarms": "ซ่อนฟาร์ม",
     "accessDeniedTitle": "เฉพาะผู้ดำเนินการเท่านั้น",
     "accessDeniedDesc": "คอนโซลนี้สำหรับผู้ดำเนินการแพลตฟอร์ม PigOS (SUPER_ADMIN) บัญชีของคุณไม่มีสิทธิ์เข้าถึง",
-    "accessDeniedLogout": "ออกจากระบบ"
+    "accessDeniedLogout": "ออกจากระบบ",
+    "navDataMonitor": "มอนิเตอร์ข้อมูล",
+    "cardSignups7d": "สมัคร (7 วัน)",
+    "cardActivated": "ฟาร์มที่เปิดใช้",
+    "cardStale": "ฟาร์มทิ้งร้าง"
   }
 }

@@ -1626,6 +1626,10 @@
     "orgHideFarms": "Ocultar granjas",
     "accessDeniedTitle": "Solo operadores",
     "accessDeniedDesc": "Esta consola es para operadores de la plataforma PigOS (SUPER_ADMIN). Tu cuenta no tiene acceso.",
-    "accessDeniedLogout": "Cerrar sesión"
+    "accessDeniedLogout": "Cerrar sesión",
+    "navDataMonitor": "Monitor de datos",
+    "cardSignups7d": "Registros (7d)",
+    "cardActivated": "Granjas activadas",
+    "cardStale": "Granjas inactivas"
   }
 }

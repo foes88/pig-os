@@ -1626,6 +1626,10 @@
     "orgHideFarms": "Hide farms",
     "accessDeniedTitle": "Operator access only",
     "accessDeniedDesc": "This console is for PigOS platform operators (SUPER_ADMIN). Your account does not have access.",
-    "accessDeniedLogout": "Log out"
+    "accessDeniedLogout": "Log out",
+    "navDataMonitor": "Data Monitor",
+    "cardSignups7d": "Signups (7d)",
+    "cardActivated": "Activated farms",
+    "cardStale": "Stale farms"
   }
 }

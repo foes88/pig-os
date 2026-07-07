@@ -1065,6 +1065,21 @@ export interface AdminOverview {
   farms: number;
   users: number;
   sows: number;
+  signups_7d: number;
+  activated_farms: number;
+  stale_farms: number;
+}
+
+export interface DataMonitorRow {
+  farm_id: string;
+  farm_name: string;
+  country: string;
+  sows: number;
+  last_event_at: string | null;
+  events_7d: number;
+  events_30d: number;
+  events_total: number;
+  status: "onboarding" | "active" | "idle" | "stale";
 }
 
 export interface AdminMemberRow {

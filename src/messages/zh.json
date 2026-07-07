@@ -1626,6 +1626,10 @@
     "orgHideFarms": "隐藏农场",
     "accessDeniedTitle": "仅限运营者",
     "accessDeniedDesc": "此控制台仅供 PigOS 平台运营者(SUPER_ADMIN)使用。当前账号无权访问。",
-    "accessDeniedLogout": "退出登录"
+    "accessDeniedLogout": "退出登录",
+    "navDataMonitor": "数据监控",
+    "cardSignups7d": "注册 (7天)",
+    "cardActivated": "已激活农场",
+    "cardStale": "沉寂农场"
   }
 }

@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Activity,
   Users,
   Network,
   Megaphone,
@@ -23,6 +24,7 @@ export interface AdminNavItem {
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: "/admin", labelKey: "navOverview", icon: LayoutDashboard, status: "ready" },
+  { href: "/admin/data-monitor", labelKey: "navDataMonitor", icon: Activity, status: "ready" },
   { href: "/admin/users", labelKey: "navMembers", icon: Users, status: "ready" },
   { href: "/admin/orgs", labelKey: "navOrgs", icon: Network, status: "ready" },
   { href: "/admin/master-data", labelKey: "navMasterData", icon: Database, status: "ready" },

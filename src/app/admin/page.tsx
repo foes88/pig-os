@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { Building2, Tractor, Users, PiggyBank } from "lucide-react";
+import { Building2, Tractor, Users, PiggyBank, UserPlus, CheckCircle2, AlertTriangle } from "lucide-react";
 import { adminApi } from "@/lib/api/endpoints/admin";
 
 // 운영자 어드민 — Phase 0 개요. 전사 카운트(조직/농장/사용자/모돈).
@@ -19,6 +19,9 @@ export default function AdminOverviewPage() {
     { key: "farms", label: t("cardFarms"), icon: Tractor, value: data?.farms },
     { key: "users", label: t("cardUsers"), icon: Users, value: data?.users },
     { key: "sows", label: t("cardSows"), icon: PiggyBank, value: data?.sows },
+    { key: "signups7d", label: t("cardSignups7d"), icon: UserPlus, value: data?.signups_7d },
+    { key: "activated", label: t("cardActivated"), icon: CheckCircle2, value: data?.activated_farms },
+    { key: "stale", label: t("cardStale"), icon: AlertTriangle, value: data?.stale_farms },
   ];
 
   return (

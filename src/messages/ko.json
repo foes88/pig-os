@@ -1626,6 +1626,10 @@
     "orgHideFarms": "농장 숨기기",
     "accessDeniedTitle": "운영자 전용",
     "accessDeniedDesc": "이 콘솔은 PigOS 플랫폼 운영자(SUPER_ADMIN) 전용입니다. 현재 계정은 접근 권한이 없습니다.",
-    "accessDeniedLogout": "로그아웃"
+    "accessDeniedLogout": "로그아웃",
+    "navDataMonitor": "데이터 모니터",
+    "cardSignups7d": "가입 (7일)",
+    "cardActivated": "활성화 농장",
+    "cardStale": "방치 농장"
   }
 }
