@@ -40,7 +40,7 @@ from app.db.models.events import (
 from app.db.models.health import HealthEvent, Removal
 from app.db.models.ops import PeriodLock, SyncLog
 from app.db.models.platform import AuditLog, Farm
-from app.db.models.sow import Boar, Sow
+from app.db.models.sow import BreedingCycle, PigletGroup, Sow
 from app.schemas.sync import (
     ServerChanges,
     SyncAccepted,
@@ -57,16 +57,18 @@ from app.schemas.sync import (
     SyncWeaning,
 )
 from app.services.event_service import (
-    MAX_NURSING_COUNT,
+    GESTATION_MAX_DAYS,
+    GESTATION_MIN_DAYS,
+    MAX_MATING_PER_CYCLE,
+    NURSING_MAX_DAYS,
+    NURSING_MIN_DAYS,
     _calc_piglet_adjustments,
+    _check_wean_compliance,
     _get_open_cycle,
+    _last_weaning_date,
     apply_terminal_reproductive,
 )
 from app.validators.base import ValidationError
-from app.validators.date_rules import (
-    validate_farrowing_after_mating,
-    validate_weaning_after_farrowing,
-)
 from app.validators.farrowing import validate_farrowing
 
 _FULL_SYNC_THRESHOLD_DAYS = 30
@@ -106,6 +108,17 @@ def _is_future_date(event_date: date) -> bool:
     return event_date > date.today() + timedelta(days=_FUTURE_DATE_TOLERANCE_DAYS)
 
 
+def _dup_time_diff_seconds(client_dt: datetime, server_dt: datetime | None) -> float | None:
+    """클라/서버 생성시각 차이(초). tz 안전: aware는 UTC로 변환(astimezone), naive는 UTC로 간주.
+    server_dt=None(같은 배치 내 직전 삽입으로 server_default 미반영)이면 None → 비교 불가.
+    과거 `.replace(tzinfo=UTC)`는 오프셋을 무시(relabel)해 +09:00을 9h 어긋나게 했음(#4)."""
+    if server_dt is None:
+        return None
+    c = client_dt if client_dt.tzinfo else client_dt.replace(tzinfo=UTC)
+    s = server_dt if server_dt.tzinfo else server_dt.replace(tzinfo=UTC)
+    return abs((c.astimezone(UTC) - s.astimezone(UTC)).total_seconds())
+
+
 def _audit(farm_id: UUID, entity_type: str, entity_id: UUID, action: str, new_value: dict) -> AuditLog:
     return AuditLog(
         farm_id=farm_id,
@@ -114,6 +127,19 @@ def _audit(farm_id: UUID, entity_type: str, entity_id: UUID, action: str, new_va
         entity_id=entity_id,
         new_value=new_value,
     )
+
+
+def _cross_farm_id_conflict(existing, item, farm_id: UUID, entity: str) -> SyncRejected | None:
+    """클라가 보낸 PK가 '다른 농장' 행을 가리키면 거부(F1).
+
+    멱등성 by-id 조회는 전역(PK 충돌 감지 목적)이라, 다른 농장 UUID를 그대로
+    merge 처리하면 호출자의 정상 레코드가 무성 손실됐다. 또 농장 스코프만 좁혀
+    insert로 흘리면 전역 PK 유니크 충돌(500)이 난다. 따라서 교차농장 PK는 ID_CONFLICT로 거부.
+    """
+    if existing is not None and existing.farm_id != farm_id:
+        return SyncRejected(id=item.id, entity=entity, reason="ID_CONFLICT",
+                            detail={"reason": "id already used by another farm"})
+    return None
 
 
 # ── Mating validation ─────────────────────────────────────────────────────────
@@ -153,6 +179,9 @@ async def _process_mating(
     # 4. Idempotency — same UUID already exists
     existing_by_id = await db.get(Mating, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "mating")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="mating", action="merged"), None, None
 
     # 4b. Field validation — REST MatingCreate 규칙 미러 (finding #1 확장)
@@ -161,26 +190,6 @@ async def _process_mating(
         return None, SyncRejected(
             id=item.id, entity="mating", reason="VALIDATION_FAILED", detail=invalid,
         ), None
-
-    # 4c. boar_id 농장 소유 검증 — REST record_mating(Boar.farm_id==farm_id)과 동일. sync 누락 시
-    #     타농장 boar_id 첨부 수락(교차테넌트 dangling FK). QA ws_feature_boar 발견.
-    if item.boar_id is not None:
-        boar = await db.scalar(
-            select(Boar).where(Boar.id == item.boar_id, Boar.farm_id == farm_id)
-        )
-        if not boar:
-            return None, SyncRejected(
-                id=item.id, entity="mating", reason="VALIDATION_FAILED",
-                detail={"field": "boar_id", "value": str(item.boar_id),
-                        "message": "boar_id is not a valid boar in this farm"},
-            ), None
-        # QA #13: REST record_mating은 boar.status=='ACTIVE'만 허용(도태/판매 boar 교배 금지). sync 누락분.
-        if boar.status != "ACTIVE":
-            return None, SyncRejected(
-                id=item.id, entity="mating", reason="VALIDATION_FAILED",
-                detail={"field": "boar_id", "value": str(item.boar_id),
-                        "message": f"Boar is '{boar.status}' and cannot be used for mating"},
-            ), None
 
     # 5. Sow status check — valid states for mating (SCREEN_MENU_SPEC 상태 정의)
     valid_for_mating = ("GILT", "OPEN", "ACCIDENT")
@@ -195,18 +204,21 @@ async def _process_mating(
             },
         ), None
 
-    # 6. Duplicate check (same sow, same date, different UUID)
+    # 6. Duplicate check (same sow, same date, SAME type, different UUID).
+    # #3: mating_type까지 일치해야 중복. 같은 날 AI 후 NATURAL 백업교배(실제 관행)는
+    # 서로 다른 교배라 둘 다 수용해야 함 — type을 빼면 무음 병합으로 데이터 손실.
     dup = await db.scalar(
         select(Mating).where(
             Mating.sow_id == item.sow_id,
             Mating.farm_id == farm_id,
             Mating.mating_date == event_date,
+            Mating.mating_type == item.mating_type,
             Mating.deleted_at.is_(None),
         )
     )
     if dup:
-        time_diff = abs((item.client_created_at.replace(tzinfo=UTC) - dup.created_at).total_seconds())
-        if time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
+        time_diff = _dup_time_diff_seconds(item.client_created_at, dup.created_at)
+        if time_diff is not None and time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
             return SyncAccepted(id=item.id, entity="mating", action="merged"), None, None
         return None, None, SyncConflict(
             id=item.id, entity="mating", conflict_type="DUPLICATE_EVENT",
@@ -220,17 +232,54 @@ async def _process_mating(
             },
         )
 
+    # F4: 재교배일 < 직전 이유일 차단 — REST validate_mating_after_last_weaning 미러.
+    last_wean = await _last_weaning_date(db, item.sow_id)
+    if last_wean is not None and event_date < last_wean:
+        return None, SyncRejected(
+            id=item.id, entity="mating", reason="VALIDATION_FAILED",
+            detail={"field": "mating_date",
+                    "message": f"mating_date {event_date} is before last weaning {last_wean}"},
+        ), None
+
     # 7. All checks passed — write (unless dry_run)
     if not dry_run:
+        # C4: REST record_mating 미러 — 활성 사이클 있으면 재사용, 없으면 신규 생성 후 연결.
+        # breeding_cycle_id 누락 시 parity별 KPI(P1/P2 ABA 등)에서 동기화 데이터가 전량 누락됨.
+        await db.flush()  # 같은 배치 직전 교배(pending) 가시화 → 사이클당 교배횟수 정확 산정
+        cycle = await _get_open_cycle(db, sow.id)
+        if cycle:
+            # F3: 기존 사이클 재교배 — 교배횟수 상한 + mating_count 유지(REST record_mating 미러).
+            existing_matings = await db.scalar(
+                select(func.count()).select_from(Mating).where(
+                    Mating.breeding_cycle_id == cycle.id, Mating.deleted_at.is_(None))
+            ) or 0
+            if existing_matings >= MAX_MATING_PER_CYCLE:
+                return None, SyncRejected(
+                    id=item.id, entity="mating", reason="VALIDATION_FAILED",
+                    detail={"message":
+                            f"Cannot record more than {MAX_MATING_PER_CYCLE} matings per breeding cycle"},
+                ), None
+            mating_number = existing_matings + 1
+        else:
+            cycle = BreedingCycle(
+                farm_id=farm_id, sow_id=sow.id, parity=(sow.parity or 0) + 1,
+                started_at=datetime.combine(event_date, datetime.min.time()).replace(tzinfo=UTC),
+            )
+            db.add(cycle)
+            await db.flush()
+            mating_number = 1
         mating = Mating(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
+            breeding_cycle_id=cycle.id,
             mating_date=event_date, mating_type=item.mating_type,
             boar_id=item.boar_id, semen_batch=item.semen_batch,
-            mating_number=item.mating_number, notes=item.notes,
+            mating_number=mating_number, notes=item.notes,  # 클라값 대신 서버 산정(REST 동일)
         )
         db.add(mating)
         db.add(_audit(farm_id, "mating", item.id, "CREATE", item.model_dump(mode="json")))
         sow.status = "PREGNANT"
+        cycle.cycle_status = "MATED"
+        cycle.mating_count = mating_number
 
     return SyncAccepted(id=item.id, entity="mating", action="created"), None, None
 
@@ -314,6 +363,9 @@ async def _process_farrowing(
 
     existing_by_id = await db.get(Farrowing, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "farrowing")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="farrowing", action="merged"), None, None
 
     if sow.status != "PREGNANT":
@@ -333,8 +385,8 @@ async def _process_farrowing(
         )
     )
     if dup:
-        time_diff = abs((item.client_created_at.replace(tzinfo=UTC) - dup.created_at).total_seconds())
-        if time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
+        time_diff = _dup_time_diff_seconds(item.client_created_at, dup.created_at)
+        if time_diff is not None and time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
             return SyncAccepted(id=item.id, entity="farrowing", action="merged"), None, None
         return None, None, SyncConflict(
             id=item.id, entity="farrowing", conflict_type="DUPLICATE_EVENT",
@@ -363,25 +415,33 @@ async def _process_farrowing(
                 id=item.id, entity="farrowing", reason="MATING_NOT_FOUND",
                 detail={"sow_id": str(item.sow_id), "message": "No mating to attach farrowing to"},
             ), None
-        # INV4: 분만일 > 교배일 (REST record_farrowing 동일). sync CREATE 누락분(QA #10) — 타임라인 역전 차단.
-        try:
-            validate_farrowing_after_mating(farrowing_date=event_date, mating_date=mating.mating_date)
-        except ValidationError as e:
+        # F1: 임신기간 100~130일 검증 — REST record_farrowing 미러(분만일>교배일도 min>=100이 보장).
+        gestation = (event_date - mating.mating_date).days
+        if not (GESTATION_MIN_DAYS <= gestation <= GESTATION_MAX_DAYS):
             return None, SyncRejected(
                 id=item.id, entity="farrowing", reason="VALIDATION_FAILED",
-                detail={"field": "farrowing_date", "message": e.detail},
+                detail={"field": "farrowing_date", "gestation_days": gestation,
+                        "message": (f"Gestation {gestation} days outside "
+                                    f"{GESTATION_MIN_DAYS}~{GESTATION_MAX_DAYS} range")},
             ), None
         # 모델 컬럼명: stillborn / mummified / farrowing_ease (sync 입력은 born_dead / mummies / farrowing_type).
+        # C4: breeding_cycle_id 연결(교배의 사이클 상속) + nursing_head 초기화 — REST record_farrowing 미러.
         farrowing = Farrowing(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id, mating_id=mating.id,
+            breeding_cycle_id=mating.breeding_cycle_id,
             farrowing_date=event_date, total_born=item.total_born,
             born_alive=item.born_alive, stillborn=item.born_dead,
-            mummified=item.mummies, farrowing_ease=item.farrowing_type, notes=item.notes,
+            mummified=item.mummies, nursing_head=item.born_alive,
+            farrowing_ease=item.farrowing_type, notes=item.notes,
         )
         db.add(farrowing)
         db.add(_audit(farm_id, "farrowing", item.id, "CREATE", item.model_dump(mode="json")))
         sow.status = "LACTATING"
         sow.parity = (sow.parity or 0) + 1
+        if mating.breeding_cycle_id:
+            cycle = await db.get(BreedingCycle, mating.breeding_cycle_id)
+            if cycle:
+                cycle.cycle_status = "FARROWED"
 
     return SyncAccepted(id=item.id, entity="farrowing", action="created"), None, None
 
@@ -413,6 +473,9 @@ async def _process_weaning(
 
     existing_by_id = await db.get(Weaning, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "weaning")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="weaning", action="merged"), None, None
 
     if sow.status != "LACTATING":
@@ -432,8 +495,8 @@ async def _process_weaning(
         )
     )
     if dup:
-        time_diff = abs((item.client_created_at.replace(tzinfo=UTC) - dup.created_at).total_seconds())
-        if time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
+        time_diff = _dup_time_diff_seconds(item.client_created_at, dup.created_at)
+        if time_diff is not None and time_diff <= _DUPLICATE_MERGE_WINDOW_HOURS * 3600:
             return SyncAccepted(id=item.id, entity="weaning", action="merged"), None, None
         return None, None, SyncConflict(
             id=item.id, entity="weaning", conflict_type="DUPLICATE_EVENT",
@@ -463,9 +526,24 @@ async def _process_weaning(
                 id=item.id, entity="weaning", reason="NO_ACTIVE_FARROWING",
                 detail={"sow_id": str(item.sow_id), "message": "No farrowing to attach weaning to"},
             ), None
-        # INV4: 이유일 > 분만일 (REST record_weaning 동일). sync CREATE 누락분(QA #11) — 타임라인 역전 차단.
+        # F2: 이유일>분만일 순서 + 포유기간 10~60일 + 국가별 최소 이유일령 — REST record_weaning 미러.
+        # (기존엔 음수 일령을 null로 저장만 하고 거부하지 않았음 → 채널 간 데이터 불일치.)
+        nursing_days = (event_date - farrowing.farrowing_date).days
+        if nursing_days < 0:
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={"field": "weaning_date",
+                        "message": f"weaning_date {event_date} is before farrowing {farrowing.farrowing_date}"},
+            ), None
+        if not (NURSING_MIN_DAYS <= nursing_days <= NURSING_MAX_DAYS):
+            return None, SyncRejected(
+                id=item.id, entity="weaning", reason="VALIDATION_FAILED",
+                detail={"field": "weaning_date", "nursing_days": nursing_days,
+                        "message": (f"Nursing period {nursing_days} days outside "
+                                    f"{NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range")},
+            ), None
         try:
-            validate_weaning_after_farrowing(weaning_date=event_date, farrowing_date=farrowing.farrowing_date)
+            await _check_wean_compliance(db, farm_id, nursing_days)
         except ValidationError as e:
             return None, SyncRejected(
                 id=item.id, entity="weaning", reason="VALIDATION_FAILED",
@@ -497,14 +575,43 @@ async def _process_weaning(
                 },
             ), None
         # 모델 컬럼명: avg_weaning_weight_kg (sync 입력은 avg_weight_kg).
+        # H1/C4: breeding_cycle_id 연결 + 부분이유 상태머신 + PigletGroup 생성 — REST record_weaning 미러.
+        # nursing_days는 위 F2 검증에서 이미 산정(>=0 보장).
         weaning = Weaning(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id, farrowing_id=farrowing.id,
+            breeding_cycle_id=farrowing.breeding_cycle_id,
             weaning_date=event_date, weaned_count=item.weaned_count,
+            weaning_age_days=nursing_days,
             avg_weaning_weight_kg=item.avg_weight_kg, notes=item.notes,
         )
         db.add(weaning)
         db.add(_audit(farm_id, "weaning", item.id, "CREATE", item.model_dump(mode="json")))
-        sow.status = "OPEN"
+        await db.flush()
+
+        # 잔여 포유두수 0 → 이유 완료(공태 복귀 + 사이클 종료). 잔여>0(부분이유) → LACTATING 유지.
+        remaining_after = remaining - item.weaned_count
+        if remaining_after <= 0:
+            sow.status = "OPEN"
+            if farrowing.breeding_cycle_id:
+                cycle = await db.get(BreedingCycle, farrowing.breeding_cycle_id)
+                if cycle:
+                    cycle.cycle_status = "WEANED"
+                    cycle.ended_at = datetime.now(UTC)
+        # else: 부분이유 — 모돈 LACTATING 유지, 사이클 FARROWED 유지
+
+        # 이유된 자돈을 그룹으로 추적(PSY→MSY 사슬 연결). 이유 1건 = 자돈그룹 1개.
+        if item.weaned_count > 0:
+            code = f"WG-{event_date:%y%m%d}-{str(item.id)[:8]}"  # VARCHAR(30) 안전
+            exists = await db.scalar(
+                select(PigletGroup).where(
+                    PigletGroup.farm_id == farm_id, PigletGroup.group_code == code
+                )
+            )
+            if not exists:
+                db.add(PigletGroup(
+                    farm_id=farm_id, group_code=code, weaning_date=event_date,
+                    head_count_in=item.weaned_count, notes=f"auto: weaning {sow.ear_tag}",
+                ))
 
     return SyncAccepted(id=item.id, entity="weaning", action="created"), None, None
 
@@ -546,6 +653,9 @@ async def _process_reproductive(
 
     existing_by_id = await db.get(ReproductiveEvent, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "reproductive_event")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="reproductive_event", action="merged"), None, None
 
     # 항목별 검증 — REST 규칙 미러(배치 전체 422 방지) — Codex P1
@@ -554,22 +664,10 @@ async def _process_reproductive(
             id=item.id, entity="reproductive_event", reason="VALIDATION_FAILED",
             detail={"field": "event_type", "message": "invalid event_type", "value": item.event_type},
         ), None
-    # QA #14: 임신모돈 도태/폐사 시 사유(notes) 필수 (REST record_reproductive_event 동일). sync 누락분.
-    if sow.status == "PREGNANT" and item.event_type in ("CULLED", "DEAD") and not item.notes:
-        return None, SyncRejected(
-            id=item.id, entity="reproductive_event", reason="VALIDATION_FAILED",
-            detail={"field": "notes", "message": "A reason (notes) is required when culling/removing a pregnant sow"},
-        ), None
 
     if not dry_run:
-        # QA C: mating_id/breeding_cycle_id 순방향 링크(REST record_reproductive_event와 동일).
-        _cycle = await _get_open_cycle(db, sow.id)
-        _mid = await db.scalar(select(Mating.id).where(
-            Mating.sow_id == sow.id, Mating.deleted_at.is_(None))
-            .order_by(Mating.mating_date.desc()).limit(1))
         event = ReproductiveEvent(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
-            mating_id=_mid, breeding_cycle_id=(_cycle.id if _cycle else None),
             event_type=item.event_type, event_date=event_date, notes=item.notes,
         )
         db.add(event)
@@ -610,6 +708,9 @@ async def _process_pregnancy_check(
 
     existing_by_id = await db.get(PregnancyCheck, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "pregnancy_check")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="pregnancy_check", action="merged"), None, None
 
     if item.result not in _PREGNANCY_RESULTS:
@@ -635,14 +736,6 @@ async def _process_pregnancy_check(
         db.add(_audit(farm_id, "pregnancy_check", item.id, "CREATE", item.model_dump(mode="json")))
         # 음성(NEGATIVE)=공태(EMPTY) → ACCIDENT 전이 + 사이클 FAILED(재교배 대기). REST와 동일 헬퍼.
         if item.result == "NEGATIVE":
-            # 공태 ReproductiveEvent(EMPTY)도 적재 — REST record_pregnancy_check와 동일(QA 알림리뷰 H-1).
-            # 미적재 시 alert_service last_rts/consecutive_rts가 못 찾아 재교배 과기한·반복RTS 도태 알림 누락.
-            db.add(ReproductiveEvent(
-                farm_id=farm_id, sow_id=item.sow_id, mating_id=item.mating_id,
-                event_date=check_date, event_type="EMPTY",
-                notes="auto: pregnancy check NEGATIVE",
-            ))
-            await db.flush()
             await apply_terminal_reproductive(db, sow, "EMPTY", check_date, farm_id)
 
     return SyncAccepted(id=item.id, entity="pregnancy_check", action="created"), None, None
@@ -677,20 +770,17 @@ async def _process_health_event(
 
     existing_by_id = await db.get(HealthEvent, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "health_event")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="health_event", action="merged"), None, None
 
     if not dry_run:
-        # QA #9: SyncHealthEvent(vaccine_code/active_substance/dose_mg)를 HealthEvent 모델(해당 컬럼 부재)에
-        # 직접 전달 + event_type(NOT NULL) 누락 → INTERNAL_ERROR(모든 건강기록 실패)였음.
-        # QA #5 (MIGRATION-PENDING a1c3e5b7d9f2): 백신/약물/용량을 정식 컬럼에 매핑(이전엔 notes 보존).
-        # event_type(NOT NULL) 유도. 마이그레이션 적용 후 활성화 — DB에 컬럼 있어야 동작.
-        event_type = "DISEASE" if item.disease_code else "OBSERVATION"
         event = HealthEvent(
             id=item.id, farm_id=farm_id, sow_id=item.sow_id,
-            event_date=event_date, event_type=event_type,
-            disease_code=item.disease_code, severity=item.severity, notes=item.notes,
+            event_date=event_date, disease_code=item.disease_code,
             vaccine_code=item.vaccine_code, active_substance=item.active_substance,
-            dose_mg=item.dose_mg,
+            dose_mg=item.dose_mg, severity=item.severity, notes=item.notes,
         )
         db.add(event)
         db.add(_audit(farm_id, "health_event", item.id, "CREATE", item.model_dump(mode="json")))
@@ -725,6 +815,9 @@ async def _process_piglet_event(
 
     existing_by_id = await db.get(PigletEvent, item.id)
     if existing_by_id:
+        rej = _cross_farm_id_conflict(existing_by_id, item, farm_id, "piglet_event")
+        if rej:
+            return None, rej, None
         return SyncAccepted(id=item.id, entity="piglet_event", action="merged"), None, None
 
     # 항목별 검증 — REST PigletEventCreate 규칙 미러(배치 전체 422 방지) — Codex P1
@@ -745,13 +838,11 @@ async def _process_piglet_event(
         ), None
 
     if not dry_run:
-        # 세션 autoflush=False → 같은 sync 배치의 직전 pending(farrowing·piglet_event) 가시화.
-        # explicit farrowing_id 경로도 _calc_piglet_adjustments(SELECT) 전에 flush 필요(QA M1):
-        # 같은 배치 다건 FOSTER_IN/DEATH가 직전 건을 못 봐 nursing 과소/과대계산되는 것 방지.
-        await db.flush()
         # Resolve farrowing_id: explicit or auto-lookup latest for this sow.
+        # 세션 autoflush=False → 같은 sync 배치의 직전 farrowing(pending) 조회 위해 flush.
         farrowing_id = item.farrowing_id
         if farrowing_id is None:
+            await db.flush()
             farrowing = await db.scalar(
                 select(Farrowing)
                 .where(Farrowing.sow_id == sow.id, Farrowing.deleted_at.is_(None))
@@ -764,35 +855,6 @@ async def _process_piglet_event(
                     detail={"sow_id": str(item.sow_id)},
                 ), None
             farrowing_id = farrowing.id
-
-        # 두수 정합: DEATH/FOSTER_OUT는 현재 포유두수 초과 불가(REST record_piglet_event 동일).
-        # sync 누락 시 포유두수 음수→이유두수 공식 깨짐(QA #8). born_alive+foster_in-foster_out-deaths.
-        if item.event_type in ("DEATH", "FOSTER_OUT"):
-            far = await db.get(Farrowing, farrowing_id)
-            if far is not None:
-                fi, fo, dd = await _calc_piglet_adjustments(db, farrowing_id)
-                nursing = far.born_alive + fi - fo - dd
-                if item.piglet_count > nursing:
-                    return None, SyncRejected(
-                        id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
-                        detail={"field": "piglet_count",
-                                "message": f"{item.event_type} ({item.piglet_count}) exceeds nursing count ({nursing})",
-                                "value": item.piglet_count},
-                    ), None
-        # QA #12: FOSTER_IN 과혼잡 — 양자전입 후 포유두수 ≤ MAX_NURSING(REST record_piglet_event 동일).
-        # sync 누락 시 한 모돈 60+마리 포유 수락(O5 재고 정합 위반). born_alive+fi+count-fo-dd.
-        elif item.event_type == "FOSTER_IN":
-            far = await db.get(Farrowing, farrowing_id)
-            if far is not None:
-                fi, fo, dd = await _calc_piglet_adjustments(db, farrowing_id)
-                nursing_after = far.born_alive + fi + item.piglet_count - fo - dd
-                if nursing_after > MAX_NURSING_COUNT:
-                    return None, SyncRejected(
-                        id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
-                        detail={"field": "piglet_count",
-                                "message": f"FOSTER_IN → nursing {nursing_after} exceeds max {MAX_NURSING_COUNT}",
-                                "value": item.piglet_count},
-                    ), None
 
         event = PigletEvent(
             id=item.id, farm_id=farm_id, sow_id=sow.id,
@@ -850,11 +912,16 @@ async def _pull_server_changes(
             out[f] = str(v) if isinstance(v, UUID) else v
         return out
 
+    # updated_at 추가(#7)로 소프트삭제도 since 윈도우에 잡힘 → 전 이벤트 타입의 tombstone 전파.
+    # repro/health/piglet 누락 시 서버측 삭제가 모바일에 영구 stale로 남음(코드리뷰 #1).
     deleted = (
         [str(s.id) for s in sows if s.deleted_at and s.deleted_at >= since] +
         [str(m.id) for m in matings if m.deleted_at and m.deleted_at >= since] +
         [str(f.id) for f in farrowings if f.deleted_at and f.deleted_at >= since] +
-        [str(w.id) for w in weanings if w.deleted_at and w.deleted_at >= since]
+        [str(w.id) for w in weanings if w.deleted_at and w.deleted_at >= since] +
+        [str(r.id) for r in repro if r.deleted_at and r.deleted_at >= since] +
+        [str(h.id) for h in health if h.deleted_at and h.deleted_at >= since] +
+        [str(p.id) for p in piglet_evs if p.deleted_at and p.deleted_at >= since]
     )
 
     return ServerChanges(
@@ -963,18 +1030,23 @@ async def process_sync(
 
             for items, processor in processors:
                 for item in items:
+                    # #8: 항목별 savepoint — 한 항목의 DB에러(IntegrityError 등)가 트랜잭션을
+                    # aborted 상태로 만들어 배치의 나머지 항목까지 연쇄 실패시키는 것을 차단
+                    # (스펙의 '한 레코드 실패해도 나머지 정상 처리' 원자성 보장).
                     try:
-                        acc, rej, con = await processor(db, farm.id, item, req.dry_run)
-                        if acc: accepted.append(acc)
-                        if rej: rejected.append(rej)
-                        if con: conflicts.append(con)
-                    except Exception as e:
+                        async with db.begin_nested():
+                            acc, rej, con = await processor(db, farm.id, item, req.dry_run)
+                    except Exception as e:  # noqa: BLE001 — 항목 격리(savepoint 롤백 후 다음 항목 계속)
                         rejected.append(SyncRejected(
                             id=item.id,
                             entity=item.__class__.__name__,
                             reason="INTERNAL_ERROR",
                             detail={"error": str(e)},
                         ))
+                        continue
+                    if acc: accepted.append(acc)
+                    if rej: rejected.append(rej)
+                    if con: conflicts.append(con)
 
             # Persist conflict queue for unresolved conflicts
             if conflicts and not req.dry_run:

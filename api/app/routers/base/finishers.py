@@ -17,6 +17,7 @@ from app.schemas.finisher import (
     FinisherGroupShip,
     FinisherGroupUpdate,
 )
+from app.services.event_service import _ensure_period_unlocked
 from app.validators.finisher import (
     validate_finisher_entry,
     validate_finisher_event_count,
@@ -26,9 +27,9 @@ from app.validators.finisher import (
 
 router = APIRouter(prefix="/farms/{farm_id}/finishers", tags=["Finishers"])
 
-_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN")  # 파괴적 작업 한정 (Section D)
+_MANAGE_ROLES = ("FARM_OWNER", "FARM_MANAGER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 파괴적 작업 한정 (Section D)
 
-_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
+_ENTRY_ROLES = ("FARM_OWNER", "FARM_MANAGER", "FARM_WORKER", "SUPER_ADMIN", "VENDOR_ADMIN", "DISTRIBUTOR_ADMIN", "DEALER_ADMIN")  # 일상입력 WORKER+ (VIEWER/VET 차단)
 
 
 @router.get("", response_model=list[FinisherGroupResponse])
@@ -58,6 +59,9 @@ async def create_finisher_group(
     current_user: CurrentUser,
 ):
     """비육돈 그룹 입식 등록"""
+    # 월마감 잠금: 입식일이 속한 월이 잠겨있으면 423 (grow-finish KPI 입력 보호)
+    if body.start_date:
+        await _ensure_period_unlocked(db, farm.id, body.start_date)
     # P0-BE-12: 입식 두수·체중 검증
     validate_finisher_entry(
         entry_count=body.head_count_in,
@@ -106,6 +110,15 @@ async def ship_finisher_group(
     if group.end_date is not None:
         raise ConflictError("Group already shipped")
 
+    # 월마감 잠금: 출하일이 속한 월이 잠겨있으면 423 (확정 월로 출하 백데이트 차단)
+    await _ensure_period_unlocked(db, farm.id, body.end_date)
+
+    # H1: 출하일은 입식일 이후여야 함(음수 사육일수 → 음수 ADG/일수로 KPI 오염 방지).
+    if group.start_date is not None and body.end_date < group.start_date:
+        raise ValidationError(
+            f"end_date ({body.end_date}) cannot be before start_date ({group.start_date})"
+        )
+
     # P0-BE-12: 출하 두수 ≤ 잔여(입식) 두수, 출하체중 범위·입식체중 초과 검증
     validate_finisher_not_shipped(shipped_at=group.end_date)
     validate_finisher_event_count(
@@ -141,6 +154,10 @@ async def delete_finisher_group(group_id: UUID, farm: FarmDep, db: DbDep):
     )
     if not group:
         raise NotFoundError(f"Finisher group {group_id} not found")
+    # 월마감 잠금: 그룹 시작/종료월이 잠겨있으면 삭제 차단(확정 KPI 보호)
+    for d in (group.start_date, group.end_date):
+        if d:
+            await _ensure_period_unlocked(db, farm.id, d)
     group.deleted_at = datetime.now(UTC)
     await db.commit()
 
@@ -157,20 +174,22 @@ async def update_finisher_group(group_id: UUID, body: FinisherGroupUpdate, farm:
     )
     if not group:
         raise NotFoundError(f"Finisher group {group_id} not found")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    data = body.model_dump(exclude_unset=True)
+    # 월마감 잠금: 기존 시작/종료월 + 변경하려는 새 시작/종료월 모두 잠금 검사
+    for d in (group.start_date, group.end_date, data.get("start_date"), data.get("end_date")):
+        if d:
+            await _ensure_period_unlocked(db, farm.id, d)
+    for k, v in data.items():
         setattr(group, k, v)
-    # 두수보존: 출하완료 그룹의 입식두수를 이미 출하한 두수 미만으로 낮추면 음수 폐사율·음수 재고
-    # → 차단(ship 경로 validate_finisher_event_count와 동일 불변식, PATCH 미러 누락 QA 비육리뷰).
-    if group.head_count_out is not None and group.head_count_out > group.head_count_in:
+    # H5: 수정 후 정합성 — 입식두수 < 출하두수(이미 출하됨)면 음수 폐사율 발생 → 차단.
+    if group.head_count_out is not None and group.head_count_in is not None \
+            and group.head_count_in < group.head_count_out:
         raise ValidationError(
-            f"head_count_in ({group.head_count_in}) cannot be less than already-shipped "
-            f"head_count_out ({group.head_count_out})"
+            f"head_count_in ({group.head_count_in}) cannot be lower than "
+            f"shipped head_count_out ({group.head_count_out})"
         )
-    # 출하완료 그룹의 입식체중을 출하체중 이상으로 올리면 음수 증체→음수 FCR/ADG → 재검증(QA 사료리뷰 Medium).
-    if (group.end_date is not None and group.avg_exit_weight_kg is not None
-            and group.avg_entry_weight_kg is not None):
-        validate_finisher_exit_weight(avg_exit_weight_kg=group.avg_exit_weight_kg,
-                                      avg_entry_weight_kg=group.avg_entry_weight_kg)
+    if group.end_date is not None and group.start_date is not None and group.end_date < group.start_date:
+        raise ValidationError("end_date cannot be before start_date")
     await db.commit()
     await db.refresh(group)
     return FinisherGroupResponse.model_validate(group)
