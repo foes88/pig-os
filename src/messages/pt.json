@@ -106,7 +106,9 @@
     "kpiSummary": "Métricas principais",
     "estLoss": "Perda est. (ano)",
     "lostPigs": "{n} suínos",
-    "demoBadge": "ref"
+    "demoBadge": "ref",
+    "benchAvg": "Méd.",
+    "benchTop25": "Top 25%"
   },
   "sows": {
     "title": "Gestão de matrizes",

@@ -14,7 +14,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useEffect } from "react";
 import { track } from "@/lib/analytics";
 import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
-import type { Alert, Task } from "@/types/api.types";
+import type { Alert, Task, KpiBenchmark } from "@/types/api.types";
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 3, WARNING: 2, INFO: 1, OK: 0 };
 
@@ -230,9 +230,9 @@ export default function Dashboard() {
             {/* ── 보조: 핵심 지표 ── */}
             <div className="text-[11px] font-bold text-text3 uppercase tracking-widest mb-2">{t("kpiSummary")}</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-              <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} />
-              <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} />
-              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} />
+              <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} benchmark={data.benchmarks?.PSY} />
+              <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} benchmark={data.benchmarks?.NPD} />
+              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} benchmark={data.benchmarks?.FARROWING_RATE} />
               <KpiCard
                 t={t}
                 label={t("statAiAlerts")}
@@ -316,8 +316,8 @@ function TaskRow({ task }: { task: Task }) {
   );
 }
 
-function KpiCard({ t, label, tier, value, rawTierLabel }: {
-  t: ReturnType<typeof useTranslations>; label: string; tier: KpiTier; value: string; rawTierLabel?: string;
+function KpiCard({ t, label, tier, value, rawTierLabel, benchmark }: {
+  t: ReturnType<typeof useTranslations>; label: string; tier: KpiTier; value: string; rawTierLabel?: string; benchmark?: KpiBenchmark;
 }) {
   const s = TIER_STYLE[tier];
   const tierLabel = rawTierLabel ?? t(
@@ -334,6 +334,12 @@ function KpiCard({ t, label, tier, value, rawTierLabel }: {
       <div className={`inline-flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-md text-[10px] font-bold border ${s.chip}`}>
         <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />{tierLabel}
       </div>
+      {benchmark && (benchmark.avg != null || benchmark.top25 != null) && (
+        <div className="mt-2 pt-2 border-t border-border/60 flex gap-3 text-[10px] font-mono text-text3">
+          {benchmark.avg != null && <span>{t("benchAvg")} <b className="text-text2">{benchmark.avg.toFixed(1)}</b></span>}
+          {benchmark.top25 != null && <span>{t("benchTop25")} <b className="text-text2">{benchmark.top25.toFixed(1)}</b></span>}
+        </div>
+      )}
     </div>
   );
 }

@@ -106,7 +106,9 @@
     "kpiSummary": "核心指标",
     "estLoss": "今年累计损失(估算)",
     "lostPigs": "{n}头",
-    "demoBadge": "参考"
+    "demoBadge": "参考",
+    "benchAvg": "平均",
+    "benchTop25": "前25%"
   },
   "sows": {
     "title": "母猪管理",

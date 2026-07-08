@@ -106,7 +106,9 @@
     "kpiSummary": "Métricas clave",
     "estLoss": "Pérdida estimada (YTD)",
     "lostPigs": "{n} cerdos",
-    "demoBadge": "ref"
+    "demoBadge": "ref",
+    "benchAvg": "Prom.",
+    "benchTop25": "Top 25%"
   },
   "sows": {
     "title": "Gestión de cerdas",

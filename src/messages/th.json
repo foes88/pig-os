@@ -106,7 +106,9 @@
     "kpiSummary": "ตัวชี้วัดหลัก",
     "estLoss": "ประเมินความสูญเสีย (ปีนี้)",
     "lostPigs": "{n} ตัว",
-    "demoBadge": "อ้างอิง"
+    "demoBadge": "อ้างอิง",
+    "benchAvg": "เฉลี่ย",
+    "benchTop25": "25% แรก"
   },
   "sows": {
     "title": "จัดการแม่สุกร",

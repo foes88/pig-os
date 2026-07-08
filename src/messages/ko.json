@@ -106,7 +106,9 @@
     "kpiSummary": "핵심 지표",
     "estLoss": "올해 누적 손실(추정)",
     "lostPigs": "{n}두",
-    "demoBadge": "참고"
+    "demoBadge": "참고",
+    "benchAvg": "평균",
+    "benchTop25": "상위25%"
   },
   "sows": {
     "title": "모돈 관리",

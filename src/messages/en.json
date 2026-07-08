@@ -106,7 +106,9 @@
     "kpiSummary": "Key metrics",
     "estLoss": "Est. loss (YTD)",
     "lostPigs": "{n} pigs",
-    "demoBadge": "ref"
+    "demoBadge": "ref",
+    "benchAvg": "Avg",
+    "benchTop25": "Top 25%"
   },
   "sows": {
     "title": "Sow management",

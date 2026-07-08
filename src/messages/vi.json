@@ -106,7 +106,9 @@
     "kpiSummary": "Chỉ số chính",
     "estLoss": "Thiệt hại ước tính (năm)",
     "lostPigs": "{n} con",
-    "demoBadge": "tham khảo"
+    "demoBadge": "tham khảo",
+    "benchAvg": "TB",
+    "benchTop25": "Top 25%"
   },
   "sows": {
     "title": "Quản lý nái",
