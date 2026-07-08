@@ -14,7 +14,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useEffect } from "react";
 import { track } from "@/lib/analytics";
 import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
-import type { Alert, Task, KpiBenchmark } from "@/types/api.types";
+import type { Alert, Task, KpiBenchmark, KpiTrend } from "@/types/api.types";
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 3, WARNING: 2, INFO: 1, OK: 0 };
 
@@ -100,6 +100,11 @@ export default function Dashboard() {
     enabled: !!farmId,
     refetchInterval: 5 * 60 * 1000,
   });
+  const { data: trendData } = useQuery({
+    queryKey: ["kpi", "trend", farmId, 6],
+    queryFn: () => kpiApi.trend(farmId!, "PSY", 6),
+    enabled: !!farmId,
+  });
   const { data: overdueData } = useQuery({
     queryKey: queryKeys.alerts.overdue(farmId ?? ""),
     queryFn: () => alertsApi.overdue(farmId!),
@@ -138,6 +143,9 @@ export default function Dashboard() {
         const psyT = psyTier(data.psy);
         const npdT = npdTier(data.npd);
         const frT = farrowingRateTier(data.farrowing_rate);
+        const psySeries = trendData?.map((x: KpiTrend) => x.psy);
+        const npdSeries = trendData?.map((x: KpiTrend) => x.npd);
+        const frSeries = trendData?.map((x: KpiTrend) => x.farrowing_rate);
         const alerts = dedupeAlerts(data.alerts ?? []);
         const topAlert = alerts[0];
         const insufficient: string[] = [];
@@ -230,9 +238,9 @@ export default function Dashboard() {
             {/* ── 보조: 핵심 지표 ── */}
             <div className="text-[11px] font-bold text-text3 uppercase tracking-widest mb-2">{t("kpiSummary")}</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-              <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} benchmark={data.benchmarks?.PSY} />
-              <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} benchmark={data.benchmarks?.NPD} />
-              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} benchmark={data.benchmarks?.FARROWING_RATE} />
+              <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} benchmark={data.benchmarks?.PSY} trend={psySeries} />
+              <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} benchmark={data.benchmarks?.NPD} trend={npdSeries} />
+              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} benchmark={data.benchmarks?.FARROWING_RATE} trend={frSeries} />
               <KpiCard
                 t={t}
                 label={t("statAiAlerts")}
@@ -316,8 +324,26 @@ function TaskRow({ task }: { task: Task }) {
   );
 }
 
-function KpiCard({ t, label, tier, value, rawTierLabel, benchmark }: {
-  t: ReturnType<typeof useTranslations>; label: string; tier: KpiTier; value: string; rawTierLabel?: string; benchmark?: KpiBenchmark;
+function Sparkline({ data }: { data: (number | null)[] }) {
+  const pts = data.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v != null);
+  if (pts.length < 2) return null;
+  const vals = pts.map((p) => p.v);
+  const min = Math.min(...vals), max = Math.max(...vals), range = max - min || 1;
+  const W = 54, H = 16;
+  const px = (i: number) => (data.length > 1 ? (i / (data.length - 1)) * W : 0);
+  const py = (v: number) => H - ((v - min) / range) * (H - 2) - 1;
+  const d = pts.map((p, k) => `${k === 0 ? "M" : "L"}${px(p.i).toFixed(1)},${py(p.v).toFixed(1)}`).join(" ");
+  const last = pts[pts.length - 1];
+  return (
+    <svg width={W} height={H} className="flex-shrink-0" aria-hidden>
+      <path d={d} fill="none" stroke="var(--color-text3)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={px(last.i)} cy={py(last.v)} r="1.6" fill="var(--color-primary)" />
+    </svg>
+  );
+}
+
+function KpiCard({ t, label, tier, value, rawTierLabel, benchmark, trend }: {
+  t: ReturnType<typeof useTranslations>; label: string; tier: KpiTier; value: string; rawTierLabel?: string; benchmark?: KpiBenchmark; trend?: (number | null)[];
 }) {
   const s = TIER_STYLE[tier];
   const tierLabel = rawTierLabel ?? t(
@@ -325,7 +351,10 @@ function KpiCard({ t, label, tier, value, rawTierLabel, benchmark }: {
   );
   return (
     <div className="rounded-2xl border border-border bg-surface px-4 py-3.5">
-      <div className="text-[11px] text-text3 font-semibold">{label}</div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] text-text3 font-semibold">{label}</span>
+        {trend && <Sparkline data={trend} />}
+      </div>
       {tier === "insufficient" ? (
         <div className="text-base font-bold text-text3 mt-2">{t("dataInsufficient")}</div>
       ) : (
