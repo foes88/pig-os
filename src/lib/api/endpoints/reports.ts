@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api/client";
 import type {
   ComprehensiveDailyReport,
+  CostSummary,
   DailyReport,
   DataQualityIssue,
   FarrowingPerfRow,
@@ -74,6 +75,13 @@ export const reportsApi = {
     apiClient
       .get<MortalityReport>(`${base(farmId)}/mortality`, {
         params: { start_date: startDate, end_date: endDate },
+      })
+      .then((r) => r.data),
+
+  costSummary: (farmId: string, startDate: string, endDate: string, period = "monthly") =>
+    apiClient
+      .get<CostSummary>(`${base(farmId)}/cost-summary`, {
+        params: { start_date: startDate, end_date: endDate, period },
       })
       .then((r) => r.data),
 };

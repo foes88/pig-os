@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DbDep, FarmDep
 from app.schemas.report import (
+    CostSummary,
     DailyReport,
     DataQualityIssue,
     FarrowingPerfRow,
@@ -134,6 +135,20 @@ async def production_summary(
     return await report_service.get_production_summary(
         db, farm, start_date, end_date, period, group_by
     )
+
+
+@router.get("/cost-summary", response_model=CostSummary)
+async def cost_summary_report(
+    farm: FarmDep,
+    db: DbDep,
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    period: str = Query("monthly", pattern="^(monthly|quarterly|annual)$"),
+):
+    """#4 원가/수익 리포트 — 사료비(unit_cost×qty) + 판매수익(sale_price)을 통화·기간별 집계.
+    원가 미입력분은 net에서 제외하고 feed_cost_coverage로 데이터 완전성을 함께 반환."""
+    _check_range(start_date, end_date)
+    return await report_service.get_cost_summary(db, farm, start_date, end_date, period)
 
 
 @router.get("/grow-finish", response_model=list[GrowFinishRow])

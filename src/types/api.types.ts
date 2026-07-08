@@ -888,6 +888,38 @@ export interface GrowFinishRow {
   mortality_rate: number | null;
 }
 
+// #4 원가/수익 리포트
+export interface CostByCurrency {
+  currency: string;
+  feed_cost: number | null;
+  feed_qty_kg: number;
+  sale_revenue: number | null;
+  sale_head: number;
+  sale_weight_kg: number | null;
+  net: number | null;
+}
+
+export interface CostPeriodRow {
+  period: string;
+  currency: string;
+  feed_cost: number | null;
+  feed_qty_kg: number;
+  sale_revenue: number | null;
+  sale_head: number;
+  net: number | null;
+}
+
+export interface CostSummary {
+  start_date: string;
+  end_date: string;
+  period: string;
+  by_currency: CostByCurrency[];
+  rows: CostPeriodRow[];
+  feed_cost_coverage: number | null;
+  feed_records_total: number;
+  feed_records_with_cost: number;
+}
+
 export interface DailyCount {
   count: number;
   total_born: number;

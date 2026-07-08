@@ -834,6 +834,136 @@ async def get_mortality_report(db: AsyncSession, farm_id: UUID, start: date, end
     }
 
 
+# ── 원가/수익 리포트 (#4) ─────────────────────────────────────────────────────
+# 사료비(feed_records.unit_cost×quantity_kg) + 판매수익(removals.sale_price)을
+# 통화별·기간별로 집계. 원가 미입력분은 net에서 제외하되 물량(feed_qty_kg)엔 포함,
+# 완전성(coverage)을 함께 반환해 "입력 안 된 원가"를 숨기지 않는다(날조 금지 원칙).
+
+
+def _round2(v) -> float | None:
+    return round(float(v), 2) if v is not None else None
+
+
+async def get_cost_summary(
+    db: AsyncSession, farm, start: date, end: date, period: str
+) -> dict:
+    """기간 내 사료비·판매수익 집계. 통화 NULL은 농장 기본통화로 귀속."""
+    default_ccy = farm.currency or "USD"
+
+    # 사료비: 통화×기간별 Σ(qty×cost) 및 Σqty, 그리고 원가 입력 여부 카운트
+    ccy = func.coalesce(FeedRecord.currency, default_ccy)
+    feed_rows = (await db.execute(
+        select(
+            ccy.label("ccy"),
+            FeedRecord.record_date,
+            func.sum(FeedRecord.quantity_kg * FeedRecord.unit_cost),
+            func.sum(FeedRecord.quantity_kg),
+            func.count(),
+            func.count(FeedRecord.unit_cost),
+        )
+        .where(FeedRecord.farm_id == farm.id, FeedRecord.deleted_at.is_(None),
+               FeedRecord.record_date >= start, FeedRecord.record_date <= end)
+        .group_by(ccy, FeedRecord.record_date)
+    )).all()
+
+    # 판매수익: 통화×기간별 Σsale_price, 두수, Σbody_weight (removal_type='SOLD')
+    sccy = func.coalesce(Removal.sale_currency, default_ccy)
+    sale_rows = (await db.execute(
+        select(
+            sccy.label("ccy"),
+            Removal.removal_date,
+            func.sum(Removal.sale_price),
+            func.count(),
+            func.sum(Removal.body_weight_kg),
+        )
+        .where(Removal.farm_id == farm.id, Removal.deleted_at.is_(None),
+               Removal.removal_type == "SOLD",
+               Removal.removal_date >= start, Removal.removal_date <= end)
+        .group_by(sccy, Removal.removal_date)
+    )).all()
+
+    # (period, ccy) → 누적 집계
+    cells: dict[tuple[str, str], dict] = {}
+    feed_total = feed_with_cost = 0
+
+    def _cell(pk: str, cur: str) -> dict:
+        return cells.setdefault((pk, cur), {
+            "feed_cost": None, "feed_qty_kg": 0.0,
+            "sale_revenue": None, "sale_head": 0, "sale_weight_kg": None,
+        })
+
+    for cur, d, cost, qty, cnt, cnt_cost in feed_rows:
+        c = _cell(period_key(d, period), cur)
+        c["feed_qty_kg"] += float(qty or 0)
+        if cost is not None:
+            c["feed_cost"] = (c["feed_cost"] or 0.0) + float(cost)
+        feed_total += int(cnt or 0)
+        feed_with_cost += int(cnt_cost or 0)
+
+    for cur, d, rev, head, wt in sale_rows:
+        c = _cell(period_key(d, period), cur)
+        c["sale_head"] += int(head or 0)
+        if rev is not None:
+            c["sale_revenue"] = (c["sale_revenue"] or 0.0) + float(rev)
+        if wt is not None:
+            c["sale_weight_kg"] = (c["sale_weight_kg"] or 0.0) + float(wt)
+
+    def _net(cell: dict) -> float | None:
+        if cell["sale_revenue"] is None and cell["feed_cost"] is None:
+            return None
+        return round((cell["sale_revenue"] or 0.0) - (cell["feed_cost"] or 0.0), 2)
+
+    rows = [
+        {
+            "period": pk, "currency": cur,
+            "feed_cost": _round2(cell["feed_cost"]),
+            "feed_qty_kg": round(cell["feed_qty_kg"], 1),
+            "sale_revenue": _round2(cell["sale_revenue"]),
+            "sale_head": cell["sale_head"],
+            "net": _net(cell),
+        }
+        for (pk, cur), cell in sorted(cells.items())
+    ]
+
+    # 통화별 총계
+    by_ccy: dict[str, dict] = {}
+    for (_pk, cur), cell in cells.items():
+        agg = by_ccy.setdefault(cur, {
+            "feed_cost": None, "feed_qty_kg": 0.0,
+            "sale_revenue": None, "sale_head": 0, "sale_weight_kg": None,
+        })
+        agg["feed_qty_kg"] += cell["feed_qty_kg"]
+        agg["sale_head"] += cell["sale_head"]
+        for k in ("feed_cost", "sale_revenue", "sale_weight_kg"):
+            if cell[k] is not None:
+                agg[k] = (agg[k] or 0.0) + cell[k]
+
+    by_currency = [
+        {
+            "currency": cur,
+            "feed_cost": _round2(agg["feed_cost"]),
+            "feed_qty_kg": round(agg["feed_qty_kg"], 1),
+            "sale_revenue": _round2(agg["sale_revenue"]),
+            "sale_head": agg["sale_head"],
+            "sale_weight_kg": _round2(agg["sale_weight_kg"]),
+            "net": _net(agg),
+        }
+        for cur, agg in sorted(by_ccy.items())
+    ]
+
+    coverage = round(feed_with_cost / feed_total * 100, 1) if feed_total else None
+    return {
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+        "period": period,
+        "by_currency": by_currency,
+        "rows": rows,
+        "feed_cost_coverage": coverage,
+        "feed_records_total": feed_total,
+        "feed_records_with_cost": feed_with_cost,
+    }
+
+
 # ── 데이터 품질/정합성 리포트 (#5 — DEV_GUIDE §5-C) ───────────────────────────
 # "두수 안 꼬임"을 가시화: 두수 불일치·날짜 역전·상태 고아·입력 누락(과기한) 탐지.
 # 검증이 막는 신규 입력 외에, 레거시/sync 경로로 들어온 부정합을 사후 점검한다.

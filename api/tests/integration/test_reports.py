@@ -8,6 +8,7 @@ from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.events import Farrowing, Mating, Weaning
+from app.db.models.health import FeedRecord, Removal
 from app.db.models.ops import FinisherGroup
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
@@ -111,3 +112,37 @@ class TestGrowFinishReport:
         r = rows[0]
         assert r["adg_g"] == 1000.0          # (115-25)/90*1000
         assert r["mortality_rate"] == 4.0    # (100-96)/100
+
+
+class TestCostSummaryReport:
+    async def test_feed_cost_and_revenue(self, db: AsyncSession, test_farm: Farm):
+        # 사료: 1월 원가입력행(100kg×0.5) + 원가미입력행(200kg, coverage 검증용)
+        db.add(FeedRecord(farm_id=test_farm.id, record_date=date(2026, 1, 10),
+                          quantity_kg=100, unit_cost=0.5, currency="USD"))
+        db.add(FeedRecord(farm_id=test_farm.id, record_date=date(2026, 1, 20),
+                          quantity_kg=200))  # unit_cost/currency NULL → 기본통화 USD, cost 제외
+        # 판매: 2두, 총 700 USD, 체중 240kg
+        sow = await _sow(db, test_farm)
+        sow2 = await _sow(db, test_farm)
+        db.add(Removal(farm_id=test_farm.id, sow_id=sow.id, removal_date=date(2026, 1, 15),
+                       removal_type="SOLD", sale_price=300, sale_currency="USD", body_weight_kg=110))
+        db.add(Removal(farm_id=test_farm.id, sow_id=sow2.id, removal_date=date(2026, 1, 25),
+                       removal_type="SOLD", sale_price=400, sale_currency="USD", body_weight_kg=130))
+        # 도태(SOLD 아님) → 수익 제외
+        sow3 = await _sow(db, test_farm)
+        db.add(Removal(farm_id=test_farm.id, sow_id=sow3.id, removal_date=date(2026, 1, 26),
+                       removal_type="CULL", sale_price=None))
+        await db.flush()
+
+        out = await report_service.get_cost_summary(
+            db, test_farm, date(2026, 1, 1), date(2026, 3, 1), "monthly")
+        usd = next(c for c in out["by_currency"] if c["currency"] == "USD")
+        assert usd["feed_cost"] == 50.0          # 100×0.5 (200kg행은 원가 없음 → 제외)
+        assert usd["feed_qty_kg"] == 300.0       # 물량엔 미입력분 포함
+        assert usd["sale_revenue"] == 700.0
+        assert usd["sale_head"] == 2             # CULL 제외
+        assert usd["net"] == 650.0               # 700 - 50
+        assert out["feed_records_total"] == 2
+        assert out["feed_records_with_cost"] == 1
+        assert out["feed_cost_coverage"] == 50.0
+        assert any(r["period"] == "2026-01" for r in out["rows"])

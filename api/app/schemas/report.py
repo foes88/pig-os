@@ -178,3 +178,39 @@ class SowHistoryCycle(BaseModel):
     weaning_date: str | None = None
     lactation_days: int | None = None
     status: str
+
+
+class CostByCurrency(BaseModel):
+    """통화별 원가·수익 집계 (feed_records.currency / removals.sale_currency).
+    통화가 섞이면 합산이 무의미하므로 통화 단위로 분리해 보고한다."""
+    currency: str
+    feed_cost: float | None = None      # Σ(quantity_kg × unit_cost), unit_cost 있는 행만
+    feed_qty_kg: float = 0.0            # Σ quantity_kg (원가 미입력분 포함)
+    sale_revenue: float | None = None   # Σ sale_price, removal_type='SOLD'
+    sale_head: int = 0
+    sale_weight_kg: float | None = None
+    net: float | None = None            # sale_revenue - feed_cost (동일 통화 내)
+
+
+class CostPeriodRow(BaseModel):
+    """기간(월/분기/연) × 통화별 원가·수익 1행."""
+    period: str
+    currency: str
+    feed_cost: float | None = None
+    feed_qty_kg: float = 0.0
+    sale_revenue: float | None = None
+    sale_head: int = 0
+    net: float | None = None
+
+
+class CostSummary(BaseModel):
+    """#4 원가/수익 리포트. 입력된 사료비·판매가 기반 집계.
+    데이터 완전성(feed_cost_coverage)을 함께 반환해 '입력 안 된 원가'를 구분한다."""
+    start_date: str
+    end_date: str
+    period: str
+    by_currency: list[CostByCurrency] = []
+    rows: list[CostPeriodRow] = []
+    feed_cost_coverage: float | None = None  # unit_cost 입력된 사료행 비율(%)
+    feed_records_total: int = 0
+    feed_records_with_cost: int = 0
