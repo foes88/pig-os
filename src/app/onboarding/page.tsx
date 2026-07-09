@@ -17,15 +17,17 @@ function isReservedUsername(u: string): boolean {
 }
 import type { OnboardingRequest } from "@/types/api.types";
 
+// tz: 국가 대표 타임존. 국가 선택 시 farm.timezone 자동 설정 → _farm_today 날짜 경계 정확.
 const COUNTRIES = [
-  { value: "KR", label: "South Korea" },
-  { value: "US", label: "United States" },
-  { value: "CN", label: "China" },
-  { value: "VN", label: "Vietnam" },
-  { value: "TH", label: "Thailand" },
-  { value: "PH", label: "Philippines" },
-  { value: "BR", label: "Brazil" },
-  { value: "MX", label: "Mexico" },
+  { value: "KR", label: "South Korea",  tz: "Asia/Seoul" },
+  { value: "US", label: "United States", tz: "America/Chicago" },
+  { value: "CN", label: "China",         tz: "Asia/Shanghai" },
+  { value: "VN", label: "Vietnam",       tz: "Asia/Ho_Chi_Minh" },
+  { value: "TH", label: "Thailand",      tz: "Asia/Bangkok" },
+  { value: "PH", label: "Philippines",   tz: "Asia/Manila" },
+  { value: "BR", label: "Brazil",        tz: "America/Sao_Paulo" },
+  { value: "MX", label: "Mexico",        tz: "America/Mexico_City" },
+  { value: "CL", label: "Chile",         tz: "America/Santiago" },
 ];
 
 // 온보딩은 pre-auth — 한국어는 관리자 전용이라 노출 안 함(공개 7개어 + 미지정 en 폴백).
@@ -181,7 +183,16 @@ export default function OnboardingPage() {
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label={t.country}>
-                  <select value={form.country} onChange={(e) => set("country", e.target.value)} className="fin">
+                  <select
+                    value={form.country}
+                    onChange={(e) => {
+                      const cc = e.target.value;
+                      const tz = COUNTRIES.find((c) => c.value === cc)?.tz;
+                      // 국가 변경 시 대표 타임존 동반 설정(날짜 경계 정확). 사용자가 뒤에 바꿀 수 있음.
+                      setForm((f) => ({ ...f, country: cc, ...(tz ? { timezone: tz } : {}) }));
+                    }}
+                    className="fin"
+                  >
                     {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </Field>
