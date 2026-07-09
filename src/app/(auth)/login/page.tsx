@@ -12,14 +12,14 @@ import { useAuthStore } from "@/store/auth.store";
 import { identifyUser } from "@/lib/analytics";
 
 // ── i18n ──────────────────────────────────────────────────────────────────────
-const LANGS = ["en", "ko", "zh", "es", "vi", "th", "pt"] as const;
+const LANGS = ["en", "ko", "zh", "es", "vi", "th", "pt", "ru"] as const;
 type Lang = (typeof LANGS)[number];
 
 // 한국어는 로그인 전 화면에 노출하지 않음(해외 출시). admin 로그인 후 Topbar에서만 선택 가능.
 const SELECTABLE_LANGS: Lang[] = LANGS.filter((l) => l !== "ko");
 
 const LANG_LABELS: Record<Lang, string> = {
-  en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt", th: "ไทย", pt: "Português",
+  en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt", th: "ไทย", pt: "Português", ru: "Русский",
 };
 
 const T: Record<Lang, {
@@ -121,6 +121,19 @@ const T: Record<Lang, {
     errInvalid: "Usuário ou senha incorretos",
     errFormat: "Verifique o formato dos dados",
     errServer: "Erro no servidor. Tente novamente.",
+  },
+  ru: {
+    heading: "С возвращением",
+    subheading: "Войдите в свой аккаунт PigOS",
+    username: "Логин (ID)", password: "Пароль",
+    submit: "Войти", submitting: "Вход…",
+    forgotPassword: "Забыли пароль?",
+    noAccount: "Впервые в PigOS?", register: "Создать бесплатный аккаунт",
+    rememberId: "Запомнить логин",
+    errUsername: "Введите логин", errPassword: "Введите пароль",
+    errInvalid: "Неверный логин или пароль",
+    errFormat: "Проверьте формат введённых данных",
+    errServer: "Ошибка сервера. Попробуйте снова.",
   },
 };
 

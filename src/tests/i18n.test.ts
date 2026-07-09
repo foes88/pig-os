@@ -3,9 +3,9 @@ import { resolve } from "path";
 
 import { describe, it, expect } from "vitest";
 
-// 7개 로케일 키 정합성 가드. en을 기준으로 다른 로케일에 누락/잉여 키가 있으면
+// 8개 로케일 키 정합성 가드. en을 기준으로 다른 로케일에 누락/잉여 키가 있으면
 // 런타임에 생키 노출(예: sowStatus.SOLD) 또는 IntlError가 난다 — 그 클래스를 통째로 차단.
-const LOCALES = ["en", "ko", "zh", "es", "vi", "th", "pt"];
+const LOCALES = ["en", "ko", "zh", "es", "vi", "th", "pt", "ru"];
 
 function load(locale: string): Record<string, unknown> {
   return JSON.parse(readFileSync(resolve("messages", `${locale}.json`), "utf8"));

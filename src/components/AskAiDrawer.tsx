@@ -44,9 +44,9 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
   }, [messages, open]);
 
   const mutation = useMutation({
-    // 챗 렌더러는 en/ko/zh/es/vi 지원 → th/pt는 en으로 매핑(Addon, 추후 확장)
+    // 챗 렌더러는 en/ko/zh/es/vi 지원 → th/pt/ru는 en으로 매핑(Addon, 추후 확장)
     mutationFn: (q: string) =>
-      chatApi.query(farmId!, { question: q, locale: lang === "th" || lang === "pt" ? "en" : lang }),
+      chatApi.query(farmId!, { question: q, locale: lang === "th" || lang === "pt" || lang === "ru" ? "en" : lang }),
     onSuccess: (data) => setMessages((p) => [...p, { role: "ai", response: data }]),
     onError: () => setMessages((p) => [...p, {
       role: "ai",

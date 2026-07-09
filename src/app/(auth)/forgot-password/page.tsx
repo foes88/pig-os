@@ -9,7 +9,7 @@ import { authApi } from "@/lib/api/endpoints/auth";
 // (auth) 공개 레이아웃 사용. middleware의 PUBLIC_PATHS에 /forgot-password 이미 포함.
 // 이메일 실발송 채널은 아직 미설정(백엔드 _deliver_reset_token = 로그/운영자 중개) → 문구도 그에 맞춤.
 
-const LANGS = ["en", "ko", "zh", "es", "vi", "th", "pt"] as const;
+const LANGS = ["en", "ko", "zh", "es", "vi", "th", "pt", "ru"] as const;
 type Lang = (typeof LANGS)[number];
 const SELECTABLE: Lang[] = LANGS.filter((l) => l !== "ko");
 
@@ -74,6 +74,14 @@ const T: Record<Lang, {
     resetOk: "Senha alterada. Você já pode entrar.", pwMismatch: "As senhas não coincidem.",
     pwShort: "A senha deve ter ao menos 8 caracteres.", badToken: "O link é inválido ou expirou.",
     err: "Algo deu errado. Tente novamente.", back: "Voltar ao login" },
+  ru: { reqTitle: "Сброс пароля", reqSub: "Введите email аккаунта. Если он существует, будет выдана ссылка для сброса.",
+    email: "Электронная почта", send: "Отправить ссылку", sending: "Отправка…",
+    sent: "Запрос принят. Если аккаунт существует, администратор отправит ссылку для сброса или временный пароль.",
+    cfmTitle: "Задать новый пароль", cfmSub: "Введите новый пароль для аккаунта.",
+    newPw: "Новый пароль", confirmPw: "Подтвердите пароль", reset: "Сбросить пароль", resetting: "Сброс…",
+    resetOk: "Пароль изменён. Теперь вы можете войти.", pwMismatch: "Пароли не совпадают.",
+    pwShort: "Пароль должен содержать не менее 8 символов.", badToken: "Ссылка недействительна или устарела.",
+    err: "Что-то пошло не так. Попробуйте снова.", back: "Вернуться ко входу" },
 };
 
 const INPUT = `w-full h-11 px-3.5 rounded-lg text-sm text-slate-900 placeholder:text-slate-400

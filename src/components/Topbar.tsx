@@ -15,10 +15,11 @@ const LABELS: Record<Locale, { search: string; qi: string }> = {
   vi: { search: "Tìm số nái, lô, khu…",           qi: "Nhập nhanh"     },
   th: { search: "ค้นหารหัสแม่สุกร, รุ่น, โรงเรือน…", qi: "บันทึกด่วน"     },
   pt: { search: "Buscar ID da matriz, lote, sala…", qi: "Registro rápido" },
+  ru: { search: "Поиск свиноматки, партии, зоны…", qi: "Быстрый ввод" },
 };
 
 const LANG_LABELS: Record<Locale, string> = {
-  en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI", th: "ไทย", pt: "PT",
+  en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI", th: "ไทย", pt: "PT", ru: "RU",
 };
 
 interface TopbarProps {
