@@ -292,6 +292,14 @@ async def import_farm(db, farm_no: int, csv_dir: Path, limit: int | None, reset:
         if n % 100 == 0:
             print(f"  ...{n} sows replayed", flush=True)
 
+    # replay 완료 후: 퇴출모돈(exit_date 있음) soft-delete → PSY 재고 분모 정확화.
+    # (replay 중엔 _get_active_sow가 deleted_at IS NULL 요구 → 반드시 replay 뒤에 실행)
+    await db.execute(text(
+        "UPDATE sows SET deleted_at = exit_date "
+        "WHERE farm_id = :f AND exit_date IS NOT NULL AND deleted_at IS NULL"),
+        {"f": str(farm.id)})
+    await db.commit()
+
     print(f"  모돈 {n}두 replay 완료.", flush=True)
     for k in ("mating", "farrowing", "weaning", "repro", "deathrecon"):
         print(f"    {k:10s} ok={stats[k+'_ok']:6d}  err={stats[k+'_err']:5d}", flush=True)
