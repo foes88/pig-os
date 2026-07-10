@@ -46,7 +46,23 @@ PigOS 리포(`c:/dev/PigOS`)에서 피그플랜(Oracle)→PigOS(PostgreSQL) 이�
 ### 6. 실행 재현 (선택)
 로컬 Docker `pigos` DB가 있으면: `pytest tests/pilot/` 실행 결과와 UAT 매트릭스가 문서 주장과 일치하는지 재현.
 
+### 7. 이번 실행에서 나온 결과·수정 — 반증 대상 (★ 집중)
+아래는 구현자가 "통과"라고 주장하는 실제 결과다. **각 주장을 반증**하려 시도해라.
+
+**주장된 결과** (4농장 전량, ~17,900모돈):
+- PSY 20~28(현실값) · 이유두수 diff 0~4.7% · NPD ±0.2일 · FR ±2pp · 무결성 위반 0 · UAT 전항목 PASS.
+
+**반드시 반증 시도할 수정 5건**:
+1. **PSY soft-delete 교정** (`import_pigplan.py` replay 후 `UPDATE sows SET deleted_at=exit_date`):
+   - `out_dt`가 **없는** 퇴출모돈(약 8%: 848은 7435중 600만 exit_date 없음→활성)은 여전히 영구활성으로 분모 부풀림. PSY가 아직도 **소폭 과소**인가? 농장별 편향 방향 확인.
+   - 재고 쿼리 `deleted_at IS NULL OR exit_date>=m` 에서 deleted_at=exit_date 세팅이 **경계월**(exit 당월) 이중계산/누락 없나?
+2. **합성 DEATH 주입** (`born_alive-weaned`): 양자전출(FOSTER_OUT)분이 폐사로 오분류 → **pre-wean 폐사율 과대**. 이게 PSY엔 무관하나 mortality KPI 신뢰도엔? 한계 명시됐나?
+3. **import_mode weaning 강제종료**: `remaining_after=0`로 사이클 항상 종료 → 부분이유·재이유가 사라져 **산차/WEI(NPD) 편향**? NPD가 ±0.2일로 맞는 게 우연인지 검증.
+4. **스코어카드 재보정** (`verify_pilot.py` 교배 gap 게이트 제외): 분만 gap ~8%(격리)는 여전히 strict(2%)로 남겨 정직하게 FAIL 노출. **교배 제외가 실제 데이터 손실을 은폐**하지 않나? 분만 8% 격리의 원인(어떤 사이클이 빠지는지)과 PSY 편향 방향.
+5. **uuid5 계정 UUID** (`pilot_common.user_uuid`): 네임스페이스 충돌·운영 계정과 겹칠 가능성.
+
 ### 산출물
 - 심각도별 발견 목록(파일:라인 + 근거 + 재현/반례).
 - **CRITICAL 0건**이면 "이관 파일럿 검증 통과", 아니면 수정 필요 항목 우선순위.
-- 특히 "수치가 맞아 보이지만 방법론 결함으로 우연히 맞은" 케이스를 집요하게 찾아라.
+- 특히 "수치가 맞아 보이지만 방법론 결함으로 우연히 맞은" 케이스를 집요하게 찾아라
+  (예: NPD ±0.2일이 import_mode 사이클 종료 때문에 우연히 수렴한 것 아닌지).
