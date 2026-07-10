@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import secrets
@@ -86,11 +87,13 @@ async def authenticate(db: AsyncSession, username: str, password: str) -> User:
     user = await db.scalar(
         select(User).where(User.username == normalize_username(username), User.active.is_(True))
     )
+    # bcrypt는 CPU 블로킹 → asyncio.to_thread로 이벤트루프 밖에서 실행.
+    # (동기 호출 시 동시 로그인이 이벤트루프에서 직렬화돼 부하 시 응답 11~24s로 폭증)
     if not user:
         # 미존재 계정도 1회 bcrypt 검증을 수행해 존재 계정과 응답시간을 맞춤(결과 무시).
-        verify_password(password, _DUMMY_PW_HASH)
+        await asyncio.to_thread(verify_password, password, _DUMMY_PW_HASH)
         raise UnauthorizedError("Invalid credentials")
-    if not verify_password(password, user.password_hash):
+    if not await asyncio.to_thread(verify_password, password, user.password_hash):
         raise UnauthorizedError("Invalid credentials")
 
     user.last_login_at = datetime.now(UTC)
