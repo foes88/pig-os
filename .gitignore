@@ -33,3 +33,7 @@ credentials/
 
 # e2e UAT 산출물(스크린샷 등) — 테스트 스크래치, 추적 제외
 src/e2e-live/_uat_tmp/
+
+# 파일럿 대용량 추출 CSV·리포트 (커밋 금지)
+tests/db/extract/
+tests/db/pilot_report_*.md
