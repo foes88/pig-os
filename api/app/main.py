@@ -24,6 +24,7 @@ from app.routers.base import (
     auth,
     boars,
     chat,
+    config,
     devices,
     events,
     farms,
@@ -89,6 +90,7 @@ app.include_router(pilot_signups.router, prefix=V1)
 app.include_router(auth.router,        prefix=V1)
 app.include_router(orgs.router,        prefix=V1)
 app.include_router(onboarding.router,  prefix=V1)
+app.include_router(config.router,      prefix=V1)
 app.include_router(farms.router,       prefix=V1)
 app.include_router(sows.router,        prefix=V1)
 app.include_router(events.router,      prefix=V1)

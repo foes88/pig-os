@@ -90,6 +90,19 @@ export interface OnboardingRequest {
   sow_count?: number;
   timezone?: string;
   language?: string;  // 온보딩 로케일 보존(M3)
+  currency?: string;      // 국가서 프리필(서버가 미전송 시 파생)
+  unit_system?: "METRIC" | "IMPERIAL";
+}
+
+// 공개 국가 설정 (GET /api/v1/config/countries) — 단일 소스 백엔드 country_config.
+export interface CountryConfig {
+  code: string;
+  name: string;
+  timezone: string;
+  currency: string;
+  unit_system: "METRIC" | "IMPERIAL";
+  dial: string;
+  language: string;
 }
 
 export interface OnboardingResponse {

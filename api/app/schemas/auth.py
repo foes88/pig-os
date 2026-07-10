@@ -75,6 +75,9 @@ class OnboardingCompleteRequest(BaseModel):
     sow_count: int | None = Field(default=None, ge=1)
     timezone: str = Field(default="UTC")
     language: str = Field(default="en")  # 온보딩 로케일 보존(M3: 하드코딩 "en" 제거)
+    # 국가별 파생값 — 클라가 안 보내면 서버가 country_config에서 채움(단일 소스).
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    unit_system: str | None = Field(default=None, pattern="^(METRIC|IMPERIAL)$")
 
     @field_validator("username")
     @classmethod

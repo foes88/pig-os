@@ -15,19 +15,21 @@ function isReservedUsername(u: string): boolean {
   const norm = u.trim().toLowerCase().replace(/0/g, "o").replace(/1/g, "i").replace(/3/g, "e").replace(/4/g, "a").replace(/5/g, "s").replace(/@/g, "a").replace(/\$/g, "s");
   return RESERVED_UN.test(norm) || norm.startsWith("admin") || /administrator|pigos|wiselake|superadmin/.test(norm);
 }
-import type { OnboardingRequest } from "@/types/api.types";
+import type { CountryConfig, OnboardingRequest } from "@/types/api.types";
 
-// tz: 국가 대표 타임존. 국가 선택 시 farm.timezone 자동 설정 → _farm_today 날짜 경계 정확.
-const COUNTRIES = [
-  { value: "KR", label: "South Korea",  tz: "Asia/Seoul" },
-  { value: "US", label: "United States", tz: "America/Chicago" },
-  { value: "CN", label: "China",         tz: "Asia/Shanghai" },
-  { value: "VN", label: "Vietnam",       tz: "Asia/Ho_Chi_Minh" },
-  { value: "TH", label: "Thailand",      tz: "Asia/Bangkok" },
-  { value: "PH", label: "Philippines",   tz: "Asia/Manila" },
-  { value: "BR", label: "Brazil",        tz: "America/Sao_Paulo" },
-  { value: "MX", label: "Mexico",        tz: "America/Mexico_City" },
-  { value: "CL", label: "Chile",         tz: "America/Santiago" },
+// 국가 설정 폴백 — 백엔드 app/core/countries.py 미러(오프라인/최초 렌더용).
+// 실사용 목록은 GET /config/countries 로 fetch → 국가 추가 시 클라 재배포 없이 반영.
+const COUNTRIES_FALLBACK: CountryConfig[] = [
+  { code: "KR", name: "South Korea",   timezone: "Asia/Seoul",          currency: "KRW", unit_system: "METRIC",   dial: "+82", language: "ko" },
+  { code: "US", name: "United States", timezone: "America/Chicago",     currency: "USD", unit_system: "IMPERIAL", dial: "+1",  language: "en" },
+  { code: "CN", name: "China",         timezone: "Asia/Shanghai",       currency: "CNY", unit_system: "METRIC",   dial: "+86", language: "zh" },
+  { code: "VN", name: "Vietnam",       timezone: "Asia/Ho_Chi_Minh",    currency: "VND", unit_system: "METRIC",   dial: "+84", language: "vi" },
+  { code: "TH", name: "Thailand",      timezone: "Asia/Bangkok",        currency: "THB", unit_system: "METRIC",   dial: "+66", language: "th" },
+  { code: "PH", name: "Philippines",   timezone: "Asia/Manila",         currency: "PHP", unit_system: "METRIC",   dial: "+63", language: "en" },
+  { code: "BR", name: "Brazil",        timezone: "America/Sao_Paulo",   currency: "BRL", unit_system: "METRIC",   dial: "+55", language: "pt" },
+  { code: "MX", name: "Mexico",        timezone: "America/Mexico_City", currency: "MXN", unit_system: "METRIC",   dial: "+52", language: "es" },
+  { code: "CL", name: "Chile",         timezone: "America/Santiago",    currency: "CLP", unit_system: "METRIC",   dial: "+56", language: "es" },
+  { code: "RU", name: "Russia",        timezone: "Europe/Moscow",       currency: "RUB", unit_system: "METRIC",   dial: "+7",  language: "ru" },
 ];
 
 // 온보딩은 pre-auth — 한국어는 관리자 전용이라 노출 안 함(공개 7개어 + 미지정 en 폴백).
@@ -59,12 +61,32 @@ export default function OnboardingPage() {
     farm_type: "FARROW_TO_FINISH",
     sow_count: 100,
     timezone: "Asia/Seoul",
+    currency: "KRW",
+    unit_system: "METRIC",
   });
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
+
+  // 국가 목록 — 공개 엔드포인트 fetch(단일 소스), 실패 시 폴백 상수.
+  const [countries, setCountries] = useState<CountryConfig[]>(COUNTRIES_FALLBACK);
+  useEffect(() => {
+    authApi.countries().then((rows) => {
+      if (Array.isArray(rows) && rows.length) setCountries(rows);
+    }).catch(() => { /* 폴백 유지 */ });
+  }, []);
+
+  // 국가 선택 → 타임존·통화·단위 자동 프리필(사용자가 이후 개별 변경 가능).
+  const selectCountry = (code: string) => {
+    const c = countries.find((x) => x.code === code);
+    setForm((f) => ({
+      ...f,
+      country: code,
+      ...(c ? { timezone: c.timezone, currency: c.currency, unit_system: c.unit_system } : {}),
+    }));
+  };
 
   // pre-auth 로케일: NEXT_LOCALE 쿠키(한국어는 관리자전용 → en으로). 6개 공개어.
   const [lang, setLang] = useState<OLang>("en");
@@ -183,17 +205,8 @@ export default function OnboardingPage() {
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label={t.country}>
-                  <select
-                    value={form.country}
-                    onChange={(e) => {
-                      const cc = e.target.value;
-                      const tz = COUNTRIES.find((c) => c.value === cc)?.tz;
-                      // 국가 변경 시 대표 타임존 동반 설정(날짜 경계 정확). 사용자가 뒤에 바꿀 수 있음.
-                      setForm((f) => ({ ...f, country: cc, ...(tz ? { timezone: tz } : {}) }));
-                    }}
-                    className="fin"
-                  >
-                    {COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                  <select value={form.country} onChange={(e) => selectCountry(e.target.value)} className="fin">
+                    {countries.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
                   </select>
                 </Field>
                 <Field label={t.ftype}>
@@ -252,7 +265,7 @@ export default function OnboardingPage() {
                 {[
                   [t.rOrg, form.org_name],
                   [t.rFarm, form.farm_name],
-                  [t.rCountry, COUNTRIES.find((c) => c.value === form.country)?.label ?? form.country],
+                  [t.rCountry, countries.find((c) => c.code === form.country)?.name ?? form.country],
                   [t.rFtype, FARM_TYPES.find((ft) => ft.value === form.farm_type)?.label ?? form.farm_type ?? ""],
                   [t.rSows, `${form.sow_count ?? "-"} ${t.head}`],
                   [t.rName, form.name],

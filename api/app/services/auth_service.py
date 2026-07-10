@@ -8,6 +8,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.countries import get_country
 from app.core.exceptions import ConflictError, UnauthorizedError, ValidationError
 from app.core.permissions import effective_system_role, get_farm_access
 from app.core.security import (
@@ -137,7 +138,13 @@ async def complete_onboarding(
     if await db.scalar(select(User).where(User.email == req.email)):
         raise ConflictError("Email already registered")
 
-    org = Organization(name=req.org_name, country=req.country, timezone=req.timezone)
+    # 국가 → 통화/단위/타임존 파생(단일 소스 country_config). 클라가 명시 전송 시 그 값 우선.
+    cc = get_country(req.country)
+    eff_timezone = req.timezone if req.timezone and req.timezone != "UTC" else cc["timezone"]
+    eff_currency = req.currency or cc["currency"]
+    eff_unit = req.unit_system or cc["unit_system"]
+
+    org = Organization(name=req.org_name, country=req.country, timezone=eff_timezone)
     db.add(org)
     await db.flush()
 
@@ -158,7 +165,9 @@ async def complete_onboarding(
         farm_code=_generate_farm_code(req.country, org.id),
         name=req.farm_name,
         country=req.country,
-        timezone=req.timezone,
+        timezone=eff_timezone,
+        currency=eff_currency,
+        unit_system=eff_unit,
     )
     db.add(farm)
     await db.flush()

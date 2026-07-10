@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import type {
+  CountryConfig,
   LoginRequest,
   LoginResponse,
   MeResponse,
@@ -25,6 +26,10 @@ export const authApi = {
 
   onboard: (body: OnboardingRequest) =>
     apiClient.post<OnboardingResponse>("/api/v1/onboarding/complete", body).then((r) => r.data),
+
+  // 공개 국가 설정 — 온보딩 드롭다운 + 국가별 프리필(통화/단위/타임존). 단일 소스 백엔드.
+  countries: () =>
+    apiClient.get<CountryConfig[]>("/api/v1/config/countries").then((r) => r.data),
 
   // 비밀번호 재설정 — 요청(이메일)·확정(토큰+새 비번). 백엔드는 열거방지로 항상 204.
   requestPasswordReset: (email: string) =>
