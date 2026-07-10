@@ -3,10 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { ShieldCheck, ArrowLeft } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { ShieldCheck, ArrowLeft, Languages } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { ADMIN_NAV } from "@/lib/admin/nav";
+import { locales } from "@/i18n/config";
+
+// 운영자 콘솔 언어 선택 — 관리자는 전 로케일(한국어 포함) 사용 가능.
+const ADMIN_LANG_LABEL: Record<string, string> = {
+  en: "English", ko: "한국어", zh: "中文", es: "Español",
+  vi: "Tiếng Việt", th: "ไทย", pt: "Português", ru: "Русский",
+};
 
 // 운영자 어드민 셸 — SUPER_ADMIN 전용. 고객 앱 셸((app))과 분리된 자체 chrome.
 // 게이트: ①클라이언트(이 레이아웃) ②백엔드 require_super_admin(403). 도메인은 admin.pigos.io로 분기 가능.
@@ -14,7 +21,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("admin");
+  const locale = useLocale();
   const user = useAuthStore((s) => s.user);
+
+  // 언어 변경: NEXT_LOCALE 쿠키 set + refresh (고객 앱 Topbar와 동일 소스).
+  const changeLang = (l: string) => {
+    document.cookie = `NEXT_LOCALE=${l}; path=/; max-age=31536000; SameSite=Lax`;
+    router.refresh();
+  };
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const [mounted, setMounted] = useState(false);
 
@@ -80,8 +94,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             );
           })}
         </nav>
-        <div className="p-3 border-t border-white/10">
-          <div className="text-[11px] text-white/60 mb-2 truncate">{user.name} · {user.role}</div>
+        <div className="p-3 border-t border-white/10 space-y-2.5">
+          <div className="text-[11px] text-white/60 truncate">{user.name} · {user.role}</div>
+          {/* 언어 선택 (관리자 = 한국어 포함 전 로케일) */}
+          <label className="flex items-center gap-1.5 text-xs text-white/70">
+            <Languages size={13} className="shrink-0" />
+            <select
+              value={locale}
+              onChange={(e) => changeLang(e.target.value)}
+              aria-label="Language"
+              className="flex-1 bg-white/10 text-white text-xs rounded px-1.5 py-1 outline-none border border-white/10 hover:bg-white/15 cursor-pointer"
+            >
+              {locales.map((l) => (
+                <option key={l} value={l} className="bg-console text-white">
+                  {ADMIN_LANG_LABEL[l] ?? l}
+                </option>
+              ))}
+            </select>
+          </label>
           <Link href="/" className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white">
             <ArrowLeft size={13} /> {t("backToApp")}
           </Link>
