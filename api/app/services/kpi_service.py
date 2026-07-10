@@ -78,10 +78,12 @@ async def calculate_psy(db: AsyncSession, farm_id: UUID, year: int) -> PsyDetail
                 GROUP BY mo.m
             ),
             num AS (
+                -- sargable: EXTRACT(YEAR) 대신 날짜범위 → idx_weanings_farm_date 사용(대형농장 seq scan 방지)
                 SELECT COALESCE(SUM(w.weaned_count), 0) AS total_weaned
                 FROM weanings w
                 WHERE w.farm_id = :farm_id AND w.deleted_at IS NULL
-                  AND EXTRACT(YEAR FROM w.weaning_date) = :year
+                  AND w.weaning_date >= make_date(:year, 1, 1)
+                  AND w.weaning_date <  make_date(:year + 1, 1, 1)
             )
             SELECT (SELECT AVG(cnt) FROM inv) AS avg_sow_count,
                    (SELECT total_weaned FROM num) AS total_weaned

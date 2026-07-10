@@ -67,6 +67,8 @@ class Sow(Base):
         Index("idx_sows_farm_status", "farm_id", "status"),
         Index("idx_sows_parity", "farm_id", "parity"),
         Index("idx_sow_exit", "exit_date", postgresql_where="exit_date IS NOT NULL"),
+        # PSY 재고 분모(월별 활성모돈)가 farm_id+entry_date로 조인 → 대형농장 seq scan 방지.
+        Index("idx_sows_farm_entry", "farm_id", "entry_date"),
         UniqueConstraint("farm_id", "ear_tag"),
     )
 

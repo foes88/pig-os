@@ -93,6 +93,8 @@ class Weaning(Base):
     __tablename__ = "weanings"
     __table_args__ = (
         Index("idx_weanings_farm_sow", "farm_id", "sow_id"),
+        # PSY/NPD/리포트/대시보드가 farm_id+weaning_date로 집계 → 대형농장(수만건) seq scan 방지.
+        Index("idx_weanings_farm_date", "farm_id", "weaning_date", postgresql_where="deleted_at IS NULL"),
         # NOTE: 분만당 이유 1건 unique 인덱스는 두지 않는다. 부분이유(partial weaning)는
         # 한 분만에 대해 이유 이벤트가 여러 건 생기는 것을 허용하므로(일부 먼저, 나머지 나중)
         # farrowing_id 단일 unique 는 기능과 모순된다. 과다이유(sum>litter) 방어는
@@ -126,6 +128,8 @@ class ReproductiveEvent(Base):
     __table_args__ = (
         Index("idx_re_farm_sow", "farm_id", "sow_id"),
         Index("idx_re_mating", "mating_id", postgresql_where="mating_id IS NOT NULL"),
+        # 알림(RTS/HEAT)·NPD가 farm_id+event_date로 집계 → 대형농장 seq scan 방지.
+        Index("idx_re_farm_date", "farm_id", "event_date"),
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
