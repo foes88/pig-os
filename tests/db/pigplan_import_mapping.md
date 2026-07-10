@@ -77,7 +77,25 @@
 | 사고일 | event_date | ⟵덤프 |
 | 사고구분(재발정/유산/공태) | event_type (RTS/ABORTION/…) | 코드 ⟵덤프 |
 
-## 3. 코드값 매핑 (STATUS_CD 등) — ⟵덤프 D절로 확정
+## 3. 코드값 매핑 — ✅ 덤프/CSV로 확정 (2026-07-10)
+
+**모돈상태 STATUS_CD (PCODE 01)**: 010001 후보돈→GILT · 010002 임신돈→PREGNANT · 010003 포유돈→LACTATING · 010004 대리모돈→LACTATING · 010005 이유모돈→OPEN · 010006 재발돈→ACCIDENT · 010007 유산돈→ACCIDENT · 010008 도폐사돈→CULLED/DEAD
+
+**사고 sago_gubun_cd (TB_SAGO, PCODE 05)** → ReproductiveEvent.event_type:
+050001 (구)재발불임→RETURN_TO_ESTRUS · 050002 유산→ABORTION · 050003 도태→CULLED · 050004 폐사→DEAD · 050005 임돈전출→TRANSFER_OUT · 050006 임돈판매→SOLD · 050007 공태→EMPTY · 050008 재발→RETURN_TO_ESTRUS · 050009 불임→INFERTILE
+
+**교배 method_1 (TB_GYOBAE)**: `A`→AI · `N`→NATURAL. boar=ungdon_pig_no_1
+
+**양자/폐사 gubun_cd (TB_MODON_JADON_TRANS, PCODE 16)** → PigletEvent:
+160001 포유자돈폐사→DEATH(reason=OTHER) · 160003 양자전입→FOSTER_IN(target=io_pig_no) · 160004 양자전출→FOSTER_OUT(target=io_pig_no) · 160002 부분이유→(스킵/부분이유 플래그)
+
+**출하 out_gubun_cd (TB_MODON, PCODE 08)**: 080001 도태→CULL · 080002 폐사→DEAD · 080003 전출→TRANSFER · 080004 판매→SOLD
+
+**분만 TB_BUNMAN**: silsan→born_alive · sasan→stillborn · mila→mummified · avg_birth_weight = saengsi_kg(총중량)/silsan · silsan_am/su(암/수) 대부분 0→스킵
+**이유 TB_EU**: dusu→weaned_count · ilryung→(PigOS가 분만일로 계산) · avg_weaning_weight = total_kg/dusu
+**국가**: TA_FARM.country_code=`KOR`(alpha-3) → PigOS `KR`. 날짜: wk_dt=`YYYYMMDD`, TB_MODON.birth_dt=`YYYY-MM-DD`
+
+### (참고) 원래 초안 매핑 표 — ⟵덤프 D절로 확정
 
 | Oracle STATUS_CD(PCODE 01) 추정 | PigOS status |
 |---|---|

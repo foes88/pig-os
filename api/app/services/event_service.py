@@ -406,7 +406,11 @@ async def record_weaning(
     farm_id: UUID,
     user_id: UUID,
     req: WeaningCreate,
+    import_mode: bool = False,
 ) -> Weaning:
+    # import_mode: 과거 대량 이관 전용. 라이브 입력용 검증(포유기간 범위·두수 항등식·
+    # 이유체중 범위)을 우회하고 사이클을 강제 종료(모돈 OPEN 복귀). 피그플랜 이유두수를
+    # 권위값으로 신뢰(양자·미기록 폐사로 born_alive와 불일치 정상). 기본 False → 운영 무영향.
     sow = await _get_active_sow(db, farm_id, req.sow_id)
     await _ensure_period_unlocked(db, farm_id, req.weaning_date)
 
@@ -440,51 +444,57 @@ async def record_weaning(
         )
     ) or 0
     remaining = effective_litter - int(prior_weaned)
-
-    # 이미 전부 이유됨 → 더 이상 이유 불가 (기존 dedup 대체)
-    if remaining <= 0:
-        raise ConflictError(f"Litter already fully weaned for farrowing {farrowing.id}")
-
-    # 상태전이 검증: 이유는 LACTATING(포유)에서만 (잔여 검사 뒤 = 더 구체적 에러 우선)
-    validate_transition(event="weaning", current_status=sow.status)
-
-    # 이유일 > 분만일 순서 검증 (app.validators)
-    validate_weaning_after_farrowing(
-        weaning_date=req.weaning_date, farrowing_date=farrowing.farrowing_date
-    )
-
-    # 포유기간 검증 (10~60일)
     nursing_days = (req.weaning_date - farrowing.farrowing_date).days
-    if not (NURSING_MIN_DAYS <= nursing_days <= NURSING_MAX_DAYS):
-        raise ValidationError(
-            f"Nursing period {nursing_days} days is outside {NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range"
+
+    if import_mode:
+        # 이관: 라이브 검증 우회. 순서(이유>분만)만 유지, 나머지는 피그플랜 권위값 신뢰.
+        validate_weaning_after_farrowing(
+            weaning_date=req.weaning_date, farrowing_date=farrowing.farrowing_date)
+        remaining_after = 0  # 항상 전량 이유 처리 → 사이클 강제 종료
+    else:
+        # 이미 전부 이유됨 → 더 이상 이유 불가 (기존 dedup 대체)
+        if remaining <= 0:
+            raise ConflictError(f"Litter already fully weaned for farrowing {farrowing.id}")
+
+        # 상태전이 검증: 이유는 LACTATING(포유)에서만 (잔여 검사 뒤 = 더 구체적 에러 우선)
+        validate_transition(event="weaning", current_status=sow.status)
+
+        # 이유일 > 분만일 순서 검증 (app.validators)
+        validate_weaning_after_farrowing(
+            weaning_date=req.weaning_date, farrowing_date=farrowing.farrowing_date
         )
 
-    # 컴플라이언스: 국가별 최소 이유일령 검증
-    await _check_wean_compliance(db, farm_id, nursing_days)
+        # 포유기간 검증 (10~60일)
+        if not (NURSING_MIN_DAYS <= nursing_days <= NURSING_MAX_DAYS):
+            raise ValidationError(
+                f"Nursing period {nursing_days} days is outside {NURSING_MIN_DAYS}~{NURSING_MAX_DAYS} range"
+            )
 
-    # P0-BE-2: 이유체중 유효 범위 2~12kg
-    if req.avg_weaning_weight_kg is not None and not (2.0 <= req.avg_weaning_weight_kg <= 12.0):
-        raise ValidationError(
-            f"Average weaning weight {req.avg_weaning_weight_kg}kg is outside the valid range (2~12kg)"
-        )
+        # 컴플라이언스: 국가별 최소 이유일령 검증
+        await _check_wean_compliance(db, farm_id, nursing_days)
 
-    # 두수 상한 + 잔여 초과 검증
-    if req.weaned_count > MAX_WEANED_COUNT:
-        raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
-    if req.weaned_count > remaining:
-        raise ValidationError(
-            f"weaned_count ({req.weaned_count}) > remaining nursing "
-            f"(effective litter {effective_litter} - already weaned {int(prior_weaned)} = {remaining})"
-        )
+        # P0-BE-2: 이유체중 유효 범위 2~12kg
+        if req.avg_weaning_weight_kg is not None and not (2.0 <= req.avg_weaning_weight_kg <= 12.0):
+            raise ValidationError(
+                f"Average weaning weight {req.avg_weaning_weight_kg}kg is outside the valid range (2~12kg)"
+            )
 
-    # 최종이유(is_partial=False)는 잔여 전량 == weaned_count 항등식 강제.
-    # 부분이유(is_partial=True)는 weaned_count <= remaining 허용(위에서 검증).
-    # 출처: PigPlan DataValidationChk.java L747~752
-    if not req.is_partial:
-        validate_weaning(weaned=req.weaned_count, nursing_head=remaining)
+        # 두수 상한 + 잔여 초과 검증
+        if req.weaned_count > MAX_WEANED_COUNT:
+            raise ValidationError(f"weaned_count exceeds maximum {MAX_WEANED_COUNT}")
+        if req.weaned_count > remaining:
+            raise ValidationError(
+                f"weaned_count ({req.weaned_count}) > remaining nursing "
+                f"(effective litter {effective_litter} - already weaned {int(prior_weaned)} = {remaining})"
+            )
 
-    remaining_after = remaining - req.weaned_count
+        # 최종이유(is_partial=False)는 잔여 전량 == weaned_count 항등식 강제.
+        # 부분이유(is_partial=True)는 weaned_count <= remaining 허용(위에서 검증).
+        # 출처: PigPlan DataValidationChk.java L747~752
+        if not req.is_partial:
+            validate_weaning(weaned=req.weaned_count, nursing_head=remaining)
+
+        remaining_after = remaining - req.weaned_count
 
     weaning = Weaning(
         farm_id=farm_id,
