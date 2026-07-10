@@ -1,6 +1,6 @@
 # 회원가입 / 온보딩 기능명세 (Web ↔ Mobile 공용)
 
-> 목적: 웹과 모바일(React Native)이 **동일한 가입 플로우·필드·검증·API**를 쓰도록 단일 명세화.
+> 목적: 웹과 모바일(네이티브 — Android: Kotlin+Compose, iOS: Swift+SwiftUI)이 **동일한 가입 플로우·필드·검증·API**를 쓰도록 단일 명세화.
 > 핵심 요구: **국가 선택 + 언어셋에 따라 입력항목·기본값이 달라진다.**
 > 작성 2026-07-10. 기준 구현: `src/app/onboarding/page.tsx`, `api/app/schemas/auth.py::OnboardingCompleteRequest`, `POST /api/v1/onboarding/complete`.
 >
@@ -145,15 +145,16 @@
 
 ---
 
-## 7. 모바일 구현 노트 (React Native)
+## 7. 모바일 구현 노트 (네이티브 — Android: Kotlin+Compose / iOS: Swift+SwiftUI)
 
-- **국가/농장유형/통화**: 네이티브 Picker(iOS Wheel / Android Dropdown). 국가는 국기 이모지 + 현지어 국가명.
-- **로케일 감지**: `expo-localization` 등 디바이스 로케일 → 공개 로케일 중 매칭, ko면 en 폴백. 이후 앱 언어토글로 override(설정 화면).
-- **비밀번호/아이디**: 웹과 **동일 정규식·예약어 상수 공유**(중복정의 금지 — 공용 패키지).
-- **오프라인**: 스텝 작성은 오프라인 가능, 제출만 네트워크. 실패 시 폼 상태 보존 재시도.
-- **딥링크**: 이메일 인증/비번재설정(`/verify-email`, `/forgot-password?token=`)은 모바일 딥링크 매핑.
-- **보안**: 토큰은 Keychain/Keystore(SecureStore), 평문 저장 금지.
-- **단위 표시**: `unit_system=imperial`(US)면 앱 전역 체중 lb·온도 °F 렌더 — 온보딩서 확정된 값이 전 화면 기준.
+- **국가/농장유형/통화**: 네이티브 Picker(iOS `Picker`/Wheel · Android `ExposedDropdownMenu`). 국가는 국기 이모지 + 현지어 국가명.
+- **국가 목록**: `GET /api/v1/config/countries` fetch(웹과 동일 단일 소스) → 로컬 캐시 + 번들 폴백(오프라인/최초 렌더). 국가 추가 시 앱 재배포 불필요.
+- **로케일 감지**: 디바이스 로케일(`Locale`/`Locale.current`) → 공개 로케일 중 매칭, ko면 en 폴백. 이후 앱 언어토글로 override(설정 화면).
+- **비밀번호/아이디**: 웹과 **동일 정규식·예약어 세트**(아이디 패턴 `^[a-zA-Z0-9_.-]{3,50}$` + 예약어). 각 플랫폼 상수로 이식하되 규칙 일치.
+- **오프라인**: 스텝 작성은 오프라인 가능(Room/Core Data 임시보관), 제출만 네트워크. 실패 시 폼 상태 보존 재시도.
+- **딥링크**: 이메일 인증/비번재설정(`/verify-email`, `/forgot-password?token=`)을 App Links(Android)/Universal Links(iOS)로 매핑.
+- **보안**: 토큰은 **Keystore(Android)/Keychain(iOS)**, 평문 저장 금지.
+- **단위 표시**: `unit_system=IMPERIAL`(US)면 앱 전역 체중 lb·온도 °F 렌더 — 온보딩서 확정된 값이 전 화면 기준.
 
 ---
 
