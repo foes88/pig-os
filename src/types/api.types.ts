@@ -56,6 +56,7 @@ export interface UserProfile {
   id: string;
   username: string;
   email: string;
+  phone?: string | null;
   name: string;
   role: UserRole;
   system_role?: UserRole;  // 플랫폼 권한 기준 — 관리자 UI 게이팅
@@ -68,6 +69,7 @@ export interface MeResponse {
   name: string;
   username: string;
   email: string | null;
+  phone?: string | null;
   role: UserRole;
   system_role?: UserRole;  // 플랫폼 권한 기준 — 관리자 UI 게이팅
   org_id: string | null;
@@ -295,6 +297,7 @@ export interface CreateFarrowingRequest {
   born_alive: number;
   stillborn?: number;
   mummified?: number;
+  avg_birth_weight_kg?: number;
   farrowing_ease?: "EASY" | "ASSISTED" | "DIFFICULT";
   notes?: string;
 }
@@ -576,7 +579,7 @@ export interface KpiTrend {
 
 export interface ChatQuery {
   question: string;
-  locale?: "en" | "ko" | "zh" | "es" | "vi";
+  locale?: "en" | "ko" | "zh" | "es" | "vi" | "th" | "pt" | "ru";
 }
 
 export interface FindingOut {

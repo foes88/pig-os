@@ -360,6 +360,7 @@
     "openOverdueMating": "공태 재교배 지연",
     "accidentOverdueMating": "사고 후 재교배 지연",
     "actionMating": "교배 입력",
+    "actionFarrowing": "분만 입력",
     "actionWeaning": "이유 입력",
     "actionPregnancyCheck": "임신 확인",
     "colType": "유형",
@@ -1002,7 +1003,10 @@
     "namePh": "이름을 입력하세요",
     "email": "이메일",
     "phone": "전화번호",
-    "save": "변경사항 저장"
+    "save": "변경사항 저장",
+    "saveError": "저장하지 못했습니다. 다시 시도해 주세요.",
+    "nameRequired": "이름을 입력하세요.",
+    "saving": "저장 중…"
   },
   "billing": {
     "title": "구독 및 결제",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "데이터 모니터",
     "cardSignups7d": "가입 (7일)",
     "cardActivated": "활성화 농장",
-    "cardStale": "방치 농장"
+    "cardStale": "방치 농장",
+    "ruleSaveError": "규칙을 저장하지 못했습니다. 임계값을 확인하고 다시 시도하세요."
   }
 }

@@ -360,6 +360,7 @@
     "openOverdueMating": "Re-service overdue",
     "accidentOverdueMating": "RTS re-service overdue",
     "actionMating": "Record mating",
+    "actionFarrowing": "Record farrowing",
     "actionWeaning": "Record weaning",
     "actionPregnancyCheck": "Pregnancy check",
     "colType": "Type",
@@ -1002,7 +1003,10 @@
     "namePh": "Enter your name",
     "email": "Email",
     "phone": "Phone",
-    "save": "Save changes"
+    "save": "Save changes",
+    "saveError": "Could not save. Please try again.",
+    "nameRequired": "Name is required.",
+    "saving": "Saving…"
   },
   "billing": {
     "title": "Subscription & billing",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "Data Monitor",
     "cardSignups7d": "Signups (7d)",
     "cardActivated": "Activated farms",
-    "cardStale": "Stale farms"
+    "cardStale": "Stale farms",
+    "ruleSaveError": "Could not save the rule. Check the thresholds and try again."
   }
 }

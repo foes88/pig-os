@@ -73,8 +73,11 @@ async def update_rule(rule_id: str, body: RuleUpdate, db: DbDep, admin: SuperAdm
     known = {r.rule_id: r for r in RuleRegistry.all()}
     if rule_id not in known:
         raise NotFoundError(f"Unknown rule: {rule_id}")
-    if body.warning is not None and body.critical is not None and body.warning >= body.critical:
-        raise ValidationError("warning must be less than critical")
+    # 임계 순서(warning<critical)는 방향에 따라 달라진다 — below형(PSY/분만율)은 warning>critical이 정상.
+    # 방향은 벤치마크(국가)에서 런타임 결정되어 규칙에 정적으로 없으므로, 여기선 동일값만 거부한다.
+    # (심각도 판정은 rule engine의 _severity_from_bench가 방향-인지로 처리)
+    if body.warning is not None and body.critical is not None and body.warning == body.critical:
+        raise ValidationError("warning and critical must differ")
 
     cfg = await db.get(RuleConfig, rule_id)
     if not cfg:

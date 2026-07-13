@@ -360,6 +360,7 @@
     "openOverdueMating": "ผสมซ้ำเกินกำหนด",
     "accidentOverdueMating": "ผสมหลังกลับสัดเกินกำหนด",
     "actionMating": "บันทึกผสม",
+    "actionFarrowing": "บันทึกการคลอด",
     "actionWeaning": "บันทึกหย่านม",
     "actionPregnancyCheck": "ตรวจท้อง",
     "colType": "ประเภท",
@@ -1002,7 +1003,10 @@
     "namePh": "กรอกชื่อของคุณ",
     "email": "อีเมล",
     "phone": "โทรศัพท์",
-    "save": "บันทึกการเปลี่ยนแปลง"
+    "save": "บันทึกการเปลี่ยนแปลง",
+    "saveError": "บันทึกไม่สำเร็จ โปรดลองอีกครั้ง",
+    "nameRequired": "กรุณากรอกชื่อ",
+    "saving": "กำลังบันทึก…"
   },
   "billing": {
     "title": "การสมัครสมาชิกและการเรียกเก็บเงิน",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "มอนิเตอร์ข้อมูล",
     "cardSignups7d": "สมัคร (7 วัน)",
     "cardActivated": "ฟาร์มที่เปิดใช้",
-    "cardStale": "ฟาร์มทิ้งร้าง"
+    "cardStale": "ฟาร์มทิ้งร้าง",
+    "ruleSaveError": "บันทึกกฎไม่สำเร็จ ตรวจสอบค่าเกณฑ์แล้วลองใหม่"
   }
 }

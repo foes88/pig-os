@@ -360,6 +360,7 @@
     "openOverdueMating": "空怀复配逾期",
     "accidentOverdueMating": "返情后复配逾期",
     "actionMating": "录入配种",
+    "actionFarrowing": "记录分娩",
     "actionWeaning": "录入断奶",
     "actionPregnancyCheck": "妊娠检查",
     "colType": "类型",
@@ -1002,7 +1003,10 @@
     "namePh": "请输入姓名",
     "email": "邮箱",
     "phone": "电话",
-    "save": "保存更改"
+    "save": "保存更改",
+    "saveError": "保存失败，请重试。",
+    "nameRequired": "请输入姓名。",
+    "saving": "保存中…"
   },
   "billing": {
     "title": "订阅与计费",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "数据监控",
     "cardSignups7d": "注册 (7天)",
     "cardActivated": "已激活农场",
-    "cardStale": "沉寂农场"
+    "cardStale": "沉寂农场",
+    "ruleSaveError": "无法保存规则。请检查阈值后重试。"
   }
 }

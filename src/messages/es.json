@@ -360,6 +360,7 @@
     "openOverdueMating": "Reservicio vencido",
     "accidentOverdueMating": "Reservicio tras RTS vencido",
     "actionMating": "Registrar monta",
+    "actionFarrowing": "Registrar parto",
     "actionWeaning": "Registrar destete",
     "actionPregnancyCheck": "Chequeo de gestación",
     "colType": "Tipo",
@@ -1002,7 +1003,10 @@
     "namePh": "Ingrese su nombre",
     "email": "Correo",
     "phone": "Teléfono",
-    "save": "Guardar cambios"
+    "save": "Guardar cambios",
+    "saveError": "No se pudo guardar. Inténtalo de nuevo.",
+    "nameRequired": "El nombre es obligatorio.",
+    "saving": "Guardando…"
   },
   "billing": {
     "title": "Suscripción y pago",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "Monitor de datos",
     "cardSignups7d": "Registros (7d)",
     "cardActivated": "Granjas activadas",
-    "cardStale": "Granjas inactivas"
+    "cardStale": "Granjas inactivas",
+    "ruleSaveError": "No se pudo guardar la regla. Verifica los umbrales e inténtalo de nuevo."
   }
 }

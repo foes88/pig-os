@@ -162,6 +162,15 @@ export default function RecordPage() {
     if (found) setSelectedSow(found);
   }, [sowIdParam, allSows, selectedSow]);
 
+  // 수정/삭제 후 목록이 refetch되면 선택된 모돈의 상태/산차도 최신으로 동기화(헤더 배지 stale 방지).
+  useEffect(() => {
+    if (!selectedSow) return;
+    const fresh = allSows.find((s) => s.id === selectedSow.id);
+    if (fresh && (fresh.status !== selectedSow.status || fresh.parity !== selectedSow.parity)) {
+      setSelectedSow(fresh);
+    }
+  }, [allSows, selectedSow]);
+
   const handleSaved = (msg: string, sowId: string, goNext: boolean, insights?: EventInsight[]) => {
     track("event_added", { event_type: eventType });
     setDoneIds((prev) => new Set([...prev, sowId]));
@@ -376,7 +385,15 @@ export default function RecordPage() {
 
                 {/* 우측 컨텍스트 레일 — 이 모돈의 최근 기록(입력 맥락) */}
                 <aside className="min-w-0">
-                  <RecentEventsSection farmId={farmId} sowId={selectedSow.id} />
+                  <RecentEventsSection
+                    farmId={farmId}
+                    sowId={selectedSow.id}
+                    onChanged={() => {
+                      // 수정/삭제 시 서버에서 모돈 상태가 롤백되므로 좌측 목록·상태배지도 갱신
+                      // (RecentEventsSection 자체는 events + sows.detail만 무효화 → 목록 stale 버그 수정)
+                      queryClient.invalidateQueries({ queryKey: queryKeys.sows.all(farmId) });
+                    }}
+                  />
                 </aside>
               </div>
             </div>
@@ -412,7 +429,10 @@ function FarrowingPanel({ farmId, sow, onSaved }: PanelProps) {
         born_alive: alive,
         stillborn: still,
         mummified: mummy,
-        notes: difficulty !== "NORMAL" ? t("noteDifficulty", { d: difficulty }) : undefined,
+        // 입력단위(kg/lbs) → 저장은 항상 kg. 스텝퍼로 수집한 평균 생시체중 누락 버그 수정.
+        avg_birth_weight_kg: weight > 0 ? (unit === "lbs" ? +(weight / 2.20462).toFixed(3) : weight) : undefined,
+        // UI 난이도(NORMAL/ASSISTED/DIFFICULT) → 백엔드 farrowing_ease(EASY/ASSISTED/DIFFICULT)
+        farrowing_ease: difficulty === "NORMAL" ? "EASY" : difficulty,
       } as CreateFarrowingRequest).then((resp) => ({ goNext, insights: resp.insights })),
     onSuccess: ({ goNext, insights }) => {
       onSaved(t("savedFarrowing", { tag: sow.ear_tag, n: alive }), sow.id, goNext, insights);

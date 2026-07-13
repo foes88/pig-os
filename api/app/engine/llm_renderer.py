@@ -68,7 +68,7 @@ def _result_to_payload(result: StructuredResult) -> dict:
 # 7개 로케일(공개 6 + ko 관리자). 미지정은 English 폴백.
 _LANG_NAME = {
     "ko": "Korean", "en": "English", "zh": "Chinese", "es": "Spanish",
-    "vi": "Vietnamese", "th": "Thai", "pt": "Brazilian Portuguese",
+    "vi": "Vietnamese", "th": "Thai", "pt": "Brazilian Portuguese", "ru": "Russian",
 }
 
 

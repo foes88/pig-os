@@ -102,12 +102,19 @@ class MeResponse(BaseModel):
     name: str
     username: str
     email: str | None
+    phone: str | None = None
     role: str
     system_role: str = "FARM_OWNER"  # 플랫폼 권한 기준(백엔드 effective_system_role) — 관리자 UI 게이팅용
     org_id: str | None
     language: str
     farm_ids: list[str]
     farm_roles: dict[str, str] = {}  # farm_id → 농장별 유효 role (멀티팜 게이팅용)
+
+
+class MeUpdate(BaseModel):
+    """프로필 자기수정(이름/연락처). 권한·role은 변경 불가."""
+    name: str | None = Field(None, min_length=1, max_length=100)
+    phone: str | None = Field(None, max_length=30)
 
 
 class PasswordResetRequest(BaseModel):

@@ -17,6 +17,10 @@ export const authApi = {
 
   me: () => apiClient.get<MeResponse>(`${BASE}/me`).then((r) => r.data),
 
+  // 프로필 자기수정(이름/연락처) — 부분수정 PATCH.
+  updateMe: (body: { name?: string; phone?: string }) =>
+    apiClient.patch<MeResponse>(`${BASE}/me`, body).then((r) => r.data),
+
   refresh: (refreshToken: string) =>
     apiClient
       .post<RefreshResponse>(`${BASE}/refresh`, { refresh_token: refreshToken })

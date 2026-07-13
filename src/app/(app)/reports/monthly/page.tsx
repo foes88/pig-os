@@ -34,6 +34,7 @@ const PRESETS = [
 
 function monthsAgoISO(n: number): string {
   const d = new Date();
+  d.setDate(1); // 월말일(31일 등)에서 setMonth 오버플로로 시작월이 밀리는 버그 방지
   d.setMonth(d.getMonth() - n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
 }

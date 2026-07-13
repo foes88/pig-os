@@ -360,6 +360,7 @@
     "openOverdueMating": "Recobertura atrasada",
     "accidentOverdueMating": "Recobertura pós-retorno atrasada",
     "actionMating": "Registrar cobertura",
+    "actionFarrowing": "Registrar parto",
     "actionWeaning": "Registrar desmame",
     "actionPregnancyCheck": "Diagnóstico de gestação",
     "colType": "Tipo",
@@ -1002,7 +1003,10 @@
     "namePh": "Digite seu nome",
     "email": "E-mail",
     "phone": "Telefone",
-    "save": "Salvar alterações"
+    "save": "Salvar alterações",
+    "saveError": "Não foi possível salvar. Tente novamente.",
+    "nameRequired": "O nome é obrigatório.",
+    "saving": "Salvando…"
   },
   "billing": {
     "title": "Assinatura e cobrança",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "Monitor de dados",
     "cardSignups7d": "Cadastros (7d)",
     "cardActivated": "Granjas ativadas",
-    "cardStale": "Granjas abandonadas"
+    "cardStale": "Granjas abandonadas",
+    "ruleSaveError": "Não foi possível salvar a regra. Verifique os limites e tente novamente."
   }
 }

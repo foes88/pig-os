@@ -15,6 +15,7 @@ export default function AdminRulesPage() {
     mutationFn: ({ id, body }: { id: string; body: { enabled?: boolean; warning?: number | null; critical?: number | null } }) =>
       adminApi.updateRule(id, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "rules"] }),
+    // 저장 실패(예: 임계값 오류)를 조용히 삼키던 버그 — 배너로 노출.
   });
 
   const rows = data ?? [];
@@ -25,6 +26,12 @@ export default function AdminRulesPage() {
         <h1 className="text-[22px] font-extrabold tracking-tight">{t("rulesTitle")}</h1>
         <p className="text-xs text-text3 mt-0.5">{t("rulesSubtitle")}</p>
       </header>
+
+      {mut.isError && (
+        <div className="mb-4 px-4 py-2.5 bg-red-soft border border-danger/30 rounded-xl text-sm text-danger font-medium">
+          {t("ruleSaveError")}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="py-12 text-center text-text3 text-sm">…</div>

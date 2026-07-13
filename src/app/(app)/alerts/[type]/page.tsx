@@ -129,7 +129,7 @@ export default function AlertDetailPage({ params }: { params: Promise<{ type: st
                         <td className="px-3 py-2 text-right font-mono font-semibold text-warning">{t("overdueDays", { days: r.overdue_days })}</td>
                         <td className="px-3 py-2 text-right">
                           <Link href={`/record?tab=${meta.action}&sowId=${r.sow_id}`} className="inline-flex items-center gap-1 text-primary text-xs font-semibold hover:underline">
-                            {t(meta.action === "weaning" ? "actionWeaning" : "actionMating")} <ArrowRight className="w-3 h-3" />
+                            {t(meta.action === "weaning" ? "actionWeaning" : meta.action === "farrowing" ? "actionFarrowing" : "actionMating")} <ArrowRight className="w-3 h-3" />
                           </Link>
                         </td>
                       </tr>

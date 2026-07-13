@@ -6,6 +6,7 @@ from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
     MeResponse,
+    MeUpdate,
     PasswordResetConfirm,
     PasswordResetRequest,
     RefreshRequest,
@@ -68,6 +69,32 @@ async def me(current_user: CurrentUser, db: DbDep):
         name=current_user.name,
         username=current_user.username,
         email=current_user.email,
+        phone=current_user.phone,
+        role=current_user.role,
+        system_role=effective_system_role(current_user),
+        org_id=str(current_user.org_id) if current_user.org_id else None,
+        language=current_user.language,
+        farm_ids=farm_ids,
+        farm_roles=farm_roles,
+    )
+
+
+@router.patch("/me", response_model=MeResponse)
+async def update_me(body: MeUpdate, current_user: CurrentUser, db: DbDep):
+    """프로필 자기수정(이름/연락처). 지정된 필드만 반영(부분수정)."""
+    if body.name is not None:
+        current_user.name = body.name
+    if body.phone is not None:
+        current_user.phone = body.phone or None
+    await db.commit()
+    await db.refresh(current_user)
+    farm_ids, farm_roles = await get_farm_access(current_user, db)
+    return MeResponse(
+        id=str(current_user.id),
+        name=current_user.name,
+        username=current_user.username,
+        email=current_user.email,
+        phone=current_user.phone,
         role=current_user.role,
         system_role=effective_system_role(current_user),
         org_id=str(current_user.org_id) if current_user.org_id else None,

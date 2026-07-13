@@ -1100,6 +1100,14 @@ async def delete_weaning(db, farm_id, user_id, weaning_id) -> None:
     if not w:
         raise NotFoundError(f"Weaning {weaning_id} not found")
     await _ensure_period_unlocked(db, farm_id, w.weaning_date)
+    # 이유 후 재교배(OPEN→PREGNANT, 새 번식사이클 시작)한 뒤 옛 이유를 지우면
+    # 무조건 LACTATING 롤백 + 옛 사이클 재개 → 현재 PREGNANT 상태를 덮어써 상태 붕괴.
+    # delete_farrowing(이유 존재 시 거부)/delete_mating(분만 존재 시 거부)과 동일하게 전방 가드.
+    if await db.scalar(select(Mating).where(
+            Mating.sow_id == w.sow_id,
+            Mating.mating_date >= w.weaning_date,
+            Mating.deleted_at.is_(None))):
+        raise ConflictError("Cannot delete a weaning after the sow was re-mated")
     w.deleted_at = datetime.now(UTC)
     # BUG-3: 이유 시 자동생성된 자돈그룹(WG-...)도 soft-delete(유령 재고 방지). create와 동일 code.
     wg_code = f"WG-{w.weaning_date:%y%m%d}-{str(w.id)[:8]}"

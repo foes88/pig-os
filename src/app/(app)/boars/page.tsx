@@ -74,7 +74,9 @@ export default function BoarsPage() {
 
   const PER_PAGE = 20;
   const totalPages = Math.max(1, Math.ceil(boars.length / PER_PAGE));
-  const paged = boars.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+  // 필터 전환으로 페이지가 총페이지를 넘으면 빈 표+페이저 사라짐(스트랜딩) 버그 방지 — finishers와 동일 클램프.
+  const safePage = Math.min(page, totalPages);
+  const paged = boars.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["boars", farmId] });
 
@@ -164,7 +166,7 @@ export default function BoarsPage() {
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             className="text-sm border border-border rounded-lg px-3 py-1.5 bg-surface text-text focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <option value="">{t("allStatus")}</option>
@@ -311,18 +313,18 @@ export default function BoarsPage() {
           </ul>
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border text-xs text-text3">
-              <span>{t("pageInfo", { n: boars.length, p: page, tp: totalPages })}</span>
+              <span>{t("pageInfo", { n: boars.length, p: safePage, tp: totalPages })}</span>
               <div className="flex gap-1.5">
                 <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
+                  onClick={() => setPage(Math.max(1, safePage - 1))}
+                  disabled={safePage <= 1}
                   className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary"
                 >
                   {t("prev")}
                 </button>
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
+                  onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                  disabled={safePage >= totalPages}
                   className="px-2.5 py-1 rounded-md border border-border disabled:opacity-40 hover:border-primary"
                 >
                   {t("next")}

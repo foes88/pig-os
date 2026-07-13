@@ -1,18 +1,34 @@
 "use client";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
+import { authApi } from "@/lib/api/endpoints/auth";
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const [name, setName] = useState(user?.name ?? "");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(user?.phone ?? "");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // 기존엔 저장 버튼이 no-op(가짜 '저장됨' 토스트)이던 버그 — 실제 PATCH /me 연동.
+  const mutation = useMutation({
+    mutationFn: () => authApi.updateMe({ name: name.trim(), phone: phone.trim() }),
+    onSuccess: (me) => {
+      if (user) setUser({ ...user, name: me.name, phone: me.phone ?? null });
+      setError(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    },
+    onError: () => setError(t("saveError")),
+  });
 
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    if (!name.trim()) { setError(t("nameRequired")); return; }
+    mutation.mutate();
   };
 
   const initials = name.slice(0, 2).toUpperCase() || "??";
@@ -24,6 +40,11 @@ export default function ProfilePage() {
       {saved && (
         <div className="mb-4 px-4 py-2.5 bg-green-soft border border-success/30 rounded-xl text-sm text-success font-medium">
           {t("saved")}
+        </div>
+      )}
+      {error && (
+        <div className="mb-4 px-4 py-2.5 bg-red-soft border border-danger/30 rounded-xl text-sm text-danger font-medium">
+          {error}
         </div>
       )}
 
@@ -58,9 +79,10 @@ export default function ProfilePage() {
 
       <button
         onClick={handleSave}
-        className="w-full mt-4 bg-navy text-white py-3.5 rounded-xl text-sm font-bold hover:opacity-90 transition"
+        disabled={mutation.isPending}
+        className="w-full mt-4 bg-navy text-white py-3.5 rounded-xl text-sm font-bold hover:opacity-90 transition disabled:opacity-50"
       >
-        {t("save")}
+        {mutation.isPending ? t("saving") : t("save")}
       </button>
     </div>
   );

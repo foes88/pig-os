@@ -30,6 +30,7 @@ const T: Record<string, {
 
 function monthsAgoISO(n: number): string {
   const d = new Date();
+  d.setDate(1);
   d.setMonth(d.getMonth() - n);
   return d.toISOString().slice(0, 10);
 }

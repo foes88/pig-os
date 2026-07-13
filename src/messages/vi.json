@@ -360,6 +360,7 @@
     "openOverdueMating": "Phối lại quá hạn",
     "accidentOverdueMating": "Phối lại sau sự cố quá hạn",
     "actionMating": "Ghi phối giống",
+    "actionFarrowing": "Ghi nhận đẻ",
     "actionWeaning": "Ghi cai sữa",
     "actionPregnancyCheck": "Kiểm tra mang thai",
     "colType": "Loại",
@@ -1002,7 +1003,10 @@
     "namePh": "Nhập tên của bạn",
     "email": "Email",
     "phone": "Điện thoại",
-    "save": "Lưu thay đổi"
+    "save": "Lưu thay đổi",
+    "saveError": "Không thể lưu. Vui lòng thử lại.",
+    "nameRequired": "Vui lòng nhập tên.",
+    "saving": "Đang lưu…"
   },
   "billing": {
     "title": "Gói & thanh toán",
@@ -1632,6 +1636,7 @@
     "navDataMonitor": "Giám sát dữ liệu",
     "cardSignups7d": "Đăng ký (7n)",
     "cardActivated": "Trang trại kích hoạt",
-    "cardStale": "Trang trại bỏ trống"
+    "cardStale": "Trang trại bỏ trống",
+    "ruleSaveError": "Không thể lưu quy tắc. Kiểm tra ngưỡng và thử lại."
   }
 }

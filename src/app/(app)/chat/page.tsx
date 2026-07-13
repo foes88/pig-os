@@ -2,11 +2,11 @@
 
 import { localToday } from "@/lib/date";
 import { useState, useRef, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useMutation } from "@tanstack/react-query";
 import { chatApi } from "@/lib/api/endpoints/chat";
 import { useAuthStore } from "@/store/auth.store";
-import type { ChatResponse, FindingOut } from "@/types/api.types";
+import type { ChatQuery, ChatResponse, FindingOut } from "@/types/api.types";
 
 const SEVERITY_COLOR: Record<string, string> = {
   OK:       "border-success/30 bg-green-soft",
@@ -30,6 +30,7 @@ type Message =
 
 export default function ChatPage() {
   const t = useTranslations("chat");
+  const locale = useLocale();
   const farmId = useAuthStore((s) => s.activeFarmId);
   const suggested = SUGGESTED_KEYS.map((k) => t(k));
   const [messages, setMessages] = useState<Message[]>([]);
@@ -42,7 +43,8 @@ export default function ChatPage() {
 
   const mutation = useMutation({
     mutationFn: (question: string) =>
-      chatApi.query(farmId!, { question, locale: "ko" }),
+      // 사용자 UI 로케일로 답변(기존 하드코딩 "ko" → 전 언어 사용자에게 한국어로 나오던 버그 수정)
+      chatApi.query(farmId!, { question, locale: locale as ChatQuery["locale"] }),
     onSuccess: (data) => {
       setMessages((prev) => [...prev, { role: "assistant", response: data }]);
     },

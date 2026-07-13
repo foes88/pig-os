@@ -30,7 +30,7 @@ VENDOR  "피그플랜 시범사업단"
 | owner_4448@pilot | FARM_OWNER | 4448 |
 | owner_848@pilot | FARM_OWNER | 848 |
 | owner_978@pilot | FARM_OWNER | 978 |
-- 초기 비밀번호 고정(`Pilot!2026`) — 테스트 전용, 문서에만 기록(코드 하드코딩 금지, env/상수).
+- 초기 비밀번호는 `PIGPLAN_PILOT_PASSWORD` env로 주입(파일럿 문서값 `Pilot!2026` 사용). 코드에는 실제 비밀번호 값 미보관.
 - user_farms.role_override로 농장 멤버십, org 소속으로 상위 접근.
 
 **산출**: 생성 계정·조직·매핑 요약표 출력.
@@ -66,12 +66,13 @@ pytest 회귀 스위트(반복 실행):
 
 ---
 
-## Phase D — 원클릭 반복 러너  (`scripts/run_pilot.sh` 또는 make 타깃)
+## Phase D — 원클릭 반복 러너  (`scripts/run_pilot.py`)
 
 ```
 A) setup_pilot_orgs.py     # 조직·계정 (멱등)
 B) uat_pilot.py            # UAT 매트릭스
-C) pytest tests/pilot/     # 수치 회귀
+C) verify_pilot.py         # 수치 스코어카드
+   pytest tests/pilot/     # 같은 검증을 회귀 테스트로 실행
 → 통합 요약 리포트(tests/db/pilot_report_<date>.md)
 ```
 - CI(.github/workflows)에 수동트리거 job으로 등록 가능.
@@ -80,10 +81,11 @@ C) pytest tests/pilot/     # 수치 회귀
 ---
 
 ## 실행 순서 (import 완료 후)
+0. `PIGPLAN_PILOT_PASSWORD` 설정(예: PowerShell `$env:PIGPLAN_PILOT_PASSWORD="Pilot!2026"`)
 1. `uv run python -m scripts.setup_pilot_orgs`
 2. API 기동(`uvicorn app.main:app`) 후 `uv run python -m scripts.uat_pilot`
-3. `uv run pytest tests/pilot/ -q`
-4. 결과 3종 → `pilot_report_<date>.md` 취합
+3. `uv run python -m scripts.verify_pilot` 또는 `uv run pytest tests/pilot/ -q`
+4. 원클릭은 `uv run python -m scripts.run_pilot` → `tests/db/pilot_report_<date>.md` 취합
 
 > 확장: 전 30농가로 스케일 시 이 플랜을 농장리스트만 바꿔 재사용. 조직 계층은
 > 실제 총판/대리점 구조(TA_FARM.company_cd/agent_cd)로 매핑 가능(2단계).

@@ -16,7 +16,7 @@ export interface AlertMeta {
   /** 임계 일수 (farm_config 기본값) */
   threshold: number;
   /** record 입력 탭 */
-  action: "mating" | "weaning";
+  action: "mating" | "farrowing" | "weaning";
   /** 권장 조치 i18n 키 배열 (alertsMeta) */
   actionKeys: string[];
 }
@@ -27,7 +27,7 @@ export const ALERT_META: Record<OverdueType, AlertMeta> = {
     labelKey: "pregnantOverdueFarrowing",
     ruleKey: "rulePregnantOverdueFarrowing",
     threshold: 114,
-    action: "mating",
+    action: "farrowing",
     actionKeys: ["actPregCheck", "actVetReview", "actVerifyMating"],
   },
   open_overdue_mating: {

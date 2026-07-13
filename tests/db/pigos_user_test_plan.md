@@ -76,7 +76,7 @@
 
 | # | 화면 | 증상 | 원인(추정) | 심각도 | 상태 |
 |---|------|------|-----------|--------|------|
-| BUG-001 | /alerts + Sidebar | 배지 "2"인데 Alerts 페이지 첫 화면(Overdue & Cull) 빈 화면 | 배지 = `overdue.total + 미읽음알림` 합산인데, 착지 탭은 overdue(0)만 표시. 2는 Notifications 탭의 미읽음. **세는 값 ≠ 보이는 탭** | 中(혼란) | 열림 |
+| BUG-001 | /alerts + Sidebar | 배지 "2"인데 Alerts 페이지 첫 화면(Overdue & Cull) 빈 화면 | 배지 = `overdue.total + 미읽음알림` 합산인데, 착지 탭은 overdue(0)만 표시. 2는 Notifications 탭의 미읽음. **세는 값 ≠ 보이는 탭** | 中(혼란) | ✅ 수정(fix c…) — AlertsTabs 탭별 건수 배지 |
 
 ### BUG-001 수정 방향(후보)
 - (a) 배지를 탭별로 분리: Alerts 아이콘 배지는 overdue+cull만, 알림(종) 배지는 미읽음만.
