@@ -35,7 +35,8 @@ const base = (farmId: string) => `/api/v1/farms/${farmId}/boars`;
 export const boarsApi = {
   list: (farmId: string, status?: string) =>
     apiClient
-      .get<Boar[]>(base(farmId), { params: { status } })
+      // limit=500(엔드포인트 최대) — 기본 100 초과분이 조용히 유실되던 버그 방지.
+      .get<Boar[]>(base(farmId), { params: { status, limit: 500 } })
       .then((r) => r.data),
 
   get: (farmId: string, boarId: string) =>

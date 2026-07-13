@@ -74,9 +74,29 @@
 
 ## 버그 로그
 
-| # | 화면 | 증상 | 원인(추정) | 심각도 | 상태 |
-|---|------|------|-----------|--------|------|
-| BUG-001 | /alerts + Sidebar | 배지 "2"인데 Alerts 페이지 첫 화면(Overdue & Cull) 빈 화면 | 배지 = `overdue.total + 미읽음알림` 합산인데, 착지 탭은 overdue(0)만 표시. 2는 Notifications 탭의 미읽음. **세는 값 ≠ 보이는 탭** | 中(혼란) | ✅ 수정(fix c…) — AlertsTabs 탭별 건수 배지 |
+> 2026-07-13 버그헌터 4기(sows/record·reports·alerts/settings/admin·finishers/chat) 동시 수색 → 확인된 결함 일괄 수정.
+
+| # | 화면 | 증상 | 원인 | 심각도 | 상태 |
+|---|------|------|------|--------|------|
+| BUG-001 | /alerts + Sidebar | 배지 "2"인데 첫 화면 빈 화면 | 배지=overdue+미읽음 합산, 착지 탭은 overdue만 | 中 | ✅ AlertsTabs 탭별 건수 배지 |
+| BUG-002 | /record 분만 | 평균 생시체중·분만난이도 입력이 저장 안 됨 | create body에서 `avg_birth_weight_kg`/`farrowing_ease` 누락(타입도 누락) | 中 | ✅ 전송+타입 추가 |
+| BUG-003 | /record 최근이벤트 | 수정/삭제 후 좌측 목록·헤더 배지 stale | RecentEventsSection이 sows.detail만 무효화(목록 prefix 불일치) | 中 | ✅ onChanged로 sows.all 무효화+선택동기화 |
+| BUG-004 | 이벤트 삭제(API) | 재교배 후 옛 이유 삭제 시 상태 붕괴 | delete_weaning 무조건 LACTATING 롤백+옛 사이클 재개 | 中 | ✅ 재교배 전방 가드 409 |
+| BUG-005 | 리포트 4종 | 월말일에 기간 시작월 1개월 밀림 | `monthsAgoISO` setMonth 오버플로 | 中 | ✅ setDate(1) 선행 |
+| BUG-006 | /alerts/[type] | 분만지연 알림 "액션"이 교배 탭(막힘) | meta.action="mating"(PREGNANT는 교배 거부) | 中 | ✅ farrowing 탭+i18n |
+| BUG-007 | /chat | 모든 언어 사용자에게 한국어 답변 | locale 하드코딩 "ko" | 高 | ✅ UI 로케일 전송 |
+| BUG-008 | /chat (백엔드) | ru 사용자 chat 422 | ChatQuery 패턴에 ru 없음 | 中 | ✅ ru 허용+타입 확장 |
+| BUG-009 | /boars | 필터 전환 시 빈 표+페이저 소실(스트랜딩) | page 클램프/리셋 없음 | 中 | ✅ safePage+setPage(1) |
+| BUG-010 | /settings/profile | 저장 버튼 no-op(가짜 토스트) | handleSave가 API 미호출 | 中 | ✅ PATCH /me 실제 연동 |
+| BUG-011 | /admin/rules | below형(PSY/분만율) 정상 임계 저장 거부 | `warning<critical` 무조건 강제 | 中 | ✅ 동일값만 거부 |
+| BUG-012 | /admin/rules | 저장 실패 무피드백 | mutation onError 없음 | 低 | ✅ 에러 배너 |
+| BUG-013 | finishers/boars/piglets | 기본 limit 초과분 조용히 유실 | 프론트가 limit 미전송 → 서버 기본(50/100) 캡 | 中 | ✅ 엔드포인트 최대(200/500/200) 요청 |
+| BUG-014 | /admin/data-monitor | ru 사용자 영어 노출 | 인라인 T에 ru 누락 | 低 | ✅ ru 추가 |
+
+### 후속(별도 태스크)
+- 진짜 서버 페이지네이션(offset+total) — finishers/boars/piglets. 현재는 최대치 요청으로 유실만 차단(200/500 초과 농장은 여전히 잘림).
+- 알림 상세 "감지규칙/임계"가 하드코딩(114/21/7/240) — 농장 커스텀 설정 반영 안 됨(표시-계산 불일치 가능). `/config/repro` 연동 필요.
+- 프로필 전화번호는 백엔드 저장되나, 사진 변경 버튼은 미구현.
 
 ### BUG-001 수정 방향(후보)
 - (a) 배지를 탭별로 분리: Alerts 아이콘 배지는 overdue+cull만, 알림(종) 배지는 미읽음만.

@@ -9,9 +9,10 @@ import type {
 const base = (farmId: string) => `/api/v1/farms/${farmId}/finishers`;
 
 export const finishersApi = {
+  // limit=200(엔드포인트 최대) — 미지정 시 기본 50으로 잘려 클라 페이지네이션이 초과분을 조용히 유실하던 버그 방지.
   list: (farmId: string, activeOnly = false) =>
     apiClient
-      .get<FinisherGroup[]>(base(farmId), { params: { active_only: activeOnly } })
+      .get<FinisherGroup[]>(base(farmId), { params: { active_only: activeOnly, limit: 200 } })
       .then((r) => r.data),
 
   create: (farmId: string, body: CreateFinisherGroupRequest) =>
