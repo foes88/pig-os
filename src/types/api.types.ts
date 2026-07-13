@@ -1131,6 +1131,7 @@ export interface DataMonitorRow {
 export interface SowStatusCount { status: string; count: number; }
 export interface EventTypeBreakdown { type: string; total: number; count_30d: number; last_at: string | null; }
 export interface RecentEvent { type: string; date: string | null; }
+export interface FarmIntegrity { litter_mismatch: number; date_reversal: number; status_orphan: number; total: number; }
 export interface FarmDataDetail {
   farm_id: string;
   farm_name: string;
@@ -1143,6 +1144,7 @@ export interface FarmDataDetail {
   sows_by_status: SowStatusCount[];
   event_breakdown: EventTypeBreakdown[];
   recent_events: RecentEvent[];
+  integrity: FarmIntegrity;
   psy: number | null;
   total_weaned_ytd: number;
   avg_sows_ytd: number | null;

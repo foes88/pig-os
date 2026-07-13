@@ -171,6 +171,13 @@ class RecentEvent(BaseModel):
     date: date | None
 
 
+class FarmIntegrity(BaseModel):
+    litter_mismatch: int   # total_born ≠ 실산+사산+미라
+    date_reversal: int     # 이유일 < 분만일
+    status_orphan: int     # LACTATING인데 분만이력 없음
+    total: int
+
+
 class FarmDataDetail(BaseModel):
     farm_id: str
     farm_name: str
@@ -183,6 +190,7 @@ class FarmDataDetail(BaseModel):
     sows_by_status: list[SowStatusCount]
     event_breakdown: list[EventTypeBreakdown]
     recent_events: list[RecentEvent]
+    integrity: FarmIntegrity
     psy: float | None = None
     total_weaned_ytd: int = 0
     avg_sows_ytd: float | None = None
@@ -218,6 +226,21 @@ async def data_monitor_detail(farm_id: str, db: DbDep, _admin: SuperAdmin) -> Fa
         {"f": farm_id})).all()
     recent_events = [RecentEvent(type=t, date=d) for t, d in rec]
 
+    # 데이터 품질(정합성) — 두수 항등식·날짜역전·상태고아
+    iq = (await db.execute(text(
+        "SELECT "
+        "(SELECT count(*) FROM farrowings WHERE farm_id=:f AND deleted_at IS NULL "
+        " AND total_born <> born_alive + stillborn + mummified) AS litter_mismatch, "
+        "(SELECT count(*) FROM weanings w JOIN farrowings f2 ON f2.id = w.farrowing_id "
+        " WHERE w.farm_id=:f AND w.deleted_at IS NULL AND w.weaning_date < f2.farrowing_date) AS date_reversal, "
+        "(SELECT count(*) FROM sows WHERE farm_id=:f AND status='LACTATING' AND deleted_at IS NULL "
+        " AND id NOT IN (SELECT sow_id FROM farrowings WHERE farm_id=:f AND deleted_at IS NULL)) AS status_orphan"),
+        {"f": farm_id})).mappings().first()
+    integrity = FarmIntegrity(
+        litter_mismatch=iq["litter_mismatch"], date_reversal=iq["date_reversal"],
+        status_orphan=iq["status_orphan"],
+        total=iq["litter_mismatch"] + iq["date_reversal"] + iq["status_orphan"])
+
     # PSY(당해년도) — 기존 KPI 엔진 재사용(대시보드 값과 동일 정의)
     psy = total_weaned = 0
     avg_sows = None
@@ -243,6 +266,7 @@ async def data_monitor_detail(farm_id: str, db: DbDep, _admin: SuperAdmin) -> Fa
         sows_by_status=sows_by_status,
         event_breakdown=event_breakdown,
         recent_events=recent_events,
+        integrity=integrity,
         psy=psy,
         total_weaned_ytd=total_weaned,
         avg_sows_ytd=avg_sows,
