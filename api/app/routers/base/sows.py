@@ -3,9 +3,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 
 from app.core.dependencies import CurrentUser, DbDep, FarmDep, require_farm_role
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.db.models.events import (
     Farrowing,
     Mating,
@@ -114,7 +115,13 @@ async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: Cu
         status="GILT" if (body.parity or 0) == 0 else "OPEN",
     )
     db.add(sow)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # 동시 생성 TOCTOU: dup-check 통과 후 두 요청이 같은 ear_tag INSERT → UNIQUE(farm_id,ear_tag)
+        # 위반. 피그플랜 MAX+1 채번 경쟁조건의 PigOS 대응 — 500 대신 깔끔한 409(ConflictError).
+        await db.rollback()
+        raise ConflictError(f"ear_tag '{body.ear_tag}' already exists in this farm")
     await db.refresh(sow)
     return SowResponse.model_validate(sow)
 
