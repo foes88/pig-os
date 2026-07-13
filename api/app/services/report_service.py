@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import case, func, select, text
+from sqlalchemy import bindparam, case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError
@@ -287,10 +287,10 @@ async def _country_kpi_benchmarks(db: AsyncSession, farm) -> list[dict]:
             SELECT scope_code, metric_code, target_value
             FROM default_metric_values
             WHERE scope_type = 'region'
-              AND scope_code = ANY(:countries)
+              AND scope_code IN :countries
               AND metric_code IN ('PSY', 'NPD', 'FARROWING_RATE')
             """
-        ),
+        ).bindparams(bindparam("countries", expanding=True)),
         {"countries": ordered},
     )
     by_country: dict[str, dict] = {c: {"country": c, "psy": None, "npd": None,
