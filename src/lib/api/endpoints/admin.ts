@@ -5,6 +5,7 @@ import type {
   AdminOverview,
   AdminPaged,
   DataMonitorRow,
+  FarmDataDetail,
   AdminOrgFarm,
   AdminOrgRow,
   AdminRuleRow,
@@ -47,6 +48,8 @@ export interface MemberQuery {
 export const adminApi = {
   overview: () => apiClient.get<AdminOverview>(`${BASE}/overview`).then((r) => r.data),
   dataMonitor: () => apiClient.get<DataMonitorRow[]>(`${BASE}/data-monitor`).then((r) => r.data),
+  dataMonitorDetail: (farmId: string) =>
+    apiClient.get<FarmDataDetail>(`${BASE}/data-monitor/${farmId}`).then((r) => r.data),
   me: () => apiClient.get<AdminMe>(`${BASE}/me`).then((r) => r.data),
 
   // 회원

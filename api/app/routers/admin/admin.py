@@ -3,7 +3,7 @@
 SUPER_ADMIN 전용. 전사(cross-tenant) 조회/운영. 라우터 전체 require_super_admin 가드.
 프리픽스: /api/v1/admin. 회원 관리는 admin/users.py, 콘텐츠는 admin/content.py 등으로 분리.
 """
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 
 from app.core.dependencies import DbDep, SuperAdmin, require_super_admin
+from app.core.exceptions import NotFoundError
 from app.db.models.platform import User
 
 router = APIRouter(
@@ -138,6 +139,114 @@ async def data_monitor(db: DbDep, _admin: SuperAdmin) -> list[DataMonitorRow]:
         )
         for r in rows
     ]
+
+
+# ── Farm Data Monitor 상세 드릴다운 ──────────────────────────────────────────
+# 농장 클릭 → 이벤트 유형별 분해 · 모돈 상태분포 · 최근 활동 · KPI. "깊게 보기".
+_FARM_EVENTS_UNION = """
+  SELECT 'mating'    AS t, mating_date    AS d, created_at AS c FROM matings           WHERE farm_id=:f AND deleted_at IS NULL
+  UNION ALL SELECT 'farrowing', farrowing_date, created_at FROM farrowings             WHERE farm_id=:f AND deleted_at IS NULL
+  UNION ALL SELECT 'weaning',   weaning_date,   created_at FROM weanings               WHERE farm_id=:f AND deleted_at IS NULL
+  UNION ALL SELECT 'health',    event_date,     created_at FROM health_events          WHERE farm_id=:f AND deleted_at IS NULL
+  UNION ALL SELECT 'removal',   removal_date,   created_at FROM removals               WHERE farm_id=:f AND deleted_at IS NULL
+  UNION ALL SELECT 'piglet',    event_date,     created_at FROM piglet_events          WHERE farm_id=:f AND deleted_at IS NULL
+  UNION ALL SELECT 'feed',      record_date,    created_at FROM feed_records           WHERE farm_id=:f AND deleted_at IS NULL
+"""
+
+
+class SowStatusCount(BaseModel):
+    status: str
+    count: int
+
+
+class EventTypeBreakdown(BaseModel):
+    type: str
+    total: int
+    count_30d: int
+    last_at: date | None
+
+
+class RecentEvent(BaseModel):
+    type: str
+    date: date | None
+
+
+class FarmDataDetail(BaseModel):
+    farm_id: str
+    farm_name: str
+    country: str
+    org_name: str | None = None
+    timezone: str | None = None
+    currency: str | None = None
+    created_at: datetime | None = None
+    total_sows: int
+    sows_by_status: list[SowStatusCount]
+    event_breakdown: list[EventTypeBreakdown]
+    recent_events: list[RecentEvent]
+    psy: float | None = None
+    total_weaned_ytd: int = 0
+    avg_sows_ytd: float | None = None
+
+
+@router.get("/data-monitor/{farm_id}", response_model=FarmDataDetail)
+async def data_monitor_detail(farm_id: str, db: DbDep, _admin: SuperAdmin) -> FarmDataDetail:
+    """농장 상세 — 이벤트 유형별 분해·모돈 상태분포·최근 활동·PSY. 운영자 심층 조회."""
+    meta = (await db.execute(text(
+        "SELECT f.name, f.country, f.timezone, f.currency, f.created_at, o.name AS org_name "
+        "FROM farms f LEFT JOIN organizations o ON o.id = f.org_id WHERE f.id = :f"),
+        {"f": farm_id})).mappings().first()
+    if not meta:
+        raise NotFoundError(f"Farm {farm_id} not found")
+
+    sbs = (await db.execute(text(
+        "SELECT status, count(*) AS c FROM sows WHERE farm_id=:f AND deleted_at IS NULL "
+        "GROUP BY status ORDER BY 2 DESC"), {"f": farm_id})).all()
+    sows_by_status = [SowStatusCount(status=s, count=c) for s, c in sbs]
+    total_sows = sum(x.count for x in sows_by_status)
+
+    brk = (await db.execute(text(
+        f"SELECT t, count(*) AS total, "
+        f"count(*) FILTER (WHERE c >= now() - interval '30 days') AS c30, max(d) AS last_at "
+        f"FROM ({_FARM_EVENTS_UNION}) x GROUP BY t ORDER BY total DESC"), {"f": farm_id})).mappings().all()
+    event_breakdown = [
+        EventTypeBreakdown(type=r["t"], total=r["total"], count_30d=r["c30"], last_at=r["last_at"])
+        for r in brk
+    ]
+
+    rec = (await db.execute(text(
+        f"SELECT t, d FROM ({_FARM_EVENTS_UNION}) x WHERE d IS NOT NULL ORDER BY d DESC LIMIT 15"),
+        {"f": farm_id})).all()
+    recent_events = [RecentEvent(type=t, date=d) for t, d in rec]
+
+    # PSY(당해년도) — 기존 KPI 엔진 재사용(대시보드 값과 동일 정의)
+    psy = total_weaned = 0
+    avg_sows = None
+    try:
+        from app.services.kpi_service import calculate_psy
+        detail = await calculate_psy(db, farm_id, datetime.now(UTC).year)  # type: ignore[arg-type]
+    except Exception:  # noqa: BLE001 — KPI 실패해도 나머지 상세는 반환
+        detail = None
+    if detail:
+        psy = detail.psy
+        total_weaned = detail.total_weaned
+        avg_sows = detail.avg_sow_count
+
+    return FarmDataDetail(
+        farm_id=farm_id,
+        farm_name=meta["name"],
+        country=meta["country"],
+        org_name=meta["org_name"],
+        timezone=meta["timezone"],
+        currency=meta["currency"],
+        created_at=meta["created_at"],
+        total_sows=total_sows,
+        sows_by_status=sows_by_status,
+        event_breakdown=event_breakdown,
+        recent_events=recent_events,
+        psy=psy,
+        total_weaned_ytd=total_weaned,
+        avg_sows_ytd=avg_sows,
+    )
 
 
 class AdminWhoAmI(BaseModel):

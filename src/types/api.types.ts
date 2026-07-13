@@ -1127,6 +1127,27 @@ export interface DataMonitorRow {
   status: "onboarding" | "active" | "idle" | "stale";
 }
 
+// 농장 데이터 심층 드릴다운 (GET /admin/data-monitor/{farm_id})
+export interface SowStatusCount { status: string; count: number; }
+export interface EventTypeBreakdown { type: string; total: number; count_30d: number; last_at: string | null; }
+export interface RecentEvent { type: string; date: string | null; }
+export interface FarmDataDetail {
+  farm_id: string;
+  farm_name: string;
+  country: string;
+  org_name: string | null;
+  timezone: string | null;
+  currency: string | null;
+  created_at: string | null;
+  total_sows: number;
+  sows_by_status: SowStatusCount[];
+  event_breakdown: EventTypeBreakdown[];
+  recent_events: RecentEvent[];
+  psy: number | null;
+  total_weaned_ytd: number;
+  avg_sows_ytd: number | null;
+}
+
 export interface AdminMemberRow {
   id: string;
   email: string | null;

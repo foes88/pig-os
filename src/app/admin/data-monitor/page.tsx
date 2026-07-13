@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Activity, AlertTriangle, CircleDashed, PauseCircle, CheckCircle2 } from "lucide-react";
 import { adminApi } from "@/lib/api/endpoints/admin";
 import type { DataMonitorRow } from "@/types/api.types";
@@ -31,6 +32,7 @@ const STATUS_META: Record<DataMonitorRow["status"], { cls: string; icon: typeof 
 
 export default function DataMonitorPage() {
   const locale = useLocale();
+  const router = useRouter();
   const c = T[locale] ?? T.en;
   const { data = [], isLoading, isError } = useQuery({
     queryKey: ["admin", "data-monitor"],
@@ -93,8 +95,12 @@ export default function DataMonitorPage() {
                 ) : data.map((r) => {
                   const m = STATUS_META[r.status];
                   return (
-                    <tr key={r.farm_id} className="border-t border-border hover:bg-bg2/40">
-                      <td className="px-4 py-2.5 font-semibold text-text">{r.farm_name}</td>
+                    <tr
+                      key={r.farm_id}
+                      onClick={() => router.push(`/admin/data-monitor/${r.farm_id}`)}
+                      className="border-t border-border hover:bg-primary-soft/40 cursor-pointer"
+                    >
+                      <td className="px-4 py-2.5 font-semibold text-text underline decoration-dotted decoration-text3 underline-offset-2">{r.farm_name}</td>
                       <td className="px-4 py-2.5 text-text2 font-mono text-xs">{r.country}</td>
                       <td className="px-4 py-2.5 text-right font-mono">{r.sows}</td>
                       <td className="px-4 py-2.5 text-text3 font-mono text-xs">
