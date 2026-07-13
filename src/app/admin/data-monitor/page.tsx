@@ -12,15 +12,15 @@ import type { DataMonitorRow } from "@/types/api.types";
 const T: Record<string, {
   title: string; sub: string; farm: string; country: string; sows: string;
   last: string; e7: string; e30: string; status: string; never: string; empty: string;
-  onboarding: string; active: string; idle: string; stale: string;
+  onboarding: string; active: string; idle: string; stale: string; issues?: string;
 }> = {
-  en: { title: "Farm Data Monitor", sub: "Which farms are entering data — and which have gone quiet.", farm: "Farm", country: "Country", sows: "Sows", last: "Last entry", e7: "7d", e30: "30d", status: "Status", never: "never", empty: "No active farms yet.", onboarding: "Onboarding", active: "Active", idle: "Idle", stale: "Stale" },
-  ko: { title: "농장 데이터 모니터", sub: "어느 농장이 데이터를 입력하고, 어느 농장이 조용한지.", farm: "농장", country: "국가", sows: "모돈", last: "마지막 입력", e7: "7일", e30: "30일", status: "상태", never: "없음", empty: "활성 농장이 아직 없습니다.", onboarding: "온보딩", active: "활성", idle: "휴면", stale: "방치" },
-  zh: { title: "农场数据监控", sub: "哪些农场在录入数据，哪些已沉寂。", farm: "农场", country: "国家", sows: "母猪", last: "最后录入", e7: "7天", e30: "30天", status: "状态", never: "无", empty: "暂无活跃农场。", onboarding: "引导中", active: "活跃", idle: "闲置", stale: "沉寂" },
-  es: { title: "Monitor de datos de granjas", sub: "Qué granjas registran datos y cuáles se han quedado en silencio.", farm: "Granja", country: "País", sows: "Cerdas", last: "Último registro", e7: "7d", e30: "30d", status: "Estado", never: "nunca", empty: "Aún no hay granjas activas.", onboarding: "Iniciando", active: "Activa", idle: "Inactiva", stale: "Abandonada" },
-  vi: { title: "Giám sát dữ liệu trang trại", sub: "Trang trại nào đang nhập dữ liệu và trang trại nào đã im lặng.", farm: "Trang trại", country: "Quốc gia", sows: "Nái", last: "Nhập gần nhất", e7: "7n", e30: "30n", status: "Trạng thái", never: "chưa", empty: "Chưa có trang trại hoạt động.", onboarding: "Bắt đầu", active: "Hoạt động", idle: "Nghỉ", stale: "Bỏ trống" },
-  th: { title: "มอนิเตอร์ข้อมูลฟาร์ม", sub: "ฟาร์มไหนกำลังบันทึกข้อมูล และฟาร์มไหนเงียบไป", farm: "ฟาร์ม", country: "ประเทศ", sows: "แม่สุกร", last: "บันทึกล่าสุด", e7: "7 วัน", e30: "30 วัน", status: "สถานะ", never: "ไม่มี", empty: "ยังไม่มีฟาร์มที่ใช้งาน", onboarding: "เริ่มต้น", active: "ใช้งาน", idle: "ว่าง", stale: "ทิ้งร้าง" },
-  pt: { title: "Monitor de dados das granjas", sub: "Quais granjas estão inserindo dados e quais ficaram em silêncio.", farm: "Granja", country: "País", sows: "Matrizes", last: "Último registro", e7: "7d", e30: "30d", status: "Status", never: "nunca", empty: "Ainda não há granjas ativas.", onboarding: "Integrando", active: "Ativa", idle: "Ociosa", stale: "Abandonada" },
+  en: { title: "Farm Data Monitor", sub: "Which farms are entering data — and which have gone quiet.", farm: "Farm", country: "Country", sows: "Sows", last: "Last entry", e7: "7d", e30: "30d", status: "Status", never: "never", empty: "No active farms yet.", onboarding: "Onboarding", active: "Active", idle: "Idle", stale: "Stale", issues: "Issues" },
+  ko: { title: "농장 데이터 모니터", sub: "어느 농장이 데이터를 입력하고, 어느 농장이 조용한지.", farm: "농장", country: "국가", sows: "모돈", last: "마지막 입력", e7: "7일", e30: "30일", status: "상태", never: "없음", empty: "활성 농장이 아직 없습니다.", onboarding: "온보딩", active: "활성", idle: "휴면", stale: "방치", issues: "이슈" },
+  zh: { title: "农场数据监控", sub: "哪些农场在录入数据，哪些已沉寂。", farm: "农场", country: "国家", sows: "母猪", last: "最后录入", e7: "7天", e30: "30天", status: "状态", never: "无", empty: "暂无活跃农场。", onboarding: "引导中", active: "活跃", idle: "闲置", stale: "沉寂", issues: "问题" },
+  es: { title: "Monitor de datos de granjas", sub: "Qué granjas registran datos y cuáles se han quedado en silencio.", farm: "Granja", country: "País", sows: "Cerdas", last: "Último registro", e7: "7d", e30: "30d", status: "Estado", never: "nunca", empty: "Aún no hay granjas activas.", onboarding: "Iniciando", active: "Activa", idle: "Inactiva", stale: "Abandonada", issues: "Problemas" },
+  vi: { title: "Giám sát dữ liệu trang trại", sub: "Trang trại nào đang nhập dữ liệu và trang trại nào đã im lặng.", farm: "Trang trại", country: "Quốc gia", sows: "Nái", last: "Nhập gần nhất", e7: "7n", e30: "30n", status: "Trạng thái", never: "chưa", empty: "Chưa có trang trại hoạt động.", onboarding: "Bắt đầu", active: "Hoạt động", idle: "Nghỉ", stale: "Bỏ trống", issues: "Lỗi" },
+  th: { title: "มอนิเตอร์ข้อมูลฟาร์ม", sub: "ฟาร์มไหนกำลังบันทึกข้อมูล และฟาร์มไหนเงียบไป", farm: "ฟาร์ม", country: "ประเทศ", sows: "แม่สุกร", last: "บันทึกล่าสุด", e7: "7 วัน", e30: "30 วัน", status: "สถานะ", never: "ไม่มี", empty: "ยังไม่มีฟาร์มที่ใช้งาน", onboarding: "เริ่มต้น", active: "ใช้งาน", idle: "ว่าง", stale: "ทิ้งร้าง", issues: "ปัญหา" },
+  pt: { title: "Monitor de dados das granjas", sub: "Quais granjas estão inserindo dados e quais ficaram em silêncio.", farm: "Granja", country: "País", sows: "Matrizes", last: "Último registro", e7: "7d", e30: "30d", status: "Status", never: "nunca", empty: "Ainda não há granjas ativas.", onboarding: "Integrando", active: "Ativa", idle: "Ociosa", stale: "Abandonada", issues: "Problemas" },
 };
 
 const STATUS_META: Record<DataMonitorRow["status"], { cls: string; icon: typeof Activity }> = {
@@ -84,14 +84,15 @@ export default function DataMonitorPage() {
                   <th className="text-left px-4 py-2.5 font-bold">{c.last}</th>
                   <th className="text-right px-4 py-2.5 font-bold">{c.e7}</th>
                   <th className="text-right px-4 py-2.5 font-bold">{c.e30}</th>
+                  <th className="text-right px-4 py-2.5 font-bold">{c.issues ?? "Issues"}</th>
                   <th className="text-left px-4 py-2.5 font-bold">{c.status}</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-text3">…</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-text3">…</td></tr>
                 ) : data.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-text3">{c.empty}</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-text3">{c.empty}</td></tr>
                 ) : data.map((r) => {
                   const m = STATUS_META[r.status];
                   return (
@@ -108,6 +109,15 @@ export default function DataMonitorPage() {
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono">{r.events_7d}</td>
                       <td className="px-4 py-2.5 text-right font-mono">{r.events_30d}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        {r.issues > 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border bg-red-soft text-danger border-danger/40">
+                            <AlertTriangle size={11} />{r.issues}
+                          </span>
+                        ) : (
+                          <span className="text-text3 font-mono text-xs">0</span>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border ${m.cls}`}>
                           <m.icon size={11} />{c[r.status]}

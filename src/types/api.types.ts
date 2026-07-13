@@ -1124,6 +1124,7 @@ export interface DataMonitorRow {
   events_7d: number;
   events_30d: number;
   events_total: number;
+  issues: number;
   status: "onboarding" | "active" | "idle" | "stale";
 }
 

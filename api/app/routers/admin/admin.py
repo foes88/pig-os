@@ -44,16 +44,32 @@ agg AS (
 ),
 sowc AS (
   SELECT farm_id, count(*) AS sows FROM sows WHERE deleted_at IS NULL GROUP BY farm_id
+),
+iss AS (
+  SELECT farm_id, sum(n) AS issues FROM (
+    SELECT farm_id, count(*) AS n FROM farrowings
+      WHERE deleted_at IS NULL AND total_born <> born_alive + stillborn + mummified GROUP BY farm_id
+    UNION ALL
+    SELECT w.farm_id, count(*) FROM weanings w JOIN farrowings f2 ON f2.id = w.farrowing_id
+      WHERE w.deleted_at IS NULL AND w.weaning_date < f2.farrowing_date GROUP BY w.farm_id
+    UNION ALL
+    SELECT s.farm_id, count(*) FROM sows s
+      WHERE s.status = 'LACTATING' AND s.deleted_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM farrowings f3 WHERE f3.sow_id = s.id AND f3.deleted_at IS NULL)
+      GROUP BY s.farm_id
+  ) u GROUP BY farm_id
 )
 SELECT f.id::text AS farm_id, f.name AS farm_name, f.country,
        COALESCE(sc.sows, 0)         AS sows,
        a.last_event_at,
        COALESCE(a.events_7d, 0)     AS events_7d,
        COALESCE(a.events_30d, 0)    AS events_30d,
-       COALESCE(a.events_total, 0)  AS events_total
+       COALESCE(a.events_total, 0)  AS events_total,
+       COALESCE(iq.issues, 0)       AS issues
 FROM farms f
 LEFT JOIN agg  a  ON a.farm_id = f.id
 LEFT JOIN sowc sc ON sc.farm_id = f.id
+LEFT JOIN iss  iq ON iq.farm_id = f.id
 WHERE f.active = true
 ORDER BY a.last_event_at DESC NULLS LAST
 """
@@ -118,6 +134,7 @@ class DataMonitorRow(BaseModel):
     events_7d: int
     events_30d: int
     events_total: int
+    issues: int = 0  # 데이터 정합성 이슈 수(두수불일치+날짜역전+상태고아)
     status: str  # onboarding | active | idle | stale
 
 
@@ -135,6 +152,7 @@ async def data_monitor(db: DbDep, _admin: SuperAdmin) -> list[DataMonitorRow]:
             events_7d=r["events_7d"],
             events_30d=r["events_30d"],
             events_total=r["events_total"],
+            issues=r["issues"],
             status=_farm_status(r["last_event_at"], r["events_total"]),
         )
         for r in rows
