@@ -13,7 +13,7 @@ from __future__ import annotations
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError
@@ -261,6 +261,83 @@ async def get_production_summary(
         "country_scope": getattr(farm, "country", None),
         "benchmarks": benchmark_values_from_effective(effective),
         "rows": rows,
+    }
+
+
+# 벤치마크 병기 대상 국가 — 농장국가 + 글로벌 참조(한국/미국/브라질). 중복 제거.
+_BENCH_REF_COUNTRIES = ("KR", "US", "BR")
+
+
+async def _country_kpi_benchmarks(db: AsyncSession, farm) -> list[dict]:
+    """PSY/NPD/분만율 목표값을 국가별로 병기(읽기전용 비교 기준).
+
+    default_metric_values의 region 행을 직접 조회(effective 함수는 단일 농장 국가만 반환).
+    농장 국가를 맨 앞에 두고 KR/US/BR 참조를 뒤에 붙인다(중복 국가는 1회만).
+    """
+    scope = getattr(farm, "country", None)
+    ordered: list[str] = []
+    for c in ([scope] if scope else []) + list(_BENCH_REF_COUNTRIES):
+        if c and c not in ordered:
+            ordered.append(c)
+    if not ordered:
+        return []
+    rows = await db.execute(
+        text(
+            """
+            SELECT scope_code, metric_code, target_value
+            FROM default_metric_values
+            WHERE scope_type = 'region'
+              AND scope_code = ANY(:countries)
+              AND metric_code IN ('PSY', 'NPD', 'FARROWING_RATE')
+            """
+        ),
+        {"countries": ordered},
+    )
+    by_country: dict[str, dict] = {c: {"country": c, "psy": None, "npd": None,
+                                       "farrowing_rate": None} for c in ordered}
+    key = {"PSY": "psy", "NPD": "npd", "FARROWING_RATE": "farrowing_rate"}
+    for r in rows:
+        tgt = float(r.target_value) if r.target_value is not None else None
+        by_country[r.scope_code][key[r.metric_code]] = tgt
+    return [by_country[c] for c in ordered]
+
+
+async def get_annual_kpi_trend(db: AsyncSession, farm, years: int, end_year: int) -> dict:
+    """PSY/NPD 연도별 추세 + 국가 벤치마크 병기.
+
+    번식 연간집계(교배/분만/분만율)는 1회 조회, PSY/NPD는 연도별 계산.
+    데이터 없는 연도는 null(추세선에서 끊김 처리는 프론트 몫).
+    """
+    from app.services import kpi_service  # 지연 임포트(순환 방지)
+
+    start_year = end_year - years + 1
+    repro = await get_reproduction_report(
+        db, farm.id, date(start_year, 1, 1), date(end_year, 12, 31), "annual", "period"
+    )
+    repro_by_year = {str(r["period"])[:4]: r for r in repro}
+
+    rows: list[dict] = []
+    for y in range(start_year, end_year + 1):
+        psy = await kpi_service.calculate_psy(db, farm.id, y)
+        npd = await kpi_service.calculate_npd_breakdown(
+            db, farm.id, date(y, 1, 1), date(y, 12, 31)
+        )
+        rr = repro_by_year.get(str(y), {})
+        rows.append({
+            "year": y,
+            "psy": psy.psy if psy else None,
+            "npd": round(npd.avg_npd, 1) if npd and npd.avg_npd is not None else None,
+            "avg_sows": psy.avg_sow_count if psy else None,
+            "total_weaned": psy.total_weaned if psy else 0,
+            "total_farrowings": rr.get("total_farrowings", 0) or 0,
+            "total_matings": rr.get("total_matings", 0) or 0,
+            "farrowing_rate": rr.get("fr"),
+        })
+
+    return {
+        "country_scope": getattr(farm, "country", None),
+        "rows": rows,
+        "country_benchmarks": await _country_kpi_benchmarks(db, farm),
     }
 
 

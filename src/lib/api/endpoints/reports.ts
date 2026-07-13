@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import type {
+  AnnualKpiTrend,
   ComprehensiveDailyReport,
   CostSummary,
   DailyReport,
@@ -83,5 +84,10 @@ export const reportsApi = {
       .get<CostSummary>(`${base(farmId)}/cost-summary`, {
         params: { start_date: startDate, end_date: endDate, period },
       })
+      .then((r) => r.data),
+
+  annualKpi: (farmId: string, years = 5) =>
+    apiClient
+      .get<AnnualKpiTrend>(`${base(farmId)}/annual-kpi`, { params: { years } })
       .then((r) => r.data),
 };

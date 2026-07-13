@@ -9,6 +9,7 @@ import { useLocale } from "next-intl";
 const TABS = [
   { href: "/reports",                    label: { en: "Production", ko: "생산성적", zh: "生产成绩", es: "Producción", vi: "Năng suất" } },
   { href: "/reports/reproduction",       label: { en: "Reproduction", ko: "번식성적", zh: "繁殖成绩", es: "Reproducción", vi: "Sinh sản" } },
+  { href: "/reports/trend",              label: { en: "Trend", ko: "연도추세", zh: "年度趋势", es: "Tendencia", vi: "Xu hướng" } },
   { href: "/reports/farrowing",          label: { en: "Farrowing", ko: "분만성적", zh: "分娩成绩", es: "Partos", vi: "Đẻ" } },
   { href: "/reports/grow-finish",        label: { en: "Grow-Finish", ko: "비육성적", zh: "育肥成绩", es: "Engorde", vi: "Vỗ béo" } },
   { href: "/reports/cost",               label: { en: "Cost / Revenue", ko: "원가·수익", zh: "成本·收益", es: "Costo·Ingreso", vi: "Chi phí·Doanh thu" } },

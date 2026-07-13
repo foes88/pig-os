@@ -933,6 +933,31 @@ export interface CostSummary {
   feed_records_with_cost: number;
 }
 
+// PSY/NPD 연도별 추세 + 국가 벤치마크 병기
+export interface AnnualKpiRow {
+  year: number;
+  psy: number | null;
+  npd: number | null;
+  avg_sows: number | null;
+  total_weaned: number;
+  total_farrowings: number;
+  total_matings: number;
+  farrowing_rate: number | null;
+}
+
+export interface CountryBenchmark {
+  country: string;
+  psy: number | null;
+  npd: number | null;
+  farrowing_rate: number | null;
+}
+
+export interface AnnualKpiTrend {
+  country_scope: string | null;
+  rows: AnnualKpiRow[];
+  country_benchmarks: CountryBenchmark[];
+}
+
 export interface DailyCount {
   count: number;
   total_born: number;

@@ -12,6 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DbDep, FarmDep
 from app.schemas.report import (
+    AnnualKpiTrend,
     CostSummary,
     DailyReport,
     DataQualityIssue,
@@ -135,6 +136,18 @@ async def production_summary(
     return await report_service.get_production_summary(
         db, farm, start_date, end_date, period, group_by
     )
+
+
+@router.get("/annual-kpi", response_model=AnnualKpiTrend)
+async def annual_kpi_trend(
+    farm: FarmDep,
+    db: DbDep,
+    years: int = Query(5, ge=2, le=10),
+):
+    """PSY/NPD 연도별 추세(최근 N년) + 국가 벤치마크(농장국가 + KR/US/BR) 병기.
+    end_year는 농장 타임존 기준 올해. 데이터 없는 연도는 null 행으로 반환."""
+    end_year = _farm_today(farm).year
+    return await report_service.get_annual_kpi_trend(db, farm, years, end_year)
 
 
 @router.get("/cost-summary", response_model=CostSummary)

@@ -214,3 +214,30 @@ class CostSummary(BaseModel):
     feed_cost_coverage: float | None = None  # unit_cost 입력된 사료행 비율(%)
     feed_records_total: int = 0
     feed_records_with_cost: int = 0
+
+
+class AnnualKpiRow(BaseModel):
+    """연도별 핵심 KPI 1행 (추세 리포트). 데이터 부족 연도는 null."""
+    year: int
+    psy: float | None = None            # 모돈두당 연간 이유두수
+    npd: float | None = None            # 평균 비생산일수(이유~재교배)
+    avg_sows: float | None = None       # 연평균 활성 모돈수(PSY 분모)
+    total_weaned: int = 0
+    total_farrowings: int = 0
+    total_matings: int = 0
+    farrowing_rate: float | None = None  # 분만율(%)
+
+
+class CountryBenchmark(BaseModel):
+    """국가별 KPI 목표값 병기용 (읽기전용 비교 기준)."""
+    country: str                        # scope_code (KR/US/BR/CN ...)
+    psy: float | None = None
+    npd: float | None = None
+    farrowing_rate: float | None = None
+
+
+class AnnualKpiTrend(BaseModel):
+    """PSY/NPD 연도별 추세 + 국가 벤치마크 병기."""
+    country_scope: str | None = None    # 농장 소속 국가
+    rows: list[AnnualKpiRow] = []       # 오래된 연도→최근 연도
+    country_benchmarks: list[CountryBenchmark] = []  # 농장국가 + 참조국가(KR/US/BR)
