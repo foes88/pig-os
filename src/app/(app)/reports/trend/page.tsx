@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TrendingUp } from "lucide-react";
 import { ReportsTabs } from "@/components/ReportsTabs";
 import { ReportExportBar } from "@/components/ReportExportBar";
+import { MiniLineChart } from "@/components/MiniLineChart";
 import { downloadCsv } from "@/lib/utils/csv";
 import { reportsApi } from "@/lib/api/endpoints/reports";
 import { useAuthStore } from "@/store/auth.store";
@@ -28,69 +29,6 @@ const PRESETS = [
   { key: "y5", years: 5 },
   { key: "y10", years: 10 },
 ];
-
-// ── 인라인 SVG 라인차트 (외부 차트 라이브러리 없음) ──
-function LineChart({
-  points,
-  benchmark,
-  color,
-  label,
-}: {
-  points: { x: string; y: number | null }[];
-  benchmark?: number | null;
-  color: string;
-  label: string;
-}) {
-  const W = 320, H = 120, padX = 8, padTop = 12, padBottom = 20;
-  const vals = points.map((p) => p.y).filter((v): v is number => v != null);
-  const withBench = benchmark != null ? [...vals, benchmark] : vals;
-  if (vals.length === 0) {
-    return <div className="h-[120px] flex items-center justify-center text-xs text-text3">—</div>;
-  }
-  const lo = Math.min(...withBench), hi = Math.max(...withBench);
-  const span = hi - lo || 1;
-  const plotH = H - padTop - padBottom;
-  const stepX = points.length > 1 ? (W - padX * 2) / (points.length - 1) : 0;
-  const xAt = (i: number) => padX + stepX * i;
-  const yAt = (v: number) => padTop + plotH * (1 - (v - lo) / span);
-
-  // null 은 선을 끊는다(연속 구간만 polyline)
-  const segments: string[] = [];
-  let cur: string[] = [];
-  points.forEach((p, i) => {
-    if (p.y == null) { if (cur.length) { segments.push(cur.join(" ")); cur = []; } return; }
-    cur.push(`${xAt(i).toFixed(1)},${yAt(p.y).toFixed(1)}`);
-  });
-  if (cur.length) segments.push(cur.join(" "));
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[120px]" role="img" aria-label={label}>
-      {benchmark != null && (
-        <>
-          <line x1={padX} x2={W - padX} y1={yAt(benchmark)} y2={yAt(benchmark)}
-            stroke="var(--color-warning, #d97706)" strokeWidth="1" strokeDasharray="4 3" opacity="0.7" />
-          <text x={W - padX} y={yAt(benchmark) - 3} textAnchor="end"
-            className="fill-warning" fontSize="9">{benchmark}</text>
-        </>
-      )}
-      {segments.map((pts, i) => (
-        <polyline key={i} points={pts} fill="none" stroke={color} strokeWidth="2"
-          strokeLinejoin="round" strokeLinecap="round" />
-      ))}
-      {points.map((p, i) => p.y != null && (
-        <g key={i}>
-          <circle cx={xAt(i)} cy={yAt(p.y)} r="3" fill={color} />
-          <text x={xAt(i)} y={yAt(p.y) - 6} textAnchor="middle" fontSize="9" className="fill-text2 font-mono">{p.y}</text>
-        </g>
-      ))}
-      {points.map((p, i) => (
-        <text key={`x${i}`} x={xAt(i)} y={H - 6} textAnchor="middle" fontSize="9" className="fill-text3 font-mono">
-          {p.x}
-        </text>
-      ))}
-    </svg>
-  );
-}
 
 export default function KpiTrendPage() {
   const locale = useLocale();
@@ -163,14 +101,14 @@ export default function KpiTrendPage() {
                 <h2 className="text-sm font-bold">{c.psy}</h2>
                 <span className="text-[10px] text-success">{c.higher}</span>
               </div>
-              <LineChart points={psyPts} benchmark={ownBench?.psy} color="var(--color-primary, #2563eb)" label={c.psy} />
+              <MiniLineChart points={psyPts} benchmark={ownBench?.psy} color="var(--color-primary, #2563eb)" label={c.psy} />
             </div>
             <div className="bg-surface border border-border rounded-2xl p-4">
               <div className="flex items-baseline justify-between mb-1">
                 <h2 className="text-sm font-bold">{c.npd}</h2>
                 <span className="text-[10px] text-text3">{c.lower}</span>
               </div>
-              <LineChart points={npdPts} benchmark={ownBench?.npd} color="var(--color-purple, #7c3aed)" label={c.npd} />
+              <MiniLineChart points={npdPts} benchmark={ownBench?.npd} color="var(--color-purple, #7c3aed)" label={c.npd} />
             </div>
           </div>
 
