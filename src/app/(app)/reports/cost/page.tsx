@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLocale } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { localToday } from "@/lib/date";
 import { downloadCsv } from "@/lib/utils/csv";
 import { ReportsTabs } from "@/components/ReportsTabs";

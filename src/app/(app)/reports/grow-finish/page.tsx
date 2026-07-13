@@ -8,7 +8,6 @@ import { ReportExportBar } from "@/components/ReportExportBar";
 
 import { downloadCsv } from "@/lib/utils/csv";
 import { useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
 import { reportsApi } from "@/lib/api/endpoints/reports";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
