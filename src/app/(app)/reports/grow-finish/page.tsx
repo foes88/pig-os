@@ -4,6 +4,7 @@ import { localToday } from "@/lib/date";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { ReportExportBar } from "@/components/ReportExportBar";
 
 import { downloadCsv } from "@/lib/utils/csv";
 import { useQuery } from "@tanstack/react-query";
@@ -59,21 +60,14 @@ export default function GrowFinishReportPage() {
   };
 
   return (
-    <div className="p-7 max-w-5xl">
-      <ReportsTabs />
+    <div className="p-7 max-w-5xl print-area">
+      <div className="no-print"><ReportsTabs /></div>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
           <p className="text-xs text-text3 mt-0.5">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={exportCsv}
-          disabled={rows.length === 0}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold border border-border rounded-xl px-3.5 py-2 hover:border-primary disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" />
-          CSV
-        </button>
+        <ReportExportBar onCsv={exportCsv} csvDisabled={rows.length === 0} />
       </div>
 
       <div className="flex gap-2 mb-5">

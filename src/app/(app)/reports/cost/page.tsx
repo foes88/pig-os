@@ -7,6 +7,7 @@ import { Download, Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-re
 import { localToday } from "@/lib/date";
 import { downloadCsv } from "@/lib/utils/csv";
 import { ReportsTabs } from "@/components/ReportsTabs";
+import { ReportExportBar } from "@/components/ReportExportBar";
 import { reportsApi } from "@/lib/api/endpoints/reports";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
@@ -76,21 +77,14 @@ export default function CostReportPage() {
   };
 
   return (
-    <div className="p-7 max-w-5xl">
-      <ReportsTabs />
+    <div className="p-7 max-w-5xl print-area">
+      <div className="no-print"><ReportsTabs /></div>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-[22px] font-extrabold tracking-tight">{c.title}</h1>
           <p className="text-xs text-text3 mt-0.5">{c.sub}</p>
         </div>
-        <button
-          onClick={exportCsv}
-          disabled={!hasData}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold border border-border rounded-xl px-3.5 py-2 hover:border-primary disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" />
-          CSV
-        </button>
+        <ReportExportBar onCsv={exportCsv} csvDisabled={!hasData} />
       </div>
 
       <div className="flex gap-2 mb-5">

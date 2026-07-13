@@ -172,3 +172,21 @@
     @apply bg-surface border border-border text-muted rounded-lg px-3 py-2 text-sm transition hover:bg-bg2;
   }
 }
+
+/* ── 인쇄 → PDF (브라우저 Save as PDF, 외부 라이브러리 없음) ────────────────── */
+@media print {
+  /* 화면 크롬 숨김 */
+  aside, nav, .no-print { display: none !important; }
+  body { background: #fff !important; }
+  /* .print-area 만 보이게 */
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area {
+    position: absolute; left: 0; top: 0; width: 100%;
+    padding: 0 !important; margin: 0 !important;
+    color: #000 !important;
+  }
+  .print-area .bg-surface, .print-area .bg-bg2 { background: #fff !important; }
+  main { margin: 0 !important; }
+  @page { margin: 14mm; }
+}
