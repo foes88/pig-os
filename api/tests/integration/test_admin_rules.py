@@ -52,11 +52,24 @@ async def test_rules_list_gate_and_content(client: AsyncClient, db: AsyncSession
 async def test_rule_update_validation_and_persist(client: AsyncClient, db: AsyncSession, test_org: Organization):
     admin = await _mk_user(db, test_org, "SUPER_ADMIN")
     await db.flush()
-    # warning >= critical 차단
+    # above형(WSI): warning >= critical 차단
     bad = await client.patch("/api/v1/admin/rules/wsi.overdue", headers=_auth(admin),
                              json={"warning": 20, "critical": 10})
     assert bad.status_code == 422
-    # 정상 upsert
+    # above형 동일값도 차단
+    same = await client.patch("/api/v1/admin/rules/wsi.overdue", headers=_auth(admin),
+                              json={"warning": 10, "critical": 10})
+    assert same.status_code == 422
+    # below형(PSY, higher-is-better): warning > critical 이 정상 → 허용 (BUG-011)
+    below_ok = await client.patch("/api/v1/admin/rules/psy.below_target", headers=_auth(admin),
+                                  json={"warning": 24, "critical": 20})
+    assert below_ok.status_code == 200, below_ok.text
+    assert below_ok.json()["warning"] == 24 and below_ok.json()["critical"] == 20
+    # below형에서 warning < critical 은 방향 위반 → 차단
+    below_bad = await client.patch("/api/v1/admin/rules/psy.below_target", headers=_auth(admin),
+                                   json={"warning": 20, "critical": 24})
+    assert below_bad.status_code == 422
+    # 정상 upsert (above형)
     ok = await client.patch("/api/v1/admin/rules/wsi.overdue", headers=_auth(admin),
                             json={"enabled": False, "warning": 8, "critical": 12})
     assert ok.status_code == 200
