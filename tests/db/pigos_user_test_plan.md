@@ -94,6 +94,12 @@
 | BUG-014 | /admin/data-monitor | ru 사용자 영어 노출 | 인라인 T에 ru 누락 | 低 | ✅ ru 추가 |
 
 | BUG-015 | ReportsTabs·QuickInput·AskAi·Sidebar·대시보드·원가리포트 | th/pt/ru 사용자 영어 노출 | 인라인 라벨이 5개어만 정의 | 中 | ✅ 8개어 보강 |
+| BUG-016 | sync piglet_event | target_sow_id 미검증 저장(dangling FK) | 오프라인 sync가 REST의 인-팜 검증 누락 | 低 | ✅ 인-팜 검증+SyncRejected |
+
+### 3차 보안감사 결과 (2026-07-15)
+- **테넌트 격리(farm_id IDOR)·RBAC·auth 전 경로 CLEAN** — path-id 조회가 dependency/service/query 3계층에서 farm_id 강제.
+- `PATCH /me`는 name/phone만 수정(role/org/system_role 자기변경 불가) 확인.
+- 잔여 hardening: support.create_ticket farm_id 멤버십 미검증(라벨 전용, 유출 아님) — 후속.
 
 > 백엔드 pytest는 로컬 Docker 엔진 미기동으로 미실행(환경 이슈). Docker 복구 시 재실행: delete_weaning 가드·PATCH /me·chat ru·annual-kpi.
 
