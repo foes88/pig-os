@@ -93,6 +93,10 @@
 | BUG-013 | finishers/boars/piglets | 기본 limit 초과분 조용히 유실 | 프론트가 limit 미전송 → 서버 기본(50/100) 캡 | 中 | ✅ 엔드포인트 최대(200/500/200) 요청 |
 | BUG-014 | /admin/data-monitor | ru 사용자 영어 노출 | 인라인 T에 ru 누락 | 低 | ✅ ru 추가 |
 
+| BUG-015 | ReportsTabs·QuickInput·AskAi·Sidebar·대시보드·원가리포트 | th/pt/ru 사용자 영어 노출 | 인라인 라벨이 5개어만 정의 | 中 | ✅ 8개어 보강 |
+
+> 백엔드 pytest는 로컬 Docker 엔진 미기동으로 미실행(환경 이슈). Docker 복구 시 재실행: delete_weaning 가드·PATCH /me·chat ru·annual-kpi.
+
 ### 후속(별도 태스크)
 - 진짜 서버 페이지네이션(offset+total) — finishers/boars/piglets. 현재는 최대치 요청으로 유실만 차단(200/500 초과 농장은 여전히 잘림).
 - 알림 상세 "감지규칙/임계"가 하드코딩(114/21/7/240) — 농장 커스텀 설정 반영 안 됨(표시-계산 불일치 가능). `/config/repro` 연동 필요.
