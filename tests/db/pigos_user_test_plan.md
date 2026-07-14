@@ -88,7 +88,7 @@
 | BUG-008 | /chat (백엔드) | ru 사용자 chat 422 | ChatQuery 패턴에 ru 없음 | 中 | ✅ ru 허용+타입 확장 |
 | BUG-009 | /boars | 필터 전환 시 빈 표+페이저 소실(스트랜딩) | page 클램프/리셋 없음 | 中 | ✅ safePage+setPage(1) |
 | BUG-010 | /settings/profile | 저장 버튼 no-op(가짜 토스트) | handleSave가 API 미호출 | 中 | ✅ PATCH /me 실제 연동 |
-| BUG-011 | /admin/rules | below형(PSY/분만율) 정상 임계 저장 거부 | `warning<critical` 무조건 강제 | 中 | ✅ 동일값만 거부 |
+| BUG-011 | /admin/rules | below형(PSY/분만율) 정상 임계 저장 거부 | `warning<critical` 무조건 강제 | 中 | ✅ 방향-인지 검증(below형 warning>critical / above형 warning<critical). ⚠️초기 "동일값만 거부"는 above형 회귀→pytest로 포착·정정 |
 | BUG-012 | /admin/rules | 저장 실패 무피드백 | mutation onError 없음 | 低 | ✅ 에러 배너 |
 | BUG-013 | finishers/boars/piglets | 기본 limit 초과분 조용히 유실 | 프론트가 limit 미전송 → 서버 기본(50/100) 캡 | 中 | ✅ 엔드포인트 최대(200/500/200) 요청 |
 | BUG-014 | /admin/data-monitor | ru 사용자 영어 노출 | 인라인 T에 ru 누락 | 低 | ✅ ru 추가 |
@@ -101,7 +101,8 @@
 - `PATCH /me`는 name/phone만 수정(role/org/system_role 자기변경 불가) 확인.
 - 잔여 hardening: support.create_ticket farm_id 멤버십 미검증(라벨 전용, 유출 아님) — 후속.
 
-> 백엔드 pytest는 로컬 Docker 엔진 미기동으로 미실행(환경 이슈). Docker 복구 시 재실행: delete_weaning 가드·PATCH /me·chat ru·annual-kpi.
+> 백엔드 pytest **실행 완료(2026-07-15, Docker 재기동 성공): 873 passed · 1 skipped · 0 failed**.
+> delete_weaning 가드·PATCH /me·chat ru·sync target·annual-kpi 전부 통과. BUG-011 초기수정 회귀는 pytest가 포착→정정.
 
 ### 후속(별도 태스크)
 - 진짜 서버 페이지네이션(offset+total) — finishers/boars/piglets. 현재는 최대치 요청으로 유실만 차단(200/500 초과 농장은 여전히 잘림).
