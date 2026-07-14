@@ -46,6 +46,7 @@ const GS: Record<string, { title: string; sub: string; s1: string; s2: string; s
   vi: { title: "Bắt đầu", sub: "Vài bước để mở khóa thông tin trang trại.", s1: "Đăng ký nái", s2: "Ghi sự kiện sinh sản", s2hint: "Thêm phối giống · đẻ · cai sữa để xem PSY, tỷ lệ đẻ và thông tin AI.", cta: "Bắt đầu ghi" },
   th: { title: "เริ่มต้นใช้งาน", sub: "ไม่กี่ขั้นตอนเพื่อปลดล็อกข้อมูลเชิงลึกของฟาร์ม", s1: "ลงทะเบียนแม่สุกร", s2: "บันทึกเหตุการณ์ผสมพันธุ์", s2hint: "เพิ่มการผสม · คลอด · หย่านม เพื่อดู PSY อัตราการคลอด และ AI insights", cta: "เริ่มบันทึก" },
   pt: { title: "Primeiros passos", sub: "Alguns passos para ativar os insights da sua granja.", s1: "Cadastre suas matrizes", s2: "Registre eventos reprodutivos", s2hint: "Adicione cobertura · parto · desmame para ver PSY, taxa de parto e insights de IA.", cta: "Começar a registrar" },
+  ru: { title: "Начало работы", sub: "Несколько шагов, чтобы открыть аналитику фермы.", s1: "Зарегистрируйте свиноматок", s2: "Записывайте события воспроизводства", s2hint: "Добавьте осеменение · опорос · отъём, чтобы увидеть PSY, процент опороса и AI-аналитику.", cta: "Начать запись" },
 };
 
 function StepDot({ done, n }: { done: boolean; n: number }) {

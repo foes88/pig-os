@@ -21,6 +21,9 @@ const SUGGESTED: Partial<Record<Locale, string[]>> & { en: string[] } = {
   zh: ["PSY为何偏低？",            "非生产天数现状",       "分娩率未达标原因",           "今日问题摘要"],
   es: ["¿Por qué es bajo el PSY?","Estado de DNP",       "Tasa de partos baja",      "Resumen de hoy"],
   vi: ["PSY thấp vì sao?",        "Tình trạng NPD",      "Tỷ lệ đẻ chưa đạt",       "Tóm tắt hôm nay"],
+  th: ["ทำไม PSY ต่ำ?",           "สถานะ NPD",           "อัตราคลอดไม่ถึงเป้า",       "ปัญหาวันนี้"],
+  pt: ["Por que o PSY está baixo?","Status de NPD",      "Taxa de parto abaixo",     "Problemas de hoje"],
+  ru: ["Почему низкий PSY?",       "Статус NPD",          "Опорос ниже цели",         "Проблемы сегодня"],
 };
 
 const UI: Partial<Record<Locale, { header: string; subtitle: string; placeholder: string }>> & { en: { header: string; subtitle: string; placeholder: string } } = {
@@ -29,6 +32,9 @@ const UI: Partial<Record<Locale, { header: string; subtitle: string; placeholder
   zh: { header: "PigOS AI", subtitle: "规则引擎分析",                placeholder: "询问您的农场KPI…" },
   es: { header: "PigOS AI", subtitle: "Análisis por motor de reglas", placeholder: "Pregunta sobre los KPI de tu granja…" },
   vi: { header: "PigOS AI", subtitle: "Phân tích Rule Engine",      placeholder: "Hỏi về KPI trang trại…" },
+  th: { header: "PigOS AI", subtitle: "การวิเคราะห์ Rule Engine",   placeholder: "ถามเกี่ยวกับ KPI ฟาร์มของคุณ…" },
+  pt: { header: "PigOS AI", subtitle: "Análise do motor de regras", placeholder: "Pergunte sobre os KPIs da sua granja…" },
+  ru: { header: "PigOS AI", subtitle: "Анализ Rule Engine",         placeholder: "Спросите о KPI вашей фермы…" },
 };
 
 type Msg = { role: "user"; text: string } | { role: "ai"; response: ChatResponse };

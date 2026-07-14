@@ -96,7 +96,7 @@ const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
-  { href: "/settings", icon: Settings, label: { en: "Settings", ko: "설정", zh: "设置", es: "Configuración", vi: "Cài đặt", ru: "Настройки" } },
+  { href: "/settings", icon: Settings, label: { en: "Settings", ko: "설정", zh: "设置", es: "Configuración", vi: "Cài đặt", th: "การตั้งค่า", pt: "Configurações", ru: "Настройки" } },
 ];
 
 interface SidebarProps {

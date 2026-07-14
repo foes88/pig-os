@@ -17,7 +17,7 @@ const TABS: { href: string | null; Icon: LucideIcon; label: L; isAI?: boolean; b
   { href: "/",              Icon: LayoutDashboard, label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ", th: "หน้าหลัก", pt: "Início", ru: "Главная" } },
   { href: "/sows",          Icon: PiggyBank,       label: { en: "Sows",   ko: "모돈",  zh: "母猪", es: "Cerdas",    vi: "Nái", th: "แม่สุกร", pt: "Matrizes", ru: "Свиноматки" } },
   { href: null,             Icon: Sparkles,        label: { en: "AI",     ko: "AI",    zh: "AI",   es: "IA",        vi: "AI", th: "AI", pt: "IA", ru: "ИИ" }, isAI: true },
-  { href: "/alerts", Icon: Bell,            label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo", th: "แจ้งเตือน", pt: "Alertas", ru: "Оповещения" }, badge: 3 },
+  { href: "/alerts", Icon: Bell,            label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo", th: "แจ้งเตือน", pt: "Alertas", ru: "Оповещения" } },
   { href: "/settings",      Icon: Menu,            label: { en: "More",  ko: "더보기", zh: "更多", es: "Más",       vi: "Thêm", th: "เพิ่มเติม", pt: "Mais", ru: "Ещё" } },
 ];
 
