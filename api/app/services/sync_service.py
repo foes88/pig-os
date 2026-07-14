@@ -836,6 +836,20 @@ async def _process_piglet_event(
             id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
             detail={"field": "reason", "message": "invalid reason", "value": item.reason},
         ), None
+    # 양자 상대 모돈(target_sow_id) 검증 — REST record_piglet_event 미러.
+    # 미검증 시 타농장/무효 UUID가 그대로 저장돼 dangling FK 발생(보안감사 hardening).
+    if item.target_sow_id is not None:
+        if item.target_sow_id == item.sow_id:
+            return None, SyncRejected(
+                id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+                detail={"field": "target_sow_id", "message": "target must differ from source sow"},
+            ), None
+        if await _get_sow(db, farm_id, item.target_sow_id) is None:
+            return None, SyncRejected(
+                id=item.id, entity="piglet_event", reason="VALIDATION_FAILED",
+                detail={"field": "target_sow_id", "message": "target_sow_id is not an active sow in this farm",
+                        "value": str(item.target_sow_id)},
+            ), None
 
     if not dry_run:
         # Resolve farrowing_id: explicit or auto-lookup latest for this sow.
