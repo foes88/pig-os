@@ -10493,6 +10493,24 @@ components:
           - type: string
           - type: 'null'
           title: Notes
+        piglet_disposition:
+          anyOf:
+          - type: string
+            pattern: ^(FOSTER_TO|DEATH|WEAN)$
+          - type: 'null'
+          title: Piglet Disposition
+        foster_target_sow_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Foster Target Sow Id
+        piglet_death_reason:
+          anyOf:
+          - type: string
+            pattern: ^(CRUSHING|SCOURS|STARVATION|CONGENITAL|HYPOTHERMIA|OTHER)$
+          - type: 'null'
+          title: Piglet Death Reason
       type: object
       required:
       - removal_type

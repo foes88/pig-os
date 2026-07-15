@@ -51,6 +51,13 @@ class SowCullRequest(BaseModel):
     sale_price: float | None = Field(None, ge=0)
     sale_currency: str | None = Field(None, min_length=3, max_length=3)
     notes: str | None = None
+    # Rule ②: 포유중 모돈 도태 시 잔여 자돈 처리(고아 방지). 잔여>0인데 미지정 시 422.
+    #   FOSTER_TO(foster_target_sow_id 필수) · DEATH(자돈 폐사 명시) · WEAN(조기 이유)
+    piglet_disposition: str | None = Field(None, pattern="^(FOSTER_TO|DEATH|WEAN)$")
+    foster_target_sow_id: UUID | None = None
+    piglet_death_reason: str | None = Field(
+        None, pattern="^(CRUSHING|SCOURS|STARVATION|CONGENITAL|HYPOTHERMIA|OTHER)$"
+    )
 
 
 class RemovalResponse(UUIDMixin):

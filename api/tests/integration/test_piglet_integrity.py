@@ -45,34 +45,82 @@ class TestWeaningCreatesPigletGroup:
         assert groups[0].weaning_date == date(2024, 6, 16)
 
 
-class TestCullLactatingBlocked:
+class TestCullLactatingRule2:
+    """Rule ②: 포유중 모돈 도태 시 잔여 자돈 처리(고아 방지) — 잔여>0이면 disposition 강제."""
     async def _token(self, u):
         return create_access_token(str(u.id), str(u.org_id), ["FARM_OWNER"])
 
-    async def test_cull_lactating_sow_blocked(self, client: AsyncClient, db, test_user, test_farm, test_sow):
-        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
-        test_sow.status = "LACTATING"
-        await db.flush()
-        token = await self._token(test_user)
-        r = await client.post(
-            f"/api/v1/farms/{test_farm.id}/sows/{test_sow.id}/cull",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"removal_type": "CULLED", "removal_date": "2024-06-01"},
-        )
-        assert r.status_code == 422, r.text          # 포유 중 → 차단
-        assert "lactating" in r.text.lower()
+    async def _farrow(self, db, farm, sow, born, fdate=date(2024, 5, 26)):
+        m = Mating(farm_id=farm.id, sow_id=sow.id, mating_date=date(2024, 2, 1),
+                   mating_number=1, mating_type="NATURAL")
+        db.add(m); await db.flush()
+        f = Farrowing(farm_id=farm.id, sow_id=sow.id, mating_id=m.id, farrowing_date=fdate,
+                      total_born=born + 1, born_alive=born, nursing_head=born)
+        db.add(f); await db.flush()
+        return f
 
-    async def test_dead_lactating_sow_allowed(self, client: AsyncClient, db, test_user, test_farm, test_sow):
+    async def _cull(self, client, farm, sow, token, **body):
+        return await client.post(
+            f"/api/v1/farms/{farm.id}/sows/{sow.id}/cull",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"removal_type": "CULLED", "removal_date": "2024-06-01", **body})
+
+    async def test_lactating_no_piglets_allowed(self, client, db, test_user, test_farm, test_sow):
+        # 분만 이력 없음 → 잔여 0 → disposition 불필요, 도태 허용(과거 무조건 차단은 과도).
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "LACTATING"; await db.flush()
+        r = await self._cull(client, test_farm, test_sow, await self._token(test_user))
+        assert r.status_code == 201, r.text
+
+    async def test_lactating_with_piglets_requires_disposition(self, client, db, test_user, test_farm, test_sow):
         db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
         test_sow.status = "LACTATING"
-        await db.flush()
-        token = await self._token(test_user)
-        r = await client.post(
-            f"/api/v1/farms/{test_farm.id}/sows/{test_sow.id}/cull",
-            headers={"Authorization": f"Bearer {token}"},
-            json={"removal_type": "DEAD", "removal_date": "2024-06-01"},
-        )
-        assert r.status_code == 201, r.text          # 사고사는 허용
+        await self._farrow(db, test_farm, test_sow, born=8); await db.flush()
+        r = await self._cull(client, test_farm, test_sow, await self._token(test_user))
+        assert r.status_code == 422, r.text
+        assert "piglet_disposition" in r.text and "8" in r.text
+
+    async def test_disposition_death(self, client, db, test_user, test_farm, test_sow):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "LACTATING"
+        await self._farrow(db, test_farm, test_sow, born=8); await db.flush()
+        r = await self._cull(client, test_farm, test_sow, await self._token(test_user),
+                             piglet_disposition="DEATH", piglet_death_reason="STARVATION")
+        assert r.status_code == 201, r.text
+        await db.refresh(test_sow)
+        assert test_sow.status == "CULLED"
+
+    async def test_disposition_wean(self, client, db, test_user, test_farm, test_sow):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "LACTATING"
+        f = await self._farrow(db, test_farm, test_sow, born=9); await db.flush()
+        r = await self._cull(client, test_farm, test_sow, await self._token(test_user),
+                             piglet_disposition="WEAN")
+        assert r.status_code == 201, r.text
+        weanings = list(await db.scalars(select(Weaning).where(Weaning.farrowing_id == f.id)))
+        assert len(weanings) == 1 and weanings[0].weaned_count == 9
+
+    async def test_disposition_foster_to(self, client, db, test_user, test_farm, test_sow):
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "LACTATING"
+        await self._farrow(db, test_farm, test_sow, born=7)
+        # 전출 대상: 같은 농장의 다른 포유 모돈(분만 이력 필요 — 거울 FOSTER_IN)
+        target = Sow(farm_id=test_farm.id, ear_tag="FOSTER-TGT", entry_date=datetime(2024, 1, 1, tzinfo=UTC),
+                     entry_type="GILT", parity=1, status="LACTATING")
+        db.add(target); await db.flush()
+        await self._farrow(db, test_farm, target, born=6); await db.flush()
+        r = await self._cull(client, test_farm, test_sow, await self._token(test_user),
+                             piglet_disposition="FOSTER_TO", foster_target_sow_id=str(target.id))
+        assert r.status_code == 201, r.text
+
+    async def test_dead_lactating_sow_allowed(self, client, db, test_user, test_farm, test_sow):
+        # 사고사(DEAD)는 disposition 강제 안 함(현실상 차단 불가).
+        db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))
+        test_sow.status = "LACTATING"
+        await self._farrow(db, test_farm, test_sow, born=8); await db.flush()
+        r = await self._cull(client, test_farm, test_sow, await self._token(test_user),
+                             removal_type="DEAD")
+        assert r.status_code == 201, r.text
 
 
 class TestEventStateGuards:

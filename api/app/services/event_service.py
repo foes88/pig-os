@@ -559,6 +559,29 @@ async def _calc_piglet_adjustments(
     return foster_in, foster_out, deaths
 
 
+async def count_unweaned_piglets(
+    db: AsyncSession, farm_id: UUID, sow_id: UUID
+) -> tuple[int, "Farrowing | None"]:
+    """포유중 모돈의 잔여(미이유) 자돈수 = 유효복당 - 기존이유합. record_weaning의 remaining과 동일 계산.
+    최근 분만 기준. 분만 이력 없으면 (0, None). Rule ②(포유 도태 시 자돈 처리) 판정용."""
+    farrowing = await db.scalar(
+        select(Farrowing)
+        .where(Farrowing.sow_id == sow_id, Farrowing.farm_id == farm_id,
+               Farrowing.deleted_at.is_(None))
+        .order_by(Farrowing.farrowing_date.desc())
+        .limit(1)
+    )
+    if not farrowing:
+        return 0, None
+    foster_in, foster_out, deaths = await _calc_piglet_adjustments(db, farrowing.id)
+    effective = max(0, farrowing.born_alive + foster_in - foster_out - deaths)
+    prior_weaned = await db.scalar(
+        select(func.coalesce(func.sum(Weaning.weaned_count), 0)).where(
+            Weaning.farrowing_id == farrowing.id, Weaning.deleted_at.is_(None))
+    ) or 0
+    return max(0, effective - int(prior_weaned)), farrowing
+
+
 # 번식사고/종료 이벤트의 모돈 상태 전이 — REST·sync 공유(드리프트 방지, Codex P1)
 _REPRO_ALIAS = {"CULL": "CULLED", "DEATH": "DEAD"}
 _REPRO_TERMINAL = ("CULLED", "DEAD", "SOLD", "TRANSFER_OUT")

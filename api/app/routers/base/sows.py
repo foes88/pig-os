@@ -19,6 +19,7 @@ from app.db.models.health import HealthEvent, Removal
 from app.db.models.platform import AuditLog
 from app.db.models.sow import PigletTransfer, Sow
 from app.schemas.common import PagedResponse, PageMeta
+from app.schemas.events import PigletEventCreate, WeaningCreate
 from app.schemas.sow import (
     RemovalResponse,
     SowCreate,
@@ -26,7 +27,13 @@ from app.schemas.sow import (
     SowResponse,
     SowUpdate,
 )
-from app.services.event_service import _ensure_period_unlocked, _get_open_cycle
+from app.services.event_service import (
+    _ensure_period_unlocked,
+    _get_open_cycle,
+    count_unweaned_piglets,
+    record_piglet_event,
+    record_weaning,
+)
 
 router = APIRouter(prefix="/farms/{farm_id}/sows", tags=["Sows"])
 
@@ -207,13 +214,6 @@ async def cull_sow(
     if not sow:
         raise NotFoundError(f"Sow {sow_id} not found")
 
-    # 데이터 정합성: 포유 중 모돈 도태/판매/전출 시 자돈이 고아가 됨 → 이유·양자 먼저.
-    # (사고사 DEAD는 현실상 막을 수 없어 허용)
-    if sow.status == "LACTATING" and body.removal_type in ("CULLED", "SOLD", "TRANSFER"):
-        raise ValidationError(
-            "Sow is lactating — wean or foster the nursing piglets before removal/sale"
-        )
-
     # 정합성: 도폐사일은 입식일 이후 & 미래일 금지 (입적 이력 보호)
     entry_d = sow.entry_date.date() if hasattr(sow.entry_date, "date") else sow.entry_date
     if entry_d and body.removal_date < entry_d:
@@ -224,6 +224,42 @@ async def cull_sow(
     # 월마감 잠금: 도폐사일이 속한 월이 잠겨있으면 423 (확정 데이터 보호 — 다른 이벤트 경로와 동일).
     # removal은 모돈 수/PSY 분모·손실·일별보고서 입력이라 잠긴 월로 백데이트 금지.
     await _ensure_period_unlocked(db, farm.id, body.removal_date)
+
+    # Rule ② (docs/specs/2026-07-10_lactating-cull-piglet-rule.md): 포유중 모돈을 도태/판매/전출할 때
+    # 잔여(미이유) 자돈이 고아가 되지 않도록 처리방식을 명시 강제. 잔여>0인데 미지정 → 422.
+    # FOSTER_TO(대상모돈 전출)·DEATH(자돈 폐사 명시)·WEAN(조기 이유) 중 택일 실행 후 도태.
+    # (DEAD 사고사는 현실상 차단 불가 → 강제 안 함. 잔여 0이면 처리 불필요.)
+    if sow.status == "LACTATING" and body.removal_type in ("CULLED", "SOLD", "TRANSFER"):
+        remaining, farrowing = await count_unweaned_piglets(db, farm.id, sow.id)
+        if remaining > 0:
+            disp = body.piglet_disposition
+            fid = farrowing.id if farrowing else None
+            if disp is None:
+                raise ValidationError(
+                    f"Sow is lactating with {remaining} un-weaned piglet(s) — set "
+                    "piglet_disposition (FOSTER_TO / DEATH / WEAN)"
+                )
+            if disp == "FOSTER_TO":
+                if not body.foster_target_sow_id:
+                    raise ValidationError("FOSTER_TO requires foster_target_sow_id")
+                await record_piglet_event(db, farm.id, current_user.id, PigletEventCreate(
+                    sow_id=sow.id, farrowing_id=fid, event_date=body.removal_date,
+                    event_type="FOSTER_OUT", piglet_count=remaining,
+                    target_sow_id=body.foster_target_sow_id))
+            elif disp == "DEATH":
+                await record_piglet_event(db, farm.id, current_user.id, PigletEventCreate(
+                    sow_id=sow.id, farrowing_id=fid, event_date=body.removal_date,
+                    event_type="DEATH", piglet_count=remaining,
+                    reason=body.piglet_death_reason or "OTHER"))
+            elif disp == "WEAN":
+                await record_weaning(db, farm.id, current_user.id, WeaningCreate(
+                    sow_id=sow.id, farrowing_id=fid, weaning_date=body.removal_date,
+                    weaned_count=remaining), import_mode=True)
+            # 처리 서비스가 내부 커밋 → sow 재조회(스테일 객체 방지). 중간상태도 유효(재시도 수렴).
+            sow = await db.scalar(select(Sow).where(
+                Sow.id == sow_id, Sow.farm_id == farm.id, Sow.deleted_at.is_(None)))
+            if not sow:
+                raise NotFoundError(f"Sow {sow_id} not found")
 
     now = datetime.now(UTC)
 
