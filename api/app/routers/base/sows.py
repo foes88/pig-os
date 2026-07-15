@@ -98,7 +98,9 @@ async def create_sow(body: SowCreate, farm: FarmDep, db: DbDep, current_user: Cu
         )
     )
     if dup:
-        raise ValidationError(f"ear_tag '{body.ear_tag}' already exists in this farm")
+        # 중복 이표 = 충돌(409). 사전검사·동시race(아래 IntegrityError) 모두 409로 일관 —
+        # 모바일 계약(중복 이표 전용 처리) 및 matings 동일날짜 중복(409)과 정합.
+        raise ConflictError(f"ear_tag '{body.ear_tag}' already exists in this farm")
 
     sow = Sow(
         farm_id=farm.id,

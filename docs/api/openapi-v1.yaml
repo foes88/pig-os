@@ -144,6 +144,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/password-reset/request:
+    post:
+      tags:
+      - Auth
+      summary: Password Reset Request
+      description: 비밀번호 재설정 요청 — 계정 존재 여부와 무관하게 항상 204(열거 방지). 존재 시 토큰 발급·전달.
+      operationId: password_reset_request_api_v1_auth_password_reset_request_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+        required: true
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/password-reset/confirm:
+    post:
+      tags:
+      - Auth
+      summary: Password Reset Confirm
+      description: 토큰 + 새 비번 → 검증 후 비번 갱신(+ refresh 전부 폐기). 무효/만료 토큰은 400.
+      operationId: password_reset_confirm_api_v1_auth_password_reset_confirm_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirm'
+        required: true
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/auth/me:
     get:
       tags:
@@ -157,6 +201,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MeResponse'
+      security:
+      - HTTPBearer: []
+    patch:
+      tags:
+      - Auth
+      summary: Update Me
+      description: 프로필 자기수정(이름/연락처). 지정된 필드만 반영(부분수정).
+      operationId: update_me_api_v1_auth_me_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeUpdate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
       security:
       - HTTPBearer: []
   /api/v1/orgs:
@@ -363,9 +434,12 @@ paths:
       tags:
       - Onboarding
       summary: Create Farm
-      description: 'Create a farm and link it to the current user.
+      description: 'Create a farm and link it to the current user (caller becomes
+        FARM_OWNER).
 
-        farm_code is auto-generated: FARM-{COUNTRY}-{ORG_PREFIX}'
+        org-스코프 작업 — 농장소유주/조직관리자만(QA 보안 H3: VIEWER/WORKER 등 무권한 생성 차단).
+
+        farm_code is auto-generated: FARM-{COUNTRY}-{ORG_PREFIX}-{RAND}.'
       operationId: create_farm_api_v1_onboarding_farm_post
       requestBody:
         content:
@@ -464,6 +538,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/config/countries:
+    get:
+      tags:
+      - Config
+      summary: Get Countries
+      description: '서비스 대상 국가 목록. 각 항목: code, name, timezone, currency, unit_system,
+        dial, language.'
+      operationId: get_countries_api_v1_config_countries_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+                title: Response Get Countries Api V1 Config Countries Get
   /api/v1/farms:
     get:
       tags:
@@ -783,6 +876,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/sows/removals:
+    get:
+      tags:
+      - Sows
+      summary: List Removals
+      description: 도폐사·판매 이력 목록.
+      operationId: list_removals_api_v1_farms__farm_id__sows_removals_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: removal_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: CULLED|DEAD|SOLD|TRANSFER
+          title: Removal Type
+        description: CULLED|DEAD|SOLD|TRANSFER
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RemovalResponse'
+                title: Response List Removals Api V1 Farms  Farm Id  Sows Removals
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/farms/{farm_id}/sows/{sow_id}:
     get:
       tags:
@@ -942,61 +1090,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RemovalResponse'
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-  /api/v1/farms/{farm_id}/sows/removals:
-    get:
-      tags:
-      - Sows
-      summary: List Removals
-      description: ?꾪룓???먮ℓ ?대젰 紐⑸줉.
-      operationId: list_removals_api_v1_farms__farm_id__sows_removals_get
-      security:
-      - HTTPBearer: []
-      parameters:
-      - name: farm_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          description: Farm UUID
-          title: Farm Id
-        description: Farm UUID
-      - name: removal_type
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: CULLED|DEAD|SOLD|TRANSFER
-          title: Removal Type
-        description: CULLED|DEAD|SOLD|TRANSFER
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          maximum: 200
-          minimum: 1
-          default: 50
-          title: Limit
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RemovalResponse'
-                title: Response List Removals Api V1 Farms  Farm Id  Sows Removals
-                  Get
         '422':
           description: Validation Error
           content:
@@ -2355,6 +2448,128 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/feed-records:
+    get:
+      tags:
+      - Feed
+      summary: List Feed Records
+      operationId: list_feed_records_api_v1_farms__farm_id__feed_records_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Offset
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeedRecordResponse'
+                title: Response List Feed Records Api V1 Farms  Farm Id  Feed Records
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Feed
+      summary: Create Feed Record
+      operationId: create_feed_record_api_v1_farms__farm_id__feed_records_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedRecordCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedRecordResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/feed-records/{record_id}:
+    delete:
+      tags:
+      - Feed
+      summary: Delete Feed Record
+      operationId: delete_feed_record_api_v1_farms__farm_id__feed_records__record_id__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Record Id
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/farms/{farm_id}/piglets:
     get:
       tags:
@@ -3374,8 +3589,10 @@ paths:
         in: query
         required: false
         schema:
-          type: string
-          format: date
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
           title: Date
       responses:
         '200':
@@ -3540,11 +3757,13 @@ paths:
         in: query
         required: false
         schema:
-          type: string
-          format: date
-          description: 과기한 판정 기준일(기본 오늘)
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          description: 과기한 판정 기준일(기본=농장 오늘)
           title: As Of
-        description: 과기한 판정 기준일(기본 오늘)
+        description: 과기한 판정 기준일(기본=농장 오늘)
       responses:
         '200':
           description: Successful Response
@@ -3683,6 +3902,105 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductionSummary'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/annual-kpi:
+    get:
+      tags:
+      - Reports
+      summary: Annual Kpi Trend
+      description: 'PSY/NPD 연도별 추세(최근 N년) + 국가 벤치마크(농장국가 + KR/US/BR) 병기.
+
+        end_year는 농장 타임존 기준 올해. 데이터 없는 연도는 null 행으로 반환.'
+      operationId: annual_kpi_trend_api_v1_farms__farm_id__reports_annual_kpi_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: years
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 10
+          minimum: 2
+          default: 5
+          title: Years
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnualKpiTrend'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/farms/{farm_id}/reports/cost-summary:
+    get:
+      tags:
+      - Reports
+      summary: Cost Summary Report
+      description: '#4 원가/수익 리포트 — 사료비(unit_cost×qty) + 판매수익(sale_price)을 통화·기간별 집계.
+
+        원가 미입력분은 net에서 제외하고 feed_cost_coverage로 데이터 완전성을 함께 반환.'
+      operationId: cost_summary_report_api_v1_farms__farm_id__reports_cost_summary_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: Farm UUID
+          title: Farm Id
+        description: Farm UUID
+      - name: start_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: Start Date
+      - name: end_date
+        in: query
+        required: true
+        schema:
+          type: string
+          format: date
+          title: End Date
+      - name: period
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(monthly|quarterly|annual)$
+          default: monthly
+          title: Period
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostSummary'
         '422':
           description: Validation Error
           content:
@@ -3939,7 +4257,7 @@ paths:
       tags:
       - Admin Console
       summary: Get Overview
-      description: 플랫폼 전사 개요 카운트 — 어드민 대시보드 상단 카드.
+      description: 플랫폼 전사 개요 + 활성화 지표 — 어드민 대시보드 상단 카드.
       operationId: get_overview_api_v1_admin_overview_get
       responses:
         '200':
@@ -3950,6 +4268,54 @@ paths:
                 $ref: '#/components/schemas/AdminOverview'
       security:
       - HTTPBearer: []
+  /api/v1/admin/data-monitor:
+    get:
+      tags:
+      - Admin Console
+      summary: Data Monitor
+      description: 농장별 데이터 입력 현황 — 마지막 입력일·최근 건수·상태. 미입력/방치 농장 식별용.
+      operationId: data_monitor_api_v1_admin_data_monitor_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DataMonitorRow'
+                type: array
+                title: Response Data Monitor Api V1 Admin Data Monitor Get
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/data-monitor/{farm_id}:
+    get:
+      tags:
+      - Admin Console
+      summary: Data Monitor Detail
+      description: 농장 상세 — 이벤트 유형별 분해·모돈 상태분포·최근 활동·PSY. 운영자 심층 조회.
+      operationId: data_monitor_detail_api_v1_admin_data_monitor__farm_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Farm Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FarmDataDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /api/v1/admin/me:
     get:
       tags:
@@ -4097,6 +4463,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminMemberRow'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/members/{member_id}/reset-password:
+    post:
+      tags:
+      - Admin · Users
+      summary: Reset Member Password
+      description: '운영자가 기존 사용자 비밀번호를 재설정 — 임시 비번 발급(무발송 환경 대응, 이메일 채널과 병행).
+
+
+        임시 비번을 새로 발급해 저장하고, 해당 사용자의 활성 리프레시 토큰을 전부 폐기(강제 재로그인).
+
+        임시 비번은 운영자에게만 반환(감사엔 평문 미기록). 사용자는 로그인 후 즉시 변경 권장.'
+      operationId: reset_member_password_api_v1_admin_members__member_id__reset_password_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: member_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Member Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPasswordResetResult'
         '422':
           description: Validation Error
           content:
@@ -4542,6 +4943,33 @@ paths:
                 title: Response List Orgs Api V1 Admin Orgs Get
       security:
       - HTTPBearer: []
+    post:
+      tags:
+      - Admin · Orgs
+      summary: Create Org
+      description: 조직 생성 (업체→총판→대리점 계층 구성).
+      operationId: create_org_api_v1_admin_orgs_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOrgCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrgRow'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
   /api/v1/admin/orgs/{org_id}/farms:
     get:
       tags:
@@ -4569,6 +4997,340 @@ paths:
                 items:
                   $ref: '#/components/schemas/AdminOrgFarm'
                 title: Response List Org Farms Api V1 Admin Orgs  Org Id  Farms Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/orgs/{org_id}:
+    patch:
+      tags:
+      - Admin · Orgs
+      summary: Update Org
+      description: 조직 수정 — 이름/유형/상위조직(계층 이동). 사이클(자기 자신·하위로 이동) 차단.
+      operationId: update_org_api_v1_admin_orgs__org_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: org_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Org Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminOrgUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrgRow'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/farms/{farm_id}/org:
+    patch:
+      tags:
+      - Admin · Orgs
+      summary: Reassign Farm
+      description: 농장을 다른 조직으로 재배정 (총판/대리점 산하 이동).
+      operationId: reassign_farm_api_v1_admin_farms__farm_id__org_patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: farm_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Farm Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FarmReassign'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOrgFarm'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/governance/kpi-definitions:
+    get:
+      tags:
+      - Admin · KPI Governance
+      summary: Get Kpi Definitions
+      description: §2 KPI 정의 16종 (국가 무관 본질 정의).
+      operationId: get_kpi_definitions_api_v1_admin_governance_kpi_definitions_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - HTTPBearer: []
+  /api/v1/admin/governance/benchmarks:
+    get:
+      tags:
+      - Admin · KPI Governance
+      summary: Get Benchmarks
+      description: benchmark 행 목록 (status/값/임계/모집단 포함).
+      operationId: get_benchmarks_api_v1_admin_governance_benchmarks_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: country
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: country_code 필터 (KR/US ...)
+          title: Country
+        description: country_code 필터 (KR/US ...)
+      - name: kpi
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: kpi_code 필터
+          title: Kpi
+        description: kpi_code 필터
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/governance/benchmarks/resolve:
+    get:
+      tags:
+      - Admin · KPI Governance
+      summary: Resolve
+      description: (country, kpi)의 발화 적격 benchmark resolve + can_fire/insufficient_reason/trace.
+        value 주면 severity.
+      operationId: resolve_api_v1_admin_governance_benchmarks_resolve_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: country
+        in: query
+        required: true
+        schema:
+          type: string
+          description: country_code
+          title: Country
+        description: country_code
+      - name: kpi
+        in: query
+        required: true
+        schema:
+          type: string
+          description: kpi_code
+          title: Kpi
+        description: kpi_code
+      - name: population
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: population_scope (선택)
+          title: Population
+        description: population_scope (선택)
+      - name: value
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: number
+          - type: 'null'
+          description: 주면 severity까지 평가
+          title: Value
+        description: 주면 severity까지 평가
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/master/{kind}:
+    get:
+      tags:
+      - Admin · Master Data
+      summary: List Master
+      description: 코드테이블 전체 행 조회.
+      operationId: list_master_api_v1_admin_master__kind__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                title: Response List Master Api V1 Admin Master  Kind  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - Admin · Master Data
+      summary: Create Master
+      description: 코드 행 생성.
+      operationId: create_master_api_v1_admin_master__kind__post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              title: Payload
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Create Master Api V1 Admin Master  Kind  Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/admin/master/{kind}/{pk_value}:
+    patch:
+      tags:
+      - Admin · Master Data
+      summary: Update Master
+      description: 코드 행 수정 (PK 제외 컬럼).
+      operationId: update_master_api_v1_admin_master__kind___pk_value__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+      - name: pk_value
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pk Value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              title: Payload
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Update Master Api V1 Admin Master  Kind   Pk Value  Patch
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - Admin · Master Data
+      summary: Delete Master
+      description: 코드 행 삭제 (카탈로그 hard-delete).
+      operationId: delete_master_api_v1_admin_master__kind___pk_value__delete
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: kind
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Kind
+      - name: pk_value
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Pk Value
+      responses:
+        '204':
+          description: Successful Response
         '422':
           description: Validation Error
           content:
@@ -4877,6 +5639,37 @@ components:
       - created_at
       - last_login_at
       title: AdminMemberRow
+    AdminOrgCreate:
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+        org_type:
+          type: string
+          title: Org Type
+          description: VENDOR|DISTRIBUTOR|DEALER|INDEPENDENT
+        parent_org_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Parent Org Id
+        country:
+          type: string
+          maxLength: 2
+          minLength: 2
+          title: Country
+        timezone:
+          type: string
+          title: Timezone
+          default: UTC
+      type: object
+      required:
+      - name
+      - org_type
+      - country
+      title: AdminOrgCreate
     AdminOrgFarm:
       properties:
         id:
@@ -4941,6 +5734,27 @@ components:
       - farm_count
       - user_count
       title: AdminOrgRow
+    AdminOrgUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 1
+          - type: 'null'
+          title: Name
+        org_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Org Type
+        parent_org_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Parent Org Id
+      type: object
+      title: AdminOrgUpdate
     AdminOverview:
       properties:
         organizations:
@@ -4955,13 +5769,47 @@ components:
         sows:
           type: integer
           title: Sows
+        signups_7d:
+          type: integer
+          title: Signups 7D
+        activated_farms:
+          type: integer
+          title: Activated Farms
+        stale_farms:
+          type: integer
+          title: Stale Farms
       type: object
       required:
       - organizations
       - farms
       - users
       - sows
+      - signups_7d
+      - activated_farms
+      - stale_farms
       title: AdminOverview
+    AdminPasswordResetResult:
+      properties:
+        user_id:
+          type: string
+          title: User Id
+        email:
+          type: string
+          title: Email
+        temp_password:
+          type: string
+          title: Temp Password
+        note:
+          type: string
+          title: Note
+      type: object
+      required:
+      - user_id
+      - email
+      - temp_password
+      - note
+      title: AdminPasswordResetResult
+      description: 운영자가 기존 사용자 비밀번호를 재설정 → 임시 비번을 운영자에게 반환(무발송 환경 대응).
     AdminWhoAmI:
       properties:
         id:
@@ -5162,6 +6010,70 @@ components:
           title: Lang
       type: object
       title: AnnouncementUpdate
+    AnnualKpiRow:
+      properties:
+        year:
+          type: integer
+          title: Year
+        psy:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Psy
+        npd:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Npd
+        avg_sows:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Sows
+        total_weaned:
+          type: integer
+          title: Total Weaned
+          default: 0
+        total_farrowings:
+          type: integer
+          title: Total Farrowings
+          default: 0
+        total_matings:
+          type: integer
+          title: Total Matings
+          default: 0
+        farrowing_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Farrowing Rate
+      type: object
+      required:
+      - year
+      title: AnnualKpiRow
+      description: 연도별 핵심 KPI 1행 (추세 리포트). 데이터 부족 연도는 null.
+    AnnualKpiTrend:
+      properties:
+        country_scope:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Country Scope
+        rows:
+          items:
+            $ref: '#/components/schemas/AnnualKpiRow'
+          type: array
+          title: Rows
+          default: []
+        country_benchmarks:
+          items:
+            $ref: '#/components/schemas/CountryBenchmark'
+          type: array
+          title: Country Benchmarks
+          default: []
+      type: object
+      title: AnnualKpiTrend
+      description: PSY/NPD 연도별 추세 + 국가 벤치마크 병기.
     AuditRow:
       properties:
         id:
@@ -5277,6 +6189,7 @@ components:
         ear_tag:
           type: string
           maxLength: 30
+          minLength: 1
           title: Ear Tag
         breed:
           anyOf:
@@ -5374,6 +6287,7 @@ components:
           anyOf:
           - type: string
             maxLength: 30
+            minLength: 1
           - type: 'null'
           title: Ear Tag
         breed:
@@ -5411,7 +6325,7 @@ components:
           title: Question
         locale:
           type: string
-          pattern: ^(en|ko|zh|es|vi)$
+          pattern: ^(en|ko|zh|es|vi|th|pt|ru)$
           title: Locale
           default: en
       type: object
@@ -5454,6 +6368,153 @@ components:
       - farm_id
       - as_of
       title: ChatResponse
+    CostByCurrency:
+      properties:
+        currency:
+          type: string
+          title: Currency
+        feed_cost:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Feed Cost
+        feed_qty_kg:
+          type: number
+          title: Feed Qty Kg
+          default: 0.0
+        sale_revenue:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Sale Revenue
+        sale_head:
+          type: integer
+          title: Sale Head
+          default: 0
+        sale_weight_kg:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Sale Weight Kg
+        net:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Net
+      type: object
+      required:
+      - currency
+      title: CostByCurrency
+      description: '통화별 원가·수익 집계 (feed_records.currency / removals.sale_currency).
+
+        통화가 섞이면 합산이 무의미하므로 통화 단위로 분리해 보고한다.'
+    CostPeriodRow:
+      properties:
+        period:
+          type: string
+          title: Period
+        currency:
+          type: string
+          title: Currency
+        feed_cost:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Feed Cost
+        feed_qty_kg:
+          type: number
+          title: Feed Qty Kg
+          default: 0.0
+        sale_revenue:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Sale Revenue
+        sale_head:
+          type: integer
+          title: Sale Head
+          default: 0
+        net:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Net
+      type: object
+      required:
+      - period
+      - currency
+      title: CostPeriodRow
+      description: 기간(월/분기/연) × 통화별 원가·수익 1행.
+    CostSummary:
+      properties:
+        start_date:
+          type: string
+          title: Start Date
+        end_date:
+          type: string
+          title: End Date
+        period:
+          type: string
+          title: Period
+        by_currency:
+          items:
+            $ref: '#/components/schemas/CostByCurrency'
+          type: array
+          title: By Currency
+          default: []
+        rows:
+          items:
+            $ref: '#/components/schemas/CostPeriodRow'
+          type: array
+          title: Rows
+          default: []
+        feed_cost_coverage:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Feed Cost Coverage
+        feed_records_total:
+          type: integer
+          title: Feed Records Total
+          default: 0
+        feed_records_with_cost:
+          type: integer
+          title: Feed Records With Cost
+          default: 0
+      type: object
+      required:
+      - start_date
+      - end_date
+      - period
+      title: CostSummary
+      description: '#4 원가/수익 리포트. 입력된 사료비·판매가 기반 집계.
+
+        데이터 완전성(feed_cost_coverage)을 함께 반환해 ''입력 안 된 원가''를 구분한다.'
+    CountryBenchmark:
+      properties:
+        country:
+          type: string
+          title: Country
+        psy:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Psy
+        npd:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Npd
+        farrowing_rate:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Farrowing Rate
+      type: object
+      required:
+      - country
+      title: CountryBenchmark
+      description: 국가별 KPI 목표값 병기용 (읽기전용 비교 기준).
     CullCandidate:
       properties:
         sow_id:
@@ -5660,6 +6721,54 @@ components:
       - alerts
       title: DashboardKpi
       description: Main KPI dashboard — Base tier (free). Flat structure for frontend.
+    DataMonitorRow:
+      properties:
+        farm_id:
+          type: string
+          title: Farm Id
+        farm_name:
+          type: string
+          title: Farm Name
+        country:
+          type: string
+          title: Country
+        sows:
+          type: integer
+          title: Sows
+        last_event_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Event At
+        events_7d:
+          type: integer
+          title: Events 7D
+        events_30d:
+          type: integer
+          title: Events 30D
+        events_total:
+          type: integer
+          title: Events Total
+        issues:
+          type: integer
+          title: Issues
+          default: 0
+        status:
+          type: string
+          title: Status
+      type: object
+      required:
+      - farm_id
+      - farm_name
+      - country
+      - sows
+      - last_event_at
+      - events_7d
+      - events_30d
+      - events_total
+      - status
+      title: DataMonitorRow
     DataQualityIssue:
       properties:
         issue_type:
@@ -5869,6 +6978,30 @@ components:
       - threshold
       title: EventInsight
       description: 백엔드 판정 결과. 프론트는 이걸 '렌더링만' 한다(판정 로직 금지).
+    EventTypeBreakdown:
+      properties:
+        type:
+          type: string
+          title: Type
+        total:
+          type: integer
+          title: Total
+        count_30d:
+          type: integer
+          title: Count 30D
+        last_at:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Last At
+      type: object
+      required:
+      - type
+      - total
+      - count_30d
+      - last_at
+      title: EventTypeBreakdown
     FarmConfigSet:
       properties:
         gestation_days:
@@ -5975,6 +7108,104 @@ components:
       - name
       - country
       title: FarmCreate
+    FarmDataDetail:
+      properties:
+        farm_id:
+          type: string
+          title: Farm Id
+        farm_name:
+          type: string
+          title: Farm Name
+        country:
+          type: string
+          title: Country
+        org_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Org Name
+        timezone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Timezone
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Currency
+        created_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Created At
+        total_sows:
+          type: integer
+          title: Total Sows
+        sows_by_status:
+          items:
+            $ref: '#/components/schemas/SowStatusCount'
+          type: array
+          title: Sows By Status
+        event_breakdown:
+          items:
+            $ref: '#/components/schemas/EventTypeBreakdown'
+          type: array
+          title: Event Breakdown
+        recent_events:
+          items:
+            $ref: '#/components/schemas/RecentEvent'
+          type: array
+          title: Recent Events
+        integrity:
+          $ref: '#/components/schemas/FarmIntegrity'
+        psy:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Psy
+        total_weaned_ytd:
+          type: integer
+          title: Total Weaned Ytd
+          default: 0
+        avg_sows_ytd:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Avg Sows Ytd
+      type: object
+      required:
+      - farm_id
+      - farm_name
+      - country
+      - total_sows
+      - sows_by_status
+      - event_breakdown
+      - recent_events
+      - integrity
+      title: FarmDataDetail
+    FarmIntegrity:
+      properties:
+        litter_mismatch:
+          type: integer
+          title: Litter Mismatch
+        date_reversal:
+          type: integer
+          title: Date Reversal
+        status_orphan:
+          type: integer
+          title: Status Orphan
+        total:
+          type: integer
+          title: Total
+      type: object
+      required:
+      - litter_mismatch
+      - date_reversal
+      - status_orphan
+      - total
+      title: FarmIntegrity
     FarmLocalConfig:
       properties:
         weight_unit:
@@ -6020,6 +7251,15 @@ components:
       title: FarmLocalConfig
       description: Resolved market/region defaults for this farm — used by frontend
         for unit display.
+    FarmReassign:
+      properties:
+        org_id:
+          type: string
+          title: Org Id
+      type: object
+      required:
+      - org_id
+      title: FarmReassign
     FarmReproConfig:
       properties:
         gestation_days:
@@ -6421,6 +7661,141 @@ components:
           title: Notes
       type: object
       title: FarrowingUpdate
+    FeedRecordCreate:
+      properties:
+        record_date:
+          type: string
+          format: date
+          title: Record Date
+        quantity_kg:
+          type: number
+          maximum: 100000.0
+          exclusiveMinimum: 0.0
+          title: Quantity Kg
+          description: 급여량(kg). 0 초과
+        feed_type:
+          anyOf:
+          - type: string
+            maxLength: 50
+          - type: 'null'
+          title: Feed Type
+          description: '사료 종류(예: 임신돈/포유돈/비육)'
+        sow_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sow Id
+        group_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Group Id
+        building_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Building Id
+        unit_cost:
+          anyOf:
+          - type: number
+            maximum: 999999.0
+            minimum: 0.0
+          - type: 'null'
+          title: Unit Cost
+          description: kg당 단가(선택)
+        currency:
+          anyOf:
+          - type: string
+            maxLength: 3
+          - type: 'null'
+          title: Currency
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+      type: object
+      required:
+      - record_date
+      - quantity_kg
+      title: FeedRecordCreate
+    FeedRecordResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        farm_id:
+          type: string
+          format: uuid
+          title: Farm Id
+        record_date:
+          type: string
+          format: date
+          title: Record Date
+        quantity_kg:
+          type: number
+          title: Quantity Kg
+        feed_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Feed Type
+        sow_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Sow Id
+        group_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Group Id
+        building_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Building Id
+        unit_cost:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Unit Cost
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Currency
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - farm_id
+      - record_date
+      - quantity_kg
+      - feed_type
+      - sow_id
+      - group_id
+      - building_id
+      - unit_cost
+      - currency
+      - notes
+      - created_at
+      title: FeedRecordResponse
     FindingOut:
       properties:
         rule_id:
@@ -6788,6 +8163,16 @@ components:
         summary:
           type: string
           title: Summary
+        subtype:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subtype
+        count:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Count
       type: object
       required:
       - id
@@ -6798,16 +8183,17 @@ components:
       description: 작업대장(Work Ledger) 통합 항목 — 전 이벤트 유형을 한 줄로.
     LoginRequest:
       properties:
-        email:
+        username:
           type: string
-          format: email
-          title: Email
+          maxLength: 50
+          minLength: 1
+          title: Username
         password:
           type: string
           title: Password
       type: object
       required:
-      - email
+      - username
       - password
       title: LoginRequest
     LoginResponse:
@@ -6831,17 +8217,30 @@ components:
         name:
           type: string
           title: Name
+        username:
+          type: string
+          title: Username
         email:
           type: string
           title: Email
         role:
           type: string
           title: Role
+        system_role:
+          type: string
+          title: System Role
+          default: FARM_OWNER
         farm_ids:
           items:
             type: string
           type: array
           title: Farm Ids
+        farm_roles:
+          additionalProperties:
+            type: string
+          type: object
+          title: Farm Roles
+          default: {}
       type: object
       required:
       - access_token
@@ -6849,6 +8248,7 @@ components:
       - expires_in
       - user_id
       - name
+      - username
       - email
       - role
       - farm_ids
@@ -6995,14 +8395,26 @@ components:
         name:
           type: string
           title: Name
+        username:
+          type: string
+          title: Username
         email:
           anyOf:
           - type: string
           - type: 'null'
           title: Email
+        phone:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Phone
         role:
           type: string
           title: Role
+        system_role:
+          type: string
+          title: System Role
+          default: FARM_OWNER
         org_id:
           anyOf:
           - type: string
@@ -7016,16 +8428,41 @@ components:
             type: string
           type: array
           title: Farm Ids
+        farm_roles:
+          additionalProperties:
+            type: string
+          type: object
+          title: Farm Roles
+          default: {}
       type: object
       required:
       - id
       - name
+      - username
       - email
       - role
       - org_id
       - language
       - farm_ids
       title: MeResponse
+    MeUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            maxLength: 100
+            minLength: 1
+          - type: 'null'
+          title: Name
+        phone:
+          anyOf:
+          - type: string
+            maxLength: 30
+          - type: 'null'
+          title: Phone
+      type: object
+      title: MeUpdate
+      description: 프로필 자기수정(이름/연락처). 권한·role은 변경 불가.
     MemberCreate:
       properties:
         name:
@@ -7033,6 +8470,11 @@ components:
           maxLength: 100
           minLength: 1
           title: Name
+        username:
+          type: string
+          pattern: ^[a-zA-Z0-9_.-]{3,50}$
+          title: Username
+          description: 직원 로그인 아이디
         email:
           type: string
           format: email
@@ -7046,9 +8488,11 @@ components:
           pattern: ^(FARM_OWNER|FARM_MANAGER|FARM_WORKER|VET|VIEWER)$
           title: Role
           default: FARM_WORKER
+      additionalProperties: false
       type: object
       required:
       - name
+      - username
       - email
       - password
       title: MemberCreate
@@ -7107,6 +8551,7 @@ components:
           - type: boolean
           - type: 'null'
           title: Active
+      additionalProperties: false
       type: object
       title: MemberUpdate
     MortalityCount:
@@ -7329,6 +8774,11 @@ components:
           maxLength: 100
           minLength: 1
           title: Name
+        username:
+          type: string
+          pattern: ^[a-zA-Z0-9_.-]{3,50}$
+          title: Username
+          description: 로그인 아이디
         email:
           type: string
           format: email
@@ -7356,11 +8806,29 @@ components:
           type: string
           title: Timezone
           default: UTC
+        language:
+          type: string
+          title: Language
+          default: en
+        currency:
+          anyOf:
+          - type: string
+            maxLength: 3
+            minLength: 3
+          - type: 'null'
+          title: Currency
+        unit_system:
+          anyOf:
+          - type: string
+            pattern: ^(METRIC|IMPERIAL)$
+          - type: 'null'
+          title: Unit System
       type: object
       required:
       - org_name
       - country
       - name
+      - username
       - email
       - password
       - farm_name
@@ -7676,6 +9144,32 @@ components:
       - items
       - meta
       title: PagedResponse[SupportTicketOut]
+    PasswordResetConfirm:
+      properties:
+        token:
+          type: string
+          minLength: 1
+          title: Token
+        new_password:
+          type: string
+          maxLength: 128
+          minLength: 8
+          title: New Password
+      type: object
+      required:
+      - token
+      - new_password
+      title: PasswordResetConfirm
+    PasswordResetRequest:
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email
+      type: object
+      required:
+      - email
+      title: PasswordResetRequest
     PigletEventCreate:
       properties:
         farrowing_id:
@@ -8406,7 +9900,7 @@ components:
           type: integer
           title: Year
         avg_sow_count:
-          type: integer
+          type: number
           title: Avg Sow Count
         total_weaned:
           type: integer
@@ -8436,6 +9930,22 @@ components:
       - benchmark_avg
       - target_value
       title: PsyDetail
+    RecentEvent:
+      properties:
+        type:
+          type: string
+          title: Type
+        date:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Date
+      type: object
+      required:
+      - type
+      - date
+      title: RecentEvent
     RefreshRequest:
       properties:
         refresh_token:
@@ -8452,6 +9962,11 @@ components:
           maxLength: 100
           minLength: 1
           title: Name
+        username:
+          type: string
+          pattern: ^[a-zA-Z0-9_.-]{3,50}$
+          title: Username
+          description: 로그인 아이디(영숫자·_.-)
         email:
           type: string
           format: email
@@ -8482,6 +9997,7 @@ components:
       type: object
       required:
       - name
+      - username
       - email
       - password
       - org_name
@@ -9131,6 +10647,19 @@ components:
       - created_at
       - updated_at
       title: SowResponse
+    SowStatusCount:
+      properties:
+        status:
+          type: string
+          title: Status
+        count:
+          type: integer
+          title: Count
+      type: object
+      required:
+      - status
+      - count
+      title: SowStatusCount
     SowStatusReport:
       properties:
         total:
@@ -9446,6 +10975,11 @@ components:
             $ref: '#/components/schemas/SyncPigletEvent'
           type: array
           title: Piglet Events
+        pregnancy_checks:
+          items:
+            $ref: '#/components/schemas/SyncPregnancyCheck'
+          type: array
+          title: Pregnancy Checks
       type: object
       title: SyncChanges
     SyncConflict:
@@ -9682,6 +11216,55 @@ components:
       - piglet_count
       - client_created_at
       title: SyncPigletEvent
+    SyncPregnancyCheck:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        sow_id:
+          type: string
+          format: uuid
+          title: Sow Id
+        check_date:
+          type: string
+          title: Check Date
+        result:
+          type: string
+          title: Result
+        mating_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Mating Id
+        days_after_mating:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Days After Mating
+        method:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Method
+        notes:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Notes
+        client_created_at:
+          type: string
+          format: date-time
+          title: Client Created At
+      type: object
+      required:
+      - id
+      - sow_id
+      - check_date
+      - result
+      - client_created_at
+      title: SyncPregnancyCheck
     SyncRejected:
       properties:
         id:

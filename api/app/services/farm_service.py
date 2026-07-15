@@ -106,7 +106,14 @@ async def get_local_config(db: AsyncSession, farm: Farm) -> FarmLocalConfig:
         select(RegionDefault).where(RegionDefault.region_code == (farm.country or "").upper())
     )
 
-    weight_unit = (region.weight_unit if region and region.weight_unit else None) or "kg"
+    # 농장의 명시적 unit_system(온보딩 선택)이 weight_unit의 SSOT — 없으면 region default → kg.
+    # (모바일 계약: unit_system=IMPERIAL → lb. 표준 온보딩은 region과 일치하므로 하위호환.)
+    if farm.unit_system == "IMPERIAL":
+        weight_unit = "lb"
+    elif farm.unit_system == "METRIC":
+        weight_unit = "kg"
+    else:
+        weight_unit = (region.weight_unit if region and region.weight_unit else None) or "kg"
     currency_code = (region.currency_code if region and region.currency_code else None) or farm.currency or "USD"
 
     # Compliance profile

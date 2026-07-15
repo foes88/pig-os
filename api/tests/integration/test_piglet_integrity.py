@@ -187,7 +187,8 @@ class TestSowRegistrationGuards:
         r1 = await client.post(f"/api/v1/farms/{test_farm.id}/sows", headers=h, json=body)
         assert r1.status_code == 201, r1.text
         r2 = await client.post(f"/api/v1/farms/{test_farm.id}/sows", headers=h, json=body)
-        assert r2.status_code == 422 and "already exists" in r2.text.lower()
+        # 중복 이표 = 충돌(409) — 모바일 계약(중복 전용 처리) 정합. 사전검사·동시race 모두 409.
+        assert r2.status_code == 409 and "already exists" in r2.text.lower()
 
     async def test_future_entry_date_blocked(self, client, db, test_user, test_farm):
         db.add(UserFarm(user_id=test_user.id, farm_id=test_farm.id, role_override="FARM_OWNER"))

@@ -76,3 +76,22 @@ class TestOnboardingCountryDerivation:
         farm = await self._farm(db, r.json()["farm_id"])
         assert farm.currency == "EUR"
         assert farm.unit_system == "METRIC"
+
+    async def test_config_weight_unit_follows_unit_system(self, client: AsyncClient, db: AsyncSession):
+        # 모바일 계약 [1](d): unit_system 이 config.weight_unit 의 SSOT.
+        # US(IMPERIAL) → lb, 명시 METRIC override → kg.
+        us = await client.post("/api/v1/onboarding/complete", json=_payload("US"))
+        assert us.status_code == 201, us.text
+        h = {"Authorization": f"Bearer {us.json()['access_token']}"}
+        cfg = await client.get(f"/api/v1/farms/{us.json()['farm_id']}/config", headers=h)
+        assert cfg.status_code == 200, cfg.text
+        assert cfg.json()["weight_unit"] == "lb"
+
+        metric = await client.post(
+            "/api/v1/onboarding/complete",
+            json=_payload("US", unit_system="METRIC"),
+        )
+        h2 = {"Authorization": f"Bearer {metric.json()['access_token']}"}
+        cfg2 = await client.get(f"/api/v1/farms/{metric.json()['farm_id']}/config", headers=h2)
+        assert cfg2.status_code == 200, cfg2.text
+        assert cfg2.json()["weight_unit"] == "kg"
