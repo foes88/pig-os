@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "Buscar ID da matriz, lote, sala…",
     "qi": "Registro rápido"
+  },
+  "quickInput": {
+    "ev_mating": "Cobrição",
+    "ev_farrowing": "Parto",
+    "ev_weaning": "Desmame",
+    "ev_repro": "Evento repro.",
+    "ev_cull": "Descarte/Morte",
+    "ev_piglet": "Grupo de leitões",
+    "ev_finisher": "Terminação",
+    "ev_foster": "Adoção",
+    "title": "Entrada Rápida",
+    "sub": "Selecione o tipo de evento"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "Análise do motor de regras",
+    "placeholder": "Pergunte sobre os KPIs da sua granja…",
+    "suggested": [
+      "Por que o PSY está baixo?",
+      "Status de NPD",
+      "Taxa de parto abaixo",
+      "Problemas de hoje"
+    ],
+    "suggestedLabel": "Sugeridas",
+    "errorMsg": "Ocorreu um erro."
   }
 }

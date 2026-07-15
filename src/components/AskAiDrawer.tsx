@@ -2,44 +2,26 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations, useLocale } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { chatApi } from "@/lib/api/endpoints/chat";
 import { useAuthStore } from "@/store/auth.store";
-import type { ChatResponse } from "@/types/api.types";
+import type { ChatQuery, ChatResponse } from "@/types/api.types";
 import type { Locale } from "@/i18n/config";
 
 interface AskAiDrawerProps {
   open: boolean;
   onClose: () => void;
   context?: string | null;
-  lang?: Locale;
+  lang?: Locale;   // 하위호환용(라벨·응답 로케일은 next-intl 사용, 파일 단일소스)
 }
 
-const SUGGESTED: Partial<Record<Locale, string[]>> & { en: string[] } = {
-  en: ["Why is PSY low?",        "NPD status",          "Farrowing rate miss",      "Today's issues"],
-  ko: ["PSY가 왜 낮아요?",        "비생산일수 현황",      "분만율 미달 이유",          "오늘 이슈 요약"],
-  zh: ["PSY为何偏低？",            "非生产天数现状",       "分娩率未达标原因",           "今日问题摘要"],
-  es: ["¿Por qué es bajo el PSY?","Estado de DNP",       "Tasa de partos baja",      "Resumen de hoy"],
-  vi: ["PSY thấp vì sao?",        "Tình trạng NPD",      "Tỷ lệ đẻ chưa đạt",       "Tóm tắt hôm nay"],
-  th: ["ทำไม PSY ต่ำ?",           "สถานะ NPD",           "อัตราคลอดไม่ถึงเป้า",       "ปัญหาวันนี้"],
-  pt: ["Por que o PSY está baixo?","Status de NPD",      "Taxa de parto abaixo",     "Problemas de hoje"],
-  ru: ["Почему низкий PSY?",       "Статус NPD",          "Опорос ниже цели",         "Проблемы сегодня"],
-};
-
-const UI: Partial<Record<Locale, { header: string; subtitle: string; placeholder: string }>> & { en: { header: string; subtitle: string; placeholder: string } } = {
-  en: { header: "PigOS AI", subtitle: "Rule Engine analysis",      placeholder: "Ask about your farm KPIs…" },
-  ko: { header: "PigOS AI", subtitle: "Rule Engine 기반 분석",      placeholder: "농장 KPI나 문제 상황을 질문하세요…" },
-  zh: { header: "PigOS AI", subtitle: "规则引擎分析",                placeholder: "询问您的农场KPI…" },
-  es: { header: "PigOS AI", subtitle: "Análisis por motor de reglas", placeholder: "Pregunta sobre los KPI de tu granja…" },
-  vi: { header: "PigOS AI", subtitle: "Phân tích Rule Engine",      placeholder: "Hỏi về KPI trang trại…" },
-  th: { header: "PigOS AI", subtitle: "การวิเคราะห์ Rule Engine",   placeholder: "ถามเกี่ยวกับ KPI ฟาร์มของคุณ…" },
-  pt: { header: "PigOS AI", subtitle: "Análise do motor de regras", placeholder: "Pergunte sobre os KPIs da sua granja…" },
-  ru: { header: "PigOS AI", subtitle: "Анализ Rule Engine",         placeholder: "Спросите о KPI вашей фермы…" },
-};
-
+// 라벨은 messages/*.json 의 askAi 네임스페이스(파일 단일소스, 인라인 제거).
 type Msg = { role: "user"; text: string } | { role: "ai"; response: ChatResponse };
 
-export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawerProps) {
+export function AskAiDrawer({ open, onClose, context }: AskAiDrawerProps) {
+  const t = useTranslations("askAi");
+  const locale = useLocale();
   const farmId = useAuthStore((s) => s.activeFarmId);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -50,13 +32,13 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
   }, [messages, open]);
 
   const mutation = useMutation({
-    // 챗 렌더러는 en/ko/zh/es/vi 지원 → th/pt/ru는 en으로 매핑(Addon, 추후 확장)
+    // 백엔드 챗은 8개 로케일(ru 포함) 모두 지원 → UI 로케일 그대로 전송.
     mutationFn: (q: string) =>
-      chatApi.query(farmId!, { question: q, locale: lang === "th" || lang === "pt" || lang === "ru" ? "en" : lang }),
+      chatApi.query(farmId!, { question: q, locale: locale as ChatQuery["locale"] }),
     onSuccess: (data) => setMessages((p) => [...p, { role: "ai", response: data }]),
     onError: () => setMessages((p) => [...p, {
       role: "ai",
-      response: { intent: "error", severity: "CRITICAL", answer: lang === "ko" ? "응답 오류가 발생했습니다." : "An error occurred.", findings: [], farm_id: farmId ?? "", as_of: "", renderer: "template" },
+      response: { intent: "error", severity: "CRITICAL", answer: t("errorMsg"), findings: [], farm_id: farmId ?? "", as_of: "", renderer: "template" },
     }]),
   });
 
@@ -67,7 +49,8 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
     mutation.mutate(text);
   };
 
-  const { header, subtitle, placeholder } = UI[lang] ?? UI.en;
+  const header = t("header"), subtitle = t("subtitle"), placeholder = t("placeholder");
+  const suggested = t.raw("suggested") as string[];
 
   return (
     <>
@@ -112,8 +95,8 @@ export function AskAiDrawer({ open, onClose, context, lang = "ko" }: AskAiDrawer
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && (
             <div className="space-y-2 mt-2">
-              <p className="text-xs text-muted font-medium">{lang === "ko" ? "추천 질문" : lang === "zh" ? "推荐问题" : lang === "es" ? "Sugeridas" : lang === "vi" ? "Gợi ý" : "Suggested"}</p>
-              {(SUGGESTED[lang] ?? SUGGESTED.en).map((q) => (
+              <p className="text-xs text-muted font-medium">{t("suggestedLabel")}</p>
+              {suggested.map((q) => (
                 <button
                   key={q}
                   onClick={() => send(q)}

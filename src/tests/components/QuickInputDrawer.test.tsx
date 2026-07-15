@@ -10,16 +10,17 @@ describe("QuickInputDrawer", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  // 라벨은 messages 파일 단일소스(next-intl은 setup에서 key 반환 mock) → key로 렌더 검증.
   it("shows the title and subtitle when open", () => {
-    render(<QuickInputDrawer open onClose={() => {}} lang="ko" />);
-    expect(screen.getByText("빠른 입력")).toBeInTheDocument();
-    expect(screen.getByText("이벤트 유형을 선택하세요")).toBeInTheDocument();
+    render(<QuickInputDrawer open onClose={() => {}} />);
+    expect(screen.getByText("title")).toBeInTheDocument();
+    expect(screen.getByText("sub")).toBeInTheDocument();
   });
 
   it("renders the core event buttons", () => {
-    render(<QuickInputDrawer open onClose={() => {}} lang="ko" />);
-    for (const label of ["교배", "분만", "이유", "비육돈", "양자"]) {
-      expect(screen.getByText(label)).toBeInTheDocument();
+    render(<QuickInputDrawer open onClose={() => {}} />);
+    for (const key of ["ev_mating", "ev_farrowing", "ev_weaning", "ev_finisher", "ev_foster"]) {
+      expect(screen.getByText(key)).toBeInTheDocument();
     }
   });
 });

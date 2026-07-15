@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   Syringe,
   Baby,
@@ -21,31 +22,20 @@ interface QuickInputDrawerProps {
   lang?: Locale;
 }
 
-type L = Partial<Record<Locale, string>> & { en: string };
-
-const EVENTS: { id: string; icon: React.ElementType; color: string; soft: string; label: L }[] = [
-  { id: "mating",    icon: Syringe,       color: "#0F6342", soft: "#E8F6EF", label: { en: "Mating",       ko: "교배",    zh: "配种",   es: "Monta",          vi: "Phối giống", th: "ผสมพันธุ์", pt: "Cobrição", ru: "Осеменение" } },
-  { id: "farrowing", icon: Baby,          color: "#059669", soft: "#ECFDF5", label: { en: "Farrowing",    ko: "분만",    zh: "分娩",   es: "Parto",          vi: "Đẻ", th: "คลอด", pt: "Parto", ru: "Опорос" } },
-  { id: "weaning",   icon: Sprout,        color: "#D97706", soft: "#FFFBEB", label: { en: "Weaning",      ko: "이유",    zh: "断奶",   es: "Destete",        vi: "Cai sữa", th: "หย่านม", pt: "Desmame", ru: "Отъём" } },
-  { id: "repro",     icon: AlertTriangle, color: "#DC2626", soft: "#FEF2F2", label: { en: "Repro Event",  ko: "임신사고", zh: "繁殖事故", es: "Evento Repro",  vi: "Sự cố sinh sản", th: "เหตุการณ์สืบพันธุ์", pt: "Evento repro.", ru: "Событие воспр." } },
-  { id: "cull",      icon: ClipboardX,    color: "#64748B", soft: "#F8FAFC", label: { en: "Cull / Death", ko: "도폐사",  zh: "淘汰/死亡", es: "Eliminación",  vi: "Loại/Chết", th: "คัดทิ้ง/ตาย", pt: "Descarte/Morte", ru: "Выбраковка/падёж" } },
-  { id: "piglet",    icon: Layers,        color: "#5F4B2C", soft: "#ECE4D3", label: { en: "Piglet Group", ko: "자돈 그룹", zh: "仔猪组",  es: "Grupo Lechones", vi: "Nhóm heo con", th: "กลุ่มลูกสุกร", pt: "Grupo de leitões", ru: "Группа поросят" } },
-  { id: "finisher",  icon: Beef,          color: "#0D1B3E", soft: "#F0F4FF", label: { en: "Finisher",     ko: "비육돈",  zh: "育肥猪",  es: "Finalización",   vi: "Heo thịt", th: "สุกรขุน", pt: "Terminação", ru: "Откорм" } },
-  { id: "foster",    icon: Repeat,        color: "#0891B2", soft: "#ECFEFF", label: { en: "Foster",       ko: "양자",    zh: "寄养",   es: "Adopción",       vi: "Nuôi ghép", th: "อุ้มบุญ", pt: "Adoção", ru: "Подсадка" } },
+// 라벨은 messages/*.json 의 quickInput 네임스페이스(파일 단일소스, 인라인 제거).
+const EVENTS: { id: string; icon: React.ElementType; color: string; soft: string }[] = [
+  { id: "mating",    icon: Syringe,       color: "#0F6342", soft: "#E8F6EF" },
+  { id: "farrowing", icon: Baby,          color: "#059669", soft: "#ECFDF5" },
+  { id: "weaning",   icon: Sprout,        color: "#D97706", soft: "#FFFBEB" },
+  { id: "repro",     icon: AlertTriangle, color: "#DC2626", soft: "#FEF2F2" },
+  { id: "cull",      icon: ClipboardX,    color: "#64748B", soft: "#F8FAFC" },
+  { id: "piglet",    icon: Layers,        color: "#5F4B2C", soft: "#ECE4D3" },
+  { id: "finisher",  icon: Beef,          color: "#0D1B3E", soft: "#F0F4FF" },
+  { id: "foster",    icon: Repeat,        color: "#0891B2", soft: "#ECFEFF" },
 ];
 
-const UI: Partial<Record<Locale, { title: string; sub: string }>> & { en: { title: string; sub: string } } = {
-  en: { title: "Quick Input",    sub: "Select an event type" },
-  ko: { title: "빠른 입력",       sub: "이벤트 유형을 선택하세요" },
-  zh: { title: "快速录入",        sub: "选择事件类型" },
-  es: { title: "Entrada Rápida", sub: "Selecciona el tipo de evento" },
-  vi: { title: "Nhập nhanh",     sub: "Chọn loại sự kiện" },
-  th: { title: "บันทึกด่วน",     sub: "เลือกประเภทเหตุการณ์" },
-  pt: { title: "Entrada Rápida", sub: "Selecione o tipo de evento" },
-  ru: { title: "Быстрый ввод",   sub: "Выберите тип события" },
-};
-
-export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawerProps) {
+export function QuickInputDrawer({ open, onClose }: QuickInputDrawerProps) {
+  const t = useTranslations("quickInput");
   const router = useRouter();
   const [, setSelected] = useState<string | null>(null);
 
@@ -68,7 +58,7 @@ export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawe
     }
   };
 
-  const { title, sub } = UI[lang] ?? UI.en;
+  const title = t("title"), sub = t("sub");
 
   if (!open) return null;
 
@@ -115,7 +105,7 @@ export function QuickInputDrawer({ open, onClose, lang = "ko" }: QuickInputDrawe
                   <Icon className="w-5 h-5" style={{ color: ev.color }} />
                 </div>
                 <span className="text-[11px] font-semibold text-text2 text-center leading-tight">
-                  {ev.label[lang] ?? ev.label.en}
+                  {t(`ev_${ev.id}`)}
                 </span>
               </button>
             );

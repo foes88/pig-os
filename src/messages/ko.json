@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "모돈 ID, 배치, 구역 검색…",
     "qi": "빠른 입력"
+  },
+  "quickInput": {
+    "ev_mating": "교배",
+    "ev_farrowing": "분만",
+    "ev_weaning": "이유",
+    "ev_repro": "임신사고",
+    "ev_cull": "도폐사",
+    "ev_piglet": "자돈 그룹",
+    "ev_finisher": "비육돈",
+    "ev_foster": "양자",
+    "title": "빠른 입력",
+    "sub": "이벤트 유형을 선택하세요"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "Rule Engine 기반 분석",
+    "placeholder": "농장 KPI나 문제 상황을 질문하세요…",
+    "suggested": [
+      "PSY가 왜 낮아요?",
+      "비생산일수 현황",
+      "분만율 미달 이유",
+      "오늘 이슈 요약"
+    ],
+    "suggestedLabel": "추천 질문",
+    "errorMsg": "응답 오류가 발생했습니다."
   }
 }

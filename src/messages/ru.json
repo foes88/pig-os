@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "Поиск свиноматки, партии, зоны…",
     "qi": "Быстрый ввод"
+  },
+  "quickInput": {
+    "ev_mating": "Осеменение",
+    "ev_farrowing": "Опорос",
+    "ev_weaning": "Отъём",
+    "ev_repro": "Событие воспр.",
+    "ev_cull": "Выбраковка/падёж",
+    "ev_piglet": "Группа поросят",
+    "ev_finisher": "Откорм",
+    "ev_foster": "Подсадка",
+    "title": "Быстрый ввод",
+    "sub": "Выберите тип события"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "Анализ Rule Engine",
+    "placeholder": "Спросите о KPI вашей фермы…",
+    "suggested": [
+      "Почему низкий PSY?",
+      "Статус NPD",
+      "Опорос ниже цели",
+      "Проблемы сегодня"
+    ],
+    "suggestedLabel": "Подсказки",
+    "errorMsg": "Произошла ошибка."
   }
 }

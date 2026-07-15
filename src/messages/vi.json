@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "Tìm số nái, lô, khu…",
     "qi": "Nhập nhanh"
+  },
+  "quickInput": {
+    "ev_mating": "Phối giống",
+    "ev_farrowing": "Đẻ",
+    "ev_weaning": "Cai sữa",
+    "ev_repro": "Sự cố sinh sản",
+    "ev_cull": "Loại/Chết",
+    "ev_piglet": "Nhóm heo con",
+    "ev_finisher": "Heo thịt",
+    "ev_foster": "Nuôi ghép",
+    "title": "Nhập nhanh",
+    "sub": "Chọn loại sự kiện"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "Phân tích Rule Engine",
+    "placeholder": "Hỏi về KPI trang trại…",
+    "suggested": [
+      "PSY thấp vì sao?",
+      "Tình trạng NPD",
+      "Tỷ lệ đẻ chưa đạt",
+      "Tóm tắt hôm nay"
+    ],
+    "suggestedLabel": "Gợi ý",
+    "errorMsg": "Đã xảy ra lỗi."
   }
 }

@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "搜索母猪ID、批次、栏位…",
     "qi": "快速录入"
+  },
+  "quickInput": {
+    "ev_mating": "配种",
+    "ev_farrowing": "分娩",
+    "ev_weaning": "断奶",
+    "ev_repro": "繁殖事故",
+    "ev_cull": "淘汰/死亡",
+    "ev_piglet": "仔猪组",
+    "ev_finisher": "育肥猪",
+    "ev_foster": "寄养",
+    "title": "快速录入",
+    "sub": "选择事件类型"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "规则引擎分析",
+    "placeholder": "询问您的农场KPI…",
+    "suggested": [
+      "PSY为何偏低？",
+      "非生产天数现状",
+      "分娩率未达标原因",
+      "今日问题摘要"
+    ],
+    "suggestedLabel": "推荐问题",
+    "errorMsg": "响应出错。"
   }
 }

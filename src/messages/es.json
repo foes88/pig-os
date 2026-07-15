@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "Buscar cerda ID, lote, sala…",
     "qi": "Entrada Rápida"
+  },
+  "quickInput": {
+    "ev_mating": "Monta",
+    "ev_farrowing": "Parto",
+    "ev_weaning": "Destete",
+    "ev_repro": "Evento Repro",
+    "ev_cull": "Eliminación",
+    "ev_piglet": "Grupo Lechones",
+    "ev_finisher": "Finalización",
+    "ev_foster": "Adopción",
+    "title": "Entrada Rápida",
+    "sub": "Selecciona el tipo de evento"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "Análisis por motor de reglas",
+    "placeholder": "Pregunta sobre los KPI de tu granja…",
+    "suggested": [
+      "¿Por qué es bajo el PSY?",
+      "Estado de DNP",
+      "Tasa de partos baja",
+      "Resumen de hoy"
+    ],
+    "suggestedLabel": "Sugeridas",
+    "errorMsg": "Ocurrió un error."
   }
 }

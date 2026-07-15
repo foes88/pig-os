@@ -1692,5 +1692,30 @@
   "topbar": {
     "search": "Search sow ID, batch, room…",
     "qi": "Quick Input"
+  },
+  "quickInput": {
+    "ev_mating": "Mating",
+    "ev_farrowing": "Farrowing",
+    "ev_weaning": "Weaning",
+    "ev_repro": "Repro Event",
+    "ev_cull": "Cull / Death",
+    "ev_piglet": "Piglet Group",
+    "ev_finisher": "Finisher",
+    "ev_foster": "Foster",
+    "title": "Quick Input",
+    "sub": "Select an event type"
+  },
+  "askAi": {
+    "header": "PigOS AI",
+    "subtitle": "Rule Engine analysis",
+    "placeholder": "Ask about your farm KPIs…",
+    "suggested": [
+      "Why is PSY low?",
+      "NPD status",
+      "Farrowing rate miss",
+      "Today's issues"
+    ],
+    "suggestedLabel": "Suggested",
+    "errorMsg": "An error occurred."
   }
 }
