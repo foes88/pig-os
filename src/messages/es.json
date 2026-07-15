@@ -1638,5 +1638,26 @@
     "cardActivated": "Granjas activadas",
     "cardStale": "Granjas inactivas",
     "ruleSaveError": "No se pudo guardar la regla. Verifica los umbrales e inténtalo de nuevo."
+  },
+  "bottomNav": {
+    "home": "Inicio",
+    "sows": "Cerdas",
+    "ai": "IA",
+    "alerts": "Alertas",
+    "more": "Más"
+  },
+  "alertsTabs": {
+    "overdue": "Atrasados",
+    "notifications": "Notificaciones"
+  },
+  "reportsTabs": {
+    "production": "Producción",
+    "reproduction": "Reproducción",
+    "trend": "Tendencia",
+    "monthly": "Mensual",
+    "farrowing": "Partos",
+    "growFinish": "Engorde",
+    "cost": "Costo·Ingreso",
+    "daily": "Diario"
   }
 }

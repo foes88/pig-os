@@ -1638,5 +1638,26 @@
     "cardActivated": "已激活农场",
     "cardStale": "沉寂农场",
     "ruleSaveError": "无法保存规则。请检查阈值后重试。"
+  },
+  "bottomNav": {
+    "home": "首页",
+    "sows": "母猪",
+    "ai": "AI",
+    "alerts": "通知",
+    "more": "更多"
+  },
+  "alertsTabs": {
+    "overdue": "管理对象",
+    "notifications": "系统通知"
+  },
+  "reportsTabs": {
+    "production": "生产成绩",
+    "reproduction": "繁殖成绩",
+    "trend": "年度趋势",
+    "monthly": "月度综合",
+    "farrowing": "分娩成绩",
+    "growFinish": "育肥成绩",
+    "cost": "成本·收益",
+    "daily": "综合日报"
   }
 }

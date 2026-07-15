@@ -2,27 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Bell, LayoutDashboard, Menu, PiggyBank, Sparkles, type LucideIcon } from "lucide-react";
 import type { Locale } from "@/i18n/config";
 
 interface BottomNavProps {
-  lang?: Locale;
+  lang?: Locale;   // 하위호환용(라벨은 next-intl 로케일 사용, 파일 단일소스)
   onAskAI?: () => void;
   alertCount?: number;
 }
 
-type L = Partial<Record<Locale, string>> & { en: string };
-
-const TABS: { href: string | null; Icon: LucideIcon; label: L; isAI?: boolean; badge?: number }[] = [
-  { href: "/",              Icon: LayoutDashboard, label: { en: "Home",   ko: "홈",    zh: "首页", es: "Inicio",    vi: "Trang chủ", th: "หน้าหลัก", pt: "Início", ru: "Главная" } },
-  { href: "/sows",          Icon: PiggyBank,       label: { en: "Sows",   ko: "모돈",  zh: "母猪", es: "Cerdas",    vi: "Nái", th: "แม่สุกร", pt: "Matrizes", ru: "Свиноматки" } },
-  { href: null,             Icon: Sparkles,        label: { en: "AI",     ko: "AI",    zh: "AI",   es: "IA",        vi: "AI", th: "AI", pt: "IA", ru: "ИИ" }, isAI: true },
-  { href: "/alerts", Icon: Bell,            label: { en: "Alerts", ko: "알림",  zh: "通知", es: "Alertas",   vi: "Cảnh báo", th: "แจ้งเตือน", pt: "Alertas", ru: "Оповещения" } },
-  { href: "/settings",      Icon: Menu,            label: { en: "More",  ko: "더보기", zh: "更多", es: "Más",       vi: "Thêm", th: "เพิ่มเติม", pt: "Mais", ru: "Ещё" } },
+// 라벨은 messages/*.json 의 bottomNav 네임스페이스에서 로드(인라인 하드코딩 제거).
+const TABS: { href: string | null; Icon: LucideIcon; k: string; isAI?: boolean; badge?: number }[] = [
+  { href: "/",         Icon: LayoutDashboard, k: "home" },
+  { href: "/sows",     Icon: PiggyBank,       k: "sows" },
+  { href: null,        Icon: Sparkles,        k: "ai", isAI: true },
+  { href: "/alerts",   Icon: Bell,            k: "alerts" },
+  { href: "/settings", Icon: Menu,            k: "more" },
 ];
 
-export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavProps) {
+export function BottomNav({ onAskAI, alertCount = 0 }: BottomNavProps) {
   const pathname = usePathname();
+  const t = useTranslations("bottomNav");
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-border grid grid-cols-5 pb-safe">
@@ -43,7 +44,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
               >
                 <tab.Icon size={20} />
               </div>
-              <span className="text-[10px] font-semibold text-primary">{tab.label[lang] ?? tab.label.en}</span>
+              <span className="text-[10px] font-semibold text-primary">{t(tab.k)}</span>
             </button>
           );
         }
@@ -64,7 +65,7 @@ export function BottomNav({ lang = "ko", onAskAI, alertCount = 0 }: BottomNavPro
               </span>
             )}
             <span className={`text-[10px] font-medium ${isActive ? "text-primary font-semibold" : "text-faint"}`}>
-              {tab.label[lang] ?? tab.label.en}
+              {t(tab.k)}
             </span>
           </Link>
         );

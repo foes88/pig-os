@@ -1638,5 +1638,26 @@
     "cardActivated": "Activated farms",
     "cardStale": "Stale farms",
     "ruleSaveError": "Could not save the rule. Check the thresholds and try again."
+  },
+  "bottomNav": {
+    "home": "Home",
+    "sows": "Sows",
+    "ai": "AI",
+    "alerts": "Alerts",
+    "more": "More"
+  },
+  "alertsTabs": {
+    "overdue": "Overdue & Cull",
+    "notifications": "Notifications"
+  },
+  "reportsTabs": {
+    "production": "Production",
+    "reproduction": "Reproduction",
+    "trend": "Trend",
+    "monthly": "Monthly",
+    "farrowing": "Farrowing",
+    "growFinish": "Grow-Finish",
+    "cost": "Cost / Revenue",
+    "daily": "Daily (Full)"
   }
 }

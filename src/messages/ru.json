@@ -1638,5 +1638,26 @@
     "cardActivated": "Активированные фермы",
     "cardStale": "Неактивные фермы",
     "ruleSaveError": "Не удалось сохранить правило. Проверьте пороги и повторите."
+  },
+  "bottomNav": {
+    "home": "Главная",
+    "sows": "Свиноматки",
+    "ai": "ИИ",
+    "alerts": "Оповещения",
+    "more": "Ещё"
+  },
+  "alertsTabs": {
+    "overdue": "Просроченные",
+    "notifications": "Оповещения"
+  },
+  "reportsTabs": {
+    "production": "Продуктивность",
+    "reproduction": "Воспроизводство",
+    "trend": "Динамика",
+    "monthly": "Помесячно",
+    "farrowing": "Опоросы",
+    "growFinish": "Откорм",
+    "cost": "Затраты·Доход",
+    "daily": "Сводка за день"
   }
 }

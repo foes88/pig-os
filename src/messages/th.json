@@ -1638,5 +1638,26 @@
     "cardActivated": "ฟาร์มที่เปิดใช้",
     "cardStale": "ฟาร์มทิ้งร้าง",
     "ruleSaveError": "บันทึกกฎไม่สำเร็จ ตรวจสอบค่าเกณฑ์แล้วลองใหม่"
+  },
+  "bottomNav": {
+    "home": "หน้าหลัก",
+    "sows": "แม่สุกร",
+    "ai": "AI",
+    "alerts": "แจ้งเตือน",
+    "more": "เพิ่มเติม"
+  },
+  "alertsTabs": {
+    "overdue": "ค้างดำเนินการ",
+    "notifications": "การแจ้งเตือน"
+  },
+  "reportsTabs": {
+    "production": "ผลผลิต",
+    "reproduction": "การสืบพันธุ์",
+    "trend": "แนวโน้มรายปี",
+    "monthly": "รายเดือน",
+    "farrowing": "การคลอด",
+    "growFinish": "ขุน",
+    "cost": "ต้นทุน·รายได้",
+    "daily": "รายวัน (เต็ม)"
   }
 }

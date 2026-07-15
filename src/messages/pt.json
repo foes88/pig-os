@@ -1638,5 +1638,26 @@
     "cardActivated": "Granjas ativadas",
     "cardStale": "Granjas abandonadas",
     "ruleSaveError": "Não foi possível salvar a regra. Verifique os limites e tente novamente."
+  },
+  "bottomNav": {
+    "home": "Início",
+    "sows": "Matrizes",
+    "ai": "IA",
+    "alerts": "Alertas",
+    "more": "Mais"
+  },
+  "alertsTabs": {
+    "overdue": "Atrasados",
+    "notifications": "Notificações"
+  },
+  "reportsTabs": {
+    "production": "Produção",
+    "reproduction": "Reprodução",
+    "trend": "Tendência",
+    "monthly": "Mensal",
+    "farrowing": "Partos",
+    "growFinish": "Engorda",
+    "cost": "Custo·Receita",
+    "daily": "Diário"
   }
 }

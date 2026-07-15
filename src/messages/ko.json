@@ -1638,5 +1638,26 @@
     "cardActivated": "활성화 농장",
     "cardStale": "방치 농장",
     "ruleSaveError": "규칙을 저장하지 못했습니다. 임계값을 확인하고 다시 시도하세요."
+  },
+  "bottomNav": {
+    "home": "홈",
+    "sows": "모돈",
+    "ai": "AI",
+    "alerts": "알림",
+    "more": "더보기"
+  },
+  "alertsTabs": {
+    "overdue": "관리 대상",
+    "notifications": "시스템 알림"
+  },
+  "reportsTabs": {
+    "production": "생산성적",
+    "reproduction": "번식성적",
+    "trend": "연도추세",
+    "monthly": "월별종합",
+    "farrowing": "분만성적",
+    "growFinish": "비육성적",
+    "cost": "원가·수익",
+    "daily": "종합일보"
   }
 }

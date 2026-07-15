@@ -1638,5 +1638,26 @@
     "cardActivated": "Trang trại kích hoạt",
     "cardStale": "Trang trại bỏ trống",
     "ruleSaveError": "Không thể lưu quy tắc. Kiểm tra ngưỡng và thử lại."
+  },
+  "bottomNav": {
+    "home": "Trang chủ",
+    "sows": "Nái",
+    "ai": "AI",
+    "alerts": "Cảnh báo",
+    "more": "Thêm"
+  },
+  "alertsTabs": {
+    "overdue": "Cần xử lý",
+    "notifications": "Thông báo"
+  },
+  "reportsTabs": {
+    "production": "Năng suất",
+    "reproduction": "Sinh sản",
+    "trend": "Xu hướng",
+    "monthly": "Hàng tháng",
+    "farrowing": "Đẻ",
+    "growFinish": "Vỗ béo",
+    "cost": "Chi phí·Doanh thu",
+    "daily": "Báo cáo ngày"
   }
 }
