@@ -9,6 +9,7 @@ import { Pencil, LogOut, X, PiggyBank, ArrowRight, Search, AlertTriangle } from 
 import { sowsApi } from "@/lib/api/endpoints/sows";
 import { track } from "@/lib/analytics";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
+import { reportsApi } from "@/lib/api/endpoints/reports";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { canEntry, canManage } from "@/lib/auth/permissions";
@@ -79,6 +80,17 @@ export default function SowsPage() {
     queryFn: () => alertsApi.overdue(farmId!),
     enabled: !!farmId,
   });
+  // 돈군 구성(상태별 두수) — 필터칩에 병기해 한눈에. 활성 상태만 집계(sow-status 리포트 재사용).
+  const { data: statusCounts } = useQuery({
+    queryKey: ["reports", "sow-status-counts", farmId ?? ""],
+    queryFn: () => reportsApi.sowStatus(farmId!),
+    enabled: !!farmId,
+  });
+  const byStatus = statusCounts?.by_status ?? {};
+  const activeTotal = statusCounts?.total ?? 0;
+  const chipCount = (tab: SowStatus | "ALL"): number | null =>
+    tab === "ALL" ? activeTotal : (byStatus[tab] ?? null);
+
   const riskBySow = new Map<string, OverdueType>();
   for (const o of overdue?.items ?? []) if (!riskBySow.has(o.sow_id)) riskBySow.set(o.sow_id, o.type);
 
@@ -131,19 +143,26 @@ export default function SowsPage() {
             />
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {STATUS_TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => { setStatusFilter(tab); setPage(1); }}
-                className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold border transition ${
-                  statusFilter === tab
-                    ? "bg-console text-white border-console"
-                    : "bg-surface border-border text-text2 hover:bg-bg2"
-                }`}
-              >
-                {tab === "ALL" ? t("tabAll") : tStatus(tab)}
-              </button>
-            ))}
+            {STATUS_TABS.map((tab) => {
+              const n = chipCount(tab);
+              const active = statusFilter === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => { setStatusFilter(tab); setPage(1); }}
+                  className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold border transition inline-flex items-center gap-1.5 ${
+                    active
+                      ? "bg-console text-white border-console"
+                      : "bg-surface border-border text-text2 hover:bg-bg2"
+                  }`}
+                >
+                  {tab === "ALL" ? t("tabAll") : tStatus(tab)}
+                  {n != null && n > 0 && (
+                    <span className={`font-mono text-[11px] tabular-nums ${active ? "text-white/80" : "text-text3"}`}>{n}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
