@@ -1,7 +1,14 @@
 # RULE: 포유/대리포유 모돈 도폐사 시 자돈 처리
 
-> 상태: 설계 확정 대기. 출처 = 피그플랜 실동작 분석(2026-07-10).
+> 상태: **백엔드 구현 완료(2026-07-15, 옵션 b)** — pytest 6종 통과, openapi 반영. 모바일/웹 UI(disposition 선택) 잔여.
+> 출처 = 피그플랜 실동작 분석(2026-07-10).
 > 영역: 이벤트 검증(validators) + 이관(import_pigplan) + 모바일/웹 cull 플로우.
+>
+> **구현 요약**: `POST /farms/{id}/sows/{sow_id}/cull` 에 옵셔널 필드 `piglet_disposition`
+> (`FOSTER_TO`|`DEATH`|`WEAN`) + `foster_target_sow_id` + `piglet_death_reason` 추가.
+> 포유 모돈 도태 시 잔여 미이유 자돈수>0 인데 disposition 미지정 → **422**(하위호환: 종전에도 422였음).
+> 지정 시 해당 처리(전출/폐사/이유) 실행 후 도태. 잔여 0 이면 처리 불필요(종전 무조건 차단 완화).
+> **모바일 TODO**: 도폐사 모달에서 LACTATING + 잔여>0 이면 처리방식 선택 UI 노출.
 
 ---
 
