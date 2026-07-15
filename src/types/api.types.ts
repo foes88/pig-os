@@ -961,6 +961,40 @@ export interface AnnualKpiTrend {
   country_benchmarks: CountryBenchmark[];
 }
 
+// 무가입 농장 건강 스코어카드 (공개 퍼널)
+export interface ScorecardRequest {
+  country: string;
+  psy?: number;
+  npd?: number;
+  farrowing_rate?: number;
+  born_alive?: number;
+  weaned?: number;
+}
+export type ScorecardBand = "TOP" | "GOOD" | "FAIR" | "LOW" | "NA";
+export interface ScorecardMetric {
+  code: string;
+  value: number;
+  avg: number | null;
+  top25: number | null;
+  target: number | null;
+  direction: string;
+  band: ScorecardBand;
+  score: number;
+  gap_to_avg: number | null;
+}
+export interface ScorecardOpportunity {
+  code: string;
+  band: ScorecardBand;
+  gap_to_avg: number | null;
+}
+export interface ScorecardResponse {
+  country: string;
+  overall_score: number;
+  overall_band: ScorecardBand;
+  metrics: ScorecardMetric[];
+  opportunities: ScorecardOpportunity[];
+}
+
 export interface DailyCount {
   count: number;
   total_born: number;

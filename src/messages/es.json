@@ -1835,5 +1835,32 @@
     "errInvalid": "Usuario o contraseña incorrectos",
     "errFormat": "Verifica el formato de tus datos",
     "errServer": "Error de servidor. Inténtalo de nuevo."
+  },
+  "scorecard": {
+    "title": "Tarjeta de salud de la granja",
+    "subtitle": "Vea cómo se posiciona su granja en el país — sin registro.",
+    "country": "País",
+    "hint": "Ingrese lo que sepa — al menos uno.",
+    "psy": "PSY (destetados/cerda/año)",
+    "npd": "DNP (días no productivos)",
+    "fr": "Tasa de partos (%)",
+    "ba": "Nacidos vivos/camada",
+    "weaned": "Destetados/camada",
+    "compute": "Ver mi puntuación",
+    "computing": "Calculando…",
+    "yourScore": "Puntuación de su granja",
+    "countryAvg": "Promedio país",
+    "top25": "Top 25%",
+    "bandTOP": "Top 25%",
+    "bandGOOD": "Sobre promedio",
+    "bandFAIR": "Bajo promedio",
+    "bandLOW": "Necesita atención",
+    "bandNA": "Sin referencia",
+    "oppsTitle": "Sus mayores oportunidades",
+    "gapToAvg": "{n} hasta el promedio",
+    "ctaTitle": "¿Quiere el panorama completo?",
+    "cta": "Empiece gratis — importe en 5 min",
+    "tryAnother": "Puntuar otra granja",
+    "needOne": "Ingrese al menos un número."
   }
 }

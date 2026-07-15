@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/register", "/onboarding", "/forgot-password"];
+const PUBLIC_PATHS = ["/login", "/register", "/onboarding", "/forgot-password", "/scorecard"];
 const LOCALES = ["en", "ko", "zh", "es", "vi", "th", "pt", "ru"];
 
 // 첫 방문(쿠키 없음) 시 브라우저 언어(Accept-Language)로 자동 선택.

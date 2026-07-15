@@ -1835,5 +1835,32 @@
     "errInvalid": "ID or password is incorrect",
     "errFormat": "Please check your input format",
     "errServer": "Server error. Please try again."
+  },
+  "scorecard": {
+    "title": "Farm Health Scorecard",
+    "subtitle": "See how your farm ranks vs your country — no signup.",
+    "country": "Country",
+    "hint": "Enter what you know — at least one.",
+    "psy": "PSY (weaned/sow/yr)",
+    "npd": "NPD (non-productive days)",
+    "fr": "Farrowing rate (%)",
+    "ba": "Born alive / litter",
+    "weaned": "Weaned / litter",
+    "compute": "See my score",
+    "computing": "Scoring…",
+    "yourScore": "Your farm score",
+    "countryAvg": "Country avg",
+    "top25": "Top 25%",
+    "bandTOP": "Top 25%",
+    "bandGOOD": "Above average",
+    "bandFAIR": "Below average",
+    "bandLOW": "Needs attention",
+    "bandNA": "No benchmark",
+    "oppsTitle": "Your biggest opportunities",
+    "gapToAvg": "{n} to country average",
+    "ctaTitle": "Want the full picture?",
+    "cta": "Start free — import in 5 min",
+    "tryAnother": "Score another farm",
+    "needOne": "Enter at least one number."
   }
 }

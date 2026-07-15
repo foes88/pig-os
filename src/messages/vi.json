@@ -1835,5 +1835,32 @@
     "errInvalid": "Tên đăng nhập hoặc mật khẩu không đúng",
     "errFormat": "Vui lòng kiểm tra định dạng nhập liệu",
     "errServer": "Lỗi máy chủ. Vui lòng thử lại."
+  },
+  "scorecard": {
+    "title": "Thẻ điểm sức khỏe trại",
+    "subtitle": "Xem trại của bạn xếp hạng thế nào so với cả nước — không cần đăng ký.",
+    "country": "Quốc gia",
+    "hint": "Nhập những gì bạn biết — ít nhất một.",
+    "psy": "PSY (cai sữa/nái/năm)",
+    "npd": "NPD (ngày không SX)",
+    "fr": "Tỷ lệ đẻ (%)",
+    "ba": "Đẻ sống/lứa",
+    "weaned": "Cai sữa/lứa",
+    "compute": "Xem điểm của tôi",
+    "computing": "Đang chấm…",
+    "yourScore": "Điểm trại của bạn",
+    "countryAvg": "TB cả nước",
+    "top25": "Top 25%",
+    "bandTOP": "Top 25%",
+    "bandGOOD": "Trên TB",
+    "bandFAIR": "Dưới TB",
+    "bandLOW": "Cần cải thiện",
+    "bandNA": "Không có chuẩn",
+    "oppsTitle": "Cơ hội lớn nhất",
+    "gapToAvg": "{n} tới TB cả nước",
+    "ctaTitle": "Muốn xem toàn cảnh?",
+    "cta": "Bắt đầu miễn phí — nhập trong 5 phút",
+    "tryAnother": "Chấm trại khác",
+    "needOne": "Nhập ít nhất một số."
   }
 }

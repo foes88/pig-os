@@ -1835,5 +1835,32 @@
     "errInvalid": "账号或密码不正确",
     "errFormat": "请检查您的输入格式",
     "errServer": "服务器错误，请稍后重试。"
+  },
+  "scorecard": {
+    "title": "农场健康评分卡",
+    "subtitle": "无需注册，立即查看您的农场在全国的排名。",
+    "country": "国家",
+    "hint": "填写您了解的数据 — 至少一项。",
+    "psy": "PSY(每母猪年断奶数)",
+    "npd": "NPD(非生产天数)",
+    "fr": "分娩率 (%)",
+    "ba": "窝均活产",
+    "weaned": "窝均断奶",
+    "compute": "查看我的评分",
+    "computing": "评分中…",
+    "yourScore": "您的农场评分",
+    "countryAvg": "全国平均",
+    "top25": "前25%",
+    "bandTOP": "前25%",
+    "bandGOOD": "高于平均",
+    "bandFAIR": "低于平均",
+    "bandLOW": "需改进",
+    "bandNA": "无基准",
+    "oppsTitle": "最大改进机会",
+    "gapToAvg": "距全国平均 {n}",
+    "ctaTitle": "想看完整分析？",
+    "cta": "免费开始 — 5分钟导入数据",
+    "tryAnother": "为另一农场评分",
+    "needOne": "请至少输入一项数据。"
   }
 }

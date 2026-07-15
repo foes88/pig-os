@@ -37,6 +37,7 @@ from app.routers.base import (
     orgs,
     piglets,
     pilot_signups,
+    scorecard,
     reports,
     sows,
     sync,
@@ -85,6 +86,7 @@ V1 = "/api/v1"
 
 # ── Public routers (no auth) ─────────────────────────────────────────────────
 app.include_router(pilot_signups.router, prefix=V1)
+app.include_router(scorecard.router, prefix=V1)
 
 # ── Base routers ─────────────────────────────────────────────────────────────
 app.include_router(auth.router,        prefix=V1)
