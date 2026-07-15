@@ -1659,5 +1659,38 @@
     "growFinish": "Engorde",
     "cost": "Costo·Ingreso",
     "daily": "Diario"
+  },
+  "sidebar": {
+    "dashboard": "Panel",
+    "record": "Registro",
+    "grpHerd": "Hato",
+    "sows": "Cerdas",
+    "boars": "Verracos",
+    "piglets": "Lechones",
+    "finishers": "Engorde",
+    "feed": "Alimento",
+    "grpTasks": "Tareas y alertas",
+    "tasks": "Tareas de hoy",
+    "alerts": "Alertas",
+    "grpReports": "Informes",
+    "kpi": "Resumen KPI",
+    "sowStatusMenu": "Estado cerdas",
+    "dailyReport": "Informe diario",
+    "dailyFull": "Diario integral",
+    "farrowWean": "Parto y destete",
+    "mortality": "Mortalidad",
+    "production": "Producción",
+    "growFinish": "Engorde",
+    "sowReport": "Informe de cerdas",
+    "ledger": "Registro",
+    "prrs": "PRRS genética",
+    "dataQuality": "Calidad de datos",
+    "grpAddons": "Addons",
+    "addonStore": "Tienda",
+    "settings": "Configuración"
+  },
+  "topbar": {
+    "search": "Buscar cerda ID, lote, sala…",
+    "qi": "Entrada Rápida"
   }
 }

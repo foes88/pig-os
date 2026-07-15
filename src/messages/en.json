@@ -1659,5 +1659,38 @@
     "growFinish": "Grow-Finish",
     "cost": "Cost / Revenue",
     "daily": "Daily (Full)"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "record": "Record Entry",
+    "grpHerd": "Herd",
+    "sows": "Sows",
+    "boars": "Boars",
+    "piglets": "Piglets",
+    "finishers": "Finishers",
+    "feed": "Feed",
+    "grpTasks": "Tasks & Alerts",
+    "tasks": "Today's Tasks",
+    "alerts": "Alerts",
+    "grpReports": "Reports",
+    "kpi": "KPI Summary",
+    "sowStatusMenu": "Sow Status",
+    "dailyReport": "Daily Report",
+    "dailyFull": "Daily (Full)",
+    "farrowWean": "Farrow & Wean",
+    "mortality": "Mortality",
+    "production": "Production (Repro)",
+    "growFinish": "Grow-Finish",
+    "sowReport": "Sow Report",
+    "ledger": "Work Ledger",
+    "prrs": "PRRS Genetics",
+    "dataQuality": "Data Quality",
+    "grpAddons": "Addons",
+    "addonStore": "Addon Store",
+    "settings": "Settings"
+  },
+  "topbar": {
+    "search": "Search sow ID, batch, room…",
+    "qi": "Quick Input"
   }
 }

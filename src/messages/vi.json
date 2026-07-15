@@ -1659,5 +1659,38 @@
     "growFinish": "Vỗ béo",
     "cost": "Chi phí·Doanh thu",
     "daily": "Báo cáo ngày"
+  },
+  "sidebar": {
+    "dashboard": "Tổng quan",
+    "record": "Nhập dữ liệu",
+    "grpHerd": "Đàn heo",
+    "sows": "Heo nái",
+    "boars": "Heo nọc",
+    "piglets": "Heo con",
+    "finishers": "Heo thịt",
+    "feed": "Thức ăn",
+    "grpTasks": "Việc & cảnh báo",
+    "tasks": "Việc hôm nay",
+    "alerts": "Cảnh báo",
+    "grpReports": "Báo cáo",
+    "kpi": "Tổng quan KPI",
+    "sowStatusMenu": "Trạng thái nái",
+    "dailyReport": "Báo cáo ngày",
+    "dailyFull": "BC tổng hợp ngày",
+    "farrowWean": "Đẻ & cai sữa",
+    "mortality": "Loại thải & chết",
+    "production": "Năng suất sinh sản",
+    "growFinish": "Năng suất vỗ béo",
+    "sowReport": "Báo cáo nái",
+    "ledger": "Sổ công việc",
+    "prrs": "PRRS di truyền",
+    "dataQuality": "Chất lượng dữ liệu",
+    "grpAddons": "Tiện ích",
+    "addonStore": "Cửa hàng",
+    "settings": "Cài đặt"
+  },
+  "topbar": {
+    "search": "Tìm số nái, lô, khu…",
+    "qi": "Nhập nhanh"
   }
 }

@@ -1659,5 +1659,38 @@
     "growFinish": "ขุน",
     "cost": "ต้นทุน·รายได้",
     "daily": "รายวัน (เต็ม)"
+  },
+  "sidebar": {
+    "dashboard": "แดชบอร์ด",
+    "record": "บันทึกข้อมูล",
+    "grpHerd": "ฝูงสุกร",
+    "sows": "แม่สุกร",
+    "boars": "พ่อพันธุ์",
+    "piglets": "ลูกสุกร",
+    "finishers": "สุกรขุน",
+    "feed": "อาหารสัตว์",
+    "grpTasks": "งาน·แจ้งเตือน",
+    "tasks": "งานวันนี้",
+    "alerts": "แจ้งเตือน",
+    "grpReports": "รายงาน",
+    "kpi": "สรุป KPI",
+    "sowStatusMenu": "สถานะแม่สุกร",
+    "dailyReport": "รายงานประจำวัน",
+    "dailyFull": "รายงานรวมรายวัน",
+    "farrowWean": "คลอด·หย่านม",
+    "mortality": "คัดทิ้ง·ตาย",
+    "production": "ผลผลิต(ผสมพันธุ์)",
+    "growFinish": "สุกรขุน",
+    "sowReport": "รายงานแม่สุกร",
+    "ledger": "สมุดงาน",
+    "prrs": "พันธุกรรม PRRS",
+    "dataQuality": "คุณภาพข้อมูล",
+    "grpAddons": "ส่วนเสริม",
+    "addonStore": "ร้านส่วนเสริม",
+    "settings": "การตั้งค่า"
+  },
+  "topbar": {
+    "search": "ค้นหารหัสแม่สุกร, รุ่น, โรงเรือน…",
+    "qi": "บันทึกด่วน"
   }
 }

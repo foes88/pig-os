@@ -1,23 +1,14 @@
 "use client";
 
 import { Bell, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/store/auth.store";
 import { visibleLocales } from "@/i18n/config";
 import { FarmSwitcher } from "@/components/FarmSwitcher";
 
 import type { Locale } from "@/i18n/config";
 
-const LABELS: Record<Locale, { search: string; qi: string }> = {
-  en: { search: "Search sow ID, batch, room…",    qi: "Quick Input"    },
-  ko: { search: "모돈 ID, 배치, 구역 검색…",         qi: "빠른 입력"      },
-  zh: { search: "搜索母猪ID、批次、栏位…",             qi: "快速录入"       },
-  es: { search: "Buscar cerda ID, lote, sala…",   qi: "Entrada Rápida" },
-  vi: { search: "Tìm số nái, lô, khu…",           qi: "Nhập nhanh"     },
-  th: { search: "ค้นหารหัสแม่สุกร, รุ่น, โรงเรือน…", qi: "บันทึกด่วน"     },
-  pt: { search: "Buscar ID da matriz, lote, sala…", qi: "Registro rápido" },
-  ru: { search: "Поиск свиноматки, партии, зоны…", qi: "Быстрый ввод" },
-};
-
+// LANG_LABELS는 언어 선택기 표시명(로케일 불변 상수 — 번역 대상 아님). search/qi는 topbar 네임스페이스.
 const LANG_LABELS: Record<Locale, string> = {
   en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI", th: "ไทย", pt: "PT", ru: "RU",
 };
@@ -37,7 +28,7 @@ export function Topbar({
   onBell,
   alertCount = 0,
 }: TopbarProps) {
-  const t = LABELS[lang] ?? LABELS.en;
+  const t = useTranslations("topbar");
   // 한국어 가시성은 system_role 기준(농장 role이 아니라 플랫폼 권한 — 코드리뷰 #2).
   const systemRole = useAuthStore((s) => s.user?.system_role);
   // 한국어는 플랫폼 관리자만. 현재 lang이 목록에 없으면(엣지) 깨지지 않게 포함.
@@ -53,7 +44,7 @@ export function Topbar({
       <div className="flex-1 max-w-[360px] relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" size={14} />
         <input
-          placeholder={t.search}
+          placeholder={t("search")}
           className="w-full bg-surface border border-border text-text text-xs pl-8 pr-10 py-2 rounded-lg outline-none focus:border-primary transition"
         />
         <span className="absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-[9px] text-faint bg-panel-hi px-1.5 py-0.5 rounded">
@@ -93,7 +84,7 @@ export function Topbar({
           className="flex items-center gap-1.5 bg-navy text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-primary transition"
         >
           <span className="text-sm font-bold leading-none">+</span>
-          {t.qi}
+          {t("qi")}
         </button>
       </div>
     </header>

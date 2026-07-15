@@ -1659,5 +1659,38 @@
     "growFinish": "Engorda",
     "cost": "Custo·Receita",
     "daily": "Diário"
+  },
+  "sidebar": {
+    "dashboard": "Painel",
+    "record": "Registro",
+    "grpHerd": "Plantel",
+    "sows": "Matrizes",
+    "boars": "Cachaços",
+    "piglets": "Leitões",
+    "finishers": "Terminação",
+    "feed": "Ração",
+    "grpTasks": "Tarefas e alertas",
+    "tasks": "Tarefas de hoje",
+    "alerts": "Alertas",
+    "grpReports": "Relatórios",
+    "kpi": "Resumo KPI",
+    "sowStatusMenu": "Status das matrizes",
+    "dailyReport": "Relatório diário",
+    "dailyFull": "Diário completo",
+    "farrowWean": "Parto e desmame",
+    "mortality": "Mortalidade",
+    "production": "Produção (Reprodução)",
+    "growFinish": "Crescimento-Terminação",
+    "sowReport": "Relatório de matrizes",
+    "ledger": "Livro de trabalho",
+    "prrs": "Genética PRRS",
+    "dataQuality": "Qualidade de dados",
+    "grpAddons": "Complementos",
+    "addonStore": "Loja de complementos",
+    "settings": "Configurações"
+  },
+  "topbar": {
+    "search": "Buscar ID da matriz, lote, sala…",
+    "qi": "Registro rápido"
   }
 }

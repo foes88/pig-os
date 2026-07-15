@@ -1659,5 +1659,38 @@
     "growFinish": "育肥成绩",
     "cost": "成本·收益",
     "daily": "综合日报"
+  },
+  "sidebar": {
+    "dashboard": "总览",
+    "record": "记录录入",
+    "grpHerd": "猪群",
+    "sows": "母猪",
+    "boars": "公猪",
+    "piglets": "仔猪",
+    "finishers": "育肥猪",
+    "feed": "饲料",
+    "grpTasks": "任务与预警",
+    "tasks": "今日任务",
+    "alerts": "预警",
+    "grpReports": "报告",
+    "kpi": "指标概览",
+    "sowStatusMenu": "母猪状态",
+    "dailyReport": "每日现状",
+    "dailyFull": "综合日报",
+    "farrowWean": "分娩断奶",
+    "mortality": "淘汰死亡",
+    "production": "繁殖成绩",
+    "growFinish": "育肥成绩",
+    "sowReport": "母猪报告",
+    "ledger": "工作台账",
+    "prrs": "PRRS基因",
+    "dataQuality": "数据质量",
+    "grpAddons": "插件",
+    "addonStore": "插件商店",
+    "settings": "设置"
+  },
+  "topbar": {
+    "search": "搜索母猪ID、批次、栏位…",
+    "qi": "快速录入"
   }
 }

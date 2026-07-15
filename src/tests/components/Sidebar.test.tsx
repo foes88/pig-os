@@ -11,10 +11,12 @@ vi.mock("@/store/auth.store", () => ({
 }));
 
 describe("Sidebar", () => {
-  it("renders the primary nav labels", () => {
-    renderWithClient(<Sidebar lang="ko" />);
-    for (const label of ["대시보드", "모돈", "웅돈", "보고서", "설정"]) {
-      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+  it("renders the primary nav items", () => {
+    // 라벨은 messages 파일 단일소스(next-intl은 setup에서 key 반환 mock) →
+    // 번역 텍스트 대신 안정적인 nav testid로 렌더 검증.
+    renderWithClient(<Sidebar />);
+    for (const id of ["nav-dashboard", "nav-sows", "nav-boars", "nav-settings", "nav-reports-sow-status"]) {
+      expect(screen.getByTestId(id)).toBeTruthy();
     }
   });
 });

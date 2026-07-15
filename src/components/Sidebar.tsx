@@ -25,78 +25,77 @@ import {
   Wheat,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/store/auth.store";
 import { alertsApi } from "@/lib/api/endpoints/alerts";
 import { notificationsApi } from "@/lib/api/endpoints/notifications";
 import { queryKeys } from "@/lib/api/queryKeys";
 import type { Locale } from "@/i18n/config";
 
-// en 필수 + 나머지 로케일 선택(미번역은 en 폴백). 신규 로케일(th/pt) 점진 번역 허용.
-type L = Partial<Record<Locale, string>> & { en: string };
-
+// 라벨은 messages/*.json 의 sidebar 네임스페이스(파일 단일소스, 인라인 제거).
 interface NavItem {
   href: string;
   icon: React.ElementType;
-  label: L;
+  k: string;            // sidebar 네임스페이스 키
   badge?: "alerts"; // 통합 알림 배지(관리대상+미읽음 합산)
 }
 
 // 메뉴 재설계 2026-06 (docs/menu-redesign-2026-06.md): PigPlan식 그룹 재편 + 알림 통합 + 분만사 제거
-const NAV_GROUPS: { label?: L; items: NavItem[] }[] = [
+const NAV_GROUPS: { labelKey?: string; items: NavItem[] }[] = [
   {
     items: [
-      { href: "/", icon: LayoutDashboard, label: { en: "Dashboard", ko: "대시보드", zh: "总览", es: "Panel", vi: "Tổng quan", th: "แดชบอร์ด", pt: "Painel", ru: "Панель" } },
+      { href: "/", icon: LayoutDashboard, k: "dashboard" },
     ],
   },
   {
     items: [
-      { href: "/record", icon: ClipboardList, label: { en: "Record Entry", ko: "기록 입력", zh: "记录录入", es: "Registro", vi: "Nhập dữ liệu", th: "บันทึกข้อมูล", pt: "Registro", ru: "Ввод данных" } },
+      { href: "/record", icon: ClipboardList, k: "record" },
     ],
   },
   {
-    label: { en: "Herd", ko: "돈군", zh: "猪群", es: "Hato", vi: "Đàn heo", th: "ฝูงสุกร", pt: "Plantel", ru: "Стадо" },
+    labelKey: "grpHerd",
     items: [
-      { href: "/sows",      icon: PiggyBank, label: { en: "Sows",      ko: "모돈",   zh: "母猪",   es: "Cerdas",   vi: "Heo nái", th: "แม่สุกร",   pt: "Matrizes", ru: "Свиноматки" } },
-      { href: "/boars",     icon: Heart,     label: { en: "Boars",     ko: "웅돈",   zh: "公猪",   es: "Verracos", vi: "Heo nọc", th: "พ่อพันธุ์", pt: "Cachaços", ru: "Хряки" } },
-      { href: "/piglets",   icon: Layers,    label: { en: "Piglets",   ko: "자돈",   zh: "仔猪",   es: "Lechones", vi: "Heo con", th: "ลูกสุกร",   pt: "Leitões", ru: "Поросята" } },
-      { href: "/finishers", icon: Beef,      label: { en: "Finishers", ko: "비육돈", zh: "育肥猪", es: "Engorde",  vi: "Heo thịt", th: "สุกรขุน",  pt: "Terminação", ru: "Откорм" } },
-      { href: "/feed",      icon: Wheat,     label: { en: "Feed",      ko: "사료",   zh: "饲料",   es: "Alimento", vi: "Thức ăn", th: "อาหารสัตว์", pt: "Ração", ru: "Корма" } },
+      { href: "/sows",      icon: PiggyBank, k: "sows" },
+      { href: "/boars",     icon: Heart,     k: "boars" },
+      { href: "/piglets",   icon: Layers,    k: "piglets" },
+      { href: "/finishers", icon: Beef,      k: "finishers" },
+      { href: "/feed",      icon: Wheat,     k: "feed" },
     ],
   },
   {
-    label: { en: "Tasks & Alerts", ko: "할 일·알림", zh: "任务与预警", es: "Tareas y alertas", vi: "Việc & cảnh báo", th: "งาน·แจ้งเตือน", pt: "Tarefas e alertas", ru: "Задачи и оповещения" },
+    labelKey: "grpTasks",
     items: [
-      { href: "/tasks",  icon: ListTodo,       label: { en: "Today's Tasks", ko: "오늘 할 일", zh: "今日任务", es: "Tareas de hoy", vi: "Việc hôm nay", th: "งานวันนี้", pt: "Tarefas de hoje", ru: "Задачи на сегодня" } },
-      { href: "/alerts", icon: AlertTriangle, badge: "alerts", label: { en: "Alerts", ko: "알림", zh: "预警", es: "Alertas", vi: "Cảnh báo", th: "แจ้งเตือน", pt: "Alertas", ru: "Оповещения" } },
+      { href: "/tasks",  icon: ListTodo,       k: "tasks" },
+      { href: "/alerts", icon: AlertTriangle, badge: "alerts", k: "alerts" },
     ],
   },
   {
-    label: { en: "Reports", ko: "보고서", zh: "报告", es: "Informes", vi: "Báo cáo", th: "รายงาน", pt: "Relatórios", ru: "Отчёты" },
+    labelKey: "grpReports",
     items: [
-      { href: "/kpi",                  icon: BarChart3, label: { en: "KPI Summary",       ko: "KPI 현황",    zh: "指标概览", es: "Resumen KPI",       vi: "Tổng quan KPI", th: "สรุป KPI", pt: "Resumo KPI", ru: "Сводка KPI" } },
-      { href: "/reports/sow-status",   icon: PiggyBank, label: { en: "Sow Status",        ko: "모돈 현황",   zh: "母猪状态", es: "Estado cerdas",     vi: "Trạng thái nái", th: "สถานะแม่สุกร", pt: "Status das matrizes", ru: "Статус свиноматок" } },
-      { href: "/reports/daily",        icon: FileText,  label: { en: "Daily Report",      ko: "일일 현황",   zh: "每日现状", es: "Informe diario",    vi: "Báo cáo ngày", th: "รายงานประจำวัน", pt: "Relatório diário", ru: "Ежедневный отчёт" } },
-      { href: "/reports/comprehensive-daily", icon: FileText, label: { en: "Daily (Full)", ko: "종합일보", zh: "综合日报", es: "Diario integral", vi: "BC tổng hợp ngày", th: "รายงานรวมรายวัน", pt: "Diário completo", ru: "Сводка за день" } },
-      { href: "/reports/farrowing",    icon: Baby,      label: { en: "Farrow & Wean",     ko: "분만·이유",   zh: "分娩断奶", es: "Parto y destete",   vi: "Đẻ & cai sữa", th: "คลอด·หย่านม", pt: "Parto e desmame", ru: "Опорос и отъём" } },
-      { href: "/reports/mortality",    icon: TrendingDown, label: { en: "Mortality",      ko: "도폐사·폐사", zh: "淘汰死亡", es: "Mortalidad",        vi: "Loại thải & chết", th: "คัดทิ้ง·ตาย", pt: "Mortalidade", ru: "Падёж и выбраковка" } },
-      { href: "/reports/reproduction", icon: FileText,  label: { en: "Production (Repro)", ko: "생산성적",    zh: "繁殖成绩", es: "Producción",        vi: "Năng suất sinh sản", th: "ผลผลิต(ผสมพันธุ์)", pt: "Produção (Reprodução)", ru: "Продуктивность (воспр.)" } },
-      { href: "/reports/grow-finish",  icon: Beef,      label: { en: "Grow-Finish",       ko: "비육성적",    zh: "育肥成绩", es: "Engorde",           vi: "Năng suất vỗ béo", th: "สุกรขุน", pt: "Crescimento-Terminação", ru: "Откорм" } },
-      { href: "/reports",              icon: FileText,  label: { en: "Sow Report",        ko: "모돈 보고서", zh: "母猪报告", es: "Informe de cerdas", vi: "Báo cáo nái", th: "รายงานแม่สุกร", pt: "Relatório de matrizes", ru: "Отчёт по свиноматкам" } },
-      { href: "/reports/ledger",       icon: ClipboardList, label: { en: "Work Ledger",   ko: "작업대장",    zh: "工作台账", es: "Registro",          vi: "Sổ công việc", th: "สมุดงาน", pt: "Livro de trabalho", ru: "Журнал работ" } },
-      { href: "/reports/prrs",         icon: Dna,       label: { en: "PRRS Genetics",     ko: "PRRS 유전",   zh: "PRRS基因", es: "PRRS genética",     vi: "PRRS di truyền", th: "พันธุกรรม PRRS", pt: "Genética PRRS", ru: "Генетика PRRS" } },
-      { href: "/reports/data-quality", icon: ShieldCheck, label: { en: "Data Quality",    ko: "데이터 품질", zh: "数据质量", es: "Calidad de datos",  vi: "Chất lượng dữ liệu", th: "คุณภาพข้อมูล", pt: "Qualidade de dados", ru: "Качество данных" } },
+      { href: "/kpi",                  icon: BarChart3, k: "kpi" },
+      { href: "/reports/sow-status",   icon: PiggyBank, k: "sowStatusMenu" },
+      { href: "/reports/daily",        icon: FileText,  k: "dailyReport" },
+      { href: "/reports/comprehensive-daily", icon: FileText, k: "dailyFull" },
+      { href: "/reports/farrowing",    icon: Baby,      k: "farrowWean" },
+      { href: "/reports/mortality",    icon: TrendingDown, k: "mortality" },
+      { href: "/reports/reproduction", icon: FileText,  k: "production" },
+      { href: "/reports/grow-finish",  icon: Beef,      k: "growFinish" },
+      { href: "/reports",              icon: FileText,  k: "sowReport" },
+      { href: "/reports/ledger",       icon: ClipboardList, k: "ledger" },
+      { href: "/reports/prrs",         icon: Dna,       k: "prrs" },
+      { href: "/reports/data-quality", icon: ShieldCheck, k: "dataQuality" },
     ],
   },
   {
-    label: { en: "Addons", ko: "Addon", zh: "插件", es: "Addons", vi: "Tiện ích", th: "ส่วนเสริม", pt: "Complementos", ru: "Дополнения" },
+    labelKey: "grpAddons",
     items: [
-      { href: "/addons", icon: Store, label: { en: "Addon Store", ko: "Addon 스토어", zh: "插件商店", es: "Tienda", vi: "Cửa hàng", th: "ร้านส่วนเสริม", pt: "Loja de complementos", ru: "Магазин дополнений" } },
+      { href: "/addons", icon: Store, k: "addonStore" },
     ],
   },
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
-  { href: "/settings", icon: Settings, label: { en: "Settings", ko: "설정", zh: "设置", es: "Configuración", vi: "Cài đặt", th: "การตั้งค่า", pt: "Configurações", ru: "Настройки" } },
+  { href: "/settings", icon: Settings, k: "settings" },
 ];
 
 interface SidebarProps {
@@ -106,8 +105,9 @@ interface SidebarProps {
   onAskAI?: () => void;
 }
 
-export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }: SidebarProps) {
+export function Sidebar({ collapsed = false, onCollapse, onAskAI }: SidebarProps) {
   const pathname = usePathname();
+  const t = useTranslations("sidebar");
   const user = useAuthStore((s) => s.user);
   const w = collapsed ? 64 : 224;
   const farmId = useAuthStore((s) => s.activeFarmId);
@@ -125,8 +125,6 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
     refetchInterval: 5 * 60 * 1000,
   });
   const unreadCount = notifUnread?.unread_count ?? 0;
-
-  const t = (obj: L) => obj[lang] ?? obj.en;
 
   // active 항목 = 현재 경로에 매칭되는 href 중 "가장 긴(가장 구체적인)" 하나만.
   // (예: /reports/reproduction → '생산성적'만 active, 상위 '/reports'(모돈보고서)는 비활성)
@@ -185,9 +183,9 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
       <nav className="flex-1 overflow-y-auto py-1.5 px-3">
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} className={gi ? "mt-3" : "mt-1"}>
-            {!collapsed && group.label && (
+            {!collapsed && group.labelKey && (
               <div className="px-2.5 pt-1 pb-1 text-[9.5px] font-bold text-console-mut uppercase tracking-[0.1em]">
-                {t(group.label)}
+                {t(group.labelKey!)}
               </div>
             )}
             {group.items.map((item) => {
@@ -198,7 +196,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
                   key={item.href}
                   href={item.href}
                   data-testid={`nav-${item.href === "/" ? "dashboard" : item.href.slice(1).replace(/\//g, "-")}`}
-                  title={collapsed ? t(item.label) : undefined}
+                  title={collapsed ? t(item.k) : undefined}
                   className={`relative flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] text-sm transition-all ${
                     isActive
                       ? "bg-console3 text-console-text font-semibold"
@@ -207,7 +205,7 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
                 >
                   {isActive && <span className="absolute left-0 top-[7px] bottom-[7px] w-[3px] rounded-full bg-brand" />}
                   <Icon size={16} className="flex-shrink-0" />
-                  {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
+                  {!collapsed && <span className="text-[13px]">{t(item.k)}</span>}
                   {!collapsed && item.badge === "alerts" && (alertCount + unreadCount) > 0 && (
                     <span className="ml-auto text-[10px] font-bold font-mono bg-danger text-white rounded-full px-1.5 min-w-[18px] text-center leading-[18px]">
                       {alertCount + unreadCount}
@@ -243,14 +241,14 @@ export function Sidebar({ lang = "ko", collapsed = false, onCollapse, onAskAI }:
               key={item.href}
               href={item.href}
               data-testid={`nav-${item.href.slice(1).replace(/\//g, "-")}`}
-              title={collapsed ? t(item.label) : undefined}
+              title={collapsed ? t(item.k) : undefined}
               className={`relative flex items-center gap-2.5 px-2.5 py-2 rounded-[6px] text-sm transition-all ${
                 isActive ? "bg-console3 text-console-text font-semibold" : "text-console-mut hover:bg-console2 hover:text-console-text"
               } ${collapsed ? "justify-center" : ""}`}
             >
               {isActive && <span className="absolute left-0 top-[7px] bottom-[7px] w-[3px] rounded-full bg-brand" />}
               <Icon size={16} className="flex-shrink-0" />
-              {!collapsed && <span className="text-[13px]">{t(item.label)}</span>}
+              {!collapsed && <span className="text-[13px]">{t(item.k)}</span>}
             </Link>
           );
         })}

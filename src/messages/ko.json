@@ -1659,5 +1659,38 @@
     "growFinish": "비육성적",
     "cost": "원가·수익",
     "daily": "종합일보"
+  },
+  "sidebar": {
+    "dashboard": "대시보드",
+    "record": "기록 입력",
+    "grpHerd": "돈군",
+    "sows": "모돈",
+    "boars": "웅돈",
+    "piglets": "자돈",
+    "finishers": "비육돈",
+    "feed": "사료",
+    "grpTasks": "할 일·알림",
+    "tasks": "오늘 할 일",
+    "alerts": "알림",
+    "grpReports": "보고서",
+    "kpi": "KPI 현황",
+    "sowStatusMenu": "모돈 현황",
+    "dailyReport": "일일 현황",
+    "dailyFull": "종합일보",
+    "farrowWean": "분만·이유",
+    "mortality": "도폐사·폐사",
+    "production": "생산성적",
+    "growFinish": "비육성적",
+    "sowReport": "모돈 보고서",
+    "ledger": "작업대장",
+    "prrs": "PRRS 유전",
+    "dataQuality": "데이터 품질",
+    "grpAddons": "Addon",
+    "addonStore": "Addon 스토어",
+    "settings": "설정"
+  },
+  "topbar": {
+    "search": "모돈 ID, 배치, 구역 검색…",
+    "qi": "빠른 입력"
   }
 }
