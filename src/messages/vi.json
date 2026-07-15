@@ -211,8 +211,8 @@
       "date": "Ngày đẻ",
       "totalBorn": "Tổng số con",
       "bornAlive": "Sống",
-      "bornDead": "Chết thai",
-      "mummies": "Thai gỗ",
+      "bornDead": "Chết lưu",
+      "mummies": "thai khô",
       "submit": "Lưu đẻ"
     },
     "weaning": {
@@ -340,7 +340,7 @@
     "OPEN": "Nái trống",
     "PREGNANT": "Mang thai",
     "LACTATING": "Nuôi con",
-    "ACCIDENT": "Sự cố",
+    "ACCIDENT": "Phối lại/Sự cố",
     "CULLED": "Loại thải",
     "DEAD": "Chết",
     "SOLD": "Đã bán",

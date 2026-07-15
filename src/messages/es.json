@@ -179,7 +179,7 @@
     "fBreedCompany": "Empresa genética",
     "fGenetics": "ID genético",
     "fStatus": "Estado",
-    "etGilt": "Gilta",
+    "etGilt": "Nulípara",
     "etPurchase": "Compra",
     "etTransfer": "Traslado",
     "etBorn": "Nacida en granja",
@@ -189,11 +189,11 @@
     "thRisk": "Riesgo",
     "riskShort": {
       "gilt_no_estrus": "Sin celo",
-      "gilt_overdue_mating": "Gilta s/montar",
+      "gilt_overdue_mating": "Nulípara s/montar",
       "pregnant_overdue_farrowing": "Parto atrasado",
       "lactating_overdue_weaning": "Destete atrasado",
       "open_overdue_mating": "Monta atrasada",
-      "accident_overdue_mating": "Remonta atrasada"
+      "accident_overdue_mating": "Reservicio atrasado"
     }
   },
   "events": {
@@ -336,11 +336,11 @@
     "search": "Buscar"
   },
   "sowStatus": {
-    "GILT": "Gilta",
+    "GILT": "Nulípara",
     "OPEN": "Vacía",
     "PREGNANT": "Gestante",
     "LACTATING": "Lactante",
-    "ACCIDENT": "Accidente",
+    "ACCIDENT": "Retorno/Accidente",
     "CULLED": "Descartada",
     "DEAD": "Muerta",
     "SOLD": "Vendida",
@@ -540,7 +540,7 @@
     "phEarTag": "ej. B-001",
     "fBreed": "Raza",
     "select": "Seleccionar",
-    "fStud": "Granja núcleo",
+    "fStud": "Central de sementales",
     "phStud": "ej. PIC",
     "fEntryDate": "Ingreso *",
     "fEntryType": "Tipo de ingreso",
@@ -792,7 +792,7 @@
     "lcGest": "Gestación",
     "draftSaved": "Borrador guardado",
     "matingDate": "Fecha de monta *",
-    "matingMethod": "Método de monta",
+    "matingMethod": "Método de cubrición",
     "methodAI": "Inseminación artificial (IA)",
     "methodNatural": "Monta natural",
     "semenNo": "Lote de semen",
@@ -1359,7 +1359,7 @@
     "loading": "Cargando…",
     "herd": "Hato",
     "activeSows": "Activas",
-    "gilts": "Giltas",
+    "gilts": "Nulíparas",
     "open": "Vacías",
     "pregnant": "Gestantes",
     "lactating": "Lactantes",
@@ -1481,8 +1481,8 @@
     "ioBoarIn": "Entrada verraco"
   },
   "alertsMeta": {
-    "ruleGiltNoEstrus": "Gilta sin celo registrado tras ingreso (1a monta objetivo {n}d)",
-    "ruleGiltOverdueMating": "Gilta de más de {n} días sin montar",
+    "ruleGiltNoEstrus": "Nulípara sin celo registrado tras ingreso (1a monta objetivo {n}d)",
+    "ruleGiltOverdueMating": "Nulípara de más de {n} días sin montar",
     "rulePregnantOverdueFarrowing": "Cerda {n}+ días tras monta sin parto registrado",
     "ruleLactatingOverdueWeaning": "Cerda lactante {n}+ días sin destete",
     "ruleOpenOverdueMating": "Cerda vacía {n}+ días tras destete sin montar",
