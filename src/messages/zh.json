@@ -1818,5 +1818,22 @@
     "total": "总计",
     "type": "类型",
     "weaned": "年内断奶"
+  },
+  "login": {
+    "heading": "欢迎回来",
+    "subheading": "登录您的 PigOS 账户",
+    "username": "账号",
+    "password": "密码",
+    "submit": "登录",
+    "submitting": "登录中…",
+    "forgotPassword": "忘记密码？",
+    "noAccount": "初次使用 PigOS？",
+    "register": "免费注册",
+    "rememberId": "记住账号",
+    "errUsername": "请输入账号",
+    "errPassword": "请输入密码",
+    "errInvalid": "账号或密码不正确",
+    "errFormat": "请检查您的输入格式",
+    "errServer": "服务器错误，请稍后重试。"
   }
 }

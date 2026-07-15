@@ -1818,5 +1818,22 @@
     "total": "전체",
     "type": "유형",
     "weaned": "당해 이유"
+  },
+  "login": {
+    "heading": "다시 오셨군요",
+    "subheading": "PigOS 계정에 로그인하세요",
+    "username": "아이디",
+    "password": "비밀번호",
+    "submit": "로그인",
+    "submitting": "로그인 중…",
+    "forgotPassword": "비밀번호 찾기",
+    "noAccount": "PigOS가 처음이신가요?",
+    "register": "무료로 시작하기",
+    "rememberId": "아이디 저장",
+    "errUsername": "아이디를 입력하세요",
+    "errPassword": "비밀번호를 입력하세요",
+    "errInvalid": "아이디 또는 비밀번호가 올바르지 않습니다",
+    "errFormat": "입력 형식을 확인해 주세요",
+    "errServer": "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
   }
 }

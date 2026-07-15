@@ -1818,5 +1818,22 @@
     "total": "Total",
     "type": "Type",
     "weaned": "Weaned YTD"
+  },
+  "login": {
+    "heading": "Welcome back",
+    "subheading": "Sign in to your PigOS account",
+    "username": "Username (ID)",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "New to PigOS?",
+    "register": "Create a free account",
+    "rememberId": "Remember my ID",
+    "errUsername": "Enter your ID",
+    "errPassword": "Enter your password",
+    "errInvalid": "ID or password is incorrect",
+    "errFormat": "Please check your input format",
+    "errServer": "Server error. Please try again."
   }
 }

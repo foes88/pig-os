@@ -1818,5 +1818,22 @@
     "total": "Total",
     "type": "Tipo",
     "weaned": "Desmame ano"
+  },
+  "login": {
+    "heading": "Bem-vindo de volta",
+    "subheading": "Entre na sua conta PigOS",
+    "username": "Usuário (ID)",
+    "password": "Senha",
+    "submit": "Entrar",
+    "submitting": "Entrando…",
+    "forgotPassword": "Esqueceu a senha?",
+    "noAccount": "Novo no PigOS?",
+    "register": "Crie uma conta gratuita",
+    "rememberId": "Lembrar meu ID",
+    "errUsername": "Digite seu usuário",
+    "errPassword": "Digite sua senha",
+    "errInvalid": "Usuário ou senha incorretos",
+    "errFormat": "Verifique o formato dos dados",
+    "errServer": "Erro no servidor. Tente novamente."
   }
 }

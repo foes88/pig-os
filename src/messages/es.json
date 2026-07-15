@@ -1818,5 +1818,22 @@
     "total": "Total",
     "type": "Tipo",
     "weaned": "Destetados año"
+  },
+  "login": {
+    "heading": "Bienvenido de nuevo",
+    "subheading": "Inicia sesión en PigOS",
+    "username": "Usuario (ID)",
+    "password": "Contraseña",
+    "submit": "Iniciar sesión",
+    "submitting": "Iniciando…",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "noAccount": "¿Nuevo en PigOS?",
+    "register": "Crea una cuenta gratis",
+    "rememberId": "Recordar mi ID",
+    "errUsername": "Ingresa tu usuario",
+    "errPassword": "Ingresa tu contraseña",
+    "errInvalid": "Usuario o contraseña incorrectos",
+    "errFormat": "Verifica el formato de tus datos",
+    "errServer": "Error de servidor. Inténtalo de nuevo."
   }
 }

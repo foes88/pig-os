@@ -1818,5 +1818,22 @@
     "total": "Всего",
     "type": "Тип",
     "weaned": "Отъём за год"
+  },
+  "login": {
+    "heading": "С возвращением",
+    "subheading": "Войдите в свой аккаунт PigOS",
+    "username": "Логин (ID)",
+    "password": "Пароль",
+    "submit": "Войти",
+    "submitting": "Вход…",
+    "forgotPassword": "Забыли пароль?",
+    "noAccount": "Впервые в PigOS?",
+    "register": "Создать бесплатный аккаунт",
+    "rememberId": "Запомнить логин",
+    "errUsername": "Введите логин",
+    "errPassword": "Введите пароль",
+    "errInvalid": "Неверный логин или пароль",
+    "errFormat": "Проверьте формат введённых данных",
+    "errServer": "Ошибка сервера. Попробуйте снова."
   }
 }

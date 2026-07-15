@@ -1818,5 +1818,22 @@
     "total": "Tổng",
     "type": "Loại",
     "weaned": "Cai sữa năm"
+  },
+  "login": {
+    "heading": "Chào mừng trở lại",
+    "subheading": "Đăng nhập vào tài khoản PigOS",
+    "username": "Tên đăng nhập (ID)",
+    "password": "Mật khẩu",
+    "submit": "Đăng nhập",
+    "submitting": "Đang đăng nhập…",
+    "forgotPassword": "Quên mật khẩu?",
+    "noAccount": "Lần đầu dùng PigOS?",
+    "register": "Tạo tài khoản miễn phí",
+    "rememberId": "Ghi nhớ ID",
+    "errUsername": "Nhập tên đăng nhập của bạn",
+    "errPassword": "Nhập mật khẩu của bạn",
+    "errInvalid": "Tên đăng nhập hoặc mật khẩu không đúng",
+    "errFormat": "Vui lòng kiểm tra định dạng nhập liệu",
+    "errServer": "Lỗi máy chủ. Vui lòng thử lại."
   }
 }

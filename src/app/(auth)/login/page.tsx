@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -21,122 +22,6 @@ const SELECTABLE_LANGS: Lang[] = LANGS.filter((l) => l !== "ko");
 const LANG_LABELS: Record<Lang, string> = {
   en: "English", ko: "한국어", zh: "中文", es: "Español", vi: "Tiếng Việt", th: "ไทย", pt: "Português", ru: "Русский",
 };
-
-const T: Record<Lang, {
-  heading: string; subheading: string;
-  username: string; password: string;
-  submit: string; submitting: string;
-  forgotPassword: string; noAccount: string; register: string;
-  rememberId: string;
-  errUsername: string; errPassword: string;
-  errInvalid: string; errFormat: string; errServer: string;
-}> = {
-  en: {
-    heading: "Welcome back",
-    subheading: "Sign in to your PigOS account",
-    username: "Username (ID)", password: "Password",
-    submit: "Sign in", submitting: "Signing in…",
-    forgotPassword: "Forgot password?",
-    noAccount: "New to PigOS?", register: "Create a free account",
-    rememberId: "Remember my ID",
-    errUsername: "Enter your ID", errPassword: "Enter your password",
-    errInvalid: "ID or password is incorrect",
-    errFormat: "Please check your input format",
-    errServer: "Server error. Please try again.",
-  },
-  ko: {
-    heading: "다시 오셨군요",
-    subheading: "PigOS 계정에 로그인하세요",
-    username: "아이디", password: "비밀번호",
-    submit: "로그인", submitting: "로그인 중…",
-    forgotPassword: "비밀번호 찾기",
-    noAccount: "PigOS가 처음이신가요?", register: "무료로 시작하기",
-    rememberId: "아이디 저장",
-    errUsername: "아이디를 입력하세요", errPassword: "비밀번호를 입력하세요",
-    errInvalid: "아이디 또는 비밀번호가 올바르지 않습니다",
-    errFormat: "입력 형식을 확인해 주세요",
-    errServer: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-  },
-  zh: {
-    heading: "欢迎回来",
-    subheading: "登录您的 PigOS 账户",
-    username: "账号", password: "密码",
-    submit: "登录", submitting: "登录中…",
-    forgotPassword: "忘记密码？",
-    noAccount: "初次使用 PigOS？", register: "免费注册",
-    rememberId: "记住账号",
-    errUsername: "请输入账号", errPassword: "请输入密码",
-    errInvalid: "账号或密码不正确",
-    errFormat: "请检查您的输入格式",
-    errServer: "服务器错误，请稍后重试。",
-  },
-  es: {
-    heading: "Bienvenido de nuevo",
-    subheading: "Inicia sesión en PigOS",
-    username: "Usuario (ID)", password: "Contraseña",
-    submit: "Iniciar sesión", submitting: "Iniciando…",
-    forgotPassword: "¿Olvidaste tu contraseña?",
-    noAccount: "¿Nuevo en PigOS?", register: "Crea una cuenta gratis",
-    rememberId: "Recordar mi ID",
-    errUsername: "Ingresa tu usuario", errPassword: "Ingresa tu contraseña",
-    errInvalid: "Usuario o contraseña incorrectos",
-    errFormat: "Verifica el formato de tus datos",
-    errServer: "Error de servidor. Inténtalo de nuevo.",
-  },
-  vi: {
-    heading: "Chào mừng trở lại",
-    subheading: "Đăng nhập vào tài khoản PigOS",
-    username: "Tên đăng nhập (ID)", password: "Mật khẩu",
-    submit: "Đăng nhập", submitting: "Đang đăng nhập…",
-    forgotPassword: "Quên mật khẩu?",
-    noAccount: "Lần đầu dùng PigOS?", register: "Tạo tài khoản miễn phí",
-    rememberId: "Ghi nhớ ID",
-    errUsername: "Nhập tên đăng nhập của bạn", errPassword: "Nhập mật khẩu của bạn",
-    errInvalid: "Tên đăng nhập hoặc mật khẩu không đúng",
-    errFormat: "Vui lòng kiểm tra định dạng nhập liệu",
-    errServer: "Lỗi máy chủ. Vui lòng thử lại.",
-  },
-  th: {
-    heading: "ยินดีต้อนรับกลับ",
-    subheading: "เข้าสู่ระบบบัญชี PigOS ของคุณ",
-    username: "ชื่อผู้ใช้ (ID)", password: "รหัสผ่าน",
-    submit: "เข้าสู่ระบบ", submitting: "กำลังเข้าสู่ระบบ…",
-    forgotPassword: "ลืมรหัสผ่าน?",
-    noAccount: "เพิ่งเริ่มใช้ PigOS?", register: "สร้างบัญชีฟรี",
-    rememberId: "จดจำ ID ของฉัน",
-    errUsername: "กรอกชื่อผู้ใช้", errPassword: "กรอกรหัสผ่านของคุณ",
-    errInvalid: "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
-    errFormat: "โปรดตรวจสอบรูปแบบการกรอก",
-    errServer: "เซิร์ฟเวอร์ผิดพลาด โปรดลองอีกครั้ง",
-  },
-  pt: {
-    heading: "Bem-vindo de volta",
-    subheading: "Entre na sua conta PigOS",
-    username: "Usuário (ID)", password: "Senha",
-    submit: "Entrar", submitting: "Entrando…",
-    forgotPassword: "Esqueceu a senha?",
-    noAccount: "Novo no PigOS?", register: "Crie uma conta gratuita",
-    rememberId: "Lembrar meu ID",
-    errUsername: "Digite seu usuário", errPassword: "Digite sua senha",
-    errInvalid: "Usuário ou senha incorretos",
-    errFormat: "Verifique o formato dos dados",
-    errServer: "Erro no servidor. Tente novamente.",
-  },
-  ru: {
-    heading: "С возвращением",
-    subheading: "Войдите в свой аккаунт PigOS",
-    username: "Логин (ID)", password: "Пароль",
-    submit: "Войти", submitting: "Вход…",
-    forgotPassword: "Забыли пароль?",
-    noAccount: "Впервые в PigOS?", register: "Создать бесплатный аккаунт",
-    rememberId: "Запомнить логин",
-    errUsername: "Введите логин", errPassword: "Введите пароль",
-    errInvalid: "Неверный логин или пароль",
-    errFormat: "Проверьте формат введённых данных",
-    errServer: "Ошибка сервера. Попробуйте снова.",
-  },
-};
-
 // ── Schema ────────────────────────────────────────────────────────────────────
 const schema = z.object({
   username: z.string().min(3, "invalid"),
@@ -283,9 +168,10 @@ export default function LoginPage() {
     localStorage.setItem("pigos_lang", l);
     // next-intl(앱 페이지)이 읽는 쿠키도 같이 설정 → 로그인 후 언어 일치
     document.cookie = `NEXT_LOCALE=${l}; path=/; max-age=31536000; SameSite=Lax`;
+    router.refresh(); // next-intl 로케일 즉시 반영(파일 단일소스)
   };
 
-  const t = T[lang];
+  const t = useTranslations("login");
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -330,9 +216,9 @@ export default function LoginPage() {
       router.replace(dest);
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 401) setServerError(t.errInvalid);
-      else if (status === 422) setServerError(t.errFormat);
-      else setServerError(t.errServer);
+      if (status === 401) setServerError(t("errInvalid"));
+      else if (status === 422) setServerError(t("errFormat"));
+      else setServerError(t("errServer"));
     }
   };
 
@@ -365,15 +251,15 @@ export default function LoginPage() {
           <div className="w-full max-w-[420px]">
             {/* Heading */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-900">{t.heading}</h1>
-              <p className="text-sm text-slate-500 mt-1">{t.subheading}</p>
+              <h1 className="text-2xl font-bold text-slate-900">{t("heading")}</h1>
+              <p className="text-sm text-slate-500 mt-1">{t("subheading")}</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
               {/* Username (ID) */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  {t.username}
+                  {t("username")}
                 </label>
                 <input
                   type="text"
@@ -387,16 +273,16 @@ export default function LoginPage() {
                     ${errors.username ? "border-red-400" : "border-[#CBD5E1]"}`}
                 />
                 {errors.username && (
-                  <p className="text-xs text-danger mt-1">{t.errUsername}</p>
+                  <p className="text-xs text-danger mt-1">{t("errUsername")}</p>
                 )}
               </div>
 
               {/* Password */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-medium text-slate-700">{t.password}</label>
+                  <label className="text-sm font-medium text-slate-700">{t("password")}</label>
                   <a href="/forgot-password" className="text-xs text-[#2563EB] hover:underline">
-                    {t.forgotPassword}
+                    {t("forgotPassword")}
                   </a>
                 </div>
                 <input
@@ -411,7 +297,7 @@ export default function LoginPage() {
                     ${errors.password ? "border-red-400" : "border-[#CBD5E1]"}`}
                 />
                 {errors.password && (
-                  <p className="text-xs text-danger mt-1">{t.errPassword}</p>
+                  <p className="text-xs text-danger mt-1">{t("errPassword")}</p>
                 )}
               </div>
 
@@ -424,7 +310,7 @@ export default function LoginPage() {
                   onChange={(e) => setRememberId(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]/30"
                 />
-                <span className="text-sm text-slate-600">{t.rememberId}</span>
+                <span className="text-sm text-slate-600">{t("rememberId")}</span>
               </label>
 
               {/* Server error */}
@@ -451,14 +337,14 @@ export default function LoginPage() {
                   text-white font-semibold rounded-lg text-sm transition shadow-sm
                   shadow-blue-200/60"
               >
-                {isSubmitting ? t.submitting : t.submit}
+                {isSubmitting ? t("submitting") : t("submit")}
               </button>
             </form>
 
             <p className="text-sm text-slate-500 text-center mt-6">
-              {t.noAccount}{" "}
+              {t("noAccount")}{" "}
               <a href="/onboarding" className="text-[#2563EB] hover:underline font-medium">
-                {t.register}
+                {t("register")}
               </a>
             </p>
 
