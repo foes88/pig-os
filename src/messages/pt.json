@@ -1865,6 +1865,7 @@
     "needOne": "Insira pelo menos um número.",
     "share": "Compartilhar resultado",
     "shareText": "Minha granja fez {score}/100 no PigOS — meça a sua grátis",
-    "copied": "Link copiado"
+    "copied": "Link copiado",
+    "saveImage": "Salvar imagem"
   }
 }

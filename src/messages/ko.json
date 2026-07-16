@@ -1865,6 +1865,7 @@
     "needOne": "최소 한 개의 값을 입력하세요.",
     "share": "결과 공유",
     "shareText": "우리 농장 PigOS 점수 {score}/100 — 너도 무료로 확인해봐",
-    "copied": "링크 복사됨"
+    "copied": "링크 복사됨",
+    "saveImage": "이미지 저장"
   }
 }

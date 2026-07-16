@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Sparkles, ArrowRight, RotateCcw, Trophy, Share2 } from "lucide-react";
+import { Sparkles, ArrowRight, RotateCcw, Trophy, Share2, ImageDown } from "lucide-react";
 import { scorecardApi } from "@/lib/api/endpoints/scorecard";
 import { authApi } from "@/lib/api/endpoints/auth";
 import type { ScorecardBand, ScorecardResponse } from "@/types/api.types";
@@ -68,6 +68,42 @@ export default function ScorecardPage() {
     if (Object.keys(v).length) { setVals(v); setTimeout(() => mut.mutate(), 0); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // SNS/카톡 공유용 스코어 이미지(PNG) 생성 — 클라이언트 canvas(서버 불필요).
+  const BAND_HEX: Record<string, string> = { TOP: "#16a34a", GOOD: "#2563eb", FAIR: "#d97706", LOW: "#dc2626", NA: "#94a3b8" };
+  const saveImage = async () => {
+    if (!result) return;
+    const W = 800, H = 1000, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d"); if (!x) return;
+    x.fillStyle = "#0D1B3E"; x.fillRect(0, 0, W, H);
+    x.textAlign = "center";
+    x.fillStyle = "#7dd3a8"; x.font = "bold 30px sans-serif"; x.fillText("PigOS", W / 2, 90);
+    x.fillStyle = "#cbd5e1"; x.font = "500 26px sans-serif"; x.fillText(t("title"), W / 2, 135);
+    // 종합 점수
+    x.fillStyle = BAND_HEX[result.overall_band]; x.font = "bold 200px sans-serif";
+    x.fillText(String(result.overall_score), W / 2, 380);
+    x.fillStyle = "#ffffff"; x.font = "bold 34px sans-serif"; x.fillText(t(`band${result.overall_band}`), W / 2, 445);
+    // 지표
+    let y = 560; x.textAlign = "left";
+    for (const m of result.metrics.slice(0, 3)) {
+      x.fillStyle = "#e2e8f0"; x.font = "600 30px sans-serif";
+      x.fillText(t(CODE_TO_LABEL[m.code] ?? m.code).replace(/\s*\(.*\)/, ""), 90, y);
+      x.textAlign = "right"; x.fillStyle = "#ffffff"; x.font = "bold 34px sans-serif";
+      x.fillText(String(m.value), 640, y);
+      x.fillStyle = BAND_HEX[m.band]; x.font = "bold 22px sans-serif";
+      x.fillText(t(`band${m.band}`), 710, y); x.textAlign = "left"; y += 80;
+    }
+    x.textAlign = "center"; x.fillStyle = "#64748b"; x.font = "500 26px sans-serif";
+    x.fillText("pigos.io/scorecard", W / 2, 940);
+    const blob: Blob | null = await new Promise((r) => c.toBlob(r, "image/png"));
+    if (!blob) return;
+    const file = new File([blob], "pigos-scorecard.png", { type: "image/png" });
+    const text = t("shareText", { score: result.overall_score });
+    if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], text }); return; } catch { /* 취소 → 저장 폴백 */ } }
+    const u = URL.createObjectURL(blob); const a = document.createElement("a");
+    a.href = u; a.download = file.name; a.click(); URL.revokeObjectURL(u);
+  };
 
   const [copied, setCopied] = useState(false);
   const share = async () => {
@@ -205,10 +241,13 @@ export default function ScorecardPage() {
               <button onClick={share} className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold border border-border rounded-xl py-2.5 hover:border-primary transition">
                 <Share2 size={15} /> {copied ? t("copied") : t("share")}
               </button>
-              <button onClick={reset} className="flex items-center justify-center gap-1.5 text-xs font-semibold text-text3 hover:text-text px-3 py-2.5">
-                <RotateCcw size={13} /> {t("tryAnother")}
+              <button onClick={saveImage} className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold border border-border rounded-xl py-2.5 hover:border-primary transition">
+                <ImageDown size={15} /> {t("saveImage")}
               </button>
             </div>
+            <button onClick={reset} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-text3 hover:text-text py-1">
+              <RotateCcw size={13} /> {t("tryAnother")}
+            </button>
           </div>
         )}
       </div>

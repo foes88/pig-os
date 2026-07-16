@@ -1865,6 +1865,7 @@
     "needOne": "Enter at least one number.",
     "share": "Share result",
     "shareText": "My farm scored {score}/100 on PigOS — check yours free",
-    "copied": "Link copied"
+    "copied": "Link copied",
+    "saveImage": "Save image"
   }
 }

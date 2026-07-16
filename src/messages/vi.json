@@ -1865,6 +1865,7 @@
     "needOne": "Nhập ít nhất một số.",
     "share": "Chia sẻ kết quả",
     "shareText": "Trại tôi đạt {score}/100 trên PigOS — đo trại bạn miễn phí",
-    "copied": "Đã sao chép liên kết"
+    "copied": "Đã sao chép liên kết",
+    "saveImage": "Lưu ảnh"
   }
 }
