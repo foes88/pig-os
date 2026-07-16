@@ -1834,7 +1834,8 @@
     "errPassword": "Nhập mật khẩu của bạn",
     "errInvalid": "Tên đăng nhập hoặc mật khẩu không đúng",
     "errFormat": "Vui lòng kiểm tra định dạng nhập liệu",
-    "errServer": "Lỗi máy chủ. Vui lòng thử lại."
+    "errServer": "Lỗi máy chủ. Vui lòng thử lại.",
+    "scorecardCta": "Miễn phí: đo điểm trại"
   },
   "scorecard": {
     "title": "Thẻ điểm sức khỏe trại",
@@ -1861,6 +1862,9 @@
     "ctaTitle": "Muốn xem toàn cảnh?",
     "cta": "Bắt đầu miễn phí — nhập trong 5 phút",
     "tryAnother": "Chấm trại khác",
-    "needOne": "Nhập ít nhất một số."
+    "needOne": "Nhập ít nhất một số.",
+    "share": "Chia sẻ kết quả",
+    "shareText": "Trại tôi đạt {score}/100 trên PigOS — đo trại bạn miễn phí",
+    "copied": "Đã sao chép liên kết"
   }
 }

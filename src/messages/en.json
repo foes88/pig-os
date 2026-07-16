@@ -1834,7 +1834,8 @@
     "errPassword": "Enter your password",
     "errInvalid": "ID or password is incorrect",
     "errFormat": "Please check your input format",
-    "errServer": "Server error. Please try again."
+    "errServer": "Server error. Please try again.",
+    "scorecardCta": "Free: check your farm's score"
   },
   "scorecard": {
     "title": "Farm Health Scorecard",
@@ -1861,6 +1862,9 @@
     "ctaTitle": "Want the full picture?",
     "cta": "Start free — import in 5 min",
     "tryAnother": "Score another farm",
-    "needOne": "Enter at least one number."
+    "needOne": "Enter at least one number.",
+    "share": "Share result",
+    "shareText": "My farm scored {score}/100 on PigOS — check yours free",
+    "copied": "Link copied"
   }
 }

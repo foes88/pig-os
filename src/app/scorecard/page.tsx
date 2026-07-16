@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Sparkles, ArrowRight, RotateCcw, Trophy } from "lucide-react";
+import { Sparkles, ArrowRight, RotateCcw, Trophy, Share2 } from "lucide-react";
 import { scorecardApi } from "@/lib/api/endpoints/scorecard";
 import { authApi } from "@/lib/api/endpoints/auth";
 import type { ScorecardBand, ScorecardResponse } from "@/types/api.types";
 
+// 국가 벤치마크가 시드된 헤드라인 3종만 노출(모든 입력이 채점됨 → 깔끔한 퍼널).
+// 백엔드는 born_alive/weaned도 수용(향후 벤치 시드 시 확장).
 const METRICS = [
   { labelKey: "psy", field: "psy" as const, code: "PSY" },
   { labelKey: "fr", field: "farrowing_rate" as const, code: "FARROWING_RATE" },
-  { labelKey: "ba", field: "born_alive" as const, code: "BORN_ALIVE" },
-  { labelKey: "weaned", field: "weaned" as const, code: "WEANED_COUNT" },
   { labelKey: "npd", field: "npd" as const, code: "NPD" },
 ];
 const CODE_TO_LABEL: Record<string, string> = {
@@ -58,6 +58,28 @@ export default function ScorecardPage() {
     mut.mutate();
   };
   const reset = () => { mut.reset(); setVals({}); setErr(null); };
+
+  // 공유 링크로 진입 시 입력 복원 + 자동 채점(수신자가 동일 결과를 봄 → 바이럴 루프).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const c = q.get("c"); if (c) setCountry(c.toUpperCase());
+    const v: Record<string, string> = {};
+    for (const m of METRICS) { const x = q.get(m.field); if (x) v[m.field] = x; }
+    if (Object.keys(v).length) { setVals(v); setTimeout(() => mut.mutate(), 0); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [copied, setCopied] = useState(false);
+  const share = async () => {
+    const q = new URLSearchParams({ c: country });
+    for (const m of METRICS) { const x = vals[m.field]; if (x) q.set(m.field, x); }
+    const url = `${window.location.origin}/scorecard?${q.toString()}`;
+    const text = t("shareText", { score: result?.overall_score ?? 0 });
+    try {
+      if (navigator.share) { await navigator.share({ title: "PigOS", text, url }); return; }
+    } catch { /* 취소 등 → 폴백 */ }
+    try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* noop */ }
+  };
 
   const result = mut.data;
 
@@ -179,9 +201,14 @@ export default function ScorecardPage() {
               </Link>
             </div>
 
-            <button onClick={reset} className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-text3 hover:text-text py-2">
-              <RotateCcw size={13} /> {t("tryAnother")}
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={share} className="flex-1 flex items-center justify-center gap-1.5 text-sm font-semibold border border-border rounded-xl py-2.5 hover:border-primary transition">
+                <Share2 size={15} /> {copied ? t("copied") : t("share")}
+              </button>
+              <button onClick={reset} className="flex items-center justify-center gap-1.5 text-xs font-semibold text-text3 hover:text-text px-3 py-2.5">
+                <RotateCcw size={13} /> {t("tryAnother")}
+              </button>
+            </div>
           </div>
         )}
       </div>

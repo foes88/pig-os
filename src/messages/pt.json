@@ -1834,7 +1834,8 @@
     "errPassword": "Digite sua senha",
     "errInvalid": "Usuário ou senha incorretos",
     "errFormat": "Verifique o formato dos dados",
-    "errServer": "Erro no servidor. Tente novamente."
+    "errServer": "Erro no servidor. Tente novamente.",
+    "scorecardCta": "Grátis: veja sua pontuação"
   },
   "scorecard": {
     "title": "Boletim de saúde da granja",
@@ -1861,6 +1862,9 @@
     "ctaTitle": "Quer o panorama completo?",
     "cta": "Comece grátis — importe em 5 min",
     "tryAnother": "Pontuar outra granja",
-    "needOne": "Insira pelo menos um número."
+    "needOne": "Insira pelo menos um número.",
+    "share": "Compartilhar resultado",
+    "shareText": "Minha granja fez {score}/100 no PigOS — meça a sua grátis",
+    "copied": "Link copiado"
   }
 }

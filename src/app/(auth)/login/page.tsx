@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -347,6 +348,11 @@ export default function LoginPage() {
                 {t("register")}
               </a>
             </p>
+
+            {/* 무가입 스코어카드 진입(퍼널 top) */}
+            <a href="/scorecard" className="mt-3 flex items-center justify-center gap-1.5 text-xs font-semibold text-[#0F6342] hover:underline">
+              <Sparkles size={13} /> {t("scorecardCta")}
+            </a>
 
             <p className="text-xs text-slate-400 text-center mt-8">
               © 2026 WiseLake Inc. · pigos.io

@@ -1834,7 +1834,8 @@
     "errPassword": "请输入密码",
     "errInvalid": "账号或密码不正确",
     "errFormat": "请检查您的输入格式",
-    "errServer": "服务器错误，请稍后重试。"
+    "errServer": "服务器错误，请稍后重试。",
+    "scorecardCta": "免费：测测农场评分"
   },
   "scorecard": {
     "title": "农场健康评分卡",
@@ -1861,6 +1862,9 @@
     "ctaTitle": "想看完整分析？",
     "cta": "免费开始 — 5分钟导入数据",
     "tryAnother": "为另一农场评分",
-    "needOne": "请至少输入一项数据。"
+    "needOne": "请至少输入一项数据。",
+    "share": "分享结果",
+    "shareText": "我的农场 PigOS 评分 {score}/100 — 免费测测你的",
+    "copied": "链接已复制"
   }
 }
