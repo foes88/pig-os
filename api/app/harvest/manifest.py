@@ -87,7 +87,13 @@ def _pick(pool: list[str], seed: int) -> str:
 
 
 def _assign_countries() -> dict[int, str]:
-    """개별농가를 quota에 맞춰 결정론적 배정(조직농가는 조직 국가 고정)."""
+    """개별농가를 quota 슬롯에 **시드 랜덤**으로 배정(조직농가는 조직 국가 고정).
+
+    - 각국 나라별로 골고루 분포(quota 유지) + 정렬순 편중 제거를 위해 셔플 사용.
+    - MANIFEST_VERSION 시드 → 멱등(재실행 동일). farm_code로 매핑 재현 가능.
+    """
+    import random
+    rng = random.Random(f"{MANIFEST_VERSION}:{SOURCE_SYSTEM}:country")
     assigned: dict[int, str] = {}
     remaining_quota = dict(COUNTRY_QUOTA)
     # 1) 조직 농가 먼저 — 조직 지정 국가
@@ -95,14 +101,13 @@ def _assign_countries() -> dict[int, str]:
         for f in org["farms"]:
             assigned[f] = org["country"]
             remaining_quota[org["country"]] -= 1
-    # 2) 나머지 개별농가 — farm_code 오름차순, 국가 순서대로 quota 채움(결정론)
+    # 2) 나머지: 남은 quota를 슬롯 풀로 펼쳐 셔플 → 농가에 랜덤 배정(분포는 quota로 균형)
+    slots = [cc for cc in _COUNTRY_ORDER for _ in range(remaining_quota.get(cc, 0))]
+    rng.shuffle(slots)
     individuals = sorted(f for f in FARM_CODES if f not in assigned)
-    for f in individuals:
-        for cc in _COUNTRY_ORDER:
-            if remaining_quota.get(cc, 0) > 0:
-                assigned[f] = cc
-                remaining_quota[cc] -= 1
-                break
+    rng.shuffle(individuals)
+    for f, cc in zip(individuals, slots, strict=True):
+        assigned[f] = cc
     return assigned
 
 

@@ -146,6 +146,12 @@ def build_rows(farm_no, farm_id, src):
         cycles, of, ow = reconstruct(pig_no, src["wk"].get(pig_no, []), src)
         stats["orphan_far"] += of
         stats["orphan_wea"] += ow
+        # 활성 사이클은 모돈당 최대 1건(idx_one_active_cycle). 이유 미기록 후 재교배로
+        # 중간에 남은 미완료 사이클(FARROWED/MATED)은 종결 처리(FAILED). 마지막만 활성 허용.
+        # 분만 데이터(farrowing row)는 그대로 보존 — cycle_status만 종결.
+        for c in cycles[:-1]:
+            if c["status"] not in ("WEANED", "FAILED"):
+                c["status"] = "FAILED"
         n_far = sum(1 for c in cycles if c["farrowing"])
         entry_type = "GILT" if (s["in_sancha"] or 0) <= 1 else "PURCHASE"
         # 현재 상태: 도폐사면 CULLED, 아니면 마지막 사이클 상태로 근사
@@ -249,7 +255,32 @@ def ensure_farm(pg, mrow):
                 (farm_id, org_id, f"PP-{fno}", mrow["farm_name"], cc, mrow["region"]))
     pg.commit()
     cur.close()
-    return farm_id
+    return farm_id, org_id
+
+
+# 데모 계정 공통 비밀번호(환경변수 우선). 내부 참조용 계정 — 운영 고객계정 아님.
+DEMO_PW = os.getenv("HARVEST_DEMO_PW", "Harvest2026!")
+
+
+def ensure_user(pg, farm_id, org_id, mrow, pw_hash):
+    """농장별 FARM_OWNER 계정가입 + farm 멤버십. 합성 신원(오너명), PII 없음."""
+    cur = pg.cursor()
+    fno = mrow["source_farm_ref"]
+    user_id = uid("user", fno)
+    username = f"pp{fno}"
+    email = f"pp-{fno}@harvest.pigos.io"
+    cur.execute("""INSERT INTO users (id, org_id, username, email, name, password_hash,
+                     role, system_role, language, active, approval_status)
+                   VALUES (%s,%s,%s,%s,%s,%s,'FARM_OWNER','FARM_OWNER','en',TRUE,'APPROVED')
+                   ON CONFLICT (id) DO NOTHING""",
+                (user_id, org_id, username, email, mrow["owner_name"], pw_hash))
+    cur.execute("""INSERT INTO user_farms (user_id, farm_id, role_override)
+                   VALUES (%s,%s,'FARM_OWNER') ON CONFLICT (user_id, farm_id) DO NOTHING""",
+                (user_id, farm_id))
+    pg.commit()
+    cur.close()
+    return dict(farm=f"PP-{fno}", country=mrow["country_code"], username=username,
+                email=email, password=DEMO_PW)
 
 
 def bootstrap_schema():
@@ -291,14 +322,19 @@ def main():
     else:
         print("--farm N 또는 --all 필요"); return
 
+    import bcrypt
+    pw_hash = bcrypt.hashpw(DEMO_PW.encode(), bcrypt.gensalt()).decode()  # 계정 공통(해시 1회)
+
     ora = oracledb.connect(user=ORACLE_USER, password=ORACLE_PW, dsn=ORACLE_DSN)
     ocur = ora.cursor()
     pg = psycopg2.connect(PG_DSN)
 
     grand = defaultdict(int)
+    creds = []
     for fno in targets:
         m = manifest[fno]
-        farm_id = ensure_farm(pg, m)
+        farm_id, org_id = ensure_farm(pg, m)
+        creds.append(ensure_user(pg, farm_id, org_id, m, pw_hash))  # 계정가입
         src = fetch_farm(ocur, fno)
         R, stats = build_rows(fno, farm_id, src)
         upsert(pg, R)
@@ -309,6 +345,7 @@ def main():
               f"far={stats['farrowings']:6} wea={stats['weanings']:6} "
               f"(orphan far={stats['orphan_far']} wea={stats['orphan_wea']})")
     print("\n합계:", dict(grand))
+    print(f"계정가입: {len(creds)}건 (공통 PW={DEMO_PW}), 예: {creds[0]['username']}/{creds[0]['email']}")
     ora.close()
     pg.close()
 
