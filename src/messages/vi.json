@@ -1088,7 +1088,22 @@
         "q": "Tôi quản lý nhiều trại trong một tài khoản được không?",
         "a": "Có, tài khoản tổ chức có thể đăng ký và chuyển đổi giữa nhiều trại."
       }
-    ]
+    ],
+    "myTicketsTitle": "Yêu cầu của tôi",
+    "newTicket": "Yêu cầu mới",
+    "noTickets": "Chưa có yêu cầu nào.",
+    "statusOpen": "Đang mở",
+    "statusAnswered": "Đã trả lời",
+    "statusClosed": "Đã đóng",
+    "subjectPlaceholder": "Tiêu đề",
+    "messagePlaceholder": "Mô tả câu hỏi của bạn…",
+    "cancel": "Hủy",
+    "submit": "Gửi",
+    "backToList": "Quay lại",
+    "staff": "Hỗ trợ",
+    "you": "Bạn",
+    "replyPlaceholder": "Viết tiếp…",
+    "sendReply": "Gửi"
   },
   "legal": {
     "title": "Điều khoản & chính sách",

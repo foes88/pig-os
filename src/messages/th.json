@@ -1088,7 +1088,22 @@
         "q": "Can I manage multiple farms in one account?",
         "a": "Yes, an organization account can register and switch between multiple farms."
       }
-    ]
+    ],
+    "myTicketsTitle": "คำถามของฉัน",
+    "newTicket": "คำถามใหม่",
+    "noTickets": "ยังไม่มีคำถาม",
+    "statusOpen": "เปิด",
+    "statusAnswered": "ตอบแล้ว",
+    "statusClosed": "ปิด",
+    "subjectPlaceholder": "หัวข้อ",
+    "messagePlaceholder": "อธิบายคำถามของคุณ…",
+    "cancel": "ยกเลิก",
+    "submit": "ส่ง",
+    "backToList": "กลับ",
+    "staff": "ฝ่ายบริการ",
+    "you": "คุณ",
+    "replyPlaceholder": "เขียนข้อความเพิ่มเติม…",
+    "sendReply": "ส่ง"
   },
   "legal": {
     "title": "ข้อกำหนดและนโยบาย",

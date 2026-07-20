@@ -1088,7 +1088,22 @@
         "q": "여러 농장을 하나의 계정으로 관리할 수 있나요?",
         "a": "네, 조직 계정에서 여러 농장을 등록하고 전환하며 사용할 수 있습니다."
       }
-    ]
+    ],
+    "myTicketsTitle": "내 문의",
+    "newTicket": "새 문의",
+    "noTickets": "아직 문의가 없습니다.",
+    "statusOpen": "접수",
+    "statusAnswered": "답변완료",
+    "statusClosed": "종료",
+    "subjectPlaceholder": "제목",
+    "messagePlaceholder": "문의 내용을 입력하세요…",
+    "cancel": "취소",
+    "submit": "보내기",
+    "backToList": "목록",
+    "staff": "상담원",
+    "you": "나",
+    "replyPlaceholder": "추가 문의를 입력하세요…",
+    "sendReply": "전송"
   },
   "legal": {
     "title": "약관 및 정책",

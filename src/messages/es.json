@@ -1088,7 +1088,22 @@
         "q": "¿Puedo gestionar varias granjas en una cuenta?",
         "a": "Sí, una cuenta de organización puede registrar y alternar entre varias granjas."
       }
-    ]
+    ],
+    "myTicketsTitle": "Mis Consultas",
+    "newTicket": "Nueva Consulta",
+    "noTickets": "Aún no hay consultas.",
+    "statusOpen": "Abierto",
+    "statusAnswered": "Respondido",
+    "statusClosed": "Cerrado",
+    "subjectPlaceholder": "Asunto",
+    "messagePlaceholder": "Describe tu pregunta…",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "backToList": "Volver",
+    "staff": "Soporte",
+    "you": "Tú",
+    "replyPlaceholder": "Escribe un seguimiento…",
+    "sendReply": "Enviar"
   },
   "legal": {
     "title": "Términos y políticas",

@@ -1088,7 +1088,22 @@
         "q": "Can I manage multiple farms in one account?",
         "a": "Yes, an organization account can register and switch between multiple farms."
       }
-    ]
+    ],
+    "myTicketsTitle": "My Inquiries",
+    "newTicket": "New Inquiry",
+    "noTickets": "No inquiries yet.",
+    "statusOpen": "Open",
+    "statusAnswered": "Answered",
+    "statusClosed": "Closed",
+    "subjectPlaceholder": "Subject",
+    "messagePlaceholder": "Describe your question…",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "backToList": "Back",
+    "staff": "Support",
+    "you": "You",
+    "replyPlaceholder": "Write a follow-up…",
+    "sendReply": "Send"
   },
   "legal": {
     "title": "Terms & policy",

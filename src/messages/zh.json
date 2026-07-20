@@ -1088,7 +1088,22 @@
         "q": "可以用一个账户管理多个猪场吗？",
         "a": "可以，组织账户可注册并切换多个猪场。"
       }
-    ]
+    ],
+    "myTicketsTitle": "我的咨询",
+    "newTicket": "新建咨询",
+    "noTickets": "暂无咨询。",
+    "statusOpen": "待处理",
+    "statusAnswered": "已回复",
+    "statusClosed": "已关闭",
+    "subjectPlaceholder": "标题",
+    "messagePlaceholder": "请描述您的问题…",
+    "cancel": "取消",
+    "submit": "提交",
+    "backToList": "返回",
+    "staff": "客服",
+    "you": "我",
+    "replyPlaceholder": "追加留言…",
+    "sendReply": "发送"
   },
   "legal": {
     "title": "条款与政策",

@@ -1088,7 +1088,22 @@
         "q": "Can I manage multiple farms in one account?",
         "a": "Yes, an organization account can register and switch between multiple farms."
       }
-    ]
+    ],
+    "myTicketsTitle": "Minhas Consultas",
+    "newTicket": "Nova Consulta",
+    "noTickets": "Ainda não há consultas.",
+    "statusOpen": "Aberto",
+    "statusAnswered": "Respondido",
+    "statusClosed": "Fechado",
+    "subjectPlaceholder": "Assunto",
+    "messagePlaceholder": "Descreva sua pergunta…",
+    "cancel": "Cancelar",
+    "submit": "Enviar",
+    "backToList": "Voltar",
+    "staff": "Suporte",
+    "you": "Você",
+    "replyPlaceholder": "Escreva um acompanhamento…",
+    "sendReply": "Enviar"
   },
   "legal": {
     "title": "Termos e política",
