@@ -52,9 +52,20 @@ class Settings(BaseSettings):
     # False(기본): 기존 default_metric_values 경로 유지(롤백 전용·현행 동작). 운영 전환 전까지 False.
     use_governance_benchmarks: bool = False
 
+    # QBridge CRM 양방향 연동 (docs: QBridge repo docs/integrations/pigos.md).
+    #  - qbridge_url + qbridge_inbound_token: 문의 발신(A). 미설정 시 아웃바운드 no-op.
+    #  - qbridge_service_token: 답변 수신(B) 서비스토큰. 미설정 시 인바운드 503.
+    qbridge_url: str = ""
+    qbridge_inbound_token: str = ""
+    qbridge_service_token: str = ""
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def qbridge_outbound_configured(self) -> bool:
+        return bool(self.qbridge_url and self.qbridge_inbound_token)
 
     @property
     def ses_configured(self) -> bool:

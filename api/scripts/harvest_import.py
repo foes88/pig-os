@@ -21,12 +21,29 @@ import uuid
 from collections import defaultdict
 from datetime import datetime
 
-# ── 접속 (비밀값은 환경변수로만 — 코드에 하드코딩 금지) ───────────────────────
-#   ORACLE_PW 필수. ORACLE_DSN/USER는 기본값 제공(비밀 아님). PG_DSN은 로컬 dev 기본.
+def _load_dotenv():
+    """api/.env.harvest(gitignore됨)에서 하베스트 비밀값 로드 — 기존 os.environ 우선.
+    앱의 pydantic Settings 는 api/.env(extra=forbid)만 읽으므로 여기 키를 섞지 않는다."""
+    envp = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env.harvest")
+    if not os.path.exists(envp):
+        return
+    with open(envp, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+
+_load_dotenv()
+
+# ── 접속 (비밀값은 환경변수/gitignore된 api/.env 로만 — 코드 하드코딩 금지) ────
 ORACLE_DSN = os.getenv("ORACLE_DSN", "pigclouddb.c8ks4denaq5l.ap-northeast-2.rds.amazonaws.com:1521/PIGPLAN")
 ORACLE_USER = os.getenv("ORACLE_USER", "pksu")
 ORACLE_PW = os.getenv("ORACLE_PW")  # 필수 — 미설정 시 종료
 PG_DSN = os.getenv("PG_DSN", "dbname=pigos user=pigos password=pigos host=localhost port=5432")
+PROD_PG_DSN = os.getenv("PROD_PG_DSN")  # --prod 용 (api/.env)
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.harvest.manifest import ORGANIZATIONS, build_manifest  # noqa: E402
@@ -301,7 +318,40 @@ def main():
     ap.add_argument("--farm", type=int, help="단일 농장 파일럿")
     ap.add_argument("--all", action="store_true", help="42농장 전량")
     ap.add_argument("--bootstrap", action="store_true", help="스키마 먼저 생성")
+    ap.add_argument("--prod", action="store_true", help="프로드 Supabase 타깃(PROD_PG_DSN)")
+    ap.add_argument("--inspect", action="store_true", help="읽기전용 점검(카운트·컬럼)")
+    ap.add_argument("--alter-columns", action="store_true", help="farms에 분류 컬럼 추가(추가전용)")
     args = ap.parse_args()
+
+    global PG_DSN
+    if args.prod:
+        if not PROD_PG_DSN:
+            sys.exit("PROD_PG_DSN 미설정 (api/.env 확인)")
+        PG_DSN = PROD_PG_DSN
+        print(f"[PROD] 타깃: {PROD_PG_DSN.split('host=')[1].split()[0]}")
+
+    import psycopg2
+
+    # ── 읽기전용 점검 (쓰기 없음) ──
+    if args.inspect:
+        cn = psycopg2.connect(PG_DSN); cur = cn.cursor()
+        cur.execute("SELECT (SELECT count(*) FROM farms),(SELECT count(*) FROM sows),(SELECT count(*) FROM users)")
+        print("farms/sows/users =", cur.fetchone())
+        cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='farms' "
+                    "AND column_name IN ('data_origin','data_classification')")
+        cols = [r[0] for r in cur.fetchall()]
+        print("분류 컬럼:", cols or "없음(--alter-columns 필요)")
+        cur.execute("SELECT count(*) FROM farms WHERE farm_code LIKE 'PP-%'")
+        print("기존 하베스트(PP-) 농장:", cur.fetchone()[0])
+        cn.close(); return
+
+    # ── 분류 컬럼 추가 (추가전용·멱등·안전) ──
+    if args.alter_columns:
+        cn = psycopg2.connect(PG_DSN); cur = cn.cursor()
+        cur.execute("ALTER TABLE farms ADD COLUMN IF NOT EXISTS data_origin varchar(20) NOT NULL DEFAULT 'native_signup'")
+        cur.execute("ALTER TABLE farms ADD COLUMN IF NOT EXISTS data_classification varchar(20) NOT NULL DEFAULT 'live_customer'")
+        cn.commit(); cn.close()
+        print("farms 분류 컬럼 추가 완료(IF NOT EXISTS)"); return
 
     if not ORACLE_PW:
         sys.exit("ORACLE_PW 환경변수 필수 (비밀값은 코드에 두지 않음)")
@@ -311,7 +361,6 @@ def main():
         bootstrap_schema()
 
     import oracledb
-    import psycopg2
     import psycopg2.extras
     psycopg2.extras.register_uuid()
     manifest = {int(m["source_farm_ref"]): m for m in build_manifest()}

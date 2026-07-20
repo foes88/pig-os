@@ -1,7 +1,7 @@
 """1:1 문의 — 고객(로그인 사용자) 등록/조회. 답변은 운영자(admin/content)."""
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -15,6 +15,7 @@ from app.schemas.content import (
     SupportTicketDetail,
     SupportTicketOut,
 )
+from app.services.qbridge_service import push_ticket_to_qbridge
 
 router = APIRouter(prefix="/support", tags=["Support"])
 
@@ -27,7 +28,9 @@ def _ticket_out(t: SupportTicket) -> SupportTicketOut:
 
 
 @router.post("/tickets", response_model=SupportTicketOut, status_code=201)
-async def create_ticket(body: SupportTicketCreate, db: DbDep, user: CurrentUser) -> SupportTicketOut:
+async def create_ticket(
+    body: SupportTicketCreate, db: DbDep, user: CurrentUser, background: BackgroundTasks
+) -> SupportTicketOut:
     t = SupportTicket(
         user_id=user.id,
         farm_id=UUID(body.farm_id) if body.farm_id else None,
@@ -36,6 +39,12 @@ async def create_ticket(body: SupportTicketCreate, db: DbDep, user: CurrentUser)
     db.add(t)
     await db.commit()
     await db.refresh(t)
+    # 커밋 이후 QBridge 로 인입(계약 A) — 실패해도 문의 저장은 유지(서비스에서 로깅만).
+    background.add_task(
+        push_ticket_to_qbridge,
+        ticket_id=str(t.id), subject=t.subject, message=t.body,
+        name=user.name, email=user.email, lang=user.language, phone=user.phone,
+    )
     return _ticket_out(t)
 
 

@@ -88,6 +88,11 @@ V1 = "/api/v1"
 app.include_router(pilot_signups.router, prefix=V1)
 app.include_router(scorecard.router, prefix=V1)
 
+# ── 서비스-투-서비스 연동 (자체 서비스토큰 가드) ──────────────────────────────
+from app.routers.integrations import qbridge as qbridge_integration  # noqa: E402
+
+app.include_router(qbridge_integration.router, prefix=V1)
+
 # ── Base routers ─────────────────────────────────────────────────────────────
 app.include_router(auth.router,        prefix=V1)
 app.include_router(orgs.router,        prefix=V1)
