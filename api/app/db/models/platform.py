@@ -65,6 +65,7 @@ class Farm(Base):
     __table_args__ = (
         Index("idx_farms_org", "org_id"),
         Index("idx_farms_country", "country"),
+        Index("idx_farms_classification", "data_classification", "data_origin"),
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -84,6 +85,12 @@ class Farm(Base):
     farm_scale: Mapped[str] = mapped_column(String(15), default="COMMERCIAL")
     internet_reliability: Mapped[str] = mapped_column(String(10), default="HIGH")
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # 데이터 출처/분류 (v2.1 §2.1) — admin 농가 분류(실사용자/테스트/피그플랜이관) + 하베스트 격리 기반.
+    # data_origin: native_signup(가입) | pigplan_migration(피그플랜이관) | external_migration
+    data_origin: Mapped[str] = mapped_column(String(20), nullable=False, server_default="native_signup")
+    # data_classification: live_customer(실사용) | internal_reference(내부참조=테스트·하베스트) | test
+    #   (tenant 도입 전 farm-level provenance. 향후 tenant_type이 authority, 이 값은 보조 §11.5-1)
+    data_classification: Mapped[str] = mapped_column(String(20), nullable=False, server_default="live_customer")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

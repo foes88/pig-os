@@ -1794,7 +1794,14 @@
     "stale": "Abandonada",
     "status": "Estado",
     "sub": "Qué granjas registran datos y cuáles se han quedado en silencio.",
-    "title": "Monitor de datos de granjas"
+    "title": "Monitor de datos de granjas",
+    "catAll": "Todos",
+    "catReal": "Usuarios reales",
+    "catTest": "Prueba",
+    "catPigplan": "Import PigPlan",
+    "category": "Tipo",
+    "prev": "Anterior",
+    "next": "Siguiente"
   },
   "adminFarmDetail": {
     "avgSows": "Prom. cerdas",

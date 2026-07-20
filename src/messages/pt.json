@@ -1794,7 +1794,14 @@
     "stale": "Abandonada",
     "status": "Status",
     "sub": "Quais granjas estão inserindo dados e quais ficaram em silêncio.",
-    "title": "Monitor de dados das granjas"
+    "title": "Monitor de dados das granjas",
+    "catAll": "Todos",
+    "catReal": "Usuários reais",
+    "catTest": "Teste",
+    "catPigplan": "Import PigPlan",
+    "category": "Tipo",
+    "prev": "Anterior",
+    "next": "Próximo"
   },
   "adminFarmDetail": {
     "avgSows": "Média matrizes",

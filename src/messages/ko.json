@@ -1794,7 +1794,14 @@
     "stale": "방치",
     "status": "상태",
     "sub": "어느 농장이 데이터를 입력하고, 어느 농장이 조용한지.",
-    "title": "농장 데이터 모니터"
+    "title": "농장 데이터 모니터",
+    "catAll": "전체",
+    "catReal": "실사용자",
+    "catTest": "테스트",
+    "catPigplan": "피그플랜 이관",
+    "category": "구분",
+    "prev": "이전",
+    "next": "다음"
   },
   "adminFarmDetail": {
     "avgSows": "평균모돈",

@@ -1794,7 +1794,14 @@
     "stale": "Stale",
     "status": "Status",
     "sub": "Which farms are entering data — and which have gone quiet.",
-    "title": "Farm Data Monitor"
+    "title": "Farm Data Monitor",
+    "catAll": "All",
+    "catReal": "Real users",
+    "catTest": "Test",
+    "catPigplan": "PigPlan import",
+    "category": "Type",
+    "prev": "Prev",
+    "next": "Next"
   },
   "adminFarmDetail": {
     "avgSows": "Avg sows",

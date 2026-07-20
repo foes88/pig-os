@@ -1794,7 +1794,14 @@
     "stale": "沉寂",
     "status": "状态",
     "sub": "哪些农场在录入数据，哪些已沉寂。",
-    "title": "农场数据监控"
+    "title": "农场数据监控",
+    "catAll": "全部",
+    "catReal": "真实用户",
+    "catTest": "测试",
+    "catPigplan": "PigPlan导入",
+    "category": "类型",
+    "prev": "上一页",
+    "next": "下一页"
   },
   "adminFarmDetail": {
     "avgSows": "平均母猪",

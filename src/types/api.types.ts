@@ -1188,6 +1188,7 @@ export interface DataMonitorRow {
   events_total: number;
   issues: number;
   status: "onboarding" | "active" | "idle" | "stale";
+  category: "real" | "test" | "pigplan";  // 실사용자 / 테스트 / 피그플랜이관
 }
 
 // 농장 데이터 심층 드릴다운 (GET /admin/data-monitor/{farm_id})

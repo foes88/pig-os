@@ -1794,7 +1794,14 @@
     "stale": "Bỏ trống",
     "status": "Trạng thái",
     "sub": "Trang trại nào đang nhập dữ liệu và trang trại nào đã im lặng.",
-    "title": "Giám sát dữ liệu trang trại"
+    "title": "Giám sát dữ liệu trang trại",
+    "catAll": "Tất cả",
+    "catReal": "Người dùng thật",
+    "catTest": "Kiểm thử",
+    "catPigplan": "Nhập PigPlan",
+    "category": "Loại",
+    "prev": "Trước",
+    "next": "Tiếp"
   },
   "adminFarmDetail": {
     "avgSows": "TB nái",

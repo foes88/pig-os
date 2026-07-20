@@ -65,7 +65,12 @@ SELECT f.id::text AS farm_id, f.name AS farm_name, f.country,
        COALESCE(a.events_7d, 0)     AS events_7d,
        COALESCE(a.events_30d, 0)    AS events_30d,
        COALESCE(a.events_total, 0)  AS events_total,
-       COALESCE(iq.issues, 0)       AS issues
+       COALESCE(iq.issues, 0)       AS issues,
+       CASE
+         WHEN f.data_origin = 'pigplan_migration' THEN 'pigplan'
+         WHEN f.data_classification IN ('internal_reference', 'test') THEN 'test'
+         ELSE 'real'
+       END AS category
 FROM farms f
 LEFT JOIN agg  a  ON a.farm_id = f.id
 LEFT JOIN sowc sc ON sc.farm_id = f.id
@@ -136,6 +141,7 @@ class DataMonitorRow(BaseModel):
     events_total: int
     issues: int = 0  # 데이터 정합성 이슈 수(두수불일치+날짜역전+상태고아)
     status: str  # onboarding | active | idle | stale
+    category: str = "real"  # real(실사용자) | test(테스트) | pigplan(피그플랜이관) — data_origin/classification 파생
 
 
 @router.get("/data-monitor", response_model=list[DataMonitorRow])
@@ -154,6 +160,7 @@ async def data_monitor(db: DbDep, _admin: SuperAdmin) -> list[DataMonitorRow]:
             events_total=r["events_total"],
             issues=r["issues"],
             status=_farm_status(r["last_event_at"], r["events_total"]),
+            category=r["category"],
         )
         for r in rows
     ]
