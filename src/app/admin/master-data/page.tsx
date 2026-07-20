@@ -71,13 +71,19 @@ type Row = Record<string, unknown>;
 export default function AdminMasterDataPage() {
   const [kindId, setKindId] = useState(KINDS[0].id);
   const [editing, setEditing] = useState<Row | "new" | null>(null);
+  const [page, setPage] = useState(1);
   const kind = KINDS.find((k) => k.id === kindId)!;
   const qc = useQueryClient();
+  const PAGE_SIZE = 25;
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["admin", "master", kindId],
     queryFn: () => adminApi.masterList(kindId),
   });
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paged = rows.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const del = useMutation({
     mutationFn: (pk: string) => adminApi.masterDelete(kindId, pk),
@@ -99,7 +105,7 @@ export default function AdminMasterDataPage() {
 
       <div className="flex gap-1.5 mb-5 border-b border-border">
         {KINDS.map((k) => (
-          <button key={k.id} onClick={() => setKindId(k.id)}
+          <button key={k.id} onClick={() => { setKindId(k.id); setPage(1); }}
             className={`px-4 py-2 text-sm font-semibold -mb-px border-b-2 transition ${
               kindId === k.id ? "border-primary text-primary" : "border-transparent text-muted hover:text-text"}`}>
             {k.label}
@@ -121,7 +127,7 @@ export default function AdminMasterDataPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {paged.map((r) => (
                 <tr key={String(r[kind.pk])} className="border-t border-border">
                   {kind.cols.map((c) => (
                     <td key={c.key} className="px-3 py-2 text-text2">{fmt(r[c.key])}</td>
@@ -136,6 +142,20 @@ export default function AdminMasterDataPage() {
               ))}
             </tbody>
           </table>
+        )}
+        {!isLoading && totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border text-xs">
+            <span className="text-text3 font-mono">
+              {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, rows.length)} / {rows.length}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage <= 1}
+                className="px-3 py-1.5 rounded-lg border border-border bg-surface font-semibold disabled:opacity-40 hover:bg-bg2 transition">이전</button>
+              <span className="font-mono text-text3 px-1">{safePage} / {totalPages}</span>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage >= totalPages}
+                className="px-3 py-1.5 rounded-lg border border-border bg-surface font-semibold disabled:opacity-40 hover:bg-bg2 transition">다음</button>
+            </div>
+          </div>
         )}
       </div>
 

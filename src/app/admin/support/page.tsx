@@ -17,14 +17,18 @@ const ST_CLS: Record<string, string> = {
 export default function AdminSupportPage() {
   const t = useTranslations("admin");
   const [status, setStatus] = useState<(typeof STATUS_FILTERS)[number]>("ALL");
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
+  const PER_PAGE = 25;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "tickets", status],
-    queryFn: () => adminApi.tickets({ status: status === "ALL" ? undefined : status, per_page: 50 }),
+    queryKey: ["admin", "tickets", status, page],
+    queryFn: () => adminApi.tickets({ status: status === "ALL" ? undefined : status, page, per_page: PER_PAGE }),
   });
 
   const rows = data?.items ?? [];
+  const totalPages = data?.meta?.pages ?? 1;
+  const setStatusReset = (s: (typeof STATUS_FILTERS)[number]) => { setStatus(s); setPage(1); };
 
   return (
     <div className="p-7 max-w-6xl">
@@ -35,7 +39,7 @@ export default function AdminSupportPage() {
 
       <div className="flex gap-1.5 mb-4">
         {STATUS_FILTERS.map((s) => (
-          <button key={s} onClick={() => setStatus(s)}
+          <button key={s} onClick={() => setStatusReset(s)}
             className={`px-3 py-1.5 rounded-full text-[13px] font-semibold border transition ${status === s ? "bg-console text-white border-console" : "bg-surface border-border text-text2 hover:bg-bg2"}`}>
             {s === "ALL" ? t("filterAll") : t(`ts${s.charAt(0)}${s.slice(1).toLowerCase()}`)}
           </button>
@@ -76,6 +80,19 @@ export default function AdminSupportPage() {
               ))}
             </tbody>
           </table>
+        )}
+        {!isLoading && totalPages > 1 && (
+          <div className="flex items-center justify-end gap-1.5 px-4 py-3 border-t border-border text-xs">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+              className="px-3 py-1.5 rounded-lg border border-border bg-surface font-semibold disabled:opacity-40 hover:bg-bg2 transition">
+              {t("prev")}
+            </button>
+            <span className="font-mono text-text3 px-1">{page} / {totalPages}</span>
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+              className="px-3 py-1.5 rounded-lg border border-border bg-surface font-semibold disabled:opacity-40 hover:bg-bg2 transition">
+              {t("next")}
+            </button>
+          </div>
         )}
       </div>
 
