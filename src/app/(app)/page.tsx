@@ -120,7 +120,7 @@ export default function Dashboard() {
   const farmName = user?.name ?? "My Farm";
 
   return (
-    <div className="p-7 max-w-5xl">
+    <div className="p-7 max-w-[1600px]">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-[22px] font-extrabold tracking-tight flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--color-primary)]" />

@@ -99,8 +99,8 @@
   /* ── Logo accent ── */
   --color-snout:        #DC2626;
 
-  /* ── Typography (IBM Plex) ── */
-  --font-sans: "IBM Plex Sans KR", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  /* ── Typography — Pretendard(시인성 우선, KR+다국어 크리스프) + IBM Plex 폴백 ── */
+  --font-sans: "Pretendard Variable", "Pretendard", "IBM Plex Sans KR", system-ui, -apple-system, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* ── Radii ── */
@@ -146,10 +146,29 @@
     background: var(--color-bg);
     color: var(--color-text);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.01em;   /* Pretendard 시인성 — 살짝 타이트하게 */
   }
 
   /* 숫자/KPI/뱃지는 모두 font-mono */
-  .font-mono { font-family: var(--font-mono); }
+  .font-mono { font-family: var(--font-mono); letter-spacing: 0; }
+
+  /* ── 세련된 얇은 스크롤바 (기본 촌스러운 스크롤바 대체) ── */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+  *::-webkit-scrollbar { width: 9px; height: 9px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.32);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); background-clip: padding-box; }
+  *::-webkit-scrollbar-corner { background: transparent; }
 }
 
 @layer components {
