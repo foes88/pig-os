@@ -39,3 +39,9 @@ src/e2e-live/_uat_tmp/
 # 파일럿 대용량 추출 CSV·리포트 (커밋 금지)
 tests/db/extract/
 tests/db/pilot_report_*.md
+
+# 비밀 유출 방지 (프로드 접속정보 — 커밋 금지)
+api/.env.supabase
+*.env.supabase
+api/.env.local.bak
+*.bak
