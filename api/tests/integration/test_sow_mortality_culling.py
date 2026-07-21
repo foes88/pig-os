@@ -66,5 +66,5 @@ async def test_young_farm_annual_rates_are_none(db: AsyncSession, test_farm: Far
     await db.flush()
     k = await build_herd_kpis(db, test_farm)
     assert k["CULLING_RATE"] is None and k["REPLACEMENT_RATE"] is None, (k["CULLING_RATE"], k["REPLACEMENT_RATE"])
-    p = await calculate_psy(db, test_farm.id, date.today().year)
+    p = await calculate_psy(db, test_farm.id, date.today())
     assert p.psy is None, "신생 농장 PSY는 폭발값 대신 None"

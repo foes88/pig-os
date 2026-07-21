@@ -44,7 +44,7 @@ async def test_psy_uses_average_inventory_not_weaning_sows(db: AsyncSession, tes
                        weaning_date=date(2026, 3, 15), weaned_count=wc))
     await db.flush()
 
-    detail = await calculate_psy(db, test_farm.id, 2026)
+    detail = await calculate_psy(db, test_farm.id, date(2026, 12, 31))
     assert detail is not None
     assert detail.total_weaned == 200
     assert detail.avg_sow_count == pytest.approx(10, abs=0.001), \
@@ -54,12 +54,12 @@ async def test_psy_uses_average_inventory_not_weaning_sows(db: AsyncSession, tes
 
 async def test_psy_zero_weanings_is_zero_not_none(db: AsyncSession, test_farm: Farm):
     await _sow(db, test_farm, entry=datetime(2025, 6, 1, tzinfo=UTC))
-    detail = await calculate_psy(db, test_farm.id, 2026)
+    detail = await calculate_psy(db, test_farm.id, date(2026, 12, 31))
     assert detail is not None and detail.total_weaned == 0
     assert detail.psy == 0.0, "분만/이유 0건이면 PSY=0 (스펙 엣지: NULL 아님)"
 
 
 async def test_psy_no_inventory_is_none(db: AsyncSession, test_farm: Farm):
     # 활성 모돈 0두 → PSY None
-    detail = await calculate_psy(db, test_farm.id, 2026)
+    detail = await calculate_psy(db, test_farm.id, date(2026, 12, 31))
     assert detail is None or detail.psy is None

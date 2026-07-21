@@ -32,8 +32,8 @@ async def psy(
     db: DbDep,
     year: int = Query(default=date.today().year, ge=2000, le=2099),
 ):
-    """Annual PSY breakdown for the specified year."""
-    return await kpi_service.calculate_psy(db, farm.id, year)
+    """PSY (rolling 12개월, 해당 연도 말 기준 — 당해년도는 오늘까지)."""
+    return await kpi_service.calculate_psy(db, farm.id, min(date(year, 12, 31), date.today()))
 
 
 @router.get("/trend", response_model=list[KpiTrend])

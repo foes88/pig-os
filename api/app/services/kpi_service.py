@@ -54,53 +54,59 @@ async def _get_benchmark(db: AsyncSession, metric_code: str, farm: Farm) -> dict
 
 
 
-async def calculate_psy(db: AsyncSession, farm_id: UUID, year: int) -> PsyDetail | None:
-    """연간 PSY = SUM(weaned_count) / AVG(활성 모돈 재고) — KPI 스펙 §1.
+async def calculate_psy(db: AsyncSession, farm_id: UUID, ref_date: date) -> PsyDetail | None:
+    """PSY = SUM(weaned) [ref_date 종료 rolling 12개월] / AVG(활성 모돈 재고) — KPI 스펙 §1.
 
-    분모는 해당 연도 12개월 각 월초의 활성 모돈수 평균(입식~퇴출 윈도우). 옛 v_farm_psy 뷰는
-    분모를 '그 해 이유한 모돈수'로 잘못 계산해 PSY를 과대평가했음(뷰 사용 중단).
+    스펙 정합(2026-07): 과거 코드는 (a) 달력연도(Jan-Dec), (b) 재고조건을 deleted_at 게이팅으로
+    구현해 스펙(rolling 12개월 + '폐사 전까지만 분모 포함')을 위반했음. 특히 (b)는 도폐사 모돈이
+    soft-delete되지 않은 데이터(하베스트)에서 재고를 영구 부풀려 PSY를 급락시켰음.
+    - 분자: ref_date 기준 최근 12개월 이유두수 합.
+    - 분모: 최근 12개월 각 월초 활성 모돈수 평균. 활성 = 입식 완료 AND (미퇴출 OR 퇴출이 그 월초 이후).
+      → deleted_at 무관하게 exit_date로만 판정(스펙 '폐사 전까지만').
     엣지: 이유 0건 → PSY=0(NULL 아님) / 활성 재고 0 → PSY=NULL.
     """
     row = await db.execute(
         text(
             """
             WITH months AS (
-                SELECT generate_series(make_date(:year,1,1), make_date(:year,12,1),
-                                       interval '1 month')::date AS m
+                SELECT generate_series(
+                    date_trunc('month', CAST(:ref AS date)) - interval '11 months',
+                    date_trunc('month', CAST(:ref AS date)),
+                    interval '1 month')::date AS m
             ),
             inv AS (
                 SELECT mo.m, COUNT(s.id) AS cnt
                 FROM months mo
                 LEFT JOIN sows s ON s.farm_id = :farm_id
                     AND s.entry_date <= mo.m
-                    AND (s.deleted_at IS NULL
-                         OR (s.exit_date IS NOT NULL AND s.exit_date >= mo.m))
+                    AND (s.exit_date IS NULL OR s.exit_date >= mo.m)  -- 폐사 전까지만(exit기반)
                 GROUP BY mo.m
             ),
             num AS (
-                -- sargable: EXTRACT(YEAR) 대신 날짜범위 → idx_weanings_farm_date 사용(대형농장 seq scan 방지)
+                -- rolling 12개월. sargable 날짜범위 → idx_weanings_farm_date 사용
                 SELECT COALESCE(SUM(w.weaned_count), 0) AS total_weaned
                 FROM weanings w
                 WHERE w.farm_id = :farm_id AND w.deleted_at IS NULL
-                  AND w.weaning_date >= make_date(:year, 1, 1)
-                  AND w.weaning_date <  make_date(:year + 1, 1, 1)
+                  AND w.weaning_date >  CAST(:ref AS date) - interval '12 months'
+                  AND w.weaning_date <= CAST(:ref AS date)
             )
             SELECT (SELECT AVG(cnt) FROM inv) AS avg_sow_count,
                    (SELECT total_weaned FROM num) AS total_weaned
             """
         ),
-        {"farm_id": str(farm_id), "year": year},
+        {"farm_id": str(farm_id), "ref": ref_date},
     )
     result = row.fetchone()
     avg_inv = float(result.avg_sow_count) if result and result.avg_sow_count else 0.0
     total_weaned = int(result.total_weaned) if result and result.total_weaned else 0
+    yr = ref_date.year
     if avg_inv < 1:
-        # 활성 재고 <1두(신생 농장 등 연중 대부분 미존재) → 연율 산정 불가 → PSY NULL(폭발값 방지).
-        return PsyDetail(farm_id=farm_id, year=year, avg_sow_count=round(avg_inv, 2),
+        # 활성 재고 <1두(신생 농장 등 대부분 미존재) → 연율 산정 불가 → PSY NULL(폭발값 방지).
+        return PsyDetail(farm_id=farm_id, year=yr, avg_sow_count=round(avg_inv, 2),
                          total_weaned=total_weaned, psy=None, benchmark_avg=None, target_value=None)
     return PsyDetail(
         farm_id=farm_id,
-        year=year,
+        year=yr,
         avg_sow_count=round(avg_inv, 2),
         total_weaned=total_weaned,
         psy=round(total_weaned / avg_inv, 2),  # 이유 0 → 0.0 (NULL 아님)
@@ -538,7 +544,7 @@ async def build_rule_context(
     if kpi_overrides:
         kpi = {**herd, **kpi_overrides}
     else:
-        psy_detail = await calculate_psy(db, farm.id, year)
+        psy_detail = await calculate_psy(db, farm.id, min(date(year, 12, 31), date.today()))
         npd_detail = await calculate_npd_breakdown(
             db, farm.id, date(today.year, 1, 1), today
         )
@@ -677,8 +683,8 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     today = date.today()
     year  = today.year
 
-    # PSY
-    psy_detail = await calculate_psy(db, farm.id, year)
+    # PSY — 대시보드는 오늘 기준 rolling 12개월(스펙 §1)
+    psy_detail = await calculate_psy(db, farm.id, today)
     psy_bench  = await _get_benchmark(db, "PSY", farm)
     psy_value  = psy_detail.psy if psy_detail else None
 

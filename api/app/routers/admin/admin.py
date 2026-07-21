@@ -271,7 +271,7 @@ async def data_monitor_detail(farm_id: str, db: DbDep, _admin: SuperAdmin) -> Fa
     avg_sows = None
     try:
         from app.services.kpi_service import calculate_psy
-        detail = await calculate_psy(db, farm_id, datetime.now(UTC).year)  # type: ignore[arg-type]
+        detail = await calculate_psy(db, farm_id, datetime.now(UTC).date())  # type: ignore[arg-type]
     except Exception:  # noqa: BLE001 — KPI 실패해도 나머지 상세는 반환
         detail = None
     if detail:
