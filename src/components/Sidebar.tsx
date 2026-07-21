@@ -148,7 +148,7 @@ export function Sidebar({ collapsed = false, onCollapse, onAskAI }: SidebarProps
           <span className="w-[30px] h-[30px] rounded-lg bg-brand flex items-center justify-center flex-shrink-0">
             <PiggyBank size={18} className="text-white" />
           </span>
-          {!collapsed && <span className="text-[16px] font-bold text-console-text tracking-tight">PigOS</span>}
+          {!collapsed && <span className="text-[16px] font-bold text-console-text tracking-tight" style={{ fontFamily: '"IBM Plex Sans KR", sans-serif' }}>PigOS</span>}
         </Link>
         {!collapsed && (
           <span className="ml-auto text-[9.5px] font-mono text-console-mut border border-console-line px-1.5 py-0.5 rounded">
