@@ -476,10 +476,12 @@ async def build_loss_inputs(db: AsyncSession, farm: Farm, window_days: int = 365
         "SELECT status, parity, count(*) cnt FROM sows WHERE farm_id=:fid AND deleted_at IS NULL "
         "AND status IN ('CULLED','DEAD') AND exit_date BETWEEN :s AND :e GROUP BY status, parity"), p)).all()
     cull_by_parity = [{"status": r.status, "parity": int(r.parity or 0), "count": int(r.cnt)} for r in cull_rows]
-    # NPD(WEI) 총 지연일 합 — S9 ① 이유→교배 (보수적, v_sow_npd)
+    # NPD(WEI) 총 지연일 합 — S9 ① 이유→교배 (보수적, v_sow_npd).
+    # 손실 윈도우(최근 window_days)로 한정 — 다른 손실지표와 기간 일치(정합성) + 대형농장에서
+    # 전체이력 LATERAL 스캔(대시보드 7s 근인)을 idx_weanings_farm_date로 제한(2026-07).
     wei_total = (await db.execute(text(
         "SELECT coalesce(sum(wei_days),0) FROM v_sow_npd WHERE farm_id=:fid "
-        "AND wei_days IS NOT NULL AND wei_days > 0"), {"fid": str(farm.id)})).scalar() or 0
+        "AND wei_days IS NOT NULL AND wei_days > 0 AND weaning_date BETWEEN :s AND :e"), p)).scalar() or 0
     price = await _load_price(db, farm)
     return {
         "price": price["price"] if price else None,

@@ -62,6 +62,9 @@ class Farrowing(Base):
     __table_args__ = (
         Index("idx_farrowings_farm_sow", "farm_id", "sow_id"),
         Index("idx_farrowings_date", "farm_id", "farrowing_date"),
+        # 분만율 코호트(mating LEFT JOIN farrowing ON mating_id)가 mating_id로 조회 →
+        # 인덱스 없으면 대형농장 스캔(대시보드 지연, 2026-07).
+        Index("idx_farrowings_mating", "mating_id"),
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)

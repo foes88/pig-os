@@ -131,7 +131,7 @@ export default function Dashboard() {
         </span>
       </div>
 
-      {isLoading && <div className="text-center py-20 text-text3 text-sm">{t("loading")}</div>}
+      {isLoading && <DashboardSkeleton />}
       {!farmId && <div className="text-center py-20 text-text3 text-sm">{t("selectFarm")}</div>}
       {isError && farmId && !isLoading && (
         <div className="rounded-2xl border border-danger/30 bg-danger/5 py-16 text-center">
@@ -395,6 +395,60 @@ function AlertCard({ alert }: { alert: Alert }) {
             {t("currentTarget", { cur: alert.current_value.toFixed(1), tgt: alert.target_value?.toFixed(1) ?? "-" })}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// 대시보드 로딩 스켈레톤 — 실제 레이아웃(진단카드·KPI 4카드·파이프라인·2단) 형태의 shimmer.
+function SkelBlock({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-xl bg-bg2 ${className}`} />;
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-5" aria-busy="true" aria-label="loading">
+      {/* AI 진단 카드 */}
+      <div className="rounded-2xl border border-border bg-surface p-5">
+        <div className="flex items-start gap-3">
+          <SkelBlock className="w-9 h-9 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <SkelBlock className="h-3 w-40" />
+            <SkelBlock className="h-3 w-24" />
+          </div>
+          <SkelBlock className="h-8 w-16" />
+        </div>
+        <SkelBlock className="h-5 w-64 mt-4" />
+        <SkelBlock className="h-9 w-40 mt-4 rounded-lg" />
+      </div>
+      {/* KPI 4카드 */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border bg-surface p-4 space-y-3">
+            <SkelBlock className="h-3 w-20" />
+            <SkelBlock className="h-7 w-16" />
+            <SkelBlock className="h-4 w-24 rounded-full" />
+          </div>
+        ))}
+      </div>
+      {/* 파이프라인 5칸 */}
+      <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border bg-surface p-5 flex flex-col items-center gap-2">
+            <SkelBlock className="w-6 h-6 rounded-full" />
+            <SkelBlock className="h-6 w-8" />
+            <SkelBlock className="h-3 w-12" />
+          </div>
+        ))}
+      </div>
+      {/* 하단 2단 (알림 / 돈군상태) */}
+      <div className="grid lg:grid-cols-2 gap-3">
+        {Array.from({ length: 2 }).map((_, col) => (
+          <div key={col} className="rounded-2xl border border-border bg-surface p-5 space-y-3">
+            <SkelBlock className="h-4 w-32" />
+            {Array.from({ length: 4 }).map((_, i) => <SkelBlock key={i} className="h-10 w-full" />)}
+          </div>
+        ))}
       </div>
     </div>
   );

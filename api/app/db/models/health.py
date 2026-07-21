@@ -66,7 +66,11 @@ class FeedRecord(Base):
 
 class Removal(Base):
     __tablename__ = "removals"
-    __table_args__ = (Index("idx_removals_farm_date", "farm_id", "removal_date"),)
+    __table_args__ = (
+        Index("idx_removals_farm_date", "farm_id", "removal_date"),
+        # 분만율 코호트의 NOT EXISTS(사망 모돈 제외)가 sow_id로 조회 → by-sow 인덱스(2026-07).
+        Index("idx_removals_sow_date", "sow_id", "removal_date"),
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
