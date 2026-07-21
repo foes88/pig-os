@@ -11,6 +11,7 @@
 2. **태스크 완료마다** PROGRESS.md 현재상태 갱신 후 `git commit`
 3. **컨텍스트가 커지면** 사람에게 `/clear` 권유 (대화가 길어져 응답이 느려지거나, 한 세션에서 대형 태스크 3개 이상 완료 시)
 4. **UI 텍스트 추가/변경 시** `src/messages/` 아래 **en/ko/zh/es/vi/th/pt/ru 8개 파일 모두** 동시 업데이트 (누락 금지). `i18n.test.ts`가 키 파리티 강제. **컴포넌트/페이지에 인라인 `{en,ko,...}` 딕셔너리 금지 — 반드시 messages 파일 + `useTranslations`** (언어 표시명 상수 LANG_LABELS류만 예외). 언어 추가 = JSON 1개만 추가하면 끝.
+5. **사용자 노출 기능/수치가 바뀌면** `docs/LANDING_SYNC.md`(랜딩 동기화 정본)를 갱신. 랜딩페이지(pigos.io, `c:/dev/pigos-landing`)는 이 문서를 참조해 `FACTS.md`를 맞춘다. **위조 0**: `[확정]`만 랜딩에 사실로 노출, `[베타/검증중]`은 hedge, `[내부]`는 비노출.
 
 ---
 
