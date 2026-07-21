@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -146,7 +147,8 @@ export function Sidebar({ collapsed = false, onCollapse, onAskAI }: SidebarProps
       <div className="flex items-center gap-2.5 px-4 py-4 border-b border-console-line flex-shrink-0">
         <Link href="/" className="flex items-center gap-2.5 flex-1 min-w-0">
           <span className="w-[30px] h-[30px] rounded-lg bg-brand flex items-center justify-center flex-shrink-0">
-            <PiggyBank size={18} className="text-white" />
+            {/* 공식 PigOS 심볼(흰색 스트로크, dark 버전) — 일반 돼지 아이콘 대체 */}
+            <Image src="/logos/pigos-symbol-dark.svg" alt="PigOS" width={19} height={19} className="w-[19px] h-[19px]" priority />
           </span>
           {!collapsed && <span className="text-[16px] font-bold text-console-text tracking-tight" style={{ fontFamily: '"IBM Plex Sans KR", sans-serif' }}>PigOS</span>}
         </Link>

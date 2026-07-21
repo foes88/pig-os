@@ -402,7 +402,7 @@ function AlertCard({ alert }: { alert: Alert }) {
 
 // 대시보드 로딩 스켈레톤 — 실제 레이아웃(진단카드·KPI 4카드·파이프라인·2단) 형태의 shimmer.
 function SkelBlock({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-bg2 ${className}`} />;
+  return <div className={`skeleton rounded-xl ${className}`} />;
 }
 
 function DashboardSkeleton() {

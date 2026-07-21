@@ -154,6 +154,29 @@
   /* 숫자/KPI/뱃지는 모두 font-mono */
   .font-mono { font-family: var(--font-mono); letter-spacing: 0; }
 
+  /* ── 모던 로딩 스켈레톤: 좌→우 shimmer sweep(요즘 트랜드) ── */
+  @keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .skeleton {
+    background-color: var(--color-bg2);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(148, 163, 184, 0.13) 20%,
+      rgba(148, 163, 184, 0.22) 50%,
+      rgba(148, 163, 184, 0.13) 80%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton { animation: none; }
+  }
+
   /* ── 세련된 얇은 스크롤바 (기본 촌스러운 스크롤바 대체) ── */
   * {
     scrollbar-width: thin;
