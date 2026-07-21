@@ -41,7 +41,7 @@ export default function DailyReportPage() {
   );
 
   return (
-    <div className="p-7 max-w-4xl">
+    <div className="p-7 max-w-6xl">
       <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
         <div>
           <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>

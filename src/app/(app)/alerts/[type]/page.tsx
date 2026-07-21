@@ -45,7 +45,7 @@ export default function AlertDetailPage({ params }: { params: Promise<{ type: st
   const bars = rows.slice(0, 12).map((r) => r.overdue_days).reverse();
 
   return (
-    <div className="p-7 max-w-6xl space-y-4">
+    <div className="p-7 max-w-[1600px] space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <button onClick={() => router.back()} className="w-9 h-9 rounded-lg border border-border bg-surface flex items-center justify-center hover:bg-bg2 transition">

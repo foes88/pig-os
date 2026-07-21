@@ -86,7 +86,7 @@ export default function ReproductionReportPage() {
   };
 
   return (
-    <div className="p-7 max-w-6xl print-area">
+    <div className="p-7 max-w-[1600px] print-area">
       <div className="no-print"><ReportsTabs /></div>
       <div className="flex items-center justify-between mb-5">
         <div>

@@ -65,7 +65,7 @@ export default function MortalityReportPage() {
   );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6">
       <header className="mb-4">
         <h1 className="text-xl font-extrabold text-text flex items-center gap-2">
           <TrendingDown size={20} className="text-danger" /> {t("title")}

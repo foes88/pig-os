@@ -23,7 +23,7 @@ export default function AnnouncementsPage() {
   const items = data ?? [];
 
   return (
-    <div className="max-w-3xl mx-auto px-7 py-6">
+    <div className="max-w-5xl mx-auto px-7 py-6">
       <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
       {isLoading ? (
         <div className="py-12 text-center text-text3 text-sm">…</div>

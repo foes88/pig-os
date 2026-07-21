@@ -27,7 +27,7 @@ export default function SupportPage() {
   const st = (s: string) => t(s === "OPEN" ? "statusOpen" : s === "ANSWERED" ? "statusAnswered" : "statusClosed");
 
   return (
-    <div className="max-w-3xl mx-auto px-7 py-6">
+    <div className="max-w-5xl mx-auto px-7 py-6">
       <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
 
       <div className="grid grid-cols-3 gap-3 mb-7">

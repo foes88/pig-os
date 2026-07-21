@@ -26,7 +26,7 @@ export default function ComprehensiveDailyPage() {
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="max-w-[1600px] mx-auto px-4 py-6">
       <ReportsTabs />
       <header className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>

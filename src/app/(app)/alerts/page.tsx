@@ -63,7 +63,7 @@ export default function AlertsPage() {
   const totalOpen = overdue?.total ?? 0;
 
   return (
-    <div className="p-7 max-w-5xl space-y-4">
+    <div className="p-7 max-w-[1600px] space-y-4">
       <AlertsTabs />
 
       {/* Header */}

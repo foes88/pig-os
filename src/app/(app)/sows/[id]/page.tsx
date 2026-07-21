@@ -121,7 +121,7 @@ export default function SowDetailPage() {
   );
 
   return (
-    <div className="p-7 max-w-3xl">
+    <div className="p-7 max-w-5xl">
         {/* 뒤로가기 */}
         <button
           onClick={() => router.back()}

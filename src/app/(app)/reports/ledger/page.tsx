@@ -34,7 +34,7 @@ export default function LedgerPage() {
   const kindLabel = (k: string) => t(KINDS.find((x) => x.value === k)?.key ?? "all");
 
   return (
-    <div className="p-7 max-w-4xl">
+    <div className="p-7 max-w-6xl">
       <div className="mb-5">
         <h1 className="text-[22px] font-extrabold tracking-tight">{t("title")}</h1>
         <p className="text-xs text-text3 mt-0.5">{t("subtitle")}</p>

@@ -16,7 +16,7 @@ export default function BillingPage() {
   // 과금/구독은 소유자 전용
   if (!isOwner) {
     return (
-      <div className="max-w-3xl mx-auto px-7 py-6">
+      <div className="max-w-5xl mx-auto px-7 py-6">
         <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
         <div className="bg-surface border border-border rounded-2xl p-6 text-center text-sm text-text3">
           {t("ownerOnly")}
@@ -26,7 +26,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-7 py-6">
+    <div className="max-w-5xl mx-auto px-7 py-6">
       <h1 className="text-xl font-extrabold tracking-tight mb-5">{t("title")}</h1>
 
       {/* Current plan */}

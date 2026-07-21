@@ -85,7 +85,7 @@ export default function MonthlyDashboardPage() {
   const frPts = trend.map((t) => ({ x: t.period.slice(2), y: t.farrowing_rate }));
 
   return (
-    <div className="p-7 max-w-5xl print-area">
+    <div className="p-7 max-w-[1600px] print-area">
       <div className="no-print"><ReportsTabs /></div>
       <div className="flex items-center justify-between mb-5">
         <div>

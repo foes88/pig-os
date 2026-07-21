@@ -67,7 +67,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="ml-[220px] max-md:ml-0 p-6 max-w-3xl">
+    <div className="ml-[220px] max-md:ml-0 p-6 max-w-5xl">
       <h1 className="text-2xl font-extrabold text-text">{t("title")}</h1>
       <p className="text-sm text-text3 mt-1">{t("subtitle")}</p>
 

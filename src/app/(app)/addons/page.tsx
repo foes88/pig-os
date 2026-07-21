@@ -66,7 +66,7 @@ export default function AddonsPage() {
   const betaCount = ADDONS.filter((a) => a.tag !== "coming_soon").length;
 
   return (
-    <div className="p-7 max-w-5xl">
+    <div className="p-7 max-w-[1600px]">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-[22px] font-extrabold tracking-tight text-text">{t("storeTitle")}</h1>
@@ -167,11 +167,12 @@ export default function AddonsPage() {
                 <div className="font-bold text-[14px] text-text">{t(`n_${addon.key}`)}</div>
                 <div className="text-xs text-text3 mt-1 leading-relaxed">{t(`d_${addon.key}`)}</div>
               </div>
+              {/* free만 동작 — beta(AI Insight 등)는 아직 미연동이라 버튼 비활성화 */}
               <button
-                disabled={disabled}
+                disabled={addon.tag !== "free"}
                 className={`text-xs font-semibold rounded-lg px-3 py-2 transition ${
-                  disabled
-                    ? "bg-bg2 text-text3/60 cursor-default"
+                  addon.tag !== "free"
+                    ? "bg-bg2 text-text3/60 cursor-not-allowed"
                     : "bg-primary text-white hover:bg-success"
                 }`}
               >

@@ -71,7 +71,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-7 py-6">
+    <div className="max-w-6xl mx-auto px-7 py-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
         <h1 className="text-xl font-extrabold tracking-tight text-text">{t("title")}</h1>
         {canManage && (

@@ -25,7 +25,7 @@ export default function DataQualityPage() {
   const warning = issues.filter((i) => i.severity === "WARNING");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6">
       <header className="mb-5">
         <h1 className="text-xl font-extrabold text-text flex items-center gap-2">
           <ShieldCheck size={20} className="text-primary" /> {t("title")}
