@@ -774,3 +774,15 @@ src/
 - 브랜드: `bg-navy` (#0D1B3E), `bg-primary` (blue #2563EB), `bg-snout` (pig snout 색상), `text-gold`
 - 시맨틱: `text-success`, `text-danger`, `text-warning`, `text-purple`
 - 숫자·코드: `font-mono` (JetBrains Mono)
+
+---
+
+## 스펙 문서 체계 (2026-07-21 신설)
+
+- **진입점**: `docs/PIGOS_SPEC_INDEX.md` — 전 스펙의 지도. 세션 시작 시 참조.
+- 핵심 스펙: `docs/specs/COUNTRY_KPI_RULE_SPEC_v0.3.1.md` (국가별 KPI 정책·룰·경영 KPI. v0.4 개정 진행 중)
+- 결재 대기: `docs/product/PIGOS_FEATURE_ENTITLEMENT_MATRIX.md` (무료/유료 SSOT — **승인 전 paywall·과금 구현 금지**)
+- 밤샘 런 프롬프트: `docs/runs/` (A 정책벡터 / B Envelope / C v0.4+evidence / D 법무 리서치)
+- 일정: `docs/planning/MASTER_SCHEDULE_2026-07.md`
+- **핵심 규율**: 위조 0은 수치와 결정 모두에 적용 — Decision Register에서 APPROVED 아닌 정책은 코드·seed에 반영 금지. 미검증 벤치마크는 UNVERIFIED_DRAFT 격리.
+- ⚠️ 상단 "전략: 무료 제공 → 데이터 수집 → 수익화 → 농가 배분" 중 **"농가 배분"은 2026-07-21 회의에서 방향 변경** (대가 = 현금 배분이 아니라 벤치마크 인사이트 환원). 본문 수정은 대표 확인 후.
