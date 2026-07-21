@@ -75,9 +75,12 @@ async def calculate_psy(db: AsyncSession, farm_id: UUID, ref_date: date) -> PsyD
                     interval '1 month')::date AS m
             ),
             inv AS (
+                -- 상시모돈 = 경산돈(parity>=1, 후보돈 제외) — PigPlan 035001 정의 정합(2026-07).
+                -- 후보돈 포함(431)이 아니라 경산만(≈323) 세야 PigPlan 상시모돈(311)과 일치.
                 SELECT mo.m, COUNT(s.id) AS cnt
                 FROM months mo
                 LEFT JOIN sows s ON s.farm_id = :farm_id
+                    AND s.parity >= 1
                     AND s.entry_date <= mo.m
                     AND (s.exit_date IS NULL OR s.exit_date >= mo.m)  -- 폐사 전까지만(exit기반)
                 GROUP BY mo.m
