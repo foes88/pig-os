@@ -121,7 +121,7 @@ function BrandPanel() {
         <div className="space-y-3">
           {[
             { icon: "◈", text: "27 yrs of field expertise" },
-            { icon: "◎", text: "4 global markets supported" },
+            { icon: "◎", text: "5 global markets · 8 languages" },
             { icon: "◉", text: "AI-powered KPI alerts" },
           ].map(({ icon, text }) => (
             <div key={text} className="flex items-center gap-3">
