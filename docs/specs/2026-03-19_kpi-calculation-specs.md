@@ -101,18 +101,35 @@ WHERE s.farm_id = :farm_id
 
 ---
 
-## 3. NPD (Non-Productive Days)
+## 3. NPD (Non-Productive Days) — 비생산일수
+
+> **2026-07-22 재정의(구현 정본).** 과거 대시보드는 `AVG(wei_days)`(이유→교배 간격 ≈ 수일)를
+> '비생산일수'로 **오표시**했음(PigPlan 30.4 vs 앱 10.7). 아래 여집합 방식으로 정정.
+> 구현: `kpi_service.calculate_npd(db, farm_id, ref_date)` (`_NPD_SQL`).
 
 ### 정의
-모돈이 임신도 포유도 아닌 비생산 일수
+모돈이 임신도 포유도 아닌 비생산 일수 (모돈-년 기준)
 
-### 공식 (모돈 개체별)
+### 공식 (여집합, herd 레벨 — 구현 정본)
 ```
-NPD = 이유~재교배 간격 합계 (rolling 12개월)
+NPD/모돈-년 = 365 × (사육일 − 임신일 − 포유일) / 사육일   [rolling 12개월]
 
-개별 NPD 이벤트 = next_mating_date - weaning_date (일)
-연간 NPD = SUM(individual NPD events)
+사육일  = Σ 경산모돈(parity>=1)의 창내 재고일(entry~exit 클립, PSY 분모와 동일)
+임신일  = Σ (분만일 − 교배일), 창·entry 클립 + 진행중 임신 꼬리(event 기반)
+포유일  = Σ (이유일 − 분만일), 창·entry 클립 + 진행중 포유 꼬리(event 기반)
+모돈회전율 = 창내 분만복수 / 평균 상시모돈(경산)   ← 신규
 ```
+전 CTE parity>=1 통일(sow_days 모집단 일치), sanity 상한 clip(임신130/포유70, 행 drop 아님),
+open-tail은 status 비의존(최근 교배/분만 + ref재고). 듀얼리뷰 5개 finding 반영(커밋 e9a97df).
+
+### ⚠️ PigPlan 관례 차이 (open — 위조 0)
+용암축산(2807) 백필 후 실측: PSY 29.0(≈PigPlan 29.1)·임신·포유 일치. 그러나 **NPD 52.7 vs 30.4**,
+**회전율 2.29 vs 2.42**. 원인은 버그가 아니라 **관례 차이**: PigPlan은 PSY와 회전율에 서로 다른
+분모(상시모돈 vs 분만간격 FI)를 쓰는 독자 035 공식. count방식 NPD 52.7 / FI방식 21 사이에 PigPlan 30.4가 위치.
+→ **여집합(정직한 self-consistent 값) 유지**. PigPlan-035 정확일치는 그들 공식 확보 후 per-country 정제(날조 금지).
+
+### (구방식 참고) WEI = 이유~재교배 간격
+`weaning_to_mating_days`로 보존(참고값). 개별 = next_mating_date − weaning_date.
 
 ### 구성 요소
 ```
