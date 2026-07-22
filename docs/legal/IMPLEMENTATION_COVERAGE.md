@@ -14,7 +14,8 @@
 | CN 가입차단 / TH·VN 게이트 (플래그 해제 가능) | ✅ | `jurisdiction._GATES` + `resolve(feature_overrides=…)` |
 | CA 링크·GPC / UOOM 자동 OFF | ✅ | `StateFlags`(do_not_sell_link, honor_uoom) → plan `auto_off_if_uoom`, UI 강제 OFF |
 | 철회·제외 요청 플로우 | ✅ | `consent_service.withdraw` (WITHDRAWN/OBJECTED/EXCLUSION_REQUESTED, append-only) + `src/app/(app)/settings/data/page.tsx` |
-| 개정 재고지 배너 + 재동의 | ⚠️ 부분 | notice_version 바인딩·비교 기반 마련. 로그인 시 변경배너/재동의 게이트는 후속 |
+| 가입 온보딩 동의 스텝 연결 | ✅ | `src/app/onboarding/page.tsx` 확인 스텝에 `ConsentForm`(embedded) 삽입 → 계정 생성 직후 `consentApi.record`. signup-plan은 공개(pre-auth) |
+| 개정 재고지 배너 | ✅ | `src/components/consent/AmendmentBanner.tsx` — 기록 notice_version ≠ 현재 → 앱 셸 배너. 강제 재동의 게이트는 법무 판정 후속 |
 
 ## 목적×법역 매트릭스 (CONSENT §2 → 코드)
 
@@ -46,6 +47,6 @@
 
 - 영어·현지어 확정 번역본 (렌더러는 `lang_pending`/`lang_gate`로 게이트 신호만)
 - EU/UK 대리인, BR SCC, TH/VN 라이선스 — 게이트 플래그 상태로 대기
-- 가입 플로우 실제 화면 연결(온보딩 스텝 삽입) — ConsentForm 컴포넌트 준비 완료, 마운트는 후속
-- 개정 재고지 배너/강제 재동의 게이트
+- US 주(state) 수집 — 온보딩은 현재 국가 단위. NE 서면옵트인 등 주별 분기를 실제 적용하려면 온보딩/농장설정에 주 코드 입력 필요(후속)
+- 강제 재동의 게이트 — 배너는 고지까지. 개정 성격별 필수 재동의 차단은 법무 판정 플래그 후속
 - 복수 국가 조직(organization) 법역 처리 [COUNSEL]

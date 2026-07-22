@@ -22,7 +22,8 @@ router = APIRouter(prefix="/consent", tags=["Consent"])
 
 @router.get("/signup-plan", response_model=SignupPlan)
 async def get_signup_plan(
-    current_user: CurrentUser,
+    # 공개: 가입 전(pre-auth) 온보딩에서 법역별 약관·목적 UI를 그리기 위한 정책 프리뷰.
+    # 사용자 데이터 없음(정책·문서 조합만) → 인증 불요. 기록(record)은 인증 필요.
     selected_country: str = Query(..., min_length=2, max_length=2),
     farm_country: str | None = Query(None, min_length=2, max_length=2),
     farm_state: str | None = Query(None, max_length=3),

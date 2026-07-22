@@ -1983,6 +1983,11 @@
         "label": "Processamento de IA externo",
         "desc": "Processamento por provedores de IA externos, pode envolver transferência internacional."
       }
+    },
+    "amendment": {
+      "title": "Nossos termos foram atualizados",
+      "desc": "Alguns documentos que você aceitou foram alterados. Revise a versão atual.",
+      "review": "Revisar alterações"
     }
   }
 }

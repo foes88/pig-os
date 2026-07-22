@@ -1983,6 +1983,11 @@
         "label": "Xử lý AI bên ngoài",
         "desc": "Xử lý bởi nhà cung cấp AI bên ngoài, có thể liên quan chuyển giao xuyên biên giới."
       }
+    },
+    "amendment": {
+      "title": "Điều khoản của chúng tôi đã được cập nhật",
+      "desc": "Một số tài liệu bạn đã đồng ý đã thay đổi. Vui lòng xem lại phiên bản hiện tại.",
+      "review": "Xem thay đổi"
     }
   }
 }

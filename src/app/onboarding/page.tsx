@@ -6,8 +6,11 @@ import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 import { authApi } from "@/lib/api/endpoints/auth";
+import { consentApi } from "@/lib/api/endpoints/consent";
+import ConsentForm from "@/components/consent/ConsentForm";
 import { useAuthStore } from "@/store/auth.store";
 import { track, identifyUser } from "@/lib/analytics";
+import type { ConsentChoice, SignupPlan } from "@/types/api.types";
 
 // 예약어 아이디 차단(백엔드 auth.py와 동일 규칙) — 사칭 방지, 즉시 피드백용.
 const RESERVED_UN = /^(admin|administrator|root|superuser|superadmin|super_admin|system|sysadmin|support|helpdesk|info|contact|moderator|mod|staff|operator|owner|master|official|security|billing|api|www|pigos|pigplan|wiselake|null|undefined)$/;
@@ -67,6 +70,13 @@ export default function OnboardingPage() {
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // 동의 인프라(TERMS_DISPLAY §4): 확인 스텝에서 법역별 약관·목적 UI 표시 후 기록.
+  const [plan, setPlan] = useState<SignupPlan | null>(null);
+  const [planStatus, setPlanStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [consentState, setConsentState] = useState<{
+    termsAck: boolean; privacyAck: boolean; choices: ConsentChoice[]; canSubmit: boolean;
+  } | null>(null);
+
   const set = <K extends keyof Form>(k: K, v: Form[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
@@ -96,6 +106,19 @@ export default function OnboardingPage() {
     if (c && c !== "ko" && c in OT) setLang(c as OLang);
   }, []);
   const t = OT[lang];
+
+  // 확인 스텝 진입 또는 국가/언어 변경 시 plan 조회(공개 엔드포인트 — pre-auth).
+  useEffect(() => {
+    if (step !== 2 || !form.country) return;
+    setPlanStatus("loading");
+    setConsentState(null);
+    consentApi.signupPlan({
+      selected_country: form.country, farm_country: form.country, lang, include_body: true,
+    })
+      .then((p) => { setPlan(p); setPlanStatus("ready"); })
+      .catch(() => { setPlan(null); setPlanStatus("error"); });
+  }, [step, form.country, lang]);
+
   const STEPS = [t.s0, t.s1, t.s2];
   const FARM_TYPES = [
     { value: "SOW_FARM", label: t.sowFarm },
@@ -106,7 +129,7 @@ export default function OnboardingPage() {
 
   const mutation = useMutation({
     mutationFn: () => authApi.onboard({ ...form, language: lang }),  // M3: 감지된 로케일 전송
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setAuth(
         { id: data.user_id, username: form.username, email: form.email, name: form.name, role: "FARM_OWNER", farm_ids: [data.farm_id] },
         data.access_token,
@@ -114,6 +137,21 @@ export default function OnboardingPage() {
         data.farm_id,
       );
       document.cookie = `pigos_session=1; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      // 동의 기록(가입 직후, 인증됨). best-effort — 실패해도 진입, 설정에서 재수집 가능.
+      if (consentState && planStatus === "ready") {
+        try {
+          await consentApi.record({
+            farm_id: data.farm_id,
+            selected_country: form.country,
+            farm_country: form.country,
+            lang,
+            terms_ack: consentState.termsAck,
+            privacy_ack: consentState.privacyAck,
+            choices: consentState.choices,
+            collection_context: "UI_SIGNUP",
+          });
+        } catch { /* 설정 > 데이터·프라이버시에서 재수집 */ }
+      }
       identifyUser(data.user_id, { country: form.country });
       track("signup", { country: form.country });
       router.replace("/");
@@ -127,6 +165,9 @@ export default function OnboardingPage() {
   const canProceed = () => {
     if (step === 0) return form.org_name.trim() && form.farm_name.trim() && form.country;
     if (step === 1) return form.name.trim() && /^[a-zA-Z0-9_.-]{3,50}$/.test(form.username) && form.email.trim() && form.password.length >= 8 && form.password === confirmPw;
+    // step 2: 동의 게이트. CN 등 차단 시 진행 불가. plan 조회 실패(인프라 에러)는 가입을 막지 않음(설정에서 재수집).
+    if (plan?.gate.signup_blocked) return false;
+    if (planStatus === "ready") return !!consentState?.canSubmit;
     return true;
   };
 
@@ -284,6 +325,22 @@ export default function OnboardingPage() {
                 </svg>
                 {t.free}
               </p>
+
+              {/* 동의 인프라 (TERMS_DISPLAY §4) */}
+              <div className="mt-6 border-t border-slate-200 pt-5">
+                {planStatus === "loading" && (
+                  <p className="text-sm text-slate-400 text-center py-4">…</p>
+                )}
+                {planStatus === "error" && (
+                  <p className="text-xs text-slate-400 text-center py-2">
+                    {lang === "es" ? "No se pudo cargar el consentimiento; podrá configurarlo en Ajustes."
+                      : "Consent could not load; you can set it later in Settings."}
+                  </p>
+                )}
+                {planStatus === "ready" && plan && (
+                  <ConsentForm plan={plan} embedded mode="signup" onChange={setConsentState} />
+                )}
+              </div>
             </div>
           )}
 

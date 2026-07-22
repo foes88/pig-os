@@ -1983,6 +1983,11 @@
         "label": "External AI processing",
         "desc": "Processing by external AI providers, may involve cross-border transfer."
       }
+    },
+    "amendment": {
+      "title": "Our terms have been updated",
+      "desc": "Some documents you agreed to have changed. Please review the current version.",
+      "review": "Review changes"
     }
   }
 }

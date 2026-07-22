@@ -14,6 +14,7 @@ import { Topbar } from "@/components/Topbar";
 import { BottomNav } from "@/components/BottomNav";
 import { QuickInputDrawer } from "@/components/QuickInputDrawer";
 import { AskAiDrawer } from "@/components/AskAiDrawer";
+import AmendmentBanner from "@/components/consent/AmendmentBanner";
 import { locales, isPlatformAdmin, type Locale } from "@/i18n/config";
 
 function readLocaleCookie(): Locale {
@@ -106,6 +107,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           />
         </div>
         <main className="flex-1 pb-16 md:pb-0">
+          <AmendmentBanner />
           {children}
         </main>
       </div>

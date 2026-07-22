@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FileText, ShieldAlert, ChevronDown, Lock } from "lucide-react";
 import type {
@@ -8,13 +8,16 @@ import type {
 
 // 가입·설정 공용 동의 UI (TERMS_DISPLAY §4·§7). plan 을 그대로 그린다 —
 // 법역별 분기(NE 서면·VN⑤미노출·CN차단·② 고지형)는 전부 서버 plan 이 결정.
+// embedded=true: 자체 제출 버튼 없이 onChange 로 상태만 방출(온보딩이 자체 버튼으로 제어).
 export default function ConsentForm({
-  plan, submitting, onSubmit, mode = "signup",
+  plan, submitting, onSubmit, onChange, mode = "signup", embedded = false,
 }: {
   plan: SignupPlan;
   submitting?: boolean;
-  onSubmit: (args: { termsAck: boolean; privacyAck: boolean; choices: ConsentChoice[] }) => void;
+  onSubmit?: (args: { termsAck: boolean; privacyAck: boolean; choices: ConsentChoice[] }) => void;
+  onChange?: (args: { termsAck: boolean; privacyAck: boolean; choices: ConsentChoice[]; canSubmit: boolean }) => void;
   mode?: "signup" | "settings";
+  embedded?: boolean;
 }) {
   const t = useTranslations("consent");
   const [termsAck, setTermsAck] = useState(false);
@@ -25,6 +28,25 @@ export default function ConsentForm({
     () => plan.purposes.filter((p) => p.visible).sort((a, b) => a.order - b.order),
     [plan.purposes],
   );
+
+  const buildChoices = (): ConsentChoice[] =>
+    visiblePurposes
+      .filter((p) => p.is_toggle)
+      .map((p) => ({
+        purpose_code: p.purpose_code,
+        granted: !!toggles[p.purpose_code] && !p.auto_off_if_uoom,
+        evidence_ref: p.ui_kind === "WRITTEN_OPT_IN" ? "UI_WRITTEN_OPT_IN" : null,
+      }));
+
+  const canSubmitState =
+    !plan.gate.signup_blocked && (mode === "settings" || (termsAck && privacyAck));
+
+  // 임베드 모드: 상태 변화를 부모로 방출
+  useEffect(() => {
+    if (!embedded || !onChange) return;
+    onChange({ termsAck, privacyAck, choices: buildChoices(), canSubmit: canSubmitState });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [termsAck, privacyAck, toggles, embedded]);
 
   // CN 등 가입 차단
   if (plan.gate.signup_blocked) {
@@ -39,18 +61,9 @@ export default function ConsentForm({
 
   const setTg = (code: string, v: boolean) => setToggles((s) => ({ ...s, [code]: v }));
 
-  const canSubmit = mode === "settings" || (termsAck && privacyAck);
+  const canSubmit = canSubmitState;
 
-  const submit = () => {
-    const choices: ConsentChoice[] = visiblePurposes
-      .filter((p) => p.is_toggle)
-      .map((p) => ({
-        purpose_code: p.purpose_code,
-        granted: !!toggles[p.purpose_code] && !(p.auto_off_if_uoom),
-        evidence_ref: p.ui_kind === "WRITTEN_OPT_IN" ? "UI_WRITTEN_OPT_IN" : null,
-      }));
-    onSubmit({ termsAck, privacyAck, choices });
-  };
+  const submit = () => onSubmit?.({ termsAck, privacyAck, choices: buildChoices() });
 
   return (
     <div className="space-y-5">
@@ -96,13 +109,15 @@ export default function ConsentForm({
         ))}
       </section>
 
-      <button
-        onClick={submit}
-        disabled={!canSubmit || submitting}
-        className="w-full bg-primary text-white rounded-xl py-3 text-sm font-bold disabled:opacity-50"
-      >
-        {submitting ? "…" : mode === "signup" ? t("submit.signup") : t("submit.settings")}
-      </button>
+      {!embedded && (
+        <button
+          onClick={submit}
+          disabled={!canSubmit || submitting}
+          className="w-full bg-primary text-white rounded-xl py-3 text-sm font-bold disabled:opacity-50"
+        >
+          {submitting ? "…" : mode === "signup" ? t("submit.signup") : t("submit.settings")}
+        </button>
+      )}
     </div>
   );
 }
