@@ -14,7 +14,7 @@ import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { useAuthStore } from "@/store/auth.store";
 import type { KpiTrend, ReproductionRow } from "@/types/api.types";
 
-// 자족적 다국어(신규 리포트 — 인라인, cost/trend와 동일 패턴).
+// i18n: messages 네임스페이스 + useTranslations 사용(규칙4 준수).
 const PRESETS = [
   { key: "m6", months: 6 },
   { key: "m12", months: 12 },

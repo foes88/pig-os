@@ -13,7 +13,7 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import type { CostSummary } from "@/types/api.types";
 
-// 자족적 다국어(신규 페이지 — messages 부분갱신 대신 인라인 7개어, data-monitor와 동일 패턴).
+// i18n: messages 네임스페이스 + useTranslations 사용(규칙4 준수).
 function monthsAgoISO(n: number): string {
   const d = new Date();
   d.setDate(1);

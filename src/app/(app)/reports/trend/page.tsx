@@ -12,7 +12,7 @@ import { reportsApi } from "@/lib/api/endpoints/reports";
 import { useAuthStore } from "@/store/auth.store";
 import type { AnnualKpiRow } from "@/types/api.types";
 
-// 자족적 다국어(신규 리포트 — messages 부분갱신 대신 인라인, cost/data-monitor와 동일 패턴).
+// i18n: messages 네임스페이스 + useTranslations 사용(규칙4 준수).
 const PRESETS = [
   { key: "y3", years: 3 },
   { key: "y5", years: 5 },

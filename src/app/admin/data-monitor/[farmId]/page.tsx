@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, PiggyBank, Activity, Calendar } from "lucide-react";
 import { adminApi } from "@/lib/api/endpoints/admin";
 
-// 자족적 다국어(admin 인라인 7개어, data-monitor 목록과 동일 패턴).
+// admin 콘솔은 ko 전용(내부 운영팀). 이벤트 유형 라벨은 한국어 고정 — 일반 사용자 노출 없음.
 const EVENT_LABEL: Record<string, string> = {
   mating: "🐷 교배", farrowing: "👶 분만", weaning: "🍼 이유", health: "💉 건강",
   removal: "📤 도폐사", piglet: "🐖 자돈", feed: "🌾 사료",
