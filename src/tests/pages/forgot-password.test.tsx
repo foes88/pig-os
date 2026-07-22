@@ -29,13 +29,14 @@ describe("ForgotPasswordPage (A: 비번찾기 배선)", () => {
     mockSearch = "";
     renderWithClient(<ForgotPasswordPage />);
     expect(screen.getByPlaceholderText("you@farm.com")).toBeInTheDocument();
-    expect(screen.getByText("Send reset link")).toBeInTheDocument();
+    // useTranslations는 setup에서 (k)=>k 로 mock → 키로 검증(타 페이지 테스트 컨벤션 동일)
+    expect(screen.getByText("send")).toBeInTheDocument();
   });
 
   it("확인 모드(?token=): 새 비밀번호 입력 렌더", () => {
     mockSearch = "token=abc123";
     renderWithClient(<ForgotPasswordPage />);
-    expect(screen.getByText("New password")).toBeInTheDocument();
-    expect(screen.getByText("Confirm password")).toBeInTheDocument();
+    expect(screen.getByText("newPw")).toBeInTheDocument();
+    expect(screen.getByText("confirmPw")).toBeInTheDocument();
   });
 });

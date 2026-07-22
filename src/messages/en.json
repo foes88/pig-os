@@ -110,7 +110,15 @@
     "benchAvg": "Avg",
     "benchTop25": "Top 25%",
     "statTurnover": "Sow turnover",
-    "unitLitters": "litters/yr"
+    "unitLitters": "litters/yr",
+    "gettingStarted": {
+      "title": "Getting started",
+      "sub": "A couple of steps to unlock your farm's insights.",
+      "s1": "Register your sows",
+      "s2": "Log breeding events",
+      "s2hint": "Add mating · farrowing · weaning to see PSY, farrowing rate and AI insights.",
+      "cta": "Start recording"
+    }
   },
   "sows": {
     "title": "Sow management",
@@ -1991,5 +1999,25 @@
       "desc": "Some documents you agreed to have changed. Please review the current version.",
       "review": "Review changes"
     }
+  },
+  "forgotPassword": {
+    "reqTitle": "Reset password",
+    "reqSub": "Enter your account email. If it exists, a reset link will be issued.",
+    "email": "Email",
+    "send": "Send reset link",
+    "sending": "Sending…",
+    "sent": "Request received. If the account exists, your administrator will share a reset link or temporary password.",
+    "cfmTitle": "Set a new password",
+    "cfmSub": "Enter a new password for your account.",
+    "newPw": "New password",
+    "confirmPw": "Confirm password",
+    "reset": "Reset password",
+    "resetting": "Resetting…",
+    "resetOk": "Password changed. You can now sign in.",
+    "pwMismatch": "Passwords do not match.",
+    "pwShort": "Password must be at least 8 characters.",
+    "badToken": "This reset link is invalid or expired.",
+    "err": "Something went wrong. Please try again.",
+    "back": "Back to sign in"
   }
 }

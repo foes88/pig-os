@@ -110,7 +110,15 @@
     "benchAvg": "平均",
     "benchTop25": "前25%",
     "statTurnover": "母猪周转率",
-    "unitLitters": "胎/年"
+    "unitLitters": "胎/年",
+    "gettingStarted": {
+      "title": "开始使用",
+      "sub": "开启农场洞察的几个步骤。",
+      "s1": "登记母猪",
+      "s2": "录入繁殖事件",
+      "s2hint": "添加配种·分娩·断奶即可查看 PSY、分娩率和 AI 洞察。",
+      "cta": "开始记录"
+    }
   },
   "sows": {
     "title": "母猪管理",
@@ -1991,5 +1999,25 @@
       "desc": "您同意的部分文件已变更。请查看当前版本。",
       "review": "查看变更"
     }
+  },
+  "forgotPassword": {
+    "reqTitle": "重置密码",
+    "reqSub": "输入账户邮箱。若存在，将发放重置链接。",
+    "email": "邮箱",
+    "send": "发送重置链接",
+    "sending": "发送中…",
+    "sent": "请求已收到。若账户存在，管理员将转发重置链接或临时密码。",
+    "cfmTitle": "设置新密码",
+    "cfmSub": "为账户输入新密码。",
+    "newPw": "新密码",
+    "confirmPw": "确认密码",
+    "reset": "重置密码",
+    "resetting": "重置中…",
+    "resetOk": "密码已修改，现在可以登录。",
+    "pwMismatch": "两次密码不一致。",
+    "pwShort": "密码至少需 8 位。",
+    "badToken": "重置链接无效或已过期。",
+    "err": "出现错误，请重试。",
+    "back": "返回登录"
   }
 }

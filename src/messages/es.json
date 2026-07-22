@@ -110,7 +110,15 @@
     "benchAvg": "Prom.",
     "benchTop25": "Top 25%",
     "statTurnover": "Rotación de cerdas",
-    "unitLitters": "partos/año"
+    "unitLitters": "partos/año",
+    "gettingStarted": {
+      "title": "Primeros pasos",
+      "sub": "Unos pasos para activar los análisis de tu granja.",
+      "s1": "Registra tus cerdas",
+      "s2": "Registra eventos reproductivos",
+      "s2hint": "Añade monta · parto · destete para ver PSY, tasa de parto e insights de IA.",
+      "cta": "Empezar a registrar"
+    }
   },
   "sows": {
     "title": "Gestión de cerdas",
@@ -1991,5 +1999,25 @@
       "desc": "Algunos documentos que aceptó han cambiado. Revise la versión actual.",
       "review": "Revisar cambios"
     }
+  },
+  "forgotPassword": {
+    "reqTitle": "Restablecer contraseña",
+    "reqSub": "Ingresa el correo de tu cuenta. Si existe, se emitirá un enlace.",
+    "email": "Correo",
+    "send": "Enviar enlace",
+    "sending": "Enviando…",
+    "sent": "Solicitud recibida. Si la cuenta existe, tu administrador compartirá un enlace o contraseña temporal.",
+    "cfmTitle": "Nueva contraseña",
+    "cfmSub": "Ingresa una nueva contraseña para tu cuenta.",
+    "newPw": "Nueva contraseña",
+    "confirmPw": "Confirmar contraseña",
+    "reset": "Restablecer",
+    "resetting": "Procesando…",
+    "resetOk": "Contraseña cambiada. Ya puedes iniciar sesión.",
+    "pwMismatch": "Las contraseñas no coinciden.",
+    "pwShort": "La contraseña debe tener al menos 8 caracteres.",
+    "badToken": "El enlace es inválido o expiró.",
+    "err": "Algo salió mal. Inténtalo de nuevo.",
+    "back": "Volver a iniciar sesión"
   }
 }

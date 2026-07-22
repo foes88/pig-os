@@ -110,7 +110,15 @@
     "benchAvg": "TB",
     "benchTop25": "Top 25%",
     "statTurnover": "Vòng quay nái",
-    "unitLitters": "lứa/năm"
+    "unitLitters": "lứa/năm",
+    "gettingStarted": {
+      "title": "Bắt đầu",
+      "sub": "Vài bước để mở khóa thông tin trang trại.",
+      "s1": "Đăng ký nái",
+      "s2": "Ghi sự kiện sinh sản",
+      "s2hint": "Thêm phối giống · đẻ · cai sữa để xem PSY, tỷ lệ đẻ và thông tin AI.",
+      "cta": "Bắt đầu ghi"
+    }
   },
   "sows": {
     "title": "Quản lý nái",
@@ -1991,5 +1999,25 @@
       "desc": "Một số tài liệu bạn đã đồng ý đã thay đổi. Vui lòng xem lại phiên bản hiện tại.",
       "review": "Xem thay đổi"
     }
+  },
+  "forgotPassword": {
+    "reqTitle": "Đặt lại mật khẩu",
+    "reqSub": "Nhập email tài khoản. Nếu tồn tại, liên kết đặt lại sẽ được cấp.",
+    "email": "Email",
+    "send": "Gửi liên kết",
+    "sending": "Đang gửi…",
+    "sent": "Đã nhận yêu cầu. Nếu tài khoản tồn tại, quản trị viên sẽ gửi liên kết hoặc mật khẩu tạm thời.",
+    "cfmTitle": "Đặt mật khẩu mới",
+    "cfmSub": "Nhập mật khẩu mới cho tài khoản.",
+    "newPw": "Mật khẩu mới",
+    "confirmPw": "Xác nhận mật khẩu",
+    "reset": "Đặt lại",
+    "resetting": "Đang xử lý…",
+    "resetOk": "Đã đổi mật khẩu. Bạn có thể đăng nhập.",
+    "pwMismatch": "Mật khẩu không khớp.",
+    "pwShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+    "badToken": "Liên kết không hợp lệ hoặc đã hết hạn.",
+    "err": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "back": "Quay lại đăng nhập"
   }
 }

@@ -110,7 +110,15 @@
     "benchAvg": "Méd.",
     "benchTop25": "Top 25%",
     "statTurnover": "Rotatividade de matrizes",
-    "unitLitters": "partos/ano"
+    "unitLitters": "partos/ano",
+    "gettingStarted": {
+      "title": "Primeiros passos",
+      "sub": "Alguns passos para ativar os insights da sua granja.",
+      "s1": "Cadastre suas matrizes",
+      "s2": "Registre eventos reprodutivos",
+      "s2hint": "Adicione cobertura · parto · desmame para ver PSY, taxa de parto e insights de IA.",
+      "cta": "Começar a registrar"
+    }
   },
   "sows": {
     "title": "Gestão de matrizes",
@@ -1991,5 +1999,25 @@
       "desc": "Alguns documentos que você aceitou foram alterados. Revise a versão atual.",
       "review": "Revisar alterações"
     }
+  },
+  "forgotPassword": {
+    "reqTitle": "Redefinir senha",
+    "reqSub": "Informe o e-mail da conta. Se existir, um link será emitido.",
+    "email": "E-mail",
+    "send": "Enviar link",
+    "sending": "Enviando…",
+    "sent": "Solicitação recebida. Se a conta existir, seu administrador enviará um link ou senha temporária.",
+    "cfmTitle": "Nova senha",
+    "cfmSub": "Informe uma nova senha para a conta.",
+    "newPw": "Nova senha",
+    "confirmPw": "Confirmar senha",
+    "reset": "Redefinir",
+    "resetting": "Processando…",
+    "resetOk": "Senha alterada. Você já pode entrar.",
+    "pwMismatch": "As senhas não coincidem.",
+    "pwShort": "A senha deve ter ao menos 8 caracteres.",
+    "badToken": "O link é inválido ou expirou.",
+    "err": "Algo deu errado. Tente novamente.",
+    "back": "Voltar ao login"
   }
 }
