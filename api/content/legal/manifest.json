@@ -1,0 +1,52 @@
+{
+  "_comment": "법무 문서 매니페스트. 문구는 변호사 확정 전 DRAFT placeholder. 확정본으로 파일만 교체하고 version 을 올리면 renderer/consent_ledger 가 자동 반영. 여기에 사업조건(크레딧·환불·SLA)·DPO 실명 하드코딩 금지 — [OPEN] 은 빈 값 유지.",
+  "documents": {
+    "MASTER_TERMS": {
+      "kind": "master",
+      "version": "0.1-draft",
+      "status": "DRAFT_LAWYER_PENDING",
+      "langs": { "en": "master_terms.en.md", "ko": "master_terms.ko.md" }
+    },
+    "GLOBAL_PRIVACY_NOTICE": {
+      "kind": "privacy",
+      "version": "0.1-draft",
+      "status": "DRAFT_LAWYER_PENDING",
+      "langs": { "en": "privacy_notice.en.md", "ko": "privacy_notice.ko.md" }
+    },
+    "ADDENDUM_US": {
+      "kind": "addendum", "group": "US",
+      "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
+      "langs": { "en": "addendum_us.en.md" }
+    },
+    "ADDENDUM_EU_GB": {
+      "kind": "addendum", "group": "EU_GB",
+      "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
+      "langs": { "en": "addendum_eu_gb.en.md" }
+    },
+    "ADDENDUM_BR": {
+      "kind": "addendum", "group": "BR",
+      "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
+      "legal_priority_lang": "pt",
+      "langs": { "en": "addendum_br.en.md" },
+      "pending_langs": ["pt"]
+    },
+    "ADDENDUM_TH": {
+      "kind": "addendum", "group": "TH",
+      "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
+      "legal_priority_lang": "th",
+      "langs": { "en": "addendum_th.en.md" },
+      "pending_langs": ["th"]
+    },
+    "ADDENDUM_VN": {
+      "kind": "addendum", "group": "VN",
+      "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
+      "legal_priority_lang": "vi",
+      "langs": { "en": "addendum_vn.en.md" },
+      "pending_langs": ["vi"]
+    }
+  },
+  "language_priority": {
+    "KR": "ko", "US": "en", "GB": "en", "EU": "en",
+    "BR": "pt", "TH": "th", "VN": "vi", "OTHER": "en"
+  }
+}

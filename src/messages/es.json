@@ -450,7 +450,9 @@
     "legal": "Términos y políticas",
     "logout": "Cerrar sesión",
     "deleteAccount": "Eliminar cuenta",
-    "deleteAccountDesc": "Todos los datos se eliminan permanentemente"
+    "deleteAccountDesc": "Todos los datos se eliminan permanentemente",
+    "dataPrivacy": "Datos y privacidad",
+    "dataPrivacyDesc": "Consentimiento, uso compartido, retirada"
   },
   "reports": {
     "selectFarm": "Seleccione una granja.",
@@ -1889,5 +1891,98 @@
     "shareText": "Mi granja obtuvo {score}/100 en PigOS — mide la tuya gratis",
     "copied": "Enlace copiado",
     "saveImage": "Guardar imagen"
+  },
+  "consent": {
+    "settingsTitle": "Datos y privacidad",
+    "settingsSubtitle": "Gestione cómo se usan y comparten los datos de su granja.",
+    "withdrawEffectNotice": "Retirar el consentimiento detiene el uso futuro para ese fin. Los resultados anonimizados o agregados ya producidos y compartidos pueden seguir existiendo y no se pueden recuperar.",
+    "documentsTitle": "Documentos",
+    "langPending": "traducción pendiente",
+    "blocked": {
+      "title": "Servicio no disponible en su región",
+      "desc": "El servicio se está preparando para su zona."
+    },
+    "banner": {
+      "draft": "Estos documentos son borradores pendientes de revisión legal. No es la versión final vinculante.",
+      "langGate": "La versión en idioma local con valor legal se está preparando; el lanzamiento en este país está restringido.",
+      "releaseHold": "El lanzamiento completo en esta región está pendiente de pasos legales requeridos (p. ej. representante / garantías de transferencia).",
+      "paidGate": "Las funciones de pago y el marketing están en espera en este país hasta la confirmación legal.",
+      "counsel": "El país seleccionado y la ubicación de la granja difieren; se aplica la jurisdicción más estricta y se marca revisión legal."
+    },
+    "ack": {
+      "terms": "Acepto los Términos del servicio.",
+      "privacy": "He leído el Aviso de privacidad."
+    },
+    "doc": {
+      "MASTER_TERMS": "Términos maestros del servicio",
+      "GLOBAL_PRIVACY_NOTICE": "Aviso de privacidad global",
+      "ADDENDUM_US": "Anexo Estados Unidos",
+      "ADDENDUM_EU_GB": "Anexo UE / RU",
+      "ADDENDUM_BR": "Anexo Brasil",
+      "ADDENDUM_TH": "Anexo Tailandia",
+      "ADDENDUM_VN": "Anexo Vietnam"
+    },
+    "kind": {
+      "NOTICE": "Aviso",
+      "NOTICE_EXCLUSION": "Aviso",
+      "LI_OBJECT": "Interés legítimo",
+      "OPT_IN": "Aceptación",
+      "WRITTEN_OPT_IN": "Aceptación escrita",
+      "TRANSFER_CONSENT": "Consentimiento de transferencia",
+      "HIDDEN": "Oculto",
+      "BLOCKED": "Bloqueado"
+    },
+    "action": {
+      "exclusion": "Solicitar exclusión",
+      "object": "Oponerse a este uso",
+      "written": "Se requiere aceptación escrita (electrónica)",
+      "doNotSell": "No vender ni compartir mi información personal",
+      "contractRequired": "Necesario para operar el servicio — no se puede retirar mientras se usa el servicio.",
+      "WITHDRAWN": "Retirar",
+      "OBJECTED": "Oponerse",
+      "EXCLUSION_REQUESTED": "Solicitar exclusión"
+    },
+    "note": {
+      "locationExcluded": "Los campos de ubicación precisa se excluyen de este fin en su estado.",
+      "uoomAutoOff": "Se detectó una señal universal de exclusión; esto se desactiva automáticamente."
+    },
+    "submit": {
+      "signup": "Aceptar y continuar",
+      "settings": "Guardar cambios"
+    },
+    "status": {
+      "GRANTED": "Otorgado",
+      "NOTICE_GIVEN": "Notificado",
+      "WITHDRAWN": "Retirado",
+      "OBJECTED": "Opuesto",
+      "EXCLUSION_REQUESTED": "Exclusión solicitada",
+      "EXPIRED": "Expirado"
+    },
+    "purpose": {
+      "SERVICE_OPERATION": {
+        "label": "Operación del servicio",
+        "desc": "Procesamiento necesario para operar el servicio según el contrato."
+      },
+      "ANON_AGG_STATS": {
+        "label": "Estadísticas anonimizadas y referencias",
+        "desc": "Estadísticas anonimizadas y agregadas y referencias del sector."
+      },
+      "AI_MODEL_TRAINING": {
+        "label": "Entrenamiento de modelos de IA",
+        "desc": "Usar sus datos para entrenar modelos de IA. Opcional."
+      },
+      "NAMED_RESEARCH": {
+        "label": "Colaboración de investigación con nombre",
+        "desc": "Compartir datos identificables con socios de investigación nombrados. Opcional."
+      },
+      "TRANSACTION_MATCHING": {
+        "label": "Emparejamiento de transacciones y leads",
+        "desc": "Usar sus datos para emparejar oportunidades comerciales. Opcional."
+      },
+      "EXTERNAL_AI_PROCESSING": {
+        "label": "Procesamiento de IA externo",
+        "desc": "Procesamiento por proveedores de IA externos, puede implicar transferencia transfronteriza."
+      }
+    }
   }
 }

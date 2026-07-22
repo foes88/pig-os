@@ -450,7 +450,9 @@
     "legal": "条款与政策",
     "logout": "退出登录",
     "deleteAccount": "删除账户",
-    "deleteAccountDesc": "所有数据将被永久删除"
+    "deleteAccountDesc": "所有数据将被永久删除",
+    "dataPrivacy": "数据与隐私",
+    "dataPrivacyDesc": "同意、数据共享、撤回"
   },
   "reports": {
     "selectFarm": "请选择猪场。",
@@ -1889,5 +1891,98 @@
     "shareText": "我的农场 PigOS 评分 {score}/100 — 免费测测你的",
     "copied": "链接已复制",
     "saveImage": "保存图片"
+  },
+  "consent": {
+    "settingsTitle": "数据与隐私",
+    "settingsSubtitle": "管理您的养殖场数据的使用和共享方式。",
+    "withdrawEffectNotice": "撤回同意将停止该目的的后续使用。但已生成并共享的匿名或汇总结果可能继续存在，且无法收回。",
+    "documentsTitle": "文件",
+    "langPending": "翻译准备中",
+    "blocked": {
+      "title": "该地区暂未提供服务",
+      "desc": "正在为您所在地区准备服务。"
+    },
+    "banner": {
+      "draft": "所示文件为法律审核前的草案，非最终有约束力版本。",
+      "langGate": "具法律优先效力的当地语言版本正在准备中，该国上线受限。",
+      "releaseHold": "该地区的正式上线需完成必要的法律步骤（如代表人/传输保障）后进行。",
+      "paidGate": "该国的付费功能与营销在法律确认前暂缓。",
+      "counsel": "所选国家与养殖场所在地不同，将适用更严格的司法管辖并标记法律复核。"
+    },
+    "ack": {
+      "terms": "我同意服务条款。",
+      "privacy": "我已阅读隐私声明。"
+    },
+    "doc": {
+      "MASTER_TERMS": "主服务条款",
+      "GLOBAL_PRIVACY_NOTICE": "全球隐私声明",
+      "ADDENDUM_US": "美国附录",
+      "ADDENDUM_EU_GB": "欧盟/英国附录",
+      "ADDENDUM_BR": "巴西附录",
+      "ADDENDUM_TH": "泰国附录",
+      "ADDENDUM_VN": "越南附录"
+    },
+    "kind": {
+      "NOTICE": "告知",
+      "NOTICE_EXCLUSION": "告知",
+      "LI_OBJECT": "正当利益",
+      "OPT_IN": "选择加入",
+      "WRITTEN_OPT_IN": "书面同意",
+      "TRANSFER_CONSENT": "传输同意",
+      "HIDDEN": "不显示",
+      "BLOCKED": "阻止"
+    },
+    "action": {
+      "exclusion": "请求排除",
+      "object": "反对此使用",
+      "written": "需要书面（电子）同意",
+      "doNotSell": "请勿出售或共享我的个人信息",
+      "contractRequired": "运营服务所必需 — 使用期间无法撤回。",
+      "WITHDRAWN": "撤回",
+      "OBJECTED": "反对",
+      "EXCLUSION_REQUESTED": "请求排除"
+    },
+    "note": {
+      "locationExcluded": "在您所在的州，精确位置字段被排除在此目的之外。",
+      "uoomAutoOff": "检测到通用退出信号，已自动关闭。"
+    },
+    "submit": {
+      "signup": "同意并继续",
+      "settings": "保存更改"
+    },
+    "status": {
+      "GRANTED": "已同意",
+      "NOTICE_GIVEN": "已告知",
+      "WITHDRAWN": "已撤回",
+      "OBJECTED": "已反对",
+      "EXCLUSION_REQUESTED": "已请求排除",
+      "EXPIRED": "已过期"
+    },
+    "purpose": {
+      "SERVICE_OPERATION": {
+        "label": "服务运营",
+        "desc": "根据合同运营服务所需的处理。"
+      },
+      "ANON_AGG_STATS": {
+        "label": "匿名统计与基准",
+        "desc": "匿名、汇总统计及行业基准。"
+      },
+      "AI_MODEL_TRAINING": {
+        "label": "AI 模型训练",
+        "desc": "使用您的数据训练 AI 模型。可选。"
+      },
+      "NAMED_RESEARCH": {
+        "label": "具名研究合作",
+        "desc": "向指定研究伙伴提供可识别数据。可选。"
+      },
+      "TRANSACTION_MATCHING": {
+        "label": "交易与线索匹配",
+        "desc": "使用您的数据匹配贸易或业务线索。可选。"
+      },
+      "EXTERNAL_AI_PROCESSING": {
+        "label": "外部 AI 处理",
+        "desc": "由外部 AI 提供商处理，可能涉及跨境传输。"
+      }
+    }
   }
 }

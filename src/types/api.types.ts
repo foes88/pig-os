@@ -1267,3 +1267,46 @@ export interface AdminOrgRow {
   parent_org_id: string | null; country: string; farm_count: number; user_count: number;
 }
 export interface AdminOrgFarm { id: string; name: string; farm_code: string; country: string; active: boolean; }
+
+// --- 동의 인프라 (CONSENT_SPEC / TERMS_DISPLAY §4·§7) ---
+export interface ConsentDocMeta {
+  doc_id: string; kind: string; version: string; status: string;
+  lang: string; is_legal_priority: boolean; lang_pending: boolean; body?: string | null;
+}
+export type ConsentUiKind =
+  | "NOTICE" | "NOTICE_EXCLUSION" | "LI_OBJECT" | "OPT_IN"
+  | "WRITTEN_OPT_IN" | "HIDDEN" | "TRANSFER_CONSENT" | "BLOCKED";
+export interface ConsentPurposePlan {
+  purpose_code: string; order: number; ui_kind: ConsentUiKind; lawful_basis: string;
+  visible: boolean; is_toggle: boolean; default_on: boolean;
+  requires_evidence: boolean; status_tag: string; auto_off_if_uoom: boolean;
+}
+export interface ConsentGate {
+  signup_blocked: boolean; paid_blocked: boolean; release_hold: boolean; reason_code: string | null;
+}
+export interface ConsentStateFlags {
+  state: string | null; written_opt_in_required: boolean; do_not_sell_link: boolean;
+  honor_uoom: boolean; exclude_location_from_sale: boolean;
+}
+export interface ConsentJurisdiction {
+  code: string; country: string; group: string; counsel_review: boolean; notes: string[];
+}
+export interface SignupPlan {
+  jurisdiction: ConsentJurisdiction; gate: ConsentGate; state_flags: ConsentStateFlags;
+  documents: ConsentDocMeta[]; notice_version: string; any_draft: boolean; lang_gate: boolean;
+  required_acks: string[]; purposes: ConsentPurposePlan[]; lang: string;
+}
+export interface ConsentChoice { purpose_code: string; granted: boolean; evidence_ref?: string | null; }
+export interface RecordConsentRequest {
+  farm_id?: string | null; selected_country: string; farm_country?: string | null;
+  farm_state?: string | null; lang?: string | null; terms_ack: boolean; privacy_ack: boolean;
+  choices: ConsentChoice[]; collection_context?: string;
+}
+export interface ConsentStatus {
+  purpose_code: string; jurisdiction: string; lawful_basis: string; consent_status: string;
+  notice_version: string; accepted_at: string | null; withdrawn_at: string | null;
+  effective_from: string | null; collection_context: string;
+}
+export interface WithdrawRequest {
+  purpose_code: string; farm_id?: string | null; action: string; reason?: string | null;
+}

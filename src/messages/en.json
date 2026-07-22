@@ -450,7 +450,9 @@
     "legal": "Terms & policy",
     "logout": "Log out",
     "deleteAccount": "Delete account",
-    "deleteAccountDesc": "All data is permanently deleted"
+    "deleteAccountDesc": "All data is permanently deleted",
+    "dataPrivacy": "Data & Privacy",
+    "dataPrivacyDesc": "Consent, data sharing, withdrawal"
   },
   "reports": {
     "selectFarm": "Please select a farm.",
@@ -1889,5 +1891,98 @@
     "shareText": "My farm scored {score}/100 on PigOS — check yours free",
     "copied": "Link copied",
     "saveImage": "Save image"
+  },
+  "consent": {
+    "settingsTitle": "Data & Privacy",
+    "settingsSubtitle": "Manage how your farm data is used and shared.",
+    "withdrawEffectNotice": "Withdrawing consent stops future use for that purpose. Anonymized or aggregated outputs already produced and shared may continue to exist and cannot be recalled.",
+    "documentsTitle": "Documents",
+    "langPending": "translation pending",
+    "blocked": {
+      "title": "Service not available in your region",
+      "desc": "Service is being prepared for your area."
+    },
+    "banner": {
+      "draft": "These documents are drafts pending legal review. Not the final binding version.",
+      "langGate": "The legally-authoritative local-language version is being prepared; launch in this country is gated.",
+      "releaseHold": "Full launch in this region is pending required legal steps (e.g. representative / transfer safeguards).",
+      "paidGate": "Paid features and marketing are on hold in this country pending legal confirmation.",
+      "counsel": "Selected country and farm location differ; the stricter jurisdiction is applied and counsel review is flagged."
+    },
+    "ack": {
+      "terms": "I agree to the Terms of Service.",
+      "privacy": "I have read the Privacy Notice."
+    },
+    "doc": {
+      "MASTER_TERMS": "Master Terms of Service",
+      "GLOBAL_PRIVACY_NOTICE": "Global Privacy Notice",
+      "ADDENDUM_US": "United States Addendum",
+      "ADDENDUM_EU_GB": "EU / UK Addendum",
+      "ADDENDUM_BR": "Brazil Addendum",
+      "ADDENDUM_TH": "Thailand Addendum",
+      "ADDENDUM_VN": "Vietnam Addendum"
+    },
+    "kind": {
+      "NOTICE": "Notice",
+      "NOTICE_EXCLUSION": "Notice",
+      "LI_OBJECT": "Legitimate interest",
+      "OPT_IN": "Opt-in",
+      "WRITTEN_OPT_IN": "Written opt-in",
+      "TRANSFER_CONSENT": "Transfer consent",
+      "HIDDEN": "Hidden",
+      "BLOCKED": "Blocked"
+    },
+    "action": {
+      "exclusion": "Request exclusion",
+      "object": "Object to this use",
+      "written": "Written (electronic) opt-in required",
+      "doNotSell": "Do Not Sell or Share My Personal Information",
+      "contractRequired": "Required to operate the service — cannot be withdrawn while using the service.",
+      "WITHDRAWN": "Withdraw",
+      "OBJECTED": "Object",
+      "EXCLUSION_REQUESTED": "Request exclusion"
+    },
+    "note": {
+      "locationExcluded": "Precise location fields are excluded from this purpose in your state.",
+      "uoomAutoOff": "A universal opt-out signal was detected; this is turned off automatically."
+    },
+    "submit": {
+      "signup": "Agree and continue",
+      "settings": "Save changes"
+    },
+    "status": {
+      "GRANTED": "Granted",
+      "NOTICE_GIVEN": "Noticed",
+      "WITHDRAWN": "Withdrawn",
+      "OBJECTED": "Objected",
+      "EXCLUSION_REQUESTED": "Exclusion requested",
+      "EXPIRED": "Expired"
+    },
+    "purpose": {
+      "SERVICE_OPERATION": {
+        "label": "Service operation",
+        "desc": "Processing needed to run the service under our contract."
+      },
+      "ANON_AGG_STATS": {
+        "label": "Anonymized statistics & benchmarks",
+        "desc": "Anonymized, aggregated stats and industry benchmarks."
+      },
+      "AI_MODEL_TRAINING": {
+        "label": "AI model training",
+        "desc": "Use your data to train AI models. Optional."
+      },
+      "NAMED_RESEARCH": {
+        "label": "Named research collaboration",
+        "desc": "Share identifiable data with named research partners. Optional."
+      },
+      "TRANSACTION_MATCHING": {
+        "label": "Transaction & lead matching",
+        "desc": "Use your data to match trade or business leads. Optional."
+      },
+      "EXTERNAL_AI_PROCESSING": {
+        "label": "External AI processing",
+        "desc": "Processing by external AI providers, may involve cross-border transfer."
+      }
+    }
   }
 }

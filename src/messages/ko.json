@@ -450,7 +450,9 @@
     "legal": "약관 및 정책",
     "logout": "로그아웃",
     "deleteAccount": "계정 삭제",
-    "deleteAccountDesc": "모든 데이터가 영구 삭제됩니다"
+    "deleteAccountDesc": "모든 데이터가 영구 삭제됩니다",
+    "dataPrivacy": "데이터·프라이버시",
+    "dataPrivacyDesc": "동의·데이터 공유·철회"
   },
   "reports": {
     "selectFarm": "농장을 선택해주세요.",
@@ -1889,5 +1891,98 @@
     "shareText": "우리 농장 PigOS 점수 {score}/100 — 너도 무료로 확인해봐",
     "copied": "링크 복사됨",
     "saveImage": "이미지 저장"
+  },
+  "consent": {
+    "settingsTitle": "데이터·프라이버시",
+    "settingsSubtitle": "내 농장 데이터의 이용·공유 방식을 관리합니다.",
+    "withdrawEffectNotice": "동의를 철회하면 해당 목적의 향후 이용이 중단됩니다. 다만 이미 생성·제공된 익명·집계 산출물은 존속할 수 있으며 회수되지 않습니다.",
+    "documentsTitle": "문서",
+    "langPending": "번역 준비 중",
+    "blocked": {
+      "title": "해당 지역은 서비스 준비 중입니다",
+      "desc": "이 지역 서비스를 준비하고 있습니다."
+    },
+    "banner": {
+      "draft": "표시된 문서는 변호사 검토 전 초안입니다. 최종 확정본이 아닙니다.",
+      "langGate": "법적 우선본(현지어)이 준비 중이라 해당 국가 출시가 보류됩니다.",
+      "releaseHold": "이 지역 본격 출시는 필요한 법적 절차(대리인·이전 보호조치 등) 완료 전 보류됩니다.",
+      "paidGate": "이 국가의 유료 기능·마케팅은 법무 확인 전까지 보류됩니다.",
+      "counsel": "선택 국가와 농장 소재지가 달라 더 엄격한 법역을 적용하고 법무 확인이 필요합니다."
+    },
+    "ack": {
+      "terms": "이용약관에 동의합니다.",
+      "privacy": "개인정보 처리방침을 확인했습니다."
+    },
+    "doc": {
+      "MASTER_TERMS": "마스터 이용약관",
+      "GLOBAL_PRIVACY_NOTICE": "글로벌 개인정보 처리방침",
+      "ADDENDUM_US": "미국 부속조항",
+      "ADDENDUM_EU_GB": "EU / 영국 부속조항",
+      "ADDENDUM_BR": "브라질 부속조항",
+      "ADDENDUM_TH": "태국 부속조항",
+      "ADDENDUM_VN": "베트남 부속조항"
+    },
+    "kind": {
+      "NOTICE": "고지",
+      "NOTICE_EXCLUSION": "고지",
+      "LI_OBJECT": "정당한 이익",
+      "OPT_IN": "선택 동의",
+      "WRITTEN_OPT_IN": "서면 동의",
+      "TRANSFER_CONSENT": "이전 동의",
+      "HIDDEN": "미노출",
+      "BLOCKED": "차단"
+    },
+    "action": {
+      "exclusion": "제외 요청",
+      "object": "이용 거부(이의)",
+      "written": "서면(전자) 동의 필요",
+      "doNotSell": "내 개인정보 판매·공유 거부",
+      "contractRequired": "서비스 운영에 필요 — 이용 중에는 철회할 수 없습니다.",
+      "WITHDRAWN": "철회",
+      "OBJECTED": "이의 제기",
+      "EXCLUSION_REQUESTED": "제외 요청"
+    },
+    "note": {
+      "locationExcluded": "해당 주에서는 정밀 위치 정보가 이 목적에서 제외됩니다.",
+      "uoomAutoOff": "보편적 옵트아웃 신호가 감지되어 자동으로 꺼졌습니다."
+    },
+    "submit": {
+      "signup": "동의하고 계속",
+      "settings": "변경 저장"
+    },
+    "status": {
+      "GRANTED": "동의함",
+      "NOTICE_GIVEN": "고지됨",
+      "WITHDRAWN": "철회됨",
+      "OBJECTED": "이의함",
+      "EXCLUSION_REQUESTED": "제외 요청됨",
+      "EXPIRED": "만료됨"
+    },
+    "purpose": {
+      "SERVICE_OPERATION": {
+        "label": "서비스 운영",
+        "desc": "계약에 따라 서비스를 운영하는 데 필요한 처리입니다."
+      },
+      "ANON_AGG_STATS": {
+        "label": "익명 통계·벤치마크",
+        "desc": "익명·집계 통계 및 업계 벤치마크."
+      },
+      "AI_MODEL_TRAINING": {
+        "label": "AI 모델 학습",
+        "desc": "데이터를 AI 모델 학습에 이용합니다. 선택."
+      },
+      "NAMED_RESEARCH": {
+        "label": "기명 연구 협력",
+        "desc": "지정된 연구 파트너에 식별 데이터를 제공합니다. 선택."
+      },
+      "TRANSACTION_MATCHING": {
+        "label": "거래·리드 매칭",
+        "desc": "데이터를 거래·비즈니스 리드 매칭에 이용합니다. 선택."
+      },
+      "EXTERNAL_AI_PROCESSING": {
+        "label": "외부 AI 처리",
+        "desc": "외부 AI 제공자의 처리, 국외 이전 포함 가능."
+      }
+    }
   }
 }

@@ -16,6 +16,7 @@ import {
   FileText,
   LifeBuoy,
   Megaphone,
+  ShieldCheck,
   LogOut,
   Trash2,
   ChevronRight,
@@ -71,6 +72,7 @@ export default function SettingsPage() {
       items: [
         { icon: Megaphone,  label: t("announcements"), href: "/announcements" },
         { icon: LifeBuoy,   label: t("support"),       href: "/support" },
+        { icon: ShieldCheck, label: t("dataPrivacy"),  desc: t("dataPrivacyDesc"), href: "/settings/data" },
         { icon: FileText,   label: t("legal"),         href: "/legal" },
       ],
     },

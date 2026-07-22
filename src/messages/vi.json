@@ -450,7 +450,9 @@
     "legal": "Điều khoản & chính sách",
     "logout": "Đăng xuất",
     "deleteAccount": "Xóa tài khoản",
-    "deleteAccountDesc": "Toàn bộ dữ liệu sẽ bị xóa vĩnh viễn"
+    "deleteAccountDesc": "Toàn bộ dữ liệu sẽ bị xóa vĩnh viễn",
+    "dataPrivacy": "Dữ liệu & Quyền riêng tư",
+    "dataPrivacyDesc": "Đồng ý, chia sẻ dữ liệu, rút lại"
   },
   "reports": {
     "selectFarm": "Vui lòng chọn trại.",
@@ -1889,5 +1891,98 @@
     "shareText": "Trại tôi đạt {score}/100 trên PigOS — đo trại bạn miễn phí",
     "copied": "Đã sao chép liên kết",
     "saveImage": "Lưu ảnh"
+  },
+  "consent": {
+    "settingsTitle": "Dữ liệu & Quyền riêng tư",
+    "settingsSubtitle": "Quản lý cách dữ liệu trang trại của bạn được sử dụng và chia sẻ.",
+    "withdrawEffectNotice": "Rút lại sự đồng ý sẽ dừng việc sử dụng cho mục đích đó trong tương lai. Tuy nhiên, các kết quả ẩn danh hoặc tổng hợp đã tạo và chia sẻ có thể vẫn tồn tại và không thể thu hồi.",
+    "documentsTitle": "Tài liệu",
+    "langPending": "đang chờ dịch",
+    "blocked": {
+      "title": "Dịch vụ chưa có ở khu vực của bạn",
+      "desc": "Dịch vụ đang được chuẩn bị cho khu vực của bạn."
+    },
+    "banner": {
+      "draft": "Các tài liệu này là bản nháp đang chờ rà soát pháp lý. Không phải bản cuối cùng có hiệu lực.",
+      "langGate": "Bản ngôn ngữ địa phương có giá trị pháp lý đang được chuẩn bị; việc ra mắt ở quốc gia này bị hạn chế.",
+      "releaseHold": "Việc ra mắt đầy đủ ở khu vực này đang chờ các bước pháp lý bắt buộc (ví dụ: đại diện / biện pháp bảo vệ chuyển giao).",
+      "paidGate": "Các tính năng trả phí và tiếp thị tạm hoãn ở quốc gia này cho đến khi có xác nhận pháp lý.",
+      "counsel": "Quốc gia đã chọn và vị trí trang trại khác nhau; áp dụng thẩm quyền nghiêm ngặt hơn và gắn cờ rà soát pháp lý."
+    },
+    "ack": {
+      "terms": "Tôi đồng ý với Điều khoản dịch vụ.",
+      "privacy": "Tôi đã đọc Thông báo quyền riêng tư."
+    },
+    "doc": {
+      "MASTER_TERMS": "Điều khoản dịch vụ chính",
+      "GLOBAL_PRIVACY_NOTICE": "Thông báo quyền riêng tư toàn cầu",
+      "ADDENDUM_US": "Phụ lục Hoa Kỳ",
+      "ADDENDUM_EU_GB": "Phụ lục EU / Anh",
+      "ADDENDUM_BR": "Phụ lục Brazil",
+      "ADDENDUM_TH": "Phụ lục Thái Lan",
+      "ADDENDUM_VN": "Phụ lục Việt Nam"
+    },
+    "kind": {
+      "NOTICE": "Thông báo",
+      "NOTICE_EXCLUSION": "Thông báo",
+      "LI_OBJECT": "Lợi ích chính đáng",
+      "OPT_IN": "Chọn tham gia",
+      "WRITTEN_OPT_IN": "Đồng ý bằng văn bản",
+      "TRANSFER_CONSENT": "Đồng ý chuyển giao",
+      "HIDDEN": "Ẩn",
+      "BLOCKED": "Chặn"
+    },
+    "action": {
+      "exclusion": "Yêu cầu loại trừ",
+      "object": "Phản đối việc sử dụng này",
+      "written": "Cần đồng ý bằng văn bản (điện tử)",
+      "doNotSell": "Không bán hoặc chia sẻ thông tin cá nhân của tôi",
+      "contractRequired": "Cần thiết để vận hành dịch vụ — không thể rút lại khi đang sử dụng dịch vụ.",
+      "WITHDRAWN": "Rút lại",
+      "OBJECTED": "Phản đối",
+      "EXCLUSION_REQUESTED": "Yêu cầu loại trừ"
+    },
+    "note": {
+      "locationExcluded": "Các trường vị trí chính xác bị loại khỏi mục đích này tại bang của bạn.",
+      "uoomAutoOff": "Đã phát hiện tín hiệu từ chối phổ quát; mục này tự động tắt."
+    },
+    "submit": {
+      "signup": "Đồng ý và tiếp tục",
+      "settings": "Lưu thay đổi"
+    },
+    "status": {
+      "GRANTED": "Đã đồng ý",
+      "NOTICE_GIVEN": "Đã thông báo",
+      "WITHDRAWN": "Đã rút lại",
+      "OBJECTED": "Đã phản đối",
+      "EXCLUSION_REQUESTED": "Đã yêu cầu loại trừ",
+      "EXPIRED": "Đã hết hạn"
+    },
+    "purpose": {
+      "SERVICE_OPERATION": {
+        "label": "Vận hành dịch vụ",
+        "desc": "Xử lý cần thiết để vận hành dịch vụ theo hợp đồng."
+      },
+      "ANON_AGG_STATS": {
+        "label": "Thống kê ẩn danh & chuẩn đối sánh",
+        "desc": "Thống kê ẩn danh, tổng hợp và chuẩn đối sánh ngành."
+      },
+      "AI_MODEL_TRAINING": {
+        "label": "Huấn luyện mô hình AI",
+        "desc": "Dùng dữ liệu của bạn để huấn luyện mô hình AI. Tùy chọn."
+      },
+      "NAMED_RESEARCH": {
+        "label": "Hợp tác nghiên cứu có tên",
+        "desc": "Chia sẻ dữ liệu định danh với đối tác nghiên cứu được nêu tên. Tùy chọn."
+      },
+      "TRANSACTION_MATCHING": {
+        "label": "Khớp giao dịch & khách hàng tiềm năng",
+        "desc": "Dùng dữ liệu của bạn để khớp cơ hội giao dịch. Tùy chọn."
+      },
+      "EXTERNAL_AI_PROCESSING": {
+        "label": "Xử lý AI bên ngoài",
+        "desc": "Xử lý bởi nhà cung cấp AI bên ngoài, có thể liên quan chuyển giao xuyên biên giới."
+      }
+    }
   }
 }
