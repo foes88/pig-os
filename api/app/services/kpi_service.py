@@ -118,38 +118,139 @@ async def calculate_psy(db: AsyncSession, farm_id: UUID, ref_date: date) -> PsyD
     )
 
 
-async def calculate_npd_breakdown(
-    db: AsyncSession,
-    farm_id: UUID,
-    period_start: date,
-    period_end: date,
-) -> NpdBreakdown:
-    """Average NPD (weaning→mating) from v_sow_npd view."""
-    row = await db.execute(
-        text(
-            """
-            SELECT AVG(wei_days) AS avg_wei_days
-            FROM v_sow_npd
-            WHERE farm_id = :farm_id
-              AND weaning_date BETWEEN :start AND :end
-              AND wei_days IS NOT NULL
-            """
-        ),
-        {"farm_id": str(farm_id), "start": period_start, "end": period_end},
+# 여집합 NPD SQL. 창=[ref-365, ref]. 사육일/임신일/포유일을 창에 클립해 합산 →
+# NPD/모돈-년 = 365 × (사육일 − 임신일 − 포유일)/사육일. 회전율 = 분만복수/평균 상시모돈(경산).
+# 임신·포유는 완결 이벤트(farrowing/weaning) 기준 + 진행중 꼬리(현재 PREGNANT/LACTATING) 포함.
+_NPD_SQL = text(
+    """
+    WITH win AS (SELECT CAST(:ref AS date) AS ref, CAST(:ref AS date) - 365 AS w0),
+    months AS (
+        SELECT generate_series(date_trunc('month', CAST(:ref AS date)) - interval '11 months',
+                               date_trunc('month', CAST(:ref AS date)), interval '1 month')::date AS m
+    ),
+    -- 재고(경산 parity>=1)는 deleted_at 무관·exit기반 — PSY 분모와 완전 동일(캐스트 없이, 스펙 '폐사 전까지만')
+    inv AS (
+        SELECT mo.m, COUNT(s.id) AS cnt FROM months mo
+        LEFT JOIN sows s ON s.farm_id = :fid AND s.parity >= 1
+            AND s.entry_date <= mo.m AND (s.exit_date IS NULL OR s.exit_date >= mo.m)
+        GROUP BY mo.m
+    ),
+    sow_days AS (
+        SELECT COALESCE(SUM(GREATEST(0,
+            LEAST(COALESCE(s.exit_date::date, w.ref), w.ref) - GREATEST(s.entry_date::date, w.w0))), 0) AS d
+        FROM sows s CROSS JOIN win w
+        WHERE s.farm_id = :fid AND s.parity >= 1
+          AND s.entry_date::date <= w.ref AND (s.exit_date IS NULL OR s.exit_date::date >= w.w0)
+    ),
+    -- 임신/포유는 전부 parity>=1 모돈(sow_days 모집단과 일치)만. 시작은 창·entry로 클립(구매 임신돈
+    -- 도입 전 임신일 제외), 완결분은 sanity 상한(임신 130 / 포유 70)으로 '클립'(행 drop 아님 — 유모돈 보존).
+    preg AS (
+        SELECT COALESCE(SUM(GREATEST(0,
+                   LEAST(f.farrowing_date, w.ref, m.mating_date + 130)
+                   - GREATEST(m.mating_date, w.w0, s.entry_date::date))), 0) AS d,
+               AVG(CASE WHEN (f.farrowing_date - m.mating_date) BETWEEN 100 AND 130
+                        THEN f.farrowing_date - m.mating_date END)::float AS g
+        FROM farrowings f
+        JOIN matings m ON m.id = f.mating_id
+        JOIN sows s ON s.id = f.sow_id
+        CROSS JOIN win w
+        WHERE f.farm_id = :fid AND f.deleted_at IS NULL AND m.deleted_at IS NULL AND s.parity >= 1
+          AND f.farrowing_date >= w.w0 AND m.mating_date <= w.ref AND f.farrowing_date > m.mating_date
+    ),
+    preg_open AS (  -- 진행중 임신: 최근 교배(ref-130 이내) 후속 분만 없음 + ref시점 재고. status 비의존(event 기반).
+        SELECT COALESCE(SUM(GREATEST(0, w.ref - GREATEST(lm.md, w.w0, s.entry_date::date))), 0) AS d
+        FROM sows s CROSS JOIN win w
+        JOIN LATERAL (
+            SELECT MAX(m.mating_date) AS md FROM matings m
+            WHERE m.sow_id = s.id AND m.deleted_at IS NULL AND m.mating_date <= w.ref
+        ) lm ON TRUE
+        WHERE s.farm_id = :fid AND s.parity >= 1
+          AND lm.md IS NOT NULL AND (w.ref - lm.md) <= 130
+          AND (s.exit_date IS NULL OR s.exit_date::date >= w.ref)
+          AND NOT EXISTS (SELECT 1 FROM farrowings f2 WHERE f2.sow_id = s.id
+                          AND f2.deleted_at IS NULL AND f2.farrowing_date >= lm.md)
+    ),
+    lact AS (
+        SELECT COALESCE(SUM(GREATEST(0,
+                   LEAST(wn.weaning_date, w.ref, f.farrowing_date + 70)
+                   - GREATEST(f.farrowing_date, w.w0, s.entry_date::date))), 0) AS d,
+               AVG(CASE WHEN (wn.weaning_date - f.farrowing_date) BETWEEN 1 AND 70
+                        THEN wn.weaning_date - f.farrowing_date END)::float AS l
+        FROM weanings wn
+        JOIN farrowings f ON f.id = wn.farrowing_id
+        JOIN sows s ON s.id = wn.sow_id
+        CROSS JOIN win w
+        WHERE wn.farm_id = :fid AND wn.deleted_at IS NULL AND f.deleted_at IS NULL AND s.parity >= 1
+          AND wn.weaning_date >= w.w0 AND f.farrowing_date <= w.ref AND wn.weaning_date > f.farrowing_date
+    ),
+    lact_open AS (  -- 진행중 포유: 최근 분만(ref-70 이내) 후속 이유 없음 + ref시점 재고. status 비의존.
+        SELECT COALESCE(SUM(GREATEST(0, w.ref - GREATEST(lf.fd, w.w0, s.entry_date::date))), 0) AS d
+        FROM sows s CROSS JOIN win w
+        JOIN LATERAL (
+            SELECT MAX(f.farrowing_date) AS fd FROM farrowings f
+            WHERE f.sow_id = s.id AND f.deleted_at IS NULL AND f.farrowing_date <= w.ref
+        ) lf ON TRUE
+        WHERE s.farm_id = :fid AND s.parity >= 1
+          AND lf.fd IS NOT NULL AND (w.ref - lf.fd) <= 70
+          AND (s.exit_date IS NULL OR s.exit_date::date >= w.ref)
+          AND NOT EXISTS (SELECT 1 FROM weanings w2 WHERE w2.sow_id = s.id
+                          AND w2.deleted_at IS NULL AND w2.weaning_date >= lf.fd)
+    ),
+    fc AS (  -- 분만복수(회전율 분자): parity>=1 모돈의 창내 분만
+        SELECT COUNT(*) AS n FROM farrowings f JOIN sows s ON s.id = f.sow_id CROSS JOIN win w
+        WHERE f.farm_id = :fid AND f.deleted_at IS NULL AND s.parity >= 1
+          AND f.farrowing_date BETWEEN w.w0 AND w.ref
     )
-    result = row.fetchone()
-    avg_npd = float(result.avg_wei_days) if result and result.avg_wei_days else None
+    SELECT sow_days.d AS sow_days,
+           preg.d + preg_open.d AS preg_days, lact.d + lact_open.d AS lact_days,
+           preg.g AS avg_gest, lact.l AS avg_lact, fc.n AS farrow_cnt,
+           (SELECT AVG(cnt) FROM inv) AS avg_inv
+    FROM sow_days, preg, preg_open, lact, lact_open, fc
+    """
+)
+
+
+async def calculate_npd(
+    db: AsyncSession, farm_id: UUID, ref_date: date,
+) -> NpdBreakdown | None:
+    """비생산일수(여집합, 모돈-년) + 모돈회전율 — rolling 12개월, PigPlan 정합.
+
+    스펙 §3 재정의: NPD = 365 × (사육일 − 임신일 − 포유일) / 사육일. WEI(이유→교배)는
+    참고값으로 weaning_to_mating_days 에 별도 보존. 재고(경산 parity>=1, exit기반)는 PSY 분모와 동일.
+    """
+    row = (await db.execute(_NPD_SQL, {"fid": str(farm_id), "ref": ref_date})).fetchone()
+    if not row or not row.sow_days or float(row.sow_days) <= 0:
+        return None
+
+    sow_days = float(row.sow_days)
+    productive = float(row.preg_days or 0) + float(row.lact_days or 0)
+    npd_days = max(0.0, sow_days - productive)
+    npd_per_year = round(365.0 * npd_days / sow_days, 1)
+
+    avg_inv = float(row.avg_inv) if row.avg_inv else 0.0
+    turnover = round(float(row.farrow_cnt) / avg_inv, 2) if avg_inv > 0 else None
+
+    # WEI(참고) — 기존 v_sow_npd
+    wei_row = (await db.execute(
+        text("SELECT AVG(wei_days) AS w FROM v_sow_npd WHERE farm_id = :fid "
+             "AND wei_days IS NOT NULL AND weaning_date BETWEEN :s AND :e"),
+        {"fid": str(farm_id), "s": ref_date - timedelta(days=365), "e": ref_date},
+    )).fetchone()
+    wei = round(float(wei_row.w), 1) if wei_row and wei_row.w is not None else None
 
     return NpdBreakdown(
         farm_id=farm_id,
-        period_start=period_start,
-        period_end=period_end,
-        avg_npd=avg_npd,
-        weaning_to_mating_days=avg_npd,
+        period_start=ref_date - timedelta(days=365),
+        period_end=ref_date,
+        avg_npd=npd_per_year,
+        weaning_to_mating_days=wei,
         return_to_estrus_days=None,
-        empty_days=None,
+        empty_days=round(npd_days, 1),
         npd_target=None,
         benchmark_avg=None,
+        sow_turnover=turnover,
+        avg_gestation_days=round(float(row.avg_gest), 1) if row.avg_gest else None,
+        avg_lactation_days=round(float(row.avg_lact), 1) if row.avg_lact else None,
     )
 
 
@@ -548,13 +649,11 @@ async def build_rule_context(
         kpi = {**herd, **kpi_overrides}
     else:
         psy_detail = await calculate_psy(db, farm.id, min(date(year, 12, 31), date.today()))
-        npd_detail = await calculate_npd_breakdown(
-            db, farm.id, date(today.year, 1, 1), today
-        )
+        npd_detail = await calculate_npd(db, farm.id, today)
         kpi = {
             **herd,
             "PSY": psy_detail.psy if psy_detail else None,
-            "NPD": npd_detail.avg_npd,
+            "NPD": npd_detail.avg_npd if npd_detail else None,
         }
 
     # Disease prevalence extra context
@@ -691,10 +790,8 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     psy_bench  = await _get_benchmark(db, "PSY", farm)
     psy_value  = psy_detail.psy if psy_detail else None
 
-    # NPD (year-to-date)
-    npd_detail = await calculate_npd_breakdown(  # noqa: E501
-        db, farm.id, date(today.year, 1, 1), today
-    )
+    # NPD — 비생산일수(여집합, rolling 12개월, PigPlan 정합). + 모돈회전율.
+    npd_detail = await calculate_npd(db, farm.id, today)
     npd_bench  = await _get_benchmark(db, "NPD", farm)
 
     # Sow counts
@@ -745,7 +842,7 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
     ctx = RuleContext(
         farm_id=farm.id,
         country=farm.country or "default",
-        kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd, "FARROWING_RATE": farrowing_rate},  # noqa: E501
+        kpi={**herd, "PSY": psy_value, "NPD": npd_detail.avg_npd if npd_detail else None, "FARROWING_RATE": farrowing_rate},  # noqa: E501
         benchmarks=benchmarks,
         sow_counts=counts,
         extra=dash_extra,
@@ -797,7 +894,8 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         farm_id=farm.id,
         as_of=today,
         psy=psy_value,
-        npd=npd_detail.avg_npd,
+        npd=npd_detail.avg_npd if npd_detail else None,
+        sow_turnover=npd_detail.sow_turnover if npd_detail else None,
         # 스케일 SSOT: percent(0~100) 단일 통일(2026-06-25). 시드 benchmarks(f3a7c2e9b5d1)가 percent
         # (KR target 85.0, unit "%")이고 RuleEngine 입력(L654)·trend 모두 percent → 출력도 percent로 통일해
         # 이중표현(ratio↔percent) 제거. ÷100 금지(과거 ratio 반환이 클라 스케일 꼬임의 근인이었음).

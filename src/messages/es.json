@@ -108,7 +108,9 @@
     "lostPigs": "{n} cerdos",
     "demoBadge": "ref",
     "benchAvg": "Prom.",
-    "benchTop25": "Top 25%"
+    "benchTop25": "Top 25%",
+    "statTurnover": "Rotación de cerdas",
+    "unitLitters": "partos/año"
   },
   "sows": {
     "title": "Gestión de cerdas",

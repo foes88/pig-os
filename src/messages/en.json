@@ -108,7 +108,9 @@
     "lostPigs": "{n} pigs",
     "demoBadge": "ref",
     "benchAvg": "Avg",
-    "benchTop25": "Top 25%"
+    "benchTop25": "Top 25%",
+    "statTurnover": "Sow turnover",
+    "unitLitters": "litters/yr"
   },
   "sows": {
     "title": "Sow management",

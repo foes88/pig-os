@@ -26,7 +26,8 @@ class DashboardKpi(BaseModel):
     as_of: date
 
     psy: float | None
-    npd: float | None
+    npd: float | None            # 비생산일수(여집합, 모돈-년) — PigPlan 정합
+    sow_turnover: float | None = None  # 모돈회전율 = 분만복수 / 평균 상시모돈(경산)
     farrowing_rate: float | None  # percent(0~100) 단일 SSOT — 시드 benchmarks와 동일 스케일. ratio 변환 금지.
 
     active_sows: int
@@ -73,12 +74,16 @@ class NpdBreakdown(BaseModel):
     farm_id: UUID
     period_start: date
     period_end: date
-    avg_npd: float | None
+    avg_npd: float | None            # 비생산일수(여집합, 모돈-년 기준) — PigPlan 정합 headline
     return_to_estrus_days: float | None
-    weaning_to_mating_days: float | None
+    weaning_to_mating_days: float | None  # WEI(이유→교배) 참고값
     empty_days: float | None
     npd_target: float | None
     benchmark_avg: float | None
+    # rolling 12개월 파생(PigPlan 대조용) — 없으면 None
+    sow_turnover: float | None = None       # 모돈회전율 = 분만복수 / 평균 상시모돈(경산)
+    avg_gestation_days: float | None = None
+    avg_lactation_days: float | None = None
 
 
 class KpiTrend(BaseModel):

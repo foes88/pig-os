@@ -108,7 +108,9 @@
     "lostPigs": "{n} свиней",
     "demoBadge": "справ.",
     "benchAvg": "Средн.",
-    "benchTop25": "Топ 25%"
+    "benchTop25": "Топ 25%",
+    "statTurnover": "Оборот свиноматок",
+    "unitLitters": "опор./год"
   },
   "sows": {
     "title": "Управление свиноматками",

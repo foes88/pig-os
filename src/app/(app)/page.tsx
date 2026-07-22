@@ -241,6 +241,9 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
               <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} benchmark={data.benchmarks?.PSY} trend={psySeries} />
               <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} benchmark={data.benchmarks?.NPD} trend={npdSeries} />
+              {data.sow_turnover != null && (
+                <KpiCard t={t} label={t("statTurnover")} tier="normal" value={`${data.sow_turnover.toFixed(2)} ${t("unitLitters")}`} />
+              )}
               <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} benchmark={data.benchmarks?.FARROWING_RATE} trend={frSeries} />
               <KpiCard
                 t={t}

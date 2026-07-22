@@ -108,7 +108,9 @@
     "lostPigs": "{n} suínos",
     "demoBadge": "ref",
     "benchAvg": "Méd.",
-    "benchTop25": "Top 25%"
+    "benchTop25": "Top 25%",
+    "statTurnover": "Rotatividade de matrizes",
+    "unitLitters": "partos/ano"
   },
   "sows": {
     "title": "Gestão de matrizes",

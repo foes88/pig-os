@@ -108,7 +108,9 @@
     "lostPigs": "{n}두",
     "demoBadge": "참고",
     "benchAvg": "평균",
-    "benchTop25": "상위25%"
+    "benchTop25": "상위25%",
+    "statTurnover": "모돈회전율",
+    "unitLitters": "회/년"
   },
   "sows": {
     "title": "모돈 관리",

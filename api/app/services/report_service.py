@@ -319,8 +319,8 @@ async def get_annual_kpi_trend(db: AsyncSession, farm, years: int, end_year: int
     rows: list[dict] = []
     for y in range(start_year, end_year + 1):
         psy = await kpi_service.calculate_psy(db, farm.id, min(date(y, 12, 31), date.today()))
-        npd = await kpi_service.calculate_npd_breakdown(
-            db, farm.id, date(y, 1, 1), date(y, 12, 31)
+        npd = await kpi_service.calculate_npd(
+            db, farm.id, min(date(y, 12, 31), date.today())
         )
         rr = repro_by_year.get(str(y), {})
         rows.append({

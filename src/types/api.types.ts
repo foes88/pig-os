@@ -545,7 +545,8 @@ export interface KpiDashboard {
   farm_id: string;
   as_of: string;
   psy: number | null;
-  npd: number | null;
+  npd: number | null;                 // 비생산일수(여집합, 모돈-년) — PigPlan 정합
+  sow_turnover?: number | null;       // 모돈회전율 = 분만복수 / 평균 상시모돈(경산)
   farrowing_rate: number | null;  // percent(0~100) 단일 SSOT — 시드 benchmarks·trend와 동일 스케일. ×100 금지.
   active_sows: number;
   gestating: number;

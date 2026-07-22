@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.events import Farrowing, Mating, Weaning
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
-from app.services.kpi_service import _cohort_farrowing_rate, calculate_npd_breakdown, get_dashboard
+from app.services.kpi_service import _cohort_farrowing_rate, calculate_npd, get_dashboard
 
 pytestmark = pytest.mark.anyio
 
@@ -37,9 +37,11 @@ async def test_npd_includes_culled_sow_history(db: AsyncSession, test_farm: Farm
                   mating_type="AI", mating_number=1))
     await db.flush()
 
-    npd = await calculate_npd_breakdown(db, test_farm.id, date(2026, 1, 1), date(2026, 12, 31))
-    # 도태 모돈이지만 이유→재교배 7일이 NPD에 잡혀야 함(옛 뷰는 deleted_at 필터로 제외 → None)
-    assert npd.avg_npd == pytest.approx(7.0, abs=0.01), npd.avg_npd
+    npd = await calculate_npd(db, test_farm.id, date(2026, 12, 31))
+    # 도태 모돈이지만 이유→재교배 7일이 WEI(weaning_to_mating_days)에 잡혀야 함
+    # (옛 뷰는 deleted_at 필터로 제외 → None). 재고도 exit기반이라 여집합 NPD 산출됨.
+    assert npd is not None
+    assert npd.weaning_to_mating_days == pytest.approx(7.0, abs=0.01), npd.weaning_to_mating_days
 
 
 async def test_dashboard_farrowing_rate_is_cohort(db: AsyncSession, test_farm: Farm):

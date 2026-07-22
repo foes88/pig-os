@@ -108,7 +108,9 @@
     "lostPigs": "{n}头",
     "demoBadge": "参考",
     "benchAvg": "平均",
-    "benchTop25": "前25%"
+    "benchTop25": "前25%",
+    "statTurnover": "母猪周转率",
+    "unitLitters": "胎/年"
   },
   "sows": {
     "title": "母猪管理",

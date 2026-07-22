@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.events import Mating, Weaning
 from app.db.models.platform import Farm
 from app.db.models.sow import Sow
-from app.services.kpi_service import calculate_npd_breakdown
+from app.services.kpi_service import calculate_npd
 
 pytestmark = pytest.mark.anyio
 # 오늘 2026-06-30 기준: today-60 = 2026-05-01
@@ -51,7 +51,9 @@ async def test_npd_includes_idle_sow_at_cap60(db: AsyncSession, test_farm: Farm)
     # C: 이유 6/20(10일 전), 미재교배 → NULL(정상 WEI, 제외)
     await _sow_wean(db, test_farm, date(2026, 6, 20))
 
-    npd = await calculate_npd_breakdown(db, test_farm.id, date(2026, 1, 1), date(2026, 12, 31))
+    # WEI(이유→교배)는 이제 weaning_to_mating_days 참고값(headline은 여집합 NPD).
+    npd = await calculate_npd(db, test_farm.id, date(2026, 6, 30))
     # AVG(60, 7) = 33.5 (C는 NULL 제외). 옛 뷰면 A 제외 → 7.0
-    assert npd.avg_npd == pytest.approx(33.5, abs=0.1), \
-        f"유휴 모돈(60)이 포함돼 33.5여야 함(옛 뷰면 7.0), got {npd.avg_npd}"
+    assert npd is not None
+    assert npd.weaning_to_mating_days == pytest.approx(33.5, abs=0.1), \
+        f"유휴 모돈(60)이 포함돼 WEI 33.5여야 함(옛 뷰면 7.0), got {npd.weaning_to_mating_days}"

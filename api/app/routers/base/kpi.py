@@ -54,10 +54,15 @@ async def npd(
     start: date = Query(default=None, description="Period start (default: Jan 1 this year)"),  # noqa: E501
     end: date = Query(default=None, description="Period end (default: today)"),
 ):
-    """NPD breakdown: WEI days + return/empty days."""
+    """NPD breakdown: 비생산일수(여집합, rolling 12개월 as-of end) + 회전율 + WEI 참고값."""
     today = date.today()
-    period_start = start or today.replace(month=1, day=1)
-    period_end = end or today
-    return await kpi_service.calculate_npd_breakdown(  # noqa: E501
-        db, farm.id, period_start, period_end
-    )
+    ref = end or today
+    detail = await kpi_service.calculate_npd(db, farm.id, ref)
+    if detail is None:
+        # 재고 없음 → 빈 브레이크다운(계약 유지)
+        return NpdBreakdown(
+            farm_id=farm.id, period_start=start or (ref.replace(month=1, day=1)),
+            period_end=ref, avg_npd=None, return_to_estrus_days=None,
+            weaning_to_mating_days=None, empty_days=None, npd_target=None, benchmark_avg=None,
+        )
+    return detail

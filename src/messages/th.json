@@ -108,7 +108,9 @@
     "lostPigs": "{n} ตัว",
     "demoBadge": "อ้างอิง",
     "benchAvg": "เฉลี่ย",
-    "benchTop25": "25% แรก"
+    "benchTop25": "25% แรก",
+    "statTurnover": "รอบหมุนแม่สุกร",
+    "unitLitters": "ครอก/ปี"
   },
   "sows": {
     "title": "จัดการแม่สุกร",
