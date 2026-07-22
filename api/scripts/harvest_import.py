@@ -19,7 +19,7 @@ import os
 import sys
 import uuid
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def _load_dotenv():
     """api/.env.harvest(gitignore됨)에서 하베스트 비밀값 로드 — 기존 os.environ 우선.
@@ -127,7 +127,16 @@ def reconstruct(pig_no, wk_events, src) -> tuple[list[dict], int, int]:
                 cur["farrowing"] = dict(date=d, wk=wk, silsan=det[0], sasan=det[1], mila=det[2], kg=det[3])
                 cur["status"] = "FARROWED"
             else:
-                orphan_far += 1
+                # orphan 분만(선행 교배 미매칭): PigPlan에 분만은 있으나 교배 레코드 누락/WK 미스매치가
+                # ~9% → 통째로 버리면 PSY·모돈회전율·NPD가 일괄 과소/과대. 교배를 합성(임신 114일 역산)해
+                # 사이클을 만들어 분만을 보존한다. 합성 교배는 wk="{wk}S"·method="SYNTH"로 식별 가능.
+                synth = d - timedelta(days=114)
+                cur = dict(sancha=sancha,
+                           matings=[dict(date=synth, wk=f"{wk}S", gc=0, method="SYNTH", boar=None)],
+                           farrowing=dict(date=d, wk=wk, silsan=det[0], sasan=det[1], mila=det[2], kg=det[3]),
+                           weaning=None, status="FARROWED")
+                cycles.append(cur)
+                orphan_far += 1  # 이제 '합성 복구' 건수(추적용)
         elif gub == "E":
             det = src["eu"].get((pig_no, wk))
             if det is None:
