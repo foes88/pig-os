@@ -13,6 +13,49 @@
 
 ---
 
+## ★ 연구 검증 결과 (deep-research 2026-07-22, 21소스·25클레임·23확정)
+
+> 1차/권위 출처로 검증된 findings. 신뢰도·투표·출처 병기. **미확인 항목은 빈칸 유지(위조0)**.
+
+**V1. NPD 여집합 정의 = 정식 (우리 구현 검증됨)** [high, 3-0]
+- `NPD = 365 − [litters/female/yr × (임신일+포유일)]` — 미국 PorkGateway(USPCE)와 한국 NIAS(김두완, 정부) **양쪽이 동일 정의**. "모돈/도입 후보돈이 임신도 포유도 아닌 모든 날."
+- 출처: porkgateway.org(비생산일수), nias.go.kr(모돈회전율·비생산일수 PDF), pig333.
+- **함의**: 우리 `calculate_npd` 여집합 방식은 **국제 표준 정의와 일치**. 2807의 52.7은 공식 오류가 아님.
+
+**V2. NPD는 후보돈 비생산일·재발·도태 종료구간 포함** [high, 3-0]
+- 'Gilt Specific NPD'(도입→초교배), 이유→교배, 교배후 재발/불임, 도태/폐사 종료구간 전부 포함(Koketsu 6구간).
+- ⚠️ **경계 관례차**: PorkGateway=**후보돈 도입**부터 / Koketsu(mated inventory)=**초교배**부터. 우리 현행은 parity≥1(경산)만 → **후보돈 NPD 미포함**. 관례 선택 필요.
+- 출처: porkgateway.org, nias.go.kr, Koketsu J Anim Sci 2005(PubMed 15890819).
+
+**V3. 회전율 2정의 공존 — 우리 것 = US 정의, PigPlan = KR 정의** [high, 3-0/2-1]
+- **US NPPC/SMS**: `연간 분만수 ÷ 평균 교배모돈(mated female) 재고` = 기록 기반. ← **우리 count방식과 동종**.
+- **KR NIAS**: `모돈회전율 = (365 − 비생산일수)/(임신기간+포유기간)` = NPD 항등식. ← **PigPlan이 쓰는 방식**.
+- **결정적**: PigPlan NPD 30.4 ⟺ 회전율 2.42가 이 항등식으로 정확히 맞물림: (365−30.4)/138.7=**2.41** ✓. 우리 52.7 ⟺ 2.25. **즉 NPD와 회전율 격차는 하나의 관례차**(per-cycle vs herd-inventory).
+- 출처: nationalhogfarmer.com(NPPC/SMS), nias.go.kr, pignpork/pigpeople.
+
+**V4. PSY 분모 = 교배모돈(mated female), 미교배 후보 제외** [high, 3-0]
+- US NPPC/SMS: `연간 이유두수 ÷ 평균 교배모돈 재고`. 후보돈은 **초교배 시점에 분모 진입**. "per mated female"로 후보 변동성 제외.
+- ⚠️ 우리 현행 분모 = **parity≥1(초산 이상)** — 교배후~초분만 전 임신 후보는 제외. **US는 교배시점 포함** → 미묘한 분모차. 단 PigPlan 상시모돈과는 실측 정합(PSY 29.0≈29.1).
+- 출처: nationalhogfarmer.com. **CAVEAT: PigCHAMP 자체 문서·PigPlan 상시모돈 1차정의 미확인**.
+
+**V5. 모돈도폐사율 = 사망만(≠removal) — 우리 스펙 의심 확정** [high, 3-0]
+- 사망률(mortality) = 폐사(안락사/자연사) ÷ 평균재고 ≈ 12~14%. **제거율(removal) = 도태(도축)+폐사 ≈ 40~48%**. KR 39%는 removal(누적) → US 12%(사망)와 **정의 상이, 직접비교 무효**.
+- 출처: UMN SHMP(PigCHAMP 데이터), Heinonen PMC6540429.
+
+**V6. 분만율 — Agriness=예정일 기준, "farrowings/sows-mated"·"초교배only"는 반증됨** [high, 3-0 / 반증 1-2·0-3]
+- Agriness: 해당기간 **예정분만일(due date)** 모돈 중 분만%. adjusted rate는 임신중 폐사·비번식 도태를 분모 제외.
+- pig333의 "분만수/교배모돈"·"초교배 기준"은 **검증에서 반증(encode 금지)**. 우리 현행(초교배 코호트)도 이 관례와 다름 → 재검토 대상.
+- 출처: ajuda.agriness.com.
+
+**V7. 최소 이유일령 — EU만 확정(28일, 특수사육 21일)** [high, 3-0]
+- EU Directive 2008/120/EC: 최소 28일(모/자돈 복지 예외 시 21일, 별도 세척 사육시설 이동 조건).
+- **US/KR/CN/VN/BR 법정 최소 이유일령은 1차출처 미확보 → 빈칸**. (관행: US~21, KR~24.6 median은 관행이지 법정 아님)
+- 출처: eur-lex.europa.eu.
+
+**미확인 → 빈칸 유지(추정 금지)**: PigCHAMP PSY 분모 자체문서 · PigPlan 상시모돈/035 1차 스펙 · **사산율(미라 포함 여부, Q4 — 클레임 0)** · **MSY(Q8 — 클레임 0)** · China WEPIG 전체 · US/KR/CN/VN/BR 법정 이유일령.
+
+---
+
 ## A. 분모/모집단 차이 (가장 영향 큼)
 
 ### PSY (두/모돈/년)
@@ -98,12 +141,20 @@
 
 > Claude/GPT 등으로 **각국 공식 정의의 1차 출처**(PigCHAMP Data Sharing Definitions, NPB PorkCheckoff, Agriness metodologia, WEPIG 지표정의)를 확보. 확보 전엔 빈칸 유지.
 
-- [ ] **US PigCHAMP**: PSY 분모 정의(gilt 포함?), NPD 산식, farrowing rate 기준(service vs 초교배), 사산율(미라 포함?)
-- [ ] **KR PigPlan**: 035 비생산일수 정확 산식, 회전율(FI 산정법), 모돈도폐사율 정의
-- [ ] **LatAm Agriness**: PSY/NPD/사산율 metodologia, 이유일령 기준
-- [ ] **CN WEPIG**: 지표 정의서(있으면)
-- [ ] **SEA/VN**: 법정 최소 이유일령, 산정 관행
-- [ ] 공통: 각국 **법정 최소 이유일령**, MSY의 "marketed" 정의(판매 vs 도축)
+- [x] **NPD 정의** — 여집합=국제표준 확정(V1), 우리 구현 검증됨. 후보돈/초교배 경계만 선택(V2).
+- [x] **회전율 2정의** — US 기록기반 vs KR NPD항등식 확정(V3). PigPlan=KR 방식.
+- [x] **PSY 분모** — US=교배모돈 확정(V4). 단 PigCHAMP 자체문서·PigPlan 상시모돈 1차정의 **미확인**.
+- [x] **모돈도폐사율** — 사망≠removal 확정(V5). KR 39%=removal.
+- [x] **분만율** — Agriness=예정일 기준(V6). pig333 초교배설 반증.
+- [x] **이유일령** — EU 28일 확정(V7). 나머지 국가 법정치 **미확보**.
+- [ ] **US PigCHAMP 1차문서**: 자체 PSY 분모 명문(gilt 포함?) — 미확보
+- [ ] **KR PigPlan 035 1차 스펙**: 상시모돈·비생산일수 정확 정의 문서 — 미확보(현재 실측 정합으로 역추정만)
+- [ ] **사산율(Q4)**: 미라 포함 여부 — **클레임 0, 완전 미확보**
+- [ ] **MSY(Q8)**: "marketed" 정의·분모 — **클레임 0, 완전 미확보**
+- [ ] **China WEPIG**: 지표 정의서 전체 — 미확보
+- [ ] **법정 최소 이유일령**: US/KR/CN/VN/BR — EU만 확보
+
+> 사용자님 Claude/GPT 조사는 **미확보 항목**(PigCHAMP/PigPlan 1차문서, 사산율, MSY, WEPIG, 각국 이유일령)에 집중하면 교차검증 효율적. deep-research 결과와 대조해 출처 확정.
 
 ## F. Phase B 반영 원칙 (출처 확보 후)
 1. **분모·포함규칙 차이**: 국가별 재계산 분기 or PigOS 분모 통일 + "외부 비교 무효" 표시 — 지표별 결정.
