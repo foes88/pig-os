@@ -1,5 +1,18 @@
 # PigOS 진행 상황
 
+## [현재상태 2026-07-23] — 동의 인프라 + KPI PigPlan 정합 + i18n 규칙4 (브랜치 feat/consent-infra, **PR #1 draft push됨, 배포 미실시**)
+> 원격 https://github.com/wiselake/pig-os/pull/1 (draft). 11커밋. prod 배포·게시 안 함.
+
+- **글로벌 동의 인프라(consent)** — TERMS_DISPLAY §7 / CONSENT §2·§5: 법역판별(국가+US주)·목적6×법역9 매트릭스 SSOT·consent_ledger(모델+마이그레이션 `d4a1b2c3e5f7`)·약관렌더러(notice_version)·API 4종·온보딩 연결·재고지 배너. **문구 전부 DRAFT placeholder**, 게이팅=기능플래그. 커버리지 `docs/legal/IMPLEMENTATION_COVERAGE.md`. (커밋 5a08bee·01863ef)
+- **KPI PigPlan 정합 정정(용암축산 2807 실측)**:
+  - `e9a97df` **NPD**: WEI 오표시(≈10일) → **여집합 비생산일수** 정정 + **모돈회전율 신규**. 듀얼리뷰 5개 finding 근본수정(parity≥1 통일·clip·entry클립·PSY캐스트·event기반 open-tail).
+  - `6f8e090` **하베스트 orphan 분만 9% 누락 복구**(선행교배 없는 분만 폐기 → 교배 합성) + 타겟 백필. 2807 prod 백필 완료(분만 +469/이유 +465).
+  - 실측 대조: **PSY 29.0≈PigPlan 29.1·임신·포유 일치**. NPD 52.7 vs 30.4·회전율 2.29 vs 2.42는 **관례차**(PigPlan=한국 NIAS 항등식, 우리=count/여집합) — deep-research(21소스)로 우리 방식이 US NPPC/SMS·NIAS 표준임을 검증. **역-피팅 금지(위조0)**.
+  - 국가별 산식 차이 매트릭스 `docs/specs/COUNTRY_KPI_DEFINITION_MATRIX.md`(Phase B 준비, 미확보=빈칸). 스펙 §3 NPD 재정의 정본화. (9dd393d·e240684·9f94841)
+- **i18n 규칙4 완결**: 인라인 딕셔너리 3개(대시보드·forgot-pw·온보딩) → messages 8개어 이관 + 하드코딩 placeholder·aria-label 이관. admin=ko전용(설계) 명시. (0fc7699·811a6a0·3a8546d·a5f66e2)
+- **게이트**: 백엔드 unit 418 + KPI integration 56 + consent 17 통과. 프론트 vitest 69/69·tsc·i18n 파리티 8/8.
+- **대기(사람 액션)**: consent 국가별 표시 개발(md 문서) / KPI Phase B(국가 1차출처 조사) / PR 머지 / 배포.
+
 ## [현재상태 2026-07-02] — DB 무결성/수치 정합성 집중 검증 라운드 (로컬 커밋만, push 미실시)
 - **라이브 무결성 배터리 33종**(참조/고아·도메인·상태·미래일·farm 격리): 5건 시드 아티팩트(QA-* gestation=0·사이클없는 LACTATING, 서비스층 우회 직접삽입 — 현재 코드로 재현불가) 外 **위반 0**. 검증층 견고.
 - **교차농장 KPI sanity 스윕(96농장)**: 크래시 0. 발견·수정:
