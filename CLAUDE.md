@@ -596,71 +596,71 @@ Rule Engine Alert → Task 자동생성 → 담당자 배정 → 모바일 알�
 #### [P12-1] 번식기록 이벤트 수정/삭제
 
 **백엔드** (`api/app/routers/base/events.py`):
-- [ ] `PATCH /api/v1/farms/{farm_id}/events/matings/{id}` — 교배 기록 수정 (교배일, 웅돈, 메모)
-- [ ] `DELETE /api/v1/farms/{farm_id}/events/matings/{id}` — 교배 기록 삭제 + 모돈 상태 롤백
-- [ ] `PATCH /api/v1/farms/{farm_id}/events/farrowings/{id}` — 분만 기록 수정 (TB/BA/SB 등)
-- [ ] `DELETE /api/v1/farms/{farm_id}/events/farrowings/{id}` — 분만 기록 삭제 + 상태 롤백
-- [ ] `PATCH /api/v1/farms/{farm_id}/events/weanings/{id}` — 이유 기록 수정
-- [ ] `DELETE /api/v1/farms/{farm_id}/events/weanings/{id}` — 이유 기록 삭제 + 상태 롤백
-- [ ] 삭제 시 sow.status 롤백 규칙:
+- [x] `PATCH /api/v1/farms/{farm_id}/events/matings/{id}` — 교배 기록 수정 (교배일, 웅돈, 메모)
+- [x] `DELETE /api/v1/farms/{farm_id}/events/matings/{id}` — 교배 기록 삭제 + 모돈 상태 롤백
+- [x] `PATCH /api/v1/farms/{farm_id}/events/farrowings/{id}` — 분만 기록 수정 (TB/BA/SB 등)
+- [x] `DELETE /api/v1/farms/{farm_id}/events/farrowings/{id}` — 분만 기록 삭제 + 상태 롤백
+- [x] `PATCH /api/v1/farms/{farm_id}/events/weanings/{id}` — 이유 기록 수정
+- [x] `DELETE /api/v1/farms/{farm_id}/events/weanings/{id}` — 이유 기록 삭제 + 상태 롤백
+- [x] 삭제 시 sow.status 롤백 규칙:
   - mating 삭제 → PREGNANT → OPEN
   - farrowing 삭제 → LACTATING → PREGNANT
   - weaning 삭제 → OPEN → LACTATING
-- [ ] 월마감 잠금 검사: `period_locks`에 해당 기간이 잠겨있으면 423 반환
+- [x] 월마감 잠금 검사: `period_locks`에 해당 기간이 잠겨있으면 423 반환
 
 **프론트엔드** (`src/app/(app)/record/page.tsx`):
-- [ ] 모돈 리스트 선택 후 우측 이벤트 탭에 "최근 이벤트 이력" 섹션 추가
+- [x] 모돈 리스트 선택 후 우측 이벤트 탭에 "최근 이벤트 이력" 섹션 추가
   - 현재 모돈의 최근 이벤트 3~5개 카드로 나열
   - 각 카드에 연필(Edit) 아이콘 + 휴지통(Delete) 아이콘
-- [ ] Edit 아이콘 클릭 → 해당 이벤트 타입의 수정 모달 (기존 폼과 동일, 값만 pre-fill)
-- [ ] Delete 아이콘 클릭 → 확인 다이얼로그 ("이 기록을 삭제하면 모돈 상태가 롤백됩니다") → DELETE API 호출
-- [ ] `api.types.ts`에 수정 스키마 타입 추가
-- [ ] `src/lib/api/endpoints/events.ts`에 update/delete 함수 추가
+- [x] Edit 아이콘 클릭 → 해당 이벤트 타입의 수정 모달 (기존 폼과 동일, 값만 pre-fill)
+- [x] Delete 아이콘 클릭 → 확인 다이얼로그 ("이 기록을 삭제하면 모돈 상태가 롤백됩니다") → DELETE API 호출
+- [x] `api.types.ts`에 수정 스키마 타입 추가
+- [x] `src/lib/api/endpoints/events.ts`에 update/delete 함수 추가
 
 #### [P12-2] 모돈 상세 페이지 이벤트 수정/삭제
 
 (`src/app/(app)/sows/[id]/page.tsx`):
-- [ ] 번식 이력 타임라인 각 항목에 Edit / Delete 버튼 추가
-- [ ] Edit 클릭 → 수정 모달 (P14-1과 동일 API 사용)
-- [ ] Delete 클릭 → 확인 후 삭제 → 페이지 데이터 재조회
+- [x] 번식 이력 타임라인 각 항목에 Edit / Delete 버튼 추가
+- [x] Edit 클릭 → 수정 모달 (P14-1과 동일 API 사용)
+- [x] Delete 클릭 → 확인 후 삭제 → 페이지 데이터 재조회
 
 #### [P12-3] 비육돈 그룹 수정
 
 **백엔드** (`api/app/routers/base/finishers.py`):
-- [ ] `PATCH /api/v1/farms/{farm_id}/finisher-groups/{id}` — 그룹명, 입식두수, 평균입식체중 수정
+- [x] `PATCH /api/v1/farms/{farm_id}/finisher-groups/{id}` — 그룹명, 입식두수, 평균입식체중 수정
 
 **프론트엔드** (`src/app/(app)/finishers/page.tsx`):
-- [ ] 각 그룹 카드에 Edit 버튼(연필 아이콘) 추가
-- [ ] 그룹 수정 모달: 배치명, 입식두수, 평균체중 편집
-- [ ] PATCH API 연동 + 성공 시 목록 invalidate
+- [x] 각 그룹 카드에 Edit 버튼(연필 아이콘) 추가
+- [x] 그룹 수정 모달: 배치명, 입식두수, 평균체중 편집
+- [x] PATCH API 연동 + 성공 시 목록 invalidate
 
 #### [P12-4] 페이지네이션 추가
 
-- [ ] **웅돈** (`boars/page.tsx`): 20개 단위 페이지네이션 추가 (`page`, `page_size` query 파라미터)
-- [ ] **비육돈** (`finishers/page.tsx`): 20개 단위 페이지네이션 추가
-- [ ] **번식기록 모돈 리스트** (`record/page.tsx`): 현재 500개 일괄 로드 → 무한스크롤 또는 50개 단위 페이지네이션으로 변경
-- [ ] 백엔드 라우터에서 `limit`/`offset` 이미 지원하는지 확인 후 필요시 추가
+- [x] **웅돈** (`boars/page.tsx`): 20개 단위 페이지네이션 추가 (`page`, `page_size` query 파라미터)
+- [x] **비육돈** (`finishers/page.tsx`): 20개 단위 페이지네이션 추가
+- [x] **번식기록 모돈 리스트** (`record/page.tsx`): 현재 500개 일괄 로드 → 무한스크롤 또는 50개 단위 페이지네이션으로 변경
+- [x] 백엔드 라우터에서 `limit`/`offset` 이미 지원하는지 확인 후 필요시 추가
 
 #### [P12-5] 보고서 기간 필터 + CSV 내보내기
 
 **프론트엔드** (`src/app/(app)/reports/page.tsx`):
-- [ ] 기간 선택 UI 추가:
+- [x] 기간 선택 UI 추가:
   - 프리셋 버튼: 최근 3개월 / 6개월 / 1년
   - 직접 입력: 시작월 ~ 종료월 (월 단위 피커)
   - 선택한 기간으로 `kpiApi.trend()` 파라미터 변경
-- [ ] CSV 내보내기 버튼 구현:
+- [x] CSV 내보내기 버튼 구현:
   - 현재 표시 데이터를 클라이언트 사이드에서 CSV 변환 후 다운로드
   - 파일명: `pigos_report_{farm_id}_{start}_{end}.csv`
   - 라이브러리: `papaparse` 또는 직접 구현 (의존성 최소화)
-- [ ] 보고서 탭 분리: "번식 성적" | "비육 성적" 탭 (Phase 7 API 완료 후 연결)
+- [x] 보고서 탭 분리: "번식 성적" | "비육 성적" 탭 (Phase 7 API 완료 후 연결)
 
 #### [P12-6] 알림/Notifications 페이지 개선
 
 (`src/app/(app)/notifications/page.tsx` 현황 확인 후):
-- [ ] 알림 읽음 처리: 개별 읽음 + 전체 읽음 버튼
-- [ ] 알림 유형 필터: CRITICAL / WARNING / INFO 탭
-- [ ] 알림 클릭 시 해당 모돈 상세 또는 이벤트 입력 페이지로 이동
-- [ ] 무한스크롤 또는 페이지네이션 (알림이 많을 경우)
+- [x] 알림 읽음 처리: 개별 읽음 + 전체 읽음 버튼
+- [x] 알림 유형 필터: CRITICAL / WARNING / INFO 탭
+- [x] 알림 클릭 시 해당 모돈 상세 또는 이벤트 입력 페이지로 이동
+- [x] 무한스크롤 또는 페이지네이션 (알림이 많을 경우)
 
 
 ---
