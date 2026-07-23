@@ -274,7 +274,7 @@ function AddMemberModal({
               onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
               className="input"
               autoComplete="off"
-              placeholder="worker1"
+              placeholder={t("workerPlaceholder")}
             />
           </Field>
           <Field label={t("fEmail")}>

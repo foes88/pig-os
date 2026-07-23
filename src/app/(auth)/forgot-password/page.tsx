@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
         <form onSubmit={onRequest} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-slate-700 block mb-1.5">{t("email")}</label>
-            <input type="email" autoComplete="email" placeholder="you@farm.com"
+            <input type="email" autoComplete="email" placeholder={t("emailPlaceholder")}
               value={email} onChange={(e) => setEmail(e.target.value)} className={INPUT} required />
           </div>
           {err && <p className="text-xs text-danger">{err}</p>}

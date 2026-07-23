@@ -47,7 +47,7 @@
     "title": "AI 대시보드",
     "subtitleRealtime": "AI 실시간 분석 중",
     "aiActive": "AI Active",
-    "loading": "대시보드 로딩 중...",
+    "loading": "불러오는 중",
     "loadError": "대시보드를 불러오지 못했습니다",
     "loadErrorDesc": "서버에 연결할 수 없습니다. 연결 상태를 확인 후 다시 시도하세요.",
     "selectFarm": "농장을 선택해주세요.",
@@ -519,7 +519,8 @@
     "inviteNote": "이메일은 발송되지 않습니다 — 계정과 초기 비밀번호를 생성해 구성원에게 전달하세요.",
     "deactivate": "비활성화",
     "activate": "활성화",
-    "onlyManagers": "멤버 관리는 소유자만 가능합니다."
+    "onlyManagers": "멤버 관리는 소유자만 가능합니다.",
+    "workerPlaceholder": "예: worker1"
   },
   "boars": {
     "title": "웅돈 관리",
@@ -1730,7 +1731,8 @@
     "ev_finisher": "비육돈",
     "ev_foster": "양자",
     "title": "빠른 입력",
-    "sub": "이벤트 유형을 선택하세요"
+    "sub": "이벤트 유형을 선택하세요",
+    "close": "닫기"
   },
   "askAi": {
     "header": "PigOS AI",
@@ -1869,7 +1871,8 @@
     "errInvalid": "아이디 또는 비밀번호가 올바르지 않습니다",
     "errFormat": "입력 형식을 확인해 주세요",
     "errServer": "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-    "scorecardCta": "무료: 내 농장 점수 체크"
+    "scorecardCta": "무료: 내 농장 점수 체크",
+    "usernamePlaceholder": "예: farmowner"
   },
   "scorecard": {
     "title": "농장 건강 스코어카드",
@@ -1998,7 +2001,8 @@
       "title": "약관이 개정되었습니다",
       "desc": "동의하신 문서 중 변경된 내용이 있습니다. 현재 버전을 확인해 주세요.",
       "review": "변경사항 확인"
-    }
+    },
+    "dismiss": "닫기"
   },
   "forgotPassword": {
     "reqTitle": "비밀번호 재설정",
@@ -2018,7 +2022,8 @@
     "pwShort": "비밀번호는 8자 이상이어야 합니다.",
     "badToken": "재설정 링크가 유효하지 않거나 만료되었습니다.",
     "err": "오류가 발생했습니다. 다시 시도하세요.",
-    "back": "로그인으로 돌아가기"
+    "back": "로그인으로 돌아가기",
+    "emailPlaceholder": "you@farm.com"
   },
   "onboarding": {
     "s0": "농장 정보",

@@ -47,7 +47,7 @@
     "title": "AI 仪表板",
     "subtitleRealtime": "AI 实时分析中",
     "aiActive": "AI Active",
-    "loading": "仪表板加载中...",
+    "loading": "加载中",
     "loadError": "无法加载仪表板",
     "loadErrorDesc": "无法连接服务器，请检查网络后重试。",
     "selectFarm": "请选择猪场。",
@@ -519,7 +519,8 @@
     "inviteNote": "不会发送邮件 — 请创建账户和初始密码并告知成员。",
     "deactivate": "停用",
     "activate": "启用",
-    "onlyManagers": "成员管理仅限所有者。"
+    "onlyManagers": "成员管理仅限所有者。",
+    "workerPlaceholder": "如：worker1"
   },
   "boars": {
     "title": "公猪管理",
@@ -1730,7 +1731,8 @@
     "ev_finisher": "育肥猪",
     "ev_foster": "寄养",
     "title": "快速录入",
-    "sub": "选择事件类型"
+    "sub": "选择事件类型",
+    "close": "关闭"
   },
   "askAi": {
     "header": "PigOS AI",
@@ -1869,7 +1871,8 @@
     "errInvalid": "账号或密码不正确",
     "errFormat": "请检查您的输入格式",
     "errServer": "服务器错误，请稍后重试。",
-    "scorecardCta": "免费：测测农场评分"
+    "scorecardCta": "免费：测测农场评分",
+    "usernamePlaceholder": "如：farmowner"
   },
   "scorecard": {
     "title": "农场健康评分卡",
@@ -1998,7 +2001,8 @@
       "title": "我们的条款已更新",
       "desc": "您同意的部分文件已变更。请查看当前版本。",
       "review": "查看变更"
-    }
+    },
+    "dismiss": "关闭"
   },
   "forgotPassword": {
     "reqTitle": "重置密码",
@@ -2018,7 +2022,8 @@
     "pwShort": "密码至少需 8 位。",
     "badToken": "重置链接无效或已过期。",
     "err": "出现错误，请重试。",
-    "back": "返回登录"
+    "back": "返回登录",
+    "emailPlaceholder": "you@farm.com"
   },
   "onboarding": {
     "s0": "农场信息",

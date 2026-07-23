@@ -28,8 +28,8 @@ describe("ForgotPasswordPage (A: 비번찾기 배선)", () => {
   it("요청 모드(토큰 없음): 이메일 입력 + 전송 버튼 렌더", () => {
     mockSearch = "";
     renderWithClient(<ForgotPasswordPage />);
-    expect(screen.getByPlaceholderText("you@farm.com")).toBeInTheDocument();
     // useTranslations는 setup에서 (k)=>k 로 mock → 키로 검증(타 페이지 테스트 컨벤션 동일)
+    expect(screen.getByPlaceholderText("emailPlaceholder")).toBeInTheDocument();
     expect(screen.getByText("send")).toBeInTheDocument();
   });
 

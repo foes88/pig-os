@@ -47,7 +47,7 @@
     "title": "Painel IA",
     "subtitleRealtime": "IA analisando em tempo real",
     "aiActive": "IA ativa",
-    "loading": "Carregando painel...",
+    "loading": "Carregando",
     "loadError": "Falha ao carregar o painel",
     "loadErrorDesc": "Não foi possível conectar ao servidor. Verifique a conexão e tente novamente.",
     "selectFarm": "Selecione uma fazenda.",
@@ -519,7 +519,8 @@
     "inviteNote": "Nenhum e-mail é enviado — crie a conta com uma senha inicial e compartilhe com o membro.",
     "deactivate": "Desativar",
     "activate": "Ativar",
-    "onlyManagers": "O gerenciamento de membros é exclusivo do proprietário."
+    "onlyManagers": "O gerenciamento de membros é exclusivo do proprietário.",
+    "workerPlaceholder": "ex. worker1"
   },
   "boars": {
     "title": "Gestão de cachaços",
@@ -1730,7 +1731,8 @@
     "ev_finisher": "Terminação",
     "ev_foster": "Adoção",
     "title": "Entrada Rápida",
-    "sub": "Selecione o tipo de evento"
+    "sub": "Selecione o tipo de evento",
+    "close": "Fechar"
   },
   "askAi": {
     "header": "PigOS AI",
@@ -1869,7 +1871,8 @@
     "errInvalid": "Usuário ou senha incorretos",
     "errFormat": "Verifique o formato dos dados",
     "errServer": "Erro no servidor. Tente novamente.",
-    "scorecardCta": "Grátis: veja sua pontuação"
+    "scorecardCta": "Grátis: veja sua pontuação",
+    "usernamePlaceholder": "ex. farmowner"
   },
   "scorecard": {
     "title": "Boletim de saúde da granja",
@@ -1998,7 +2001,8 @@
       "title": "Nossos termos foram atualizados",
       "desc": "Alguns documentos que você aceitou foram alterados. Revise a versão atual.",
       "review": "Revisar alterações"
-    }
+    },
+    "dismiss": "Dispensar"
   },
   "forgotPassword": {
     "reqTitle": "Redefinir senha",
@@ -2018,7 +2022,8 @@
     "pwShort": "A senha deve ter ao menos 8 caracteres.",
     "badToken": "O link é inválido ou expirou.",
     "err": "Algo deu errado. Tente novamente.",
-    "back": "Voltar ao login"
+    "back": "Voltar ao login",
+    "emailPlaceholder": "you@farm.com"
   },
   "onboarding": {
     "s0": "Granja",

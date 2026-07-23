@@ -396,8 +396,9 @@ function SkelBlock({ className = "" }: { className?: string }) {
 }
 
 function DashboardSkeleton() {
+  const t = useTranslations("dashboard");
   return (
-    <div className="space-y-5" aria-busy="true" aria-label="loading">
+    <div className="space-y-5" aria-busy="true" aria-label={t("loading")}>
       {/* AI 진단 카드 */}
       <div className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-start gap-3">

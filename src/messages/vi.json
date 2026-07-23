@@ -47,7 +47,7 @@
     "title": "Bảng điều khiển AI",
     "subtitleRealtime": "AI đang phân tích thời gian thực",
     "aiActive": "AI Active",
-    "loading": "Đang tải bảng điều khiển...",
+    "loading": "Đang tải",
     "loadError": "Không tải được bảng điều khiển",
     "loadErrorDesc": "Không kết nối được máy chủ. Kiểm tra kết nối và thử lại.",
     "selectFarm": "Vui lòng chọn trại.",
@@ -519,7 +519,8 @@
     "inviteNote": "Không gửi email — hãy tạo tài khoản với mật khẩu ban đầu và chia sẻ cho thành viên.",
     "deactivate": "Ngừng kích hoạt",
     "activate": "Kích hoạt",
-    "onlyManagers": "Quản lý thành viên chỉ dành cho chủ trại."
+    "onlyManagers": "Quản lý thành viên chỉ dành cho chủ trại.",
+    "workerPlaceholder": "vd: worker1"
   },
   "boars": {
     "title": "Quản lý heo nọc",
@@ -1730,7 +1731,8 @@
     "ev_finisher": "Heo thịt",
     "ev_foster": "Nuôi ghép",
     "title": "Nhập nhanh",
-    "sub": "Chọn loại sự kiện"
+    "sub": "Chọn loại sự kiện",
+    "close": "Đóng"
   },
   "askAi": {
     "header": "PigOS AI",
@@ -1869,7 +1871,8 @@
     "errInvalid": "Tên đăng nhập hoặc mật khẩu không đúng",
     "errFormat": "Vui lòng kiểm tra định dạng nhập liệu",
     "errServer": "Lỗi máy chủ. Vui lòng thử lại.",
-    "scorecardCta": "Miễn phí: đo điểm trại"
+    "scorecardCta": "Miễn phí: đo điểm trại",
+    "usernamePlaceholder": "vd: farmowner"
   },
   "scorecard": {
     "title": "Thẻ điểm sức khỏe trại",
@@ -1998,7 +2001,8 @@
       "title": "Điều khoản của chúng tôi đã được cập nhật",
       "desc": "Một số tài liệu bạn đã đồng ý đã thay đổi. Vui lòng xem lại phiên bản hiện tại.",
       "review": "Xem thay đổi"
-    }
+    },
+    "dismiss": "Bỏ qua"
   },
   "forgotPassword": {
     "reqTitle": "Đặt lại mật khẩu",
@@ -2018,7 +2022,8 @@
     "pwShort": "Mật khẩu phải có ít nhất 8 ký tự.",
     "badToken": "Liên kết không hợp lệ hoặc đã hết hạn.",
     "err": "Đã xảy ra lỗi. Vui lòng thử lại.",
-    "back": "Quay lại đăng nhập"
+    "back": "Quay lại đăng nhập",
+    "emailPlaceholder": "you@farm.com"
   },
   "onboarding": {
     "s0": "Trang trại",

@@ -57,7 +57,7 @@ export default function AmendmentBanner() {
           {t("amendment.review")}
         </Link>
       </div>
-      <button onClick={() => setDismissed(true)} aria-label="dismiss" className="text-text3 hover:text-text shrink-0">
+      <button onClick={() => setDismissed(true)} aria-label={t("dismiss")} className="text-text3 hover:text-text shrink-0">
         <X size={15} />
       </button>
     </div>

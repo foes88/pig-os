@@ -47,7 +47,7 @@
     "title": "Panel IA",
     "subtitleRealtime": "IA analizando en tiempo real",
     "aiActive": "AI Active",
-    "loading": "Cargando panel...",
+    "loading": "Cargando",
     "loadError": "Error al cargar el panel",
     "loadErrorDesc": "No se pudo conectar con el servidor. Revisa tu conexión y reintenta.",
     "selectFarm": "Seleccione una granja.",
@@ -519,7 +519,8 @@
     "inviteNote": "No se envía correo — cree la cuenta con una contraseña inicial y compártala con el miembro.",
     "deactivate": "Desactivar",
     "activate": "Activar",
-    "onlyManagers": "La gestión de miembros es solo del propietario."
+    "onlyManagers": "La gestión de miembros es solo del propietario.",
+    "workerPlaceholder": "ej. worker1"
   },
   "boars": {
     "title": "Gestión de verracos",
@@ -1730,7 +1731,8 @@
     "ev_finisher": "Finalización",
     "ev_foster": "Adopción",
     "title": "Entrada Rápida",
-    "sub": "Selecciona el tipo de evento"
+    "sub": "Selecciona el tipo de evento",
+    "close": "Cerrar"
   },
   "askAi": {
     "header": "PigOS AI",
@@ -1869,7 +1871,8 @@
     "errInvalid": "Usuario o contraseña incorrectos",
     "errFormat": "Verifica el formato de tus datos",
     "errServer": "Error de servidor. Inténtalo de nuevo.",
-    "scorecardCta": "Gratis: mide tu granja"
+    "scorecardCta": "Gratis: mide tu granja",
+    "usernamePlaceholder": "ej. farmowner"
   },
   "scorecard": {
     "title": "Tarjeta de salud de la granja",
@@ -1998,7 +2001,8 @@
       "title": "Nuestros términos se han actualizado",
       "desc": "Algunos documentos que aceptó han cambiado. Revise la versión actual.",
       "review": "Revisar cambios"
-    }
+    },
+    "dismiss": "Descartar"
   },
   "forgotPassword": {
     "reqTitle": "Restablecer contraseña",
@@ -2018,7 +2022,8 @@
     "pwShort": "La contraseña debe tener al menos 8 caracteres.",
     "badToken": "El enlace es inválido o expiró.",
     "err": "Algo salió mal. Inténtalo de nuevo.",
-    "back": "Volver a iniciar sesión"
+    "back": "Volver a iniciar sesión",
+    "emailPlaceholder": "you@farm.com"
   },
   "onboarding": {
     "s0": "Granja",

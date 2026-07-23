@@ -266,7 +266,7 @@ export default function LoginPage() {
                   type="text"
                   data-testid="login-username"
                   autoComplete="username"
-                  placeholder="admin"
+                  placeholder={t("usernamePlaceholder")}
                   {...register("username")}
                   className={`w-full h-11 px-3.5 rounded-lg text-sm text-slate-900
                     placeholder:text-slate-400 outline-none border bg-white transition

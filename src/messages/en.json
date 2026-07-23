@@ -47,7 +47,7 @@
     "title": "AI Dashboard",
     "subtitleRealtime": "AI analyzing in real-time",
     "aiActive": "AI Active",
-    "loading": "Loading dashboard...",
+    "loading": "Loading",
     "loadError": "Failed to load dashboard",
     "loadErrorDesc": "Could not reach the server. Check your connection and retry.",
     "selectFarm": "Please select a farm.",
@@ -519,7 +519,8 @@
     "inviteNote": "No email is sent — create the account with an initial password and share it with the member.",
     "deactivate": "Deactivate",
     "activate": "Activate",
-    "onlyManagers": "Member management is owner-only."
+    "onlyManagers": "Member management is owner-only.",
+    "workerPlaceholder": "e.g. worker1"
   },
   "boars": {
     "title": "Boar management",
@@ -1730,7 +1731,8 @@
     "ev_finisher": "Finisher",
     "ev_foster": "Foster",
     "title": "Quick Input",
-    "sub": "Select an event type"
+    "sub": "Select an event type",
+    "close": "Close"
   },
   "askAi": {
     "header": "PigOS AI",
@@ -1869,7 +1871,8 @@
     "errInvalid": "ID or password is incorrect",
     "errFormat": "Please check your input format",
     "errServer": "Server error. Please try again.",
-    "scorecardCta": "Free: check your farm's score"
+    "scorecardCta": "Free: check your farm's score",
+    "usernamePlaceholder": "e.g. farmowner"
   },
   "scorecard": {
     "title": "Farm Health Scorecard",
@@ -1998,7 +2001,8 @@
       "title": "Our terms have been updated",
       "desc": "Some documents you agreed to have changed. Please review the current version.",
       "review": "Review changes"
-    }
+    },
+    "dismiss": "Dismiss"
   },
   "forgotPassword": {
     "reqTitle": "Reset password",
@@ -2018,7 +2022,8 @@
     "pwShort": "Password must be at least 8 characters.",
     "badToken": "This reset link is invalid or expired.",
     "err": "Something went wrong. Please try again.",
-    "back": "Back to sign in"
+    "back": "Back to sign in",
+    "emailPlaceholder": "you@farm.com"
   },
   "onboarding": {
     "s0": "Farm Info",

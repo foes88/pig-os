@@ -82,7 +82,7 @@ export function QuickInputDrawer({ open, onClose }: QuickInputDrawerProps) {
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-full bg-bg2 flex items-center justify-center text-muted hover:text-text transition"
-            aria-label="Close"
+            aria-label={t("close")}
           >
             <X className="w-4 h-4" />
           </button>
