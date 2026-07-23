@@ -1,4 +1,4 @@
-# RUN_PROMPT_D — 국가·주별 약관 요건 리서치 (legal 스킬 활용)
+﻿# RUN_PROMPT_D — 국가·주별 약관 요건 리서치 (legal 스킬 활용)
 ## 밤샘 자율 실행 프롬프트 (2026-07-21)
 
 > **레포**: C:\dev\PigOS / **입력 SSOT**: docs/legal/DATA_RIGHTS_CONSENT_SPEC.md (구조·purpose 체계) · docs/PIGOS_SPEC_INDEX.md · docs/legal-review-notes.md
@@ -12,7 +12,7 @@
 4. 학습 지식만으로 "현행" 단정 금지 — 웹 확인 시점 명시.
 
 ## G0
-baseline `[PLACEHOLDER]` / 브랜치 `docs/legal-research` / Consent Spec 존재 확인
+baseline `d54e897` / 브랜치 `docs/legal-research` / Consent Spec 존재 확인
 
 ## 작업
 ### T1 — 국가별 리서치 노트 (`docs/legal/research/{국가}.md`)

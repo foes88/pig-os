@@ -1,4 +1,4 @@
-# RUN_PROMPT_A — 정책 벡터 + Resolved Policy 구현
+﻿# RUN_PROMPT_A — 정책 벡터 + Resolved Policy 구현
 ## 밤샘 자율 실행 프롬프트 (2026-07-21)
 
 > **레포**: C:\dev\PigOS / **스펙 SSOT**: docs/specs/COUNTRY_KPI_RULE_SPEC_v0.3.1.md §4
@@ -6,7 +6,7 @@
 > **아키텍처 변수**: country_kpi_policy 도입 1개. 다른 시스템 변경 금지.
 
 ## G0 — 선행조건 (하나라도 FAIL 시 즉시 중단, 아무것도 수정하지 않음)
-1. baseline 커밋 = `[PLACEHOLDER: 커밋 해시]` 일치
+1. baseline 커밋 = `d54e897` 일치
 2. 전체 테스트 `[PLACEHOLDER: 기대 테스트 수]`개 전부 PASS
 3. 스펙 v0.3.1 존재·§4 로드
 4. 신규 브랜치: `feat/kpi-policy-vector`

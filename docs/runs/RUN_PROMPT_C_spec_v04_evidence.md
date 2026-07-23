@@ -1,4 +1,4 @@
-# RUN_PROMPT_C — KPI 스펙 v0.4 개편 + Evidence Register + 대표 결정요청서 (문서 전용 런)
+﻿# RUN_PROMPT_C — KPI 스펙 v0.4 개편 + Evidence Register + 대표 결정요청서 (문서 전용 런)
 ## 밤샘 자율 실행 프롬프트 (2026-07-21)
 
 > **레포**: C:\dev\PigOS
@@ -7,7 +7,7 @@
 > **성격**: 문서 전용. 코드·스키마·seed 일절 생성 금지.
 
 ## G0 — 선행조건
-baseline `[PLACEHOLDER]` / 브랜치 `docs/kpi-spec-v0.4` / 입력 문서 전부 존재 확인
+baseline `d54e897` / 브랜치 `docs/kpi-spec-v0.4` / 입력 문서 전부 존재 확인
 
 ## ⚠️ 최상위 규칙 — 미검증 격리
 GPT 국가별 초안(Pork Checkoff·Agriness·Embrapa·AHDB·SEGES·IFIP·Teagasc 인용 포함)은 **검증된 바 없다**:

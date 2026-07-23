@@ -1,4 +1,4 @@
-# RUN_PROMPT_B — Canonical Event Envelope 모델 + 검증기
+﻿# RUN_PROMPT_B — Canonical Event Envelope 모델 + 검증기
 ## 밤샘 자율 실행 프롬프트 (2026-07-21)
 
 > **레포**: C:\dev\PigOS / **스펙 SSOT**: docs/specs/COUNTRY_KPI_RULE_SPEC_v0.3.1.md §15
@@ -6,7 +6,7 @@
 > **아키텍처 변수**: envelope 계약 1개. **기존 입력 경로 배선(rewiring) 금지** — 계약·검증기·테스트만. 연결은 감독 세션에서.
 
 ## G0 — 선행조건 (FAIL 시 즉시 중단)
-1. baseline 커밋 `[PLACEHOLDER]` / 전체 테스트 `[PLACEHOLDER]`개 PASS
+1. baseline 커밋 `d54e897` / 전체 테스트 `[PLACEHOLDER]`개 PASS
 2. 브랜치 `feat/canonical-envelope` (baseline에서 분기 — 런 A와 독립)
 
 ## 작업
