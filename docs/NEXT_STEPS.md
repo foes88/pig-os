@@ -1,89 +1,61 @@
-# PigOS — 다음 할 일 (Next Steps)
+# PigOS 다음 개발 사항 (이어가기용)
 
-> 작성: 2026-06-10 · 기준: CLAUDE.md 자율 실행 플랜 **54/54 완료** 직후
-> 요약: **계획된 개발은 끝.** 남은 건 "내 머신에서 검증 → 배포 → 출시 QA" + 그 다음 로드맵.
-
----
-
-## 0. 지금 상태 한 줄 요약
-- 백엔드 유닛 **219/219**, 프론트 **tsc clean**, 통합테스트 **30개 수집 통과**.
-- 코드는 전부 커밋됨(원자적). **`git push`는 안 함** — 내가 직접 확인 후 push.
+> 갱신 2026-07-23. 브랜치 `feat/consent-infra` (PR #1 draft, https://github.com/wiselake/pig-os/pull/1). **배포 미실시.**
+> 세션 상세는 PROGRESS.md 최상단(2026-07-23). 원칙: 위조0 · prod alembic 금지(divergent) · 배포는 사람 결정.
+> (이전 2026-06-10 판은 MVP 스프린트 기준 — 아래로 대체됨.)
 
 ---
 
-## 1. 복귀 직후 — 검증 (30분, 순서대로)
-
-### 1-1. git 정리 (필수, 1분)
-세션 첫 커밋 때 생긴 stale lock 정리 (커밋·워킹트리는 정상, 인덱스만 잠김):
-```bat
-cd C:\dev\PigOS
-del .git\index.lock 2>nul
-git reset            REM 인덱스를 HEAD에 맞춤 — git status 깨끗해짐
-git log --oneline -15   REM 이번 세션 커밋 확인
-```
-
-### 1-2. 백엔드 테스트 (Docker 필요)
+## 0. 복귀 직후 (환경)
 ```bash
-docker compose up -d            # postgres + redis + api
-cd api && uv run pytest tests/ -q   # 유닛 219 + 통합 30 전체 실행
+# Docker가 자주 죽음(chronic) → 재시작 후 postgres 기동
+powershell.exe -Command "Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'"
+docker start pigos-postgres          # pg_isready -U pigos 로 확인
+cd api && uv run pytest tests/unit -q                 # 418 pass 기대
+cd src && NODE_OPTIONS=--experimental-require-module npx vitest run   # 69 pass, tsc clean
 ```
-> 통합 테스트는 샌드박스에 Docker가 없어 이번에 **수집까지만** 검증됨. 여기서 실제 통과 확인.
+- 노드: `/c/Users/bjh/AppData/Roaming/nvm/v22.11.0`. 프론트 빌드/테스트는 `NODE_OPTIONS=--experimental-require-module` 필요.
+- 프로드 백필 등 prod write는 하네스 분류기가 게이트 → 사람이 `--write` 직접 실행.
 
-### 1-3. 프론트 타입체크 + Vitest
-```bash
-cd src
-npx tsc --noEmit
-npm i -D vitest jsdom @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event
-npm test                        # 스캐폴딩된 컴포넌트/페이지 스모크 테스트
-```
-> Vitest 의존성은 샌드박스 마운트 제약(ENOTEMPTY)으로 설치 못함 → 여기서 설치 후 실행.
-
-### 1-4. 수동 스모크 (브라우저)
-- `docker compose up` + `cd src && npm run dev` → http://localhost:3000
-- 로그인(test001@pigos.io / 12312300) → 대시보드 / 모돈 / 기록 / **/alerts** / **/reports/reproduction** / **/settings/farm** 클릭 확인.
+## 1. 지금까지 (이번 세션 완료, 전부 커밋·push)
+- **동의 인프라**: 법역판별·consent_ledger·API·온보딩 연결·재고지 배너 (문구 DRAFT placeholder)
+- **KPI PigPlan 정합**: PSY 29.0≈29.1·NPD 여집합·모돈회전율 신규·하베스트 orphan 복구·2807 백필 (deep-research V1~V7 검증)
+- **i18n 규칙4 완결**: 인라인 딕셔너리·하드코딩 전부 messages 8개어
+- **KPI v0.4 P1 골격**: country_kpi_policy 테이블 + 상속 리졸버 + GLOBAL seed 14(현재 동작 codify, priority_class=NULL)
 
 ---
 
-## 2. 검증 통과하면 — 커밋 정리 & push
-```bash
-git push                        # 검토 후 직접 (자동 push 금지 규칙)
-```
-> 워킹트리에 줄바꿈 정규화로 잡히는 옛 파일(concepts/docs/mvp 등)은 이번 세션이 만든 게 아님.
-> push 전 `git status`로 내 커밋 범위만 올라가는지 확인.
+## 2. 다음 개발 (우선순위)
+
+### B1. KPI v0.4 P1-b — 리졸버를 대시보드/룰엔진에 연결 【자율 가능·추천】
+현재 대시보드 KPI 카드 하드코딩(PSY/NPD/FR 고정) → `resolve_display_kpis()` 결과로 **동적 표시**하도록 리팩터. 룰엔진도 resolved `rule_enabled` 존중. 프론트/룰엔진은 resolved만 조회(원본 금지).
+- 파일: `api/app/services/kpi_policy_resolver.py`, `src/app/(app)/page.tsx`, `api/app/engine/`. 선행 없음.
+
+### B2. KPI v0.4 P1-c — priority_class 배정 【제품결정 필요】
+NORTH_STAR(대표지표) 등 6분류를 (country×farm_type×stage)별 배정. 현재 seed priority_class=NULL(미결).
+- 예: US·F2F NORTH_STAR=MSY? / 번식전업=PSY? (2026-07-21 회의 방향만, 미확정) → 대표 확인 후 APPROVED seed.
+
+### B3. consent 국가별 표시 세부 【md 설계문서 대기】
+인프라는 구현됨. 국가별 표시 문구/분기 세부는 사용자 추가 md 오면 착수. 참조 `docs/legal/TERMS_DISPLAY_SPEC.md`.
+
+### B4. KPI Phase B — 국가별 산식 정제 【1차출처 조사 대기】
+국가별 계산 공식/분모 차이 반영. **위조0**: PigCHAMP/PigPlan 1차문서·사산율(미라포함)·MSY 정의·China WEPIG·각국 법정 이유일령(EU만 확보)=미확보 빈칸.
+- 참조: `docs/specs/COUNTRY_KPI_DEFINITION_MATRIX.md`(V1~V7) + `docs/kpi/gpt_country_draft_UNVERIFIED.md`(구조만 확정).
+- 절차: 출처확보 → G-C1~C8 게이트 → Decision Register APPROVED → country_kpi_policy override 행.
+
+### B5. 배포 & PR 머지 【사람 결정】
+PR #1 draft → ready + 머지. 배포: `docker-compose.prod.yml -f docker-compose.deploy.yml` + `--force-recreate` + 서버 .env 보존. **prod alembic 금지**(consent_ledger·country_kpi_policy 마이그레이션 로컬/CI 전용, 스키마 수동 확인). 서버 ssh ubuntu@52.78.65.6(키 C:\dev_env\keyfile\wiselake-app-key.pem), ~/pigos.
 
 ---
 
-## 3. 배포 (MVP 출시, 7/1 목표)
+## 3. 백로그 (CLAUDE.md 설계만)
+- **Phase 2**: Task 자동배정(노동력 절감), PRRS 유전자 추적, Traceability Addon(B2B)
+- **모바일 Android**: Kotlin+Compose+Room 오프라인 우선 (공용 자산: FastAPI/OpenAPI/sync/KPI공식/디자인토큰)
+- **경영 KPI 도메인**(v0.3.1 §6): source_documents(OCR)·기간운영비·현금손익. B-08(보안) 해소 전 프로덕션 금지
+- **R2 특화 예측**(유료, B-07 후) · 트라이얼/과금(BILLING_ARCHITECTURE_NOTE 참조)
 
-| 대상 | 방법 | 비고 |
-|------|------|------|
-| 프론트 | Vercel (`src/vercel.json` 준비됨) | env `NEXT_PUBLIC_API_URL` 설정 |
-| 백엔드 | `api/Dockerfile`(non-root·healthcheck) + `docker-compose.prod.yml` | AWS 서울(ap-northeast-2) |
-| DB 마이그레이션 | `uv run alembic upgrade head` | 신규 `f1a2b3c4d5e6`(llm_usage_logs) 포함 |
-| CI | `.github/workflows/ci.yml` | PR→development, 운영배포는 수동 |
-| 비밀값 | `.env.example` 참고 — 실제 값은 운영 시크릿으로 | SECRET_KEY/DB/REDIS |
-
-체크: `/health` 200, alembic head 적용, CORS(pigos.io) 확인.
-
----
-
-## 4. 출시 전 마무리 권장 (선택, 코드 품질)
-- **Addon #1 AI Insight 실연동**: `llm_renderer`는 키 없으면 템플릿 폴백. 운영에서 `ANTHROPIC_API_KEY` 넣고 `chat_service`에 `use_llm`/`usage_count` 라우터 배선(현재 기본 template).
-- **i18n 실사용 전환**: 신규 페이지(alerts/settings/reports)는 현재 한국어 하드코딩. `messages/*.json`에 키는 추가됨(123키 정합) → 점진적으로 `useTranslations`로 교체.
-- **record 페이지 이벤트 인라인 수정 UI**: 현재 삭제+롤백은 모돈 상세에 구현. record 페이지 인라인 편집은 추후.
-
----
-
-## 5. 그 다음 로드맵 (Phase 2 — MVP 이후, CLAUDE.md 기준)
-1. **Task 자동배정 시스템** — Rule Engine 알림 → Task 생성 → 담당자 배정 → 모바일 알림. (`tasks` 테이블 신규)
-2. **PRRS 유전자 성과 추적** — `sow.breed` + `health_events.disease_code` 품종별 발생률 분석.
-3. **Traceability Addon** — 농장 이벤트 → 도축장 → 소비자 QR 이력 (B2B 데이터 판매).
-4. **모바일(Android Native)** — Kotlin/Compose + Room 오프라인 퍼스트 (공용 자산: FastAPI/OpenAPI/sync 프로토콜/KPI 공식/디자인 토큰 이미 준비됨).
-5. **pigos.io 랜딩페이지** — 별도 Next.js, en/ko 우선 → zh/es/vi.
-
----
-
-## 6. 참고 문서
-- `docs/AUTONOMOUS_SESSION_REPORT_2026-06-10.md` — 이번 세션 전체 내역 + 환경 발견사항
-- `docs/DEVELOPMENT.md` — 로컬 실행 가이드
-- `CLAUDE.md` / `PROGRESS.md` — 플랜 체크박스(54/54) + 진행 로그
+## 4. 상시 규율 (위반 금지)
+- **위조0**: APPROVED·VERIFIED 아닌 수치·정책은 코드/seed 금지, UNVERIFIED_DRAFT 격리. 역-피팅 금지.
+- prod alembic 금지(divergent) · Oracle PKSU READ-ONLY(FARM_NM 등 PII 금지, 훅 차단) · 비밀값 env only
+- i18n 8개어 파리티(i18n.test.ts) · 인라인 딕셔너리 금지 · admin은 ko전용(설계)
+- 커밋 trailer: `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>` · 피처 브랜치 커밋/push 자율 OK, prod 배포만 확인
