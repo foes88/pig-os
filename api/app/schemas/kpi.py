@@ -91,3 +91,14 @@ class KpiTrend(BaseModel):
     psy: float | None
     npd: float | None
     farrowing_rate: float | None  # percent(0~100) — DashboardKpi와 동일 스케일 SSOT.
+
+
+class KpiPolicyOut(BaseModel):
+    """resolved 정책 벡터(리졸버 결과) — 대시보드/룰엔진 구성용. (COUNTRY_KPI_RULE_SPEC v0.4)"""
+    kpi_code: str
+    compute_enabled: bool | None = None
+    display_role: str | None = None
+    priority_class: str | None = None
+    rule_enabled: bool | None = None
+    benchmark_exposure: str | None = None
+    evidence_status: str | None = None

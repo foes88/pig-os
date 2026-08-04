@@ -10,10 +10,26 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from app.core.dependencies import DbDep, FarmDep
-from app.schemas.kpi import DashboardKpi, KpiTrend, NpdBreakdown, PsyDetail
+from app.schemas.kpi import DashboardKpi, KpiPolicyOut, KpiTrend, NpdBreakdown, PsyDetail
 from app.services import kpi_service
+from app.services.kpi_policy_resolver import resolve_display_kpis
 
 router = APIRouter(prefix="/farms/{farm_id}/kpi", tags=["KPI"])
+
+
+@router.get("/policy", response_model=list[KpiPolicyOut])
+async def kpi_policy(farm: FarmDep, db: DbDep) -> list[KpiPolicyOut]:
+    """농장 법역에 맞는 resolved KPI 정책(표시 대상). 프론트/룰엔진이 이걸로 표시 KPI 결정.
+    (COUNTRY_KPI_RULE_SPEC v0.4 — 원본 country_kpi_policy 직접 조회 금지, resolved만)."""
+    rows = await resolve_display_kpis(db, country=farm.country)
+    return [
+        KpiPolicyOut(
+            kpi_code=r.kpi_code, compute_enabled=r.compute_enabled, display_role=r.display_role,
+            priority_class=r.priority_class, rule_enabled=r.rule_enabled,
+            benchmark_exposure=r.benchmark_exposure, evidence_status=r.evidence_status,
+        )
+        for r in rows
+    ]
 
 
 @router.get("/dashboard", response_model=DashboardKpi)

@@ -1311,3 +1311,14 @@ export interface ConsentStatus {
 export interface WithdrawRequest {
   purpose_code: string; farm_id?: string | null; action: string; reason?: string | null;
 }
+
+// v0.4 KPI 정책 벡터 (resolved) — GET /kpi/policy
+export interface KpiPolicy {
+  kpi_code: string;
+  compute_enabled: boolean | null;
+  display_role: "PRIMARY" | "SECONDARY" | "HIDDEN" | null;
+  priority_class: "NORTH_STAR" | "DRIVER" | "GUARDRAIL" | "FINANCIAL" | "QUALITY" | "CONTEXT" | null;
+  rule_enabled: boolean | null;
+  benchmark_exposure: "FULL" | "CONTEXT_ONLY" | "NONE" | null;
+  evidence_status: string | null;
+}
