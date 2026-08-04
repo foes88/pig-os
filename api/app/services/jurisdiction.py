@@ -84,7 +84,7 @@ class Jurisdiction:
 
 # 그룹 → 부속조항 문서 id (TERMS_DISPLAY §2). None = 부속 없음(마스터+방침만)
 _ADDENDUM = {
-    "US": "ADDENDUM_US", "EU": "ADDENDUM_EU_GB", "GB": "ADDENDUM_EU_GB",
+    "US": "ADDENDUM_US", "EU": "ADDENDUM_EU", "GB": "ADDENDUM_GB",
     "BR": "ADDENDUM_BR", "TH": "ADDENDUM_TH", "VN": "ADDENDUM_VN",
     "KR": None, "CN": None, "OTHER": None,
 }

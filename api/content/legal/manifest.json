@@ -18,10 +18,15 @@
       "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
       "langs": { "en": "addendum_us.en.md" }
     },
-    "ADDENDUM_EU_GB": {
-      "kind": "addendum", "group": "EU_GB",
+    "ADDENDUM_EU": {
+      "kind": "addendum", "group": "EU",
       "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
-      "langs": { "en": "addendum_eu_gb.en.md" }
+      "langs": { "en": "addendum_eu.en.md" }
+    },
+    "ADDENDUM_GB": {
+      "kind": "addendum", "group": "GB",
+      "version": "0.1-draft", "status": "DRAFT_LAWYER_PENDING",
+      "langs": { "en": "addendum_gb.en.md" }
     },
     "ADDENDUM_BR": {
       "kind": "addendum", "group": "BR",
