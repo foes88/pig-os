@@ -27,9 +27,10 @@ cd src && NODE_OPTIONS=--experimental-require-module npx vitest run   # 69 pass,
 
 ## 2. 다음 개발 (우선순위)
 
-### B1. KPI v0.4 P1-b — 리졸버를 대시보드/룰엔진에 연결 【자율 가능·추천】
-현재 대시보드 KPI 카드 하드코딩(PSY/NPD/FR 고정) → `resolve_display_kpis()` 결과로 **동적 표시**하도록 리팩터. 룰엔진도 resolved `rule_enabled` 존중. 프론트/룰엔진은 resolved만 조회(원본 금지).
-- 파일: `api/app/services/kpi_policy_resolver.py`, `src/app/(app)/page.tsx`, `api/app/engine/`. 선행 없음.
+### B1. KPI v0.4 P1-b — 리졸버를 대시보드/룰엔진에 연결 【진행중: API 배선 완료(93cbbfd), UI는 B2 후】
+- ✅ **완료**: `GET /farms/{id}/kpi/policy`(resolve_display_kpis) + 프론트 `kpiApi.policy()`·`KpiPolicy` 타입. 리졸버 원본 직접조회 금지·resolved만.
+- ⏳ **남음(B2 후)**: 대시보드 카드를 정책기반 동적 렌더로 리팩터(현재 PSY/NPD/FR 하드코딩). GLOBAL seed만이라 지금은 가시효과 없음 → priority_class(B2) 배정 후 진행해야 payoff. 룰엔진 `rule_enabled` 존중도 함께.
+- 파일: `src/app/(app)/page.tsx`, `api/app/engine/`.
 
 ### B2. KPI v0.4 P1-c — priority_class 배정 【제품결정 필요】
 NORTH_STAR(대표지표) 등 6분류를 (country×farm_type×stage)별 배정. 현재 seed priority_class=NULL(미결).
