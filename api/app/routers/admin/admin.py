@@ -3,6 +3,7 @@
 SUPER_ADMIN 전용. 전사(cross-tenant) 조회/운영. 라우터 전체 require_super_admin 가드.
 프리픽스: /api/v1/admin. 회원 관리는 admin/users.py, 콘텐츠는 admin/content.py 등으로 분리.
 """
+import time
 from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 
@@ -144,11 +145,20 @@ class DataMonitorRow(BaseModel):
     category: str = "real"  # real(실사용자) | test(테스트) | pigplan(피그플랜이관) — data_origin/classification 파생
 
 
+# data-monitor 집계는 무겁고(전 농장·전 이벤트 union+무결성) 실시간 불필요 →
+# 프로세스 내 짧은 TTL 캐시. 60초 내 재요청은 즉시(관리자 새로고침 UX). 워커별 독립 캐시.
+_MONITOR_CACHE: dict = {"data": None, "ts": 0.0}
+_MONITOR_TTL = 60.0
+
+
 @router.get("/data-monitor", response_model=list[DataMonitorRow])
 async def data_monitor(db: DbDep, _admin: SuperAdmin) -> list[DataMonitorRow]:
     """농장별 데이터 입력 현황 — 마지막 입력일·최근 건수·상태. 미입력/방치 농장 식별용."""
+    now = time.monotonic()
+    if _MONITOR_CACHE["data"] is not None and (now - _MONITOR_CACHE["ts"]) < _MONITOR_TTL:
+        return _MONITOR_CACHE["data"]
     rows = (await db.execute(text(_FARM_ACTIVITY_SQL))).mappings().all()
-    return [
+    result = [
         DataMonitorRow(
             farm_id=r["farm_id"],
             farm_name=r["farm_name"],
@@ -164,6 +174,9 @@ async def data_monitor(db: DbDep, _admin: SuperAdmin) -> list[DataMonitorRow]:
         )
         for r in rows
     ]
+    _MONITOR_CACHE["data"] = result
+    _MONITOR_CACHE["ts"] = now
+    return result
 
 
 # ── Farm Data Monitor 상세 드릴다운 ──────────────────────────────────────────
