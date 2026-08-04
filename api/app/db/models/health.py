@@ -15,6 +15,7 @@ class HealthEvent(Base):
     __tablename__ = "health_events"
     __table_args__ = (
         Index("idx_health_farm_date", "farm_id", "event_date"),
+        Index("idx_health_farm_created", "farm_id", "created_at"),  # admin data-monitor
         # XOR: sow_id IS NOT NULL OR group_id IS NOT NULL (enforced in DB)
     )
 
@@ -46,7 +47,10 @@ class HealthEvent(Base):
 
 class FeedRecord(Base):
     __tablename__ = "feed_records"
-    __table_args__ = (Index("idx_feed_farm_date", "farm_id", "record_date"),)
+    __table_args__ = (
+        Index("idx_feed_farm_date", "farm_id", "record_date"),
+        Index("idx_feed_farm_created", "farm_id", "created_at"),  # admin data-monitor
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     farm_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("farms.id"), nullable=False)
@@ -68,6 +72,7 @@ class Removal(Base):
     __tablename__ = "removals"
     __table_args__ = (
         Index("idx_removals_farm_date", "farm_id", "removal_date"),
+        Index("idx_removals_farm_created", "farm_id", "created_at"),  # admin data-monitor
         # 분만율 코호트의 NOT EXISTS(사망 모돈 제외)가 sow_id로 조회 → by-sow 인덱스(2026-07).
         Index("idx_removals_sow_date", "sow_id", "removal_date"),
     )

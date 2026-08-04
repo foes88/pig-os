@@ -16,6 +16,7 @@ class Mating(Base):
     __tablename__ = "matings"
     __table_args__ = (
         Index("idx_matings_farm_sow", "farm_id", "sow_id"),
+        Index("idx_matings_farm_created", "farm_id", "created_at"),  # admin data-monitor
         Index("idx_matings_date", "farm_id", "mating_date"),
         # NPD(v_sow_npd LATERAL)가 sow_id로 다음 교배를 조회 → by-sow 인덱스 없으면 대형농장
         # 스캔(대시보드 타임아웃 근인, 2026-07). farm 스코프 인덱스는 sow_id 단독 조회에 안 걸림.
@@ -61,6 +62,7 @@ class Farrowing(Base):
     __tablename__ = "farrowings"
     __table_args__ = (
         Index("idx_farrowings_farm_sow", "farm_id", "sow_id"),
+        Index("idx_farrowings_farm_created", "farm_id", "created_at"),  # admin data-monitor
         Index("idx_farrowings_date", "farm_id", "farrowing_date"),
         # 분만율 코호트(mating LEFT JOIN farrowing ON mating_id)가 mating_id로 조회 →
         # 인덱스 없으면 대형농장 스캔(대시보드 지연, 2026-07).
@@ -99,6 +101,7 @@ class Weaning(Base):
     __tablename__ = "weanings"
     __table_args__ = (
         Index("idx_weanings_farm_sow", "farm_id", "sow_id"),
+        Index("idx_weanings_farm_created", "farm_id", "created_at"),  # admin data-monitor
         # PSY/NPD/리포트/대시보드가 farm_id+weaning_date로 집계 → 대형농장(수만건) seq scan 방지.
         Index("idx_weanings_farm_date", "farm_id", "weaning_date", postgresql_where="deleted_at IS NULL"),
         # WSI 상관 서브쿼리(build_herd_kpis)가 sow_id로 직전 이유일을 조회 → by-sow 인덱스 필수
@@ -166,6 +169,7 @@ class PigletEvent(Base):
     __tablename__ = "piglet_events"
     __table_args__ = (
         Index("idx_pe_farrowing", "farrowing_id"),
+        Index("idx_piglet_farm_created", "farm_id", "created_at"),  # admin data-monitor
         Index("idx_pe_farm_date", "farm_id", "event_date"),
     )
 
