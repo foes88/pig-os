@@ -46,7 +46,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<Form>({
     org_name: "",
-    country: "KR",
+    country: "US",  // 기본=1차 출시 시장. KR은 레퍼런스 전용(가입 차단, 대표 override 시만 선택)
     name: "",
     username: "",
     email: "",
@@ -54,9 +54,9 @@ export default function OnboardingPage() {
     farm_name: "",
     farm_type: "FARROW_TO_FINISH",
     sow_count: 100,
-    timezone: "Asia/Seoul",
-    currency: "KRW",
-    unit_system: "METRIC",
+    timezone: "America/Chicago",
+    currency: "USD",
+    unit_system: "IMPERIAL",
   });
   const [confirmPw, setConfirmPw] = useState("");
   const [error, setError] = useState<string | null>(null);
