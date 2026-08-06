@@ -40,24 +40,17 @@
 주소: 경기도 안양시 동안구 동편로20번길 9, 스마트넷빌딩 3층
       (3rd Floor, Smartnet Building, 9 Dongpyeon-ro 20beon-gil, Dongan-gu, Anyang-si, Gyeonggi-do, Korea)
 사업자등록번호: 768-87-02255
-전화: [대표 확정 필요 — 아래 ⚠ 참조]
-전자우편: [대표 확정 필요 — 아래 ⚠ 참조]
+전화: +82-31-421-3418
+전자우편: wiselake@wiselake.ai
 ```
 - `CEO : Seung Hwan An` 문구 **제거**. 대표자 표기가 필요하면 **"진교문"으로 통일**.
 - 완료 후 재캡처하여 `T1_RECHECK_20260804.md`에 완료 기록.
 
 ---
 
-## ⚠ 발신 전 대표 확정 필요 — publish_candidate 내부 실값 불일치 2건 (임의 선택 금지)
+## ✅ 실값 확정됨 (대표 확인 2026-08-05) — footer 반영값
 
-1. **전화번호 1자리 상이**:
-   - 마스터약관 제25조: `+82-31-421-3414`
-   - 글로벌 방침 보호책임자: `+82-31-421-3418`
-   → 정본 1개 확정 후 두 문서·footer 통일.
-2. **개인정보 이메일 도메인 (T1 F-T1a, 3원 불일치)**:
-   - publish_candidate(신규 정본): `wiselake@wiselake.ai`
-   - 현행 게시본(pigos.io/pigplan.io): `wiselake@wiselake.co.kr`
-   - 구 방침 보호책임자: `gyomoon@ezfarm.co.kr`
-   → 글로벌 정본 1개 확정. **기존 주소는 alias/forwarding으로 계속 수신**(진행 중 제외요청 유실 방지), 원장 통합. 새 주소만 남기고 기존 즉시 폐기 금지.
+1. **전화번호**: **`+82-31-421-3418`로 전 문서 통일** (마스터약관 -3414 → -3418 정정 완료).
+2. **개인정보 이메일 정본**: **`wiselake@wiselake.ai`** (publish_candidate 기준 유지). 기존 `wiselake@wiselake.co.kr`·`gyomoon@ezfarm.co.kr`은 **alias/forwarding으로 계속 수신**(진행 중 제외요청 유실 방지), 원장 통합. 새 주소만 남기고 기존 즉시 폐기 금지.
 
-> 이 2건은 실값 결정 사항이라 본 지시서에서 임의로 채우지 않았습니다(위조 0). 대표 확정 후 footer·문서에 반영.
+→ footer에 위 확정값(진교문 · +82-31-421-3418 · wiselake@wiselake.ai)으로 반영.

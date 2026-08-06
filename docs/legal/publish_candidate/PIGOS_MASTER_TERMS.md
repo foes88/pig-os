@@ -236,7 +236,7 @@
 - 상호: 주식회사 와이즈레이크
 - 주소: 경기도 안양시 동안구 동편로20번길 9, 스마트넷빌딩 3층 (3rd Floor, Smartnet Building, 9 Dongpyeon-ro 20beon-gil, Dongan-gu, Anyang-si, Gyeonggi-do, Korea)
 - 사업자등록번호: 768-87-02255
-- 전화: +82-31-421-3414
+- 전화: +82-31-421-3418
 - 전자우편: wiselake@wiselake.ai
 
 (개인정보보호책임자·연락처는 개인정보 처리방침에서 현행화 — OPEN_QUESTIONS B/F2 연계)

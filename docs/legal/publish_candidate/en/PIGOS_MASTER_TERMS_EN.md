@@ -238,7 +238,7 @@ The Member warrants that it is not a target prohibited from transacting under th
 - Company name: WiseLake Inc.
 - Address: 경기도 안양시 동안구 동편로20번길 9, 스마트넷빌딩 3층 (3rd Floor, Smartnet Building, 9 Dongpyeon-ro 20beon-gil, Dongan-gu, Anyang-si, Gyeonggi-do, Korea)
 - Business registration number: 768-87-02255
-- Telephone: +82-31-421-3414
+- Telephone: +82-31-421-3418
 - Email: wiselake@wiselake.ai
 
 (The Data Protection Officer and contact information are to be kept current in the Privacy Notice — linked to OPEN_QUESTIONS B/F2)
