@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 from app.policy.consent_matrix import (
     GROUP_CN,
+    GROUP_KR,
     GROUP_US,
     group_for_country,
 )
@@ -61,6 +62,8 @@ class Gate:
 # 기능 플래그로 해제 가능(§7). 기본은 스펙대로 잠금.
 _GATES: dict[str, Gate] = {
     "CN": Gate(signup_blocked=True, reason_code="HOLD_D07"),
+    # KR: 레퍼런스 전용(공개 마케팅 타겟 아님) → 실고객 가입 차단. 대표 확인용은 allow_kr_signup(env)로 해제.
+    "KR": Gate(signup_blocked=True, reason_code="KR_REFERENCE_ONLY"),
     "TH": Gate(paid_blocked=True, reason_code="GATE_D09"),
     "VN": Gate(paid_blocked=True, reason_code="GATE_D08"),
     "EU": Gate(release_hold=True, reason_code="OPEN_EU_REP"),
@@ -126,6 +129,8 @@ def resolve(
         # 예: feature_overrides={'CN_signup': True} 로 특정 게이트 해제
         if group == GROUP_CN and feature_overrides.get("CN_signup"):
             gate = Gate(reason_code="OVERRIDE_CN")
+        if group == GROUP_KR and feature_overrides.get("KR_signup"):
+            gate = Gate(reason_code="OVERRIDE_KR")  # 대표 확인용(allow_kr_signup env)
         if group in ("TH", "VN") and feature_overrides.get(f"{group}_paid"):
             gate = Gate(release_hold=gate.release_hold, reason_code=f"OVERRIDE_{group}")
         if group in ("EU", "GB", "BR") and feature_overrides.get(f"{group}_release"):

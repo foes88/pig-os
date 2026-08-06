@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     # False(기본): 기존 default_metric_values 경로 유지(롤백 전용·현행 동작). 운영 전환 전까지 False.
     use_governance_benchmarks: bool = False
 
+    # KR 가입 정책: KR은 공개 마케팅 타겟 아님(레퍼런스 전용) → 운영은 기본 가입 차단.
+    # True로 두면 KR 가입 허용(대표 확인·검토용 환경에서만 env로 켬). 클라이언트가 못 바꿈(서버 env).
+    allow_kr_signup: bool = False
+
     # QBridge CRM 양방향 연동 (docs: QBridge repo docs/integrations/pigos.md).
     #  - qbridge_url + qbridge_inbound_token: 문의 발신(A). 미설정 시 아웃바운드 no-op.
     #  - qbridge_service_token: 답변 수신(B) 서비스토큰. 미설정 시 인바운드 503.

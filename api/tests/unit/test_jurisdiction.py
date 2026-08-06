@@ -57,11 +57,20 @@ def test_country_mismatch_picks_stricter_and_flags_counsel():
     assert j.counsel_review is True
 
 
-def test_kr_has_no_addendum_or_gate():
+def test_kr_reference_only_signup_blocked_by_default():
+    # KR = 레퍼런스 전용 → 실고객 가입 기본 차단(부속조항은 없음)
     j = resolve(selected_country="KR")
     assert j.group == "KR"
     assert j.doc_addendum is None
-    assert j.gate.signup_blocked is False and j.gate.release_hold is False
+    assert j.gate.signup_blocked is True
+    assert j.gate.reason_code == "KR_REFERENCE_ONLY"
+
+
+def test_kr_signup_override_unblocks():
+    # 대표 확인용 override(allow_kr_signup env → KR_signup) 시 해제
+    j = resolve(selected_country="KR", feature_overrides={"KR_signup": True})
+    assert j.gate.signup_blocked is False
+    assert j.gate.reason_code == "OVERRIDE_KR"
 
 
 def test_th_paid_gate_and_override():
