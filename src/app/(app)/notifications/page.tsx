@@ -92,7 +92,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="p-7 max-w-2xl">
+    <div className="p-7 max-w-4xl">
       <AlertsTabs />
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-3">
