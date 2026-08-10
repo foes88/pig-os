@@ -24,6 +24,7 @@ import {
   Baby,
   TrendingDown,
   Wheat,
+  LifeBuoy,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -71,18 +72,28 @@ const NAV_GROUPS: { labelKey?: string; items: NavItem[] }[] = [
     ],
   },
   {
-    labelKey: "grpReports",
+    labelKey: "grpPerformance",
     items: [
       { href: "/kpi",                  icon: BarChart3, k: "kpi" },
       { href: "/reports/sow-status",   icon: PiggyBank, k: "sowStatusMenu" },
+      { href: "/reports/reproduction", icon: FileText,  k: "production" },
+      { href: "/reports/farrowing",    icon: Baby,      k: "farrowWean" },
+      { href: "/reports/grow-finish",  icon: Beef,      k: "growFinish" },
+    ],
+  },
+  {
+    labelKey: "grpReports",
+    items: [
       { href: "/reports/daily",        icon: FileText,  k: "dailyReport" },
       { href: "/reports/comprehensive-daily", icon: FileText, k: "dailyFull" },
-      { href: "/reports/farrowing",    icon: Baby,      k: "farrowWean" },
-      { href: "/reports/mortality",    icon: TrendingDown, k: "mortality" },
-      { href: "/reports/reproduction", icon: FileText,  k: "production" },
-      { href: "/reports/grow-finish",  icon: Beef,      k: "growFinish" },
       { href: "/reports",              icon: FileText,  k: "sowReport" },
       { href: "/reports/ledger",       icon: ClipboardList, k: "ledger" },
+    ],
+  },
+  {
+    labelKey: "grpHealth",
+    items: [
+      { href: "/reports/mortality",    icon: TrendingDown, k: "mortality" },
       { href: "/reports/prrs",         icon: Dna,       k: "prrs" },
       { href: "/reports/data-quality", icon: ShieldCheck, k: "dataQuality" },
     ],
@@ -96,6 +107,7 @@ const NAV_GROUPS: { labelKey?: string; items: NavItem[] }[] = [
 ];
 
 const BOTTOM_ITEMS: NavItem[] = [
+  { href: "/support", icon: LifeBuoy, k: "support" },
   { href: "/settings", icon: Settings, k: "settings" },
 ];
 

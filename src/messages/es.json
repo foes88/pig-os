@@ -1715,7 +1715,10 @@
     "dataQuality": "Calidad de datos",
     "grpAddons": "Addons",
     "addonStore": "Tienda",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "support": "Soporte",
+    "grpPerformance": "Rendimiento",
+    "grpHealth": "Salud y calidad"
   },
   "topbar": {
     "search": "Buscar cerda ID, lote, sala…",

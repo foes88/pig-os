@@ -1715,7 +1715,10 @@
     "dataQuality": "数据质量",
     "grpAddons": "插件",
     "addonStore": "插件商店",
-    "settings": "设置"
+    "settings": "设置",
+    "support": "客户咨询",
+    "grpPerformance": "生产成绩",
+    "grpHealth": "健康与质量"
   },
   "topbar": {
     "search": "搜索母猪ID、批次、栏位…",

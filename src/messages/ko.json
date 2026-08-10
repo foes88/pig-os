@@ -1715,7 +1715,10 @@
     "dataQuality": "데이터 품질",
     "grpAddons": "Addon",
     "addonStore": "Addon 스토어",
-    "settings": "설정"
+    "settings": "설정",
+    "support": "고객문의",
+    "grpPerformance": "생산성적",
+    "grpHealth": "건강·품질"
   },
   "topbar": {
     "search": "모돈 ID, 배치, 구역 검색…",

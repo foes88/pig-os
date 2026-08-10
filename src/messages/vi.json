@@ -1715,7 +1715,10 @@
     "dataQuality": "Chất lượng dữ liệu",
     "grpAddons": "Tiện ích",
     "addonStore": "Cửa hàng",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "support": "Hỗ trợ",
+    "grpPerformance": "Hiệu suất",
+    "grpHealth": "Sức khỏe & Chất lượng"
   },
   "topbar": {
     "search": "Tìm số nái, lô, khu…",

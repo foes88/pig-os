@@ -1715,7 +1715,10 @@
     "dataQuality": "Qualidade de dados",
     "grpAddons": "Complementos",
     "addonStore": "Loja de complementos",
-    "settings": "Configurações"
+    "settings": "Configurações",
+    "support": "Suporte",
+    "grpPerformance": "Desempenho",
+    "grpHealth": "Saúde e Qualidade"
   },
   "topbar": {
     "search": "Buscar ID da matriz, lote, sala…",

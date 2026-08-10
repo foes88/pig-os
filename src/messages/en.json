@@ -1715,7 +1715,10 @@
     "dataQuality": "Data Quality",
     "grpAddons": "Addons",
     "addonStore": "Addon Store",
-    "settings": "Settings"
+    "settings": "Settings",
+    "support": "Support",
+    "grpPerformance": "Performance",
+    "grpHealth": "Health & Quality"
   },
   "topbar": {
     "search": "Search sow ID, batch, room…",
