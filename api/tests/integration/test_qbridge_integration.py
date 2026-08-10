@@ -36,6 +36,21 @@ async def test_inbound_reply_creates_reply_status_notification(client, db, test_
 
 
 @pytest.mark.asyncio
+async def test_inbound_reply_accepts_external_id_alias(client, db, test_user, monkeypatch):
+    # QBridge Partner API 가이드는 콜백에 external_id를 보냄 → external_ref alias로 수용돼야 함
+    monkeypatch.setattr(settings, "qbridge_service_token", "svc-token")
+    t = await _make_ticket(db, test_user)
+    r = await client.post(
+        "/api/v1/integrations/qbridge/reply",
+        json={"external_id": str(t.id), "body": "가이드 필드로 답변", "ticket_number": "QB-2026-2"},
+        headers={"Authorization": "Bearer svc-token"},
+    )
+    assert r.status_code == 200
+    replies = (await db.execute(select(SupportReply).where(SupportReply.ticket_id == t.id))).scalars().all()
+    assert len(replies) == 1 and replies[0].body == "가이드 필드로 답변"
+
+
+@pytest.mark.asyncio
 async def test_inbound_rejects_bad_token(client, db, test_user, monkeypatch):
     monkeypatch.setattr(settings, "qbridge_service_token", "svc-token")
     t = await _make_ticket(db, test_user)

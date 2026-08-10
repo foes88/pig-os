@@ -11,7 +11,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 from app.core.config import settings
 from app.core.dependencies import DbDep
@@ -24,7 +24,12 @@ router = APIRouter(prefix="/integrations/qbridge", tags=["integration"])
 
 
 class QBridgeReply(BaseModel):
-    external_ref: str = Field(..., description="원 SupportTicket.id (UUID 문자열)")
+    # QBridge Partner API 가이드는 콜백에 external_id를, 내부 계약은 external_ref를 씀 → 둘 다 수용(정합 리스크 제거).
+    external_ref: str = Field(
+        ...,
+        validation_alias=AliasChoices("external_ref", "external_id"),
+        description="원 SupportTicket.id (UUID 문자열) — external_ref/external_id 둘 다 허용",
+    )
     body: str = Field(..., description="상담사 답변 — 이미 고객 언어로 번역됨")
     lang: str | None = None
     ticket_number: str | None = None
