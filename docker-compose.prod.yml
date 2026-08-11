@@ -34,6 +34,9 @@ services:
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      QBRIDGE_URL: ${QBRIDGE_URL:-}
+      QBRIDGE_INBOUND_TOKEN: ${QBRIDGE_INBOUND_TOKEN:-}
+      QBRIDGE_SERVICE_TOKEN: ${QBRIDGE_SERVICE_TOKEN:-}
     expose:
       - "8000"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
