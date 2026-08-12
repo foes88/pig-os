@@ -106,7 +106,6 @@ export default function KpiPage() {
                 <span className="text-sm font-bold text-text">{t("trendTitle")}</span>
                 <div className="flex gap-3 text-[11px] text-text3">
                   <Legend className="text-success" label="PSY" />
-                  <Legend className="text-warning" label="NPD" />
                   <Legend className="text-text3" label={t("benchmark")} dash />
                 </div>
               </div>
@@ -117,7 +116,6 @@ export default function KpiPage() {
                   bench={data.benchmarks?.PSY?.target ?? 28}
                   series={[
                     { data: trend.map((r) => r.psy ?? 0), colorClass: "text-success" },
-                    { data: trend.map((r) => (r.npd != null ? r.npd / 1.6 : 0)), colorClass: "text-warning", fill: false },
                   ]}
                 />
               ) : (
