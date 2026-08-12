@@ -60,6 +60,12 @@ def psy_grade(psy: float | None) -> str | None:
 # ── NPD overdue ───────────────────────────────────────────────────────────────
 
 async def _npd_overdue(ctx: RuleContext) -> list[Finding]:
+    # DISABLED 2026-08 (ADR-KPI-00 / ADR-KPI-03 pending)
+    # ctx.kpi["NPD"] 는 WEI(이유-교배 간격, 60일 상한)이고
+    # ctx.benchmarks["NPD"] 는 연간 비생산일수(avg_inventory_sow/rolling_365) 기준.
+    # 의미가 어긋난 채 발화 가능하므로 비활성화. 재활성화는 ADR-KPI-03 결정 후.
+    # (규칙 코드는 삭제하지 않음 — ADR-KPI-03에서 재정의 대상)
+    return []
     npd = ctx.kpi.get("NPD")
     if npd is None:
         return []

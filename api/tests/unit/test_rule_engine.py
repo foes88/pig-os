@@ -115,38 +115,37 @@ class TestPsyRule:
 # ── NPD rules — country thresholds ───────────────────────────────────────────
 
 class TestNpdRule:
-    def test_kr_npd_30_ok(self):
+    # npd.overdue DISABLED (M1 STEP 1 · ADR-KPI-00 / ADR-KPI-03 pending):
+    # ctx.kpi["NPD"]는 실제 WEI인데 벤치는 연간 NPD 기준이라 발화가 어긋남 → 규칙이 항상 [] 반환.
+    # 아래는 "예전에 발화했을 값(WARNING/CRITICAL 포함)도 이제 미발화"임을 고정.
+    # 재활성화(여집합 NPD 또는 규칙 WEI 재정의) 시 ADR-KPI-03에서 본 테스트 갱신.
+    def test_disabled_kr_30(self):
         ctx = make_ctx("KR", kpi={"NPD": 30.0}, benchmarks={"NPD": KR_NPD_BENCH})
         assert asyncio.run(_npd_overdue(ctx)) == []
 
-    def test_kr_npd_40_warning(self):
+    def test_disabled_kr_40(self):
         ctx = make_ctx("KR", kpi={"NPD": 40.0}, benchmarks={"NPD": KR_NPD_BENCH})
-        findings = asyncio.run(_npd_overdue(ctx))
-        assert findings[0].severity == Severity.WARNING
+        assert asyncio.run(_npd_overdue(ctx)) == []
 
-    def test_kr_npd_55_critical(self):
+    def test_disabled_kr_55(self):
         ctx = make_ctx("KR", kpi={"NPD": 55.0}, benchmarks={"NPD": KR_NPD_BENCH})
-        findings = asyncio.run(_npd_overdue(ctx))
-        assert findings[0].severity == Severity.CRITICAL
+        assert asyncio.run(_npd_overdue(ctx)) == []
 
-    def test_cn_npd_40_ok(self):
-        # NPD=40 is WARNING in KR but OK in CN
+    def test_disabled_cn_40(self):
         ctx = make_ctx("CN", kpi={"NPD": 40.0}, benchmarks={"NPD": CN_NPD_BENCH})
         assert asyncio.run(_npd_overdue(ctx)) == []
 
-    def test_cn_npd_50_warning(self):
+    def test_disabled_cn_50(self):
         ctx = make_ctx("CN", kpi={"NPD": 50.0}, benchmarks={"NPD": CN_NPD_BENCH})
-        findings = asyncio.run(_npd_overdue(ctx))
-        assert findings[0].severity == Severity.WARNING
+        assert asyncio.run(_npd_overdue(ctx)) == []
 
-    def test_npd_none_no_finding(self):
+    def test_disabled_npd_none(self):
         ctx = make_ctx("KR", kpi={"NPD": None}, benchmarks={"NPD": KR_NPD_BENCH})
         assert asyncio.run(_npd_overdue(ctx)) == []
 
-    def test_critical_npd_adds_extended_cause(self):
+    def test_disabled_even_at_prior_critical_value(self):
         ctx = make_ctx("KR", kpi={"NPD": 55.0}, benchmarks={"NPD": KR_NPD_BENCH})
-        findings = asyncio.run(_npd_overdue(ctx))
-        assert any("extended" in c for c in findings[0].causes)
+        assert asyncio.run(_npd_overdue(ctx)) == []
 
 
 # ── Farrowing rate rules ──────────────────────────────────────────────────────
