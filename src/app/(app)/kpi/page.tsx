@@ -7,7 +7,7 @@ import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { Spark, LineChart } from "@/components/ui/charts";
-import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
+import { psyTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
 import type { KpiDashboard, KpiTrend } from "@/types/api.types";
 
 export default function KpiPage() {
@@ -78,9 +78,9 @@ export default function KpiPage() {
               tier={psyTier(data.psy)} spark={trend?.map((r) => r.psy)} t={t}
             />
             <KpiCard
-              label="NPD" desc={t("npdDesc")} unit={t("daysUnit")}
-              value={fmt(data.npd, 1)} bench={data.benchmarks?.NPD?.target ?? 35}
-              tier={npdTier(data.npd)} invert spark={trend?.map((r) => r.npd)} t={t}
+              label={t("weiLabel")} desc={t("weiDesc")} unit={t("daysUnit")}
+              value={fmt(data.npd, 1)} bench={null}
+              tier={null} invert spark={trend?.map((r) => r.npd)} t={t}
             />
             <KpiCard
               label={t("frLabel")} desc={t("frDesc")} unit="%"
