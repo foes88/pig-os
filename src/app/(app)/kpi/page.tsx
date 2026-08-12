@@ -146,11 +146,13 @@ function KpiCard({
   label, desc, value, unit, bench, tier, invert = false, spark, t,
 }: {
   label: string; desc: string; value: string; unit?: string;
-  bench: number; tier: KpiTier; invert?: boolean; spark?: (number | null)[]; t: (k: string, v?: Record<string, string | number | Date>) => string;
+  bench: number | null; tier: KpiTier | null; invert?: boolean; spark?: (number | null)[]; t: (k: string, v?: Record<string, string | number | Date>) => string;
 }) {
-  const style = TIER_STYLE[tier];
+  // tier/bench null 허용(ADR-KPI-08 전까지 백엔드 severity 미도달 KPI·정의 미확정 벤치). null이면 티어 색·벤치 델타 미표시.
+  const style = tier != null ? TIER_STYLE[tier] : null;
+  const textCls = style ? style.text : "text-text";
   const num = parseFloat(value);
-  const delta = Number.isFinite(num) ? num - bench : null;
+  const delta = (bench != null && Number.isFinite(num)) ? num - bench : null;
   // invert(낮을수록 좋음, 예: NPD): delta ≤ 0 이 좋음
   const deltaGood = delta == null ? false : invert ? delta <= 0 : delta >= 0;
   const sparkData = (spark ?? []).filter((v): v is number => v != null && Number.isFinite(v));
@@ -158,23 +160,25 @@ function KpiCard({
     <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-bold tracking-wide uppercase text-text3">{label}</span>
-        <span className={`w-2 h-2 rounded-full ${style.dot}`} />
+        {style && <span className={`w-2 h-2 rounded-full ${style.dot}`} />}
       </div>
       <div className="text-[10px] text-text3 -mt-1">{desc}</div>
       <div className="flex items-baseline gap-1">
-        <span className={`font-mono text-3xl font-extrabold leading-none ${style.text}`}>{value}</span>
+        <span className={`font-mono text-3xl font-extrabold leading-none ${textCls}`}>{value}</span>
         {unit && value !== "—" && <span className="text-xs text-text3 font-semibold">{unit}</span>}
       </div>
-      <div className="flex items-center gap-1.5 text-[11px] text-text3">
-        {delta != null && (
-          <span className={`font-mono font-bold ${deltaGood ? "text-success" : style.text}`}>
-            {delta > 0 ? "+" : ""}{delta.toFixed(1)}
-          </span>
-        )}
-        <span>{t("vsBench", { v: bench })}</span>
-      </div>
+      {bench != null && (
+        <div className="flex items-center gap-1.5 text-[11px] text-text3">
+          {delta != null && (
+            <span className={`font-mono font-bold ${deltaGood ? "text-success" : textCls}`}>
+              {delta > 0 ? "+" : ""}{delta.toFixed(1)}
+            </span>
+          )}
+          <span>{t("vsBench", { v: bench })}</span>
+        </div>
+      )}
       {sparkData.length >= 2 && (
-        <div className={style.text}>
+        <div className={textCls}>
           <Spark data={sparkData} w={210} h={30} />
         </div>
       )}
