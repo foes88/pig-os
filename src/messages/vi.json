@@ -268,7 +268,9 @@
     "aiSummaryBody": "PSY {psy} ({psyDelta} so kỳ trước), tỷ lệ đẻ {fr}%. {signals} tín hiệu mở, {crit} khẩn cấp.",
     "aiTemplateBadge": "MẪU",
     "print": "In / PDF",
-    "export": "Xuất CSV"
+    "export": "Xuất CSV",
+    "weiLabel": "Khoảng cách cai sữa–phối giống (WEI)",
+    "weiDesc": "Số ngày trung bình từ cai sữa đến phối lại (chỉ tính phối lại trong vòng 60 ngày)"
   },
   "chat": {
     "placeholder": "Hỏi về KPI hoặc vấn đề của trại...",

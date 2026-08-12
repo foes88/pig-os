@@ -268,7 +268,9 @@
     "aiSummaryBody": "PSY é {psy} ({psyDelta} vs anterior), taxa de partos {fr}%. {signals} sinais abertos, {crit} críticos.",
     "aiTemplateBadge": "MODELO",
     "print": "Imprimir / PDF",
-    "export": "Exportar CSV"
+    "export": "Exportar CSV",
+    "weiLabel": "Intervalo desmame-cio (WEI)",
+    "weiDesc": "Média de dias do desmame à recobertura (apenas recoberturas em até 60 dias)"
   },
   "chat": {
     "placeholder": "Pergunte sobre KPIs ou problemas da fazenda...",

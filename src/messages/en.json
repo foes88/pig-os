@@ -268,7 +268,9 @@
     "aiSummaryBody": "PSY is {psy} ({psyDelta} vs last period), farrowing rate {fr}%. {signals} management signals open, {crit} critical.",
     "aiTemplateBadge": "TEMPLATE",
     "print": "Print / PDF",
-    "export": "Export CSV"
+    "export": "Export CSV",
+    "weiLabel": "Wean-to-Estrus Interval (WEI)",
+    "weiDesc": "Average days from weaning to re-breeding (only re-breedings within 60 days)"
   },
   "chat": {
     "placeholder": "Ask about farm KPIs or issues...",

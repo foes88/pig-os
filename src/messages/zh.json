@@ -268,7 +268,9 @@
     "aiSummaryBody": "PSY {psy}（环比 {psyDelta}），分娩率 {fr}%。待处理信号 {signals} 个（紧急 {crit} 个）。",
     "aiTemplateBadge": "模板",
     "print": "打印 / PDF",
-    "export": "导出 CSV"
+    "export": "导出 CSV",
+    "weiLabel": "断奶至配种间隔 (WEI)",
+    "weiDesc": "断奶到再配种的平均天数（仅统计60天内再配种）"
   },
   "chat": {
     "placeholder": "询问猪场KPI或问题...",

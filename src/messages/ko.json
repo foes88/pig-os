@@ -268,7 +268,9 @@
     "aiSummaryBody": "PSY {psy} ({psyDelta} 전월 대비), 분만율 {fr}%. 관리 신호 {signals}건 (긴급 {crit}건).",
     "aiTemplateBadge": "템플릿",
     "print": "인쇄 / PDF",
-    "export": "내보내기"
+    "export": "내보내기",
+    "weiLabel": "이유-교배 간격 (WEI)",
+    "weiDesc": "이유 후 재교배까지 평균 일수 (60일 내 재교배 건만 집계)"
   },
   "chat": {
     "placeholder": "농장 KPI나 문제 상황을 질문하세요...",

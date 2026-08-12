@@ -268,7 +268,9 @@
     "aiSummaryBody": "PSY {psy} ({psyDelta} vs anterior), tasa de partos {fr}%. {signals} señales abiertas, {crit} críticas.",
     "aiTemplateBadge": "PLANTILLA",
     "print": "Imprimir / PDF",
-    "export": "Exportar CSV"
+    "export": "Exportar CSV",
+    "weiLabel": "Intervalo destete-celo (WEI)",
+    "weiDesc": "Días promedio del destete a la re-cubrición (solo re-cubriciones dentro de 60 días)"
   },
   "chat": {
     "placeholder": "Pregunte sobre KPI o problemas...",
