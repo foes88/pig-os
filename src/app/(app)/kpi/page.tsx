@@ -77,6 +77,10 @@ export default function KpiPage() {
               value={fmt(data.psy, 1)} bench={data.benchmarks?.PSY?.target ?? 28}
               tier={psyTier(data.psy)} spark={trend?.map((r) => r.psy)} t={t}
             />
+            {/* INTERIM (ADR-KPI-03): main 의 NPD 가 WEI(v_sow_npd AVG(wei_days)) 인 동안만 유효.
+                여집합 NPD 계산(365×(사육일−임신일−포유일)/사육일)이 main 에 이관되면
+                이 커밋을 revert 하고 npdLabel/npdDesc + NPD 벤치마크·tier 를 복원할 것.
+                (여집합 구현은 feat/consent-infra 에 존재 — PORT_AND_VALIDATE 대상) */}
             <KpiCard
               label={t("weiLabel")} desc={t("weiDesc")} unit={t("daysUnit")}
               value={fmt(data.npd, 1)} bench={null}

@@ -65,6 +65,8 @@ async def _npd_overdue(ctx: RuleContext) -> list[Finding]:
     # ctx.benchmarks["NPD"] 는 연간 비생산일수(avg_inventory_sow/rolling_365) 기준.
     # 의미가 어긋난 채 발화 가능하므로 비활성화. 재활성화는 ADR-KPI-03 결정 후.
     # (규칙 코드는 삭제하지 않음 — ADR-KPI-03에서 재정의 대상)
+    # INTERIM 제거 트리거: 여집합 NPD 계산이 main 에 이관되어 ctx.kpi["NPD"] 가 연간 비생산일수가 되면
+    # 이 return 을 제거해 규칙을 재활성화하고 TestNpdRule 을 발화 단언으로 되돌릴 것.
     return []
     npd = ctx.kpi.get("NPD")
     if npd is None:
