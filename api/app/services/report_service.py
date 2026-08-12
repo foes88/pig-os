@@ -288,7 +288,7 @@ async def _country_kpi_benchmarks(db: AsyncSession, farm) -> list[dict]:
             FROM default_metric_values
             WHERE scope_type = 'region'
               AND scope_code IN :countries
-              AND metric_code IN ('PSY', 'NPD', 'FARROWING_RATE')
+              AND metric_code IN ('PSY', 'FARROWING_RATE')
             """
         ).bindparams(bindparam("countries", expanding=True)),
         {"countries": ordered},
