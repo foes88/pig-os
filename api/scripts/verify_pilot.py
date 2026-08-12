@@ -27,7 +27,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import AsyncSessionLocal
-from app.services.kpi_service import calculate_npd_breakdown, calculate_psy
+from app.services.kpi_service import calculate_npd, calculate_psy
 from scripts.import_pigplan import DEFAULT_CSV, fnum, load_csv, pdate
 from scripts.pilot_common import PILOT_FARMS, farm_uuid
 
@@ -316,7 +316,8 @@ async def build_scorecards(
             for year in years:
                 counts = await _pigos_year_counts(db, farm_id, year)
                 psy = await calculate_psy(db, farm_id, year)
-                npd = await calculate_npd_breakdown(db, farm_id, date(year, 1, 1), date(year, 12, 31))
+                # calculate_npd(여집합 NPD, rolling 12개월) — ref_date 기준. 연도 검증이므로 연말일자를 기준일로.
+                npd = await calculate_npd(db, farm_id, date(year, 12, 31))
                 year_scores.append(YearScore(
                     farm_no=farm_no,
                     year=year,
