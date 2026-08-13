@@ -248,19 +248,27 @@ farm.country → effective_metric_values(warning/critical/direction) → KPI val
 
 ## 7. API Contract
 
-`DashboardKpi`에 KPI별 status를 추가한다(필드 추가 = 하위호환).
+`DashboardKpi`에 KPI별 status를 추가한다(필드 추가 = 하위호환). **D1 확정:**
 
 ```json
 {
   "psy": 24.3,
   "kpi_status": {
-    "PSY":            { "status": "normal" },
-    "NPD":            { "status": "insufficient", "reason": "definition_pending" },
-    "FARROWING_RATE": { "status": "warning" }
+    "PSY":            { "status": "normal",       "reason": null },
+    "FARROWING_RATE": { "status": "warning",      "reason": null },
+    "NPD":            { "status": "insufficient", "reason": "policy_pending" },
+    "SOW_TURNOVER":   { "status": "insufficient", "reason": "no_policy" }
   }
 }
 ```
-- 최소 계약은 `status` 하나. `reason`은 insufficient/설명이 필요할 때만 선택적.
+
+**D1-1. `reason`은 항상 존재하고, 없으면 `null`** (optional 금지)
+> optional로 두면 프론트가 `reason` 유무로 분기하게 되고, **그것이 프론트 판단 로직의 입구**가 된다.
+> 본 ADR이 막으려는 바로 그 패턴이므로 키를 항상 내려보낸다.
+
+**D1-2. 키는 `metric_code`로 통일** (`PSY`·`NPD`·`FARROWING_RATE`·`SOW_TURNOVER`)
+> 이미 `effective_metric_values`와 `benchmarks` dict가 쓰는 키다. 동일 키를 쓰면
+> 후속 Registry(canonical_variant_id) 연결 시 **매핑 테이블이 불필요**하다.
 - **UI가 판정을 재현하기 위해 threshold 전체를 받을 필요는 없다.**
 - 기존 `benchmarks`(avg/top25/target)는 "비교 표시" 목적이며 **status 계산과 분리**된다.
 
@@ -351,7 +359,17 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 ## 14. Risks
 
 - 백엔드 status와 기존 화면 색이 달라져 **사용자가 "성적이 나빠졌다"고 오인** (Phase 2 관찰로 사전 파악)
-- `effective_metric_values`에 임계 미설정 KPI는 대량 insufficient 발생 가능 → 시드 점검 선행
+- **[실측] 임계 시드 커버리지** (2026-08-13, bjh 로컬 판독):
+  | 대상 | 시드 행 | 판정 |
+  |---|---|---|
+  | PSY | 20 | ✅ 임계 적용 가능 |
+  | NPD | 20 | ✅ (단 rule 비활성 → policy_pending) |
+  | FARROWING_RATE | 12 | ✅ |
+  | **SOW_TURNOVER** | **0** | ❌ no_policy 확정 |
+  | 로컬 DB `default_metric_values` | **0 rows** (마이그레이션 미적용) | ⚠️ **이 상태로 Phase 3 → 화면 전체 회색** |
+
+  → **착수 전 필수**: ① 개발 DB에 시드 마이그레이션 적용 ② **프로드 실제 커버리지 read-only 확인**.
+  프로드에 임계가 비어 있으면 Phase 3 전에 시드 보완이 선행되어야 한다.
 - NPD 정의 혼선(브랜치 발산)이 남은 상태에서 status를 붙이면 잘못된 판정 고착 → **NPD는 ADR-KPI-03 확정 후**
 - 어휘 3종 매핑 누락 시 채널 간 불일치
 
@@ -376,9 +394,9 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 
 | # | 질문 | 상태 |
 |---|---|---|
-| D1 | `kpi_status` 필드명·중첩 구조 최종안 | OPEN |
-| D2 | insufficient reason 어휘 확정 | OPEN |
-| D3 | Phase 2(dual observation) 실제 수행 여부 | OPEN |
+| D1 | `kpi_status` 필드명·중첩 구조 | **DECIDED** — §7 (reason 항상 존재·null 허용, 키=metric_code) |
+| D2 | insufficient reason 어휘 | **DECIDED** — `no_data`·`insufficient_sample`·`out_of_valid_range`·`no_policy`·`policy_pending`·`evaluation_skipped`·`rule_disabled`·`context_missing` (§4.1.1) |
+| D3 | Phase 2(dual observation) 수행 여부 | **DECIDED — 수행함.** 사용자 수가 적은 지금이 가장 저렴하고, 백엔드 판정 ↔ 기존 화면색 불일치 로그가 **D-2(재고 결함)의 간접 증거**가 된다(백엔드 WARNING인데 화면 normal = 미발화 사례) |
 | D4 | `feat/consent-infra` 머지 계획 | **NOT_FOUND** (조직 결정) |
 | D5 | 임계 미설정 KPI 시드 보완 범위 | OPEN |
 | D6 | 모바일(Android) 클라이언트 동일 계약 적용 시점 | OPEN |
