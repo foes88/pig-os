@@ -3,7 +3,7 @@
 > (구 제목: Backend-Owned KPI Status Contract — 판독 결과 "새 판정엔진 구축"이 아니라
 > "이미 있는 판정의 끊어진 contract 복구"임이 확인되어 v0.2에서 범위를 축소·개명)
 
-status: PROPOSED (v0.2)
+status: ACCEPTED (v0.3 — P1·P2·P3 패치 반영)
 date: 2026-08-13
 supersedes: (없음) · depends_on: ADR-KPI-00 P7 · blocks: M3 Country Policy
 
@@ -161,17 +161,52 @@ benchmark 값 출처 분류: **COUNTRY_POLICY** (`effective_metric_values`, 농�
 | `active_sows` 등 카운트 | `inventory.zero`(SOW_COUNT) | 상태카드 아님 | N/A |
 
 **결론: 부분 YES(3/4).** 따라서 serializer는 "severity를 그냥 가져오기"만으로 충분하지 않고,
-**KPI→status 조회 adapter**가 필요하다. adapter 규칙:
+**KPI Status Contract Assembler**(§4.2)가 필요하다.
+
+### 4.1.1 status 결정 규칙 (P1 — `normal`은 적극적으로 증명된 상태)
+
+> "발화 없음 = normal"로 뭉뚱그리지 않는다. rule 미실행·컨텍스트 부족·매핑 실패가
+> normal(초록)로 표시되면 침묵 실패(silent pass)가 된다.
 
 ```
-1) 해당 KPI에 대한 rule 판정이 있으면 → 그 severity를 canonical status로 매핑
-2) rule은 있으나 발화 없음(정상 범위)      → normal
-3) rule 자체가 없는 KPI(sow_turnover 등)   → insufficient(reason="no_policy")
-   ※ 프론트가 대신 판정하지 않는다. 정책이 없으면 "정책 없음"을 표시한다.
-4) 값 없음/표본 부족/정의 미확정           → insufficient(각 reason)
+rule exists + evaluation completed + sufficient data + no violation
+    → normal                       # 적극 증명됨
+
+rule exists + evaluation completed + violation
+    → warning / critical           # severity 매핑
+
+rule exists but evaluation unavailable / skipped / disabled / context missing
+    → insufficient(reason= evaluation_skipped | rule_disabled | context_missing | policy_pending)
+
+rule does not exist for this metric_key
+    → insufficient(reason="no_policy")
+
+value 없음 / 표본 부족 / 유효범위 밖
+    → insufficient(reason= no_data | insufficient_sample | out_of_valid_range)
 ```
-`sow_turnover`에 상태가 필요하면 **rule/threshold를 백엔드에 추가**하는 것이 정답이며,
-프론트 상수로 되돌아가지 않는다(ADR-KPI-00 P7).
+
+- `npd`는 현재 rule이 **비활성**(M1) → `insufficient(reason="policy_pending")`.
+  **절대 `npdTier()`로 폴백하지 않는다.** 정책 미확정이면 UI는 판단하지 않고 insufficient를 표시한다
+  — 이 케이스가 본 ADR 원칙의 실증이다.
+
+### 4.2 KPI Status Contract Assembler (P2 — 판정기가 아님)
+
+이름을 **Assembler**로 고정한다(“adapter”는 판정 로직이 스며들 여지를 준다).
+책임은 **연결·정규화**뿐이다.
+
+```
+허용:
+  - metric_key ↔ rule evaluation 결과 연결
+  - rule evaluation 결과(Severity) → canonical status 변환
+  - missing / unavailable / no_policy / disabled → insufficient(+reason) 정규화
+
+금지:
+  - threshold 비교          (warning/critical 값을 직접 다루지 않음)
+  - country 조건 분기
+  - KPI별 자체 판정
+  - benchmark(avg/top25/target) 기반 재판정
+```
+Assembler가 threshold를 읽어야 한다면 그것은 설계 위반이다 — 판정은 Rule Engine에서 이미 끝나 있어야 한다.
 
 ---
 
@@ -296,6 +331,12 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 6. **Regression**: 프론트 tier 함수 호출 0 (grep gate)
 7. **Cross-channel**: dashboard/report의 동일 KPI status 의미 일치
    — 단 **benchmark 필드 노출 차이는 불일치로 보지 않는다**
+8. **normal 적극증명 (P1)**: rule 미실행·skipped·disabled·context 결손이 **normal로 새지 않음**
+   (각각 insufficient + 해당 reason)
+9. **no_policy**: rule 없는 KPI(`sow_turnover`)가 `insufficient(no_policy)`로 나오고 프론트가 대체판정하지 않음
+10. **policy_pending**: NPD가 `insufficient(policy_pending)`이며 `npdTier` 폴백이 호출되지 않음
+11. **Assembler 순수성 (P2)**: Assembler 코드에 threshold 비교·country 분기·benchmark 재판정 부재
+    (구현 시 grep/리뷰 게이트)
 
 ---
 
@@ -323,6 +364,8 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 - ❌ **threshold를 frontend로 이전** — warning/critical을 API로 내려 프론트가 재계산하면 본 ADR이 무의미해진다.
 - ❌ **benchmark(avg/top25/target)와 alert threshold(warning/critical/direction) 통합** — §9 참조. 둘은 다른 데이터다.
 - ❌ **Rule Engine 계산식 변경**
+- ❌ **`sow_turnover` 등 rule 없는 KPI를 위한 신규 정책/rule 신설** (D7-B — 후속 작업. 본 ADR은 `no_policy → insufficient` contract만 확정)
+- ❌ **ADR-KPI-03(NPD 정의) 완료 대기** — NPD는 `insufficient(policy_pending)`으로 두고 선행 구현한다
 - KPI 계산식 변경 · DB 스키마 변경 · 알림(alerts) 도메인의 `Severity` 폐기
 - benchmark 값 자체의 정확성 검증(ADR-KPI-01/02 소관)
 - NPD 정의 확정(ADR-KPI-03 소관)
@@ -339,7 +382,23 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 | D4 | `feat/consent-infra` 머지 계획 | **NOT_FOUND** (조직 결정) |
 | D5 | 임계 미설정 KPI 시드 보완 범위 | OPEN |
 | D6 | 모바일(Android) 클라이언트 동일 계약 적용 시점 | OPEN |
-| D7 | **`sow_turnover` 상태 표시 필요 여부** — 필요하면 백엔드 rule/threshold 신설(프론트 상수 금지), 불필요하면 status 없이 값만 표시 | **OPEN (신규, §4.1)** |
+| **D7-A** | rule 없는 KPI(`sow_turnover` 등)의 contract 처리 | **DECIDED — `insufficient(reason="no_policy")`** (ADR-08 내에서 확정) |
+| **D7-B** | `sow_turnover`용 정책/rule을 신설할 것인가 | **분리 — 후속 작업/별도 ADR. ADR-08 Non-Goal, blocker 아님** |
+
+### 16.1 Blocking items (ADR-08 구현 착수 기준 — P3로 축소)
+
+```
+1. canonical status enum 확정                      → §5 (결정됨)
+2. rule-result → KPI mapping 확정                  → §4.1 (판독 완료)
+3. normal / insufficient 판정 조건 확정            → §4.1.1 (결정됨)
+4. API additive contract 확정                      → D1 (필드명·구조)
+5. frontend legacy tier 호출처 전수 확인           → §2.1 (완료: 2화면+테스트1)
+6. NPD 임시 insufficient 정책 확정                 → policy_pending (결정됨)
+```
+**ADR-08 blocker에서 제외**(과결합 해소): `sow_turnover` rule 신설(D7-B), **ADR-KPI-03 본 구현**.
+ADR-03 완료 전에도 다음까지 구현 가능하다 —
+`PSY→status` · `farrowing_rate→status` · `NPD→insufficient(policy_pending)` · `sow_turnover→insufficient(no_policy)`.
+이것이 오히려 안전한 단계적 이행이다.
 
 ---
 
