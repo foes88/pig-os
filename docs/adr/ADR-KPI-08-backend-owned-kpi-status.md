@@ -1,8 +1,16 @@
-# ADR-KPI-08 — Backend-Owned KPI Status Contract
+# ADR-KPI-08 — KPI Status Contract: Rule Engine → API → Frontend
 
-status: PROPOSED
+> (구 제목: Backend-Owned KPI Status Contract — 판독 결과 "새 판정엔진 구축"이 아니라
+> "이미 있는 판정의 끊어진 contract 복구"임이 확인되어 v0.2에서 범위를 축소·개명)
+
+status: PROPOSED (v0.2)
 date: 2026-08-13
 supersedes: (없음) · depends_on: ADR-KPI-00 P7 · blocks: M3 Country Policy
+
+## 0. Decision (한 문장)
+
+> **PigOS는 새로운 KPI 판정 로직을 만들지 않는다. 기존 국가별 Rule Engine 판정을 canonical status로
+> API에 전달하고, Frontend의 모든 KPI threshold/tier 판정을 제거한다.**
 
 ---
 
@@ -134,10 +142,36 @@ benchmark 값 출처 분류: **COUNTRY_POLICY** (`effective_metric_values`, 농�
 
 ## 4. Decision
 
-1. **KPI 상태 판정 authority = 백엔드.** 프론트는 렌더링만 한다.
-2. 백엔드가 KPI별 canonical status를 계산해 **API 응답에 KPI 단위로 포함**한다.
+1. **KPI 상태 판정 authority = 백엔드**(기존 Rule Engine). 프론트는 렌더링만 한다.
+2. **판정 로직을 새로 만들지 않는다.** 기존 `effective_metric_values`(국가별 warning/critical/direction)
+   + Rule Engine 판정을 **canonical status로 승격**해 API에 싣는다.
 3. 프론트의 KPI 임계·국가 분기·방향성 판정 코드는 **전량 제거**한다.
 4. 상태 어휘는 **하나**로 통일하고, 나머지는 백엔드 내부에서 매핑한다.
+
+### 4.1 판독: 대시보드 KPI ↔ Rule 판정 1:1 재사용 가능성 (핵심 질문)
+
+`RuleRegistry.register` (api/app/engine/rules/base.py) 기준:
+
+| 대시보드 KPI (DashboardKpi) | Rule | rule의 kpi= | 1:1 재사용 |
+|---|---|---|---|
+| `psy` | `psy.below_target` (L150) | `PSY` | ✅ 가능 |
+| `farrowing_rate` | `farrowing.low_rate` (L185) | `FARROWING_RATE` | ✅ 가능 |
+| `npd` | `npd.overdue` (L97) | `NPD` | ⚠️ 매핑은 1:1이나 **M1에서 비활성**(ADR-KPI-03 대기) → 당분간 `insufficient` |
+| **`sow_turnover`** | **없음** | — | ❌ **rule 미존재 → adapter 필요** |
+| `active_sows` 등 카운트 | `inventory.zero`(SOW_COUNT) | 상태카드 아님 | N/A |
+
+**결론: 부분 YES(3/4).** 따라서 serializer는 "severity를 그냥 가져오기"만으로 충분하지 않고,
+**KPI→status 조회 adapter**가 필요하다. adapter 규칙:
+
+```
+1) 해당 KPI에 대한 rule 판정이 있으면 → 그 severity를 canonical status로 매핑
+2) rule은 있으나 발화 없음(정상 범위)      → normal
+3) rule 자체가 없는 KPI(sow_turnover 등)   → insufficient(reason="no_policy")
+   ※ 프론트가 대신 판정하지 않는다. 정책이 없으면 "정책 없음"을 표시한다.
+4) 값 없음/표본 부족/정의 미확정           → insufficient(각 reason)
+```
+`sow_turnover`에 상태가 필요하면 **rule/threshold를 백엔드에 추가**하는 것이 정답이며,
+프론트 상수로 되돌아가지 않는다(ADR-KPI-00 P7).
 
 ---
 
@@ -207,6 +241,19 @@ farm.country → effective_metric_values(warning/critical/direction) → KPI val
 
 ## 9. Benchmark Exposure Policy
 
+### 9.1 benchmark ≠ threshold ≠ status (세 데이터는 별개)
+
+| 데이터 | 소스 | 성격 | 프론트 노출 |
+|---|---|---|---|
+| **benchmark** `avg/top25/target` | `effective_metric_values` → `KpiBenchmark` | **설명·비교용** ("국가평균 22.0") | ✅ 현행 유지 |
+| **threshold** `warning/critical/direction` | `effective_metric_values` → Rule Engine | **판정 정책** | ❌ **내려보내지 않음** |
+| **status** | 백엔드가 threshold 적용한 결과 | **판정 결과** | ✅ 신규(본 ADR) |
+
+**threshold를 API로 내려 프론트가 재계산하게 만들면 본 ADR을 한 의미가 사라진다.**
+프론트는 threshold를 알 필요가 없다. benchmark는 "비교 표시"로만 계속 쓴다.
+
+### 9.2 채널별 노출
+
 > **Status semantic consistency ≠ identical field exposure**
 
 - status 의미는 dashboard/report/export/mobile에서 동일해야 한다.
@@ -269,8 +316,13 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 
 ---
 
-## 15. Non-Goals
+## 15. Non-Goals (명시적 금지 — 범위 팽창 방지)
 
+- ❌ **새로운 국가별 판정 엔진 구축** — 이미 `effective_metric_values` + Rule Engine이 있다. 복제 금지.
+- ❌ **`effective_metric_values` 재설계**
+- ❌ **threshold를 frontend로 이전** — warning/critical을 API로 내려 프론트가 재계산하면 본 ADR이 무의미해진다.
+- ❌ **benchmark(avg/top25/target)와 alert threshold(warning/critical/direction) 통합** — §9 참조. 둘은 다른 데이터다.
+- ❌ **Rule Engine 계산식 변경**
 - KPI 계산식 변경 · DB 스키마 변경 · 알림(alerts) 도메인의 `Severity` 폐기
 - benchmark 값 자체의 정확성 검증(ADR-KPI-01/02 소관)
 - NPD 정의 확정(ADR-KPI-03 소관)
@@ -287,6 +339,7 @@ M1 INTERIM 트리거(여집합 NPD가 main에 이관되면 revert)와 **충돌�
 | D4 | `feat/consent-infra` 머지 계획 | **NOT_FOUND** (조직 결정) |
 | D5 | 임계 미설정 KPI 시드 보완 범위 | OPEN |
 | D6 | 모바일(Android) 클라이언트 동일 계약 적용 시점 | OPEN |
+| D7 | **`sow_turnover` 상태 표시 필요 여부** — 필요하면 백엔드 rule/threshold 신설(프론트 상수 금지), 불필요하면 status 없이 값만 표시 | **OPEN (신규, §4.1)** |
 
 ---
 
