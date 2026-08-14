@@ -25,6 +25,7 @@ from app.engine.rules import (
 )
 from app.engine.threshold_resolver import load_operational_defaults_map
 from app.schemas.kpi import Alert, DashboardKpi, KpiBenchmark, KpiTrend, NpdBreakdown, PsyDetail
+from app.services.kpi_status_assembler import DASHBOARD_POLICY_KPIS, assemble_kpi_status
 from app.services.rule_config_service import load_rule_configs
 
 
@@ -890,12 +891,26 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
                 "lost_pigs": lost, "basis": "ytd_lost_piglets", "demo": price["demo"],
             }
 
+    # ADR-KPI-08 Phase 1 — Rule Engine이 국가별 정책으로 이미 판정한 결과를 canonical status로 조립.
+    # 여기서 threshold를 다시 비교하지 않는다(판정은 위 RuleEngine.evaluate에서 끝났다).
+    kpi_status = assemble_kpi_status(
+        values={
+            "PSY": psy_value,
+            "NPD": npd_detail.avg_npd if npd_detail else None,
+            "FARROWING_RATE": farrowing_rate,
+            "SOW_TURNOVER": npd_detail.sow_turnover if npd_detail else None,
+        },
+        findings=result.findings,
+        policy_kpis=DASHBOARD_POLICY_KPIS,
+    )
+
     return DashboardKpi(
         farm_id=farm.id,
         as_of=today,
         psy=psy_value,
         npd=npd_detail.avg_npd if npd_detail else None,
         sow_turnover=npd_detail.sow_turnover if npd_detail else None,
+        kpi_status=kpi_status,
         # 스케일 SSOT: percent(0~100) 단일 통일(2026-06-25). 시드 benchmarks(f3a7c2e9b5d1)가 percent
         # (KR target 85.0, unit "%")이고 RuleEngine 입력(L654)·trend 모두 percent → 출력도 percent로 통일해
         # 이중표현(ratio↔percent) 제거. ÷100 금지(과거 ratio 반환이 클라 스케일 꼬임의 근인이었음).

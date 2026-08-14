@@ -14,10 +14,24 @@ class Alert(BaseModel):
 
 
 class KpiBenchmark(BaseModel):
-    """국가별 벤치마크 (농장 country 기준 effective_metric_values에서 해석)."""
+    """국가별 벤치마크 (농장 country 기준 effective_metric_values에서 해석).
+    ※ 판정용 threshold(warning/critical/direction)는 여기 담지 않는다 — ADR-KPI-08 §9.1.
+    benchmark(비교 표시용) ≠ threshold(판정 정책) ≠ status(판정 결과)."""
     avg: float | None = None      # 국가 평균
     top25: float | None = None    # 국가 상위 25%
     target: float | None = None   # 목표값
+
+
+class KpiStatus(BaseModel):
+    """ADR-KPI-08 canonical status. 백엔드(Rule Engine)가 국가별 정책으로 판정한 결과.
+
+    status: normal | warning | critical | insufficient
+    reason: 항상 존재(없으면 None). optional로 두면 프론트가 유무로 분기 → 판단 로직의 입구가 됨.
+            어휘: no_data · insufficient_sample · out_of_valid_range · no_policy ·
+                  policy_pending · evaluation_skipped · rule_disabled · context_missing
+    """
+    status: str
+    reason: str | None = None
 
 
 class DashboardKpi(BaseModel):
@@ -43,6 +57,10 @@ class DashboardKpi(BaseModel):
     # 국가별 벤치마크 — "내 KPI vs 국가평균/상위25%" 비교용 (웹/모바일 공용)
     country: str | None = None
     benchmarks: dict[str, KpiBenchmark] = {}  # "PSY" | "NPD" | "FARROWING_RATE"
+
+    # ADR-KPI-08 Phase 1 — 백엔드 소유 KPI 상태(국가별 Rule Engine 판정 결과).
+    # 키 = metric_code(benchmarks와 동일 키). 프론트는 이 값을 렌더만 하고 자체 판정 금지.
+    kpi_status: dict[str, KpiStatus] = {}
 
     alerts: list[Alert]
 
