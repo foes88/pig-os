@@ -557,6 +557,9 @@ export interface KpiDashboard {
   week_weanings: number;
   country: string | null;
   benchmarks: Record<string, KpiBenchmark>;  // "PSY" | "NPD" | "FARROWING_RATE"
+  /** ADR-KPI-08 — 백엔드(국가별 Rule Engine)가 판정한 KPI 상태. 키=metric_code.
+   *  프론트는 렌더만 하고 자체 판정 금지. Phase 2에서는 관측만, Phase 3에서 렌더 전환. */
+  kpi_status?: Record<string, KpiStatusDto>;
   alerts: Alert[];
   estimated_loss?: {
     amount: number; currency: string; lost_pigs: number; basis: string; demo: boolean;
@@ -567,6 +570,12 @@ export interface KpiBenchmark {
   avg: number | null;
   top25: number | null;
   target: number | null;
+}
+
+/** ADR-KPI-08 canonical status. reason은 항상 존재(없으면 null) — 유무로 분기 금지. */
+export interface KpiStatusDto {
+  status: "normal" | "warning" | "critical" | "insufficient" | (string & {});
+  reason: string | null;
 }
 
 export interface KpiTrend {

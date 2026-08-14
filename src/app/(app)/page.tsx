@@ -14,6 +14,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useEffect } from "react";
 import { track } from "@/lib/analytics";
 import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
+import { reportStatusMismatches } from "@/lib/kpi/statusObservation";
 import type { Alert, Task, KpiBenchmark, KpiTrend } from "@/types/api.types";
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 3, WARNING: 2, INFO: 1, OK: 0 };
@@ -98,6 +99,17 @@ export default function Dashboard() {
     queryFn: () => alertsApi.overdue(farmId!),
     enabled: !!farmId,
   });
+
+  // ADR-KPI-08 Phase 2 — dual observation. 백엔드 판정 ↔ 현행 프론트 tier 불일치를 관측만 한다.
+  // 화면 판정은 그대로(전환은 Phase 3). 불일치는 놓친 경보의 단서가 된다.
+  useEffect(() => {
+    if (!data) return;
+    reportStatusMismatches(data.kpi_status, {
+      PSY: psyTier(data.psy),
+      NPD: npdTier(data.npd),
+      FARROWING_RATE: farrowingRateTier(data.farrowing_rate),
+    });
+  }, [data]);
   const { data: tasks } = useQuery({
     queryKey: queryKeys.tasks.list(farmId ?? "", "OPEN"),
     queryFn: () => tasksApi.list(farmId!, "OPEN"),
