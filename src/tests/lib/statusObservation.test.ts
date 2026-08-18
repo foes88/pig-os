@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { findStatusMismatches, reportStatusMismatches } from "@/lib/kpi/statusObservation";
+import { findStatusMismatches, reportStatusMismatches, resolveTier } from "@/lib/kpi/statusObservation";
 import type { KpiStatusDto } from "@/types/api.types";
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
@@ -37,6 +37,32 @@ describe("findStatusMismatches (ADR-KPI-08 Phase 2 관측)", () => {
 
   it("kpi_status 미제공(구버전 API)이면 빈 배열 — 안전", () => {
     expect(findStatusMismatches(undefined, { PSY: "normal" })).toEqual([]);
+  });
+});
+
+describe("resolveTier (Phase 3 — 백엔드 판정 우선)", () => {
+  it("백엔드 status가 있으면 그것을 쓴다(국가별 정책 반영)", () => {
+    // legacy는 warning이지만 백엔드(US 기준)는 normal → 백엔드 승
+    expect(resolveTier({ PSY: be("normal") }, "PSY", "warning")).toBe("normal");
+    expect(resolveTier({ NPD: be("critical") }, "NPD", "normal")).toBe("critical");
+  });
+
+  it("백엔드가 status를 안 주면 legacy 폴백(구버전 API 안전)", () => {
+    expect(resolveTier(undefined, "PSY", "warning")).toBe("warning");
+    expect(resolveTier({}, "PSY", "critical")).toBe("critical");
+  });
+
+  it("insufficient도 그대로 반영(프론트가 임의 판정하지 않음)", () => {
+    expect(resolveTier({ SOW_TURNOVER: be("insufficient", "no_policy") }, "SOW_TURNOVER", "normal"))
+      .toBe("insufficient");
+  });
+
+  it("미지의 status는 중립(insufficient) — 임계 계산으로 되돌아가지 않음", () => {
+    expect(resolveTier({ PSY: be("excellent") }, "PSY", "normal")).toBe("insufficient");
+  });
+
+  it("대소문자 무관", () => {
+    expect(resolveTier({ PSY: be("WARNING") }, "PSY", "normal")).toBe("warning");
   });
 });
 

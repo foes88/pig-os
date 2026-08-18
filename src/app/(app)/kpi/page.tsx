@@ -8,6 +8,7 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { Spark, LineChart } from "@/components/ui/charts";
 import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
+import { resolveTier } from "@/lib/kpi/statusObservation";
 import type { KpiDashboard, KpiTrend } from "@/types/api.types";
 
 export default function KpiPage() {
@@ -75,18 +76,18 @@ export default function KpiPage() {
             <KpiCard
               label="PSY" desc={t("psyDesc")}
               value={fmt(data.psy, 1)} bench={data.benchmarks?.PSY?.target ?? 28}
-              tier={psyTier(data.psy)} spark={trend?.map((r) => r.psy)} t={t}
+              tier={resolveTier(data.kpi_status, "PSY", psyTier(data.psy))} spark={trend?.map((r) => r.psy)} t={t}
             />
             <KpiCard
               label="NPD" desc={t("npdDesc")} unit={t("daysUnit")}
               value={fmt(data.npd, 1)} bench={data.benchmarks?.NPD?.target ?? 35}
-              tier={npdTier(data.npd)} invert spark={trend?.map((r) => r.npd)} t={t}
+              tier={resolveTier(data.kpi_status, "NPD", npdTier(data.npd))} invert spark={trend?.map((r) => r.npd)} t={t}
             />
             <KpiCard
               label={t("frLabel")} desc={t("frDesc")} unit="%"
               value={data.farrowing_rate != null ? data.farrowing_rate.toFixed(1) : "—"}
               bench={data.benchmarks?.FARROWING_RATE?.target ?? 90}
-              tier={farrowingRateTier(data.farrowing_rate)}
+              tier={resolveTier(data.kpi_status, "FARROWING_RATE", farrowingRateTier(data.farrowing_rate))}
               spark={trend?.map((r) => r.farrowing_rate)} t={t}
             />
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between">

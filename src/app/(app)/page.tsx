@@ -14,7 +14,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useEffect } from "react";
 import { track } from "@/lib/analytics";
 import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
-import { reportStatusMismatches } from "@/lib/kpi/statusObservation";
+import { reportStatusMismatches, resolveTier } from "@/lib/kpi/statusObservation";
 import type { Alert, Task, KpiBenchmark, KpiTrend } from "@/types/api.types";
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 3, WARNING: 2, INFO: 1, OK: 0 };
@@ -140,9 +140,11 @@ export default function Dashboard() {
       )}
 
       {data && (() => {
-        const psyT = psyTier(data.psy);
-        const npdT = npdTier(data.npd);
-        const frT = farrowingRateTier(data.farrowing_rate);
+        // ADR-KPI-08 Phase 3 — 백엔드(국가별 Rule Engine) 판정을 렌더에 사용.
+        // legacy tier는 백엔드가 status를 주지 않을 때만의 폴백(Phase 4에서 제거).
+        const psyT = resolveTier(data.kpi_status, "PSY", psyTier(data.psy));
+        const npdT = resolveTier(data.kpi_status, "NPD", npdTier(data.npd));
+        const frT = resolveTier(data.kpi_status, "FARROWING_RATE", farrowingRateTier(data.farrowing_rate));
         const psySeries = trendData?.map((x: KpiTrend) => x.psy);
         const npdSeries = trendData?.map((x: KpiTrend) => x.npd);
         const frSeries = trendData?.map((x: KpiTrend) => x.farrowing_rate);

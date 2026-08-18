@@ -40,6 +40,25 @@ export function findStatusMismatches(
   return out;
 }
 
+/**
+ * ADR-KPI-08 Phase 3 — 렌더용 tier 결정.
+ * 백엔드 canonical status가 있으면 그것을 쓴다(국가별 정책 반영). 프론트는 판정하지 않는다.
+ * 백엔드가 status를 주지 않을 때(구버전 API·미배포)만 legacy tier로 폴백한다 — Phase 4에서 제거.
+ * 미지의 status 값은 임계 계산으로 되돌아가지 않고 중립(insufficient)으로 렌더한다.
+ */
+const _CANONICAL: readonly KpiTier[] = ["normal", "warning", "critical", "insufficient"];
+
+export function resolveTier(
+  backend: Record<string, KpiStatusDto> | undefined,
+  metric: string,
+  legacy: KpiTier,
+): KpiTier {
+  const be = backend?.[metric];
+  if (!be) return legacy;                                   // 폴백(Phase 4에서 제거)
+  const s = normalize(be.status) as KpiTier;
+  return _CANONICAL.includes(s) ? s : "insufficient";       // unknown → 중립, 재판정 금지
+}
+
 /** 불일치를 텔레메트리로 보낸다(있을 때만). 화면 동작에는 영향 없음. */
 export function reportStatusMismatches(
   backend: Record<string, KpiStatusDto> | undefined,
