@@ -270,8 +270,15 @@ def upsert(pg, R):
     run(cycle_sql, closed)   # ★ 먼저 — 열린 사이클을 닫아 부분 유니크 해제
     run(cycle_sql, active)   # 그 다음 — 신규 활성 사이클 삽입
 
+    # 교배도 원본 사후정정 실측(농장4448 11건) — 분만율의 분모라 정정 미반영 시 FR이 틀어진다.
     run("""INSERT INTO matings (id, farm_id, sow_id, breeding_cycle_id, mating_date, mating_type, mating_number)
-           VALUES %s ON CONFLICT (id) DO NOTHING""", R["matings"])
+           VALUES %s
+           ON CONFLICT (id) DO UPDATE SET
+             mating_date        = EXCLUDED.mating_date,
+             mating_type        = EXCLUDED.mating_type,
+             mating_number      = EXCLUDED.mating_number,
+             breeding_cycle_id  = EXCLUDED.breeding_cycle_id,
+             updated_at         = now()""", R["matings"])
 
     # 분만/이유: 원본 사후정정(LOG_UPT_DT 갱신)이 실측되므로 실측치를 반영한다.
     run("""INSERT INTO farrowings (id, farm_id, sow_id, mating_id, breeding_cycle_id, farrowing_date,
