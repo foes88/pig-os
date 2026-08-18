@@ -197,7 +197,11 @@ def build_rows(farm_no, farm_id, src):
         for idx, c in enumerate(cycles, start=1):
             cyc_id = uid("cyc", farm_no, pig_no, idx)
             first_m = c["matings"][0]
-            R["cycles"].append((cyc_id, farm_id, sow_id, idx, c["status"], first_m["date"], len(c["matings"])))
+            # 종료일: 원본 이벤트일 기준(이관 시각 아님). WEANED=이유일, FAILED=재발/공태일.
+            ended = (c["weaning"]["date"] if (c["status"] == "WEANED" and c["weaning"])
+                     else c.get("repro") if c["status"] == "FAILED" else None)
+            R["cycles"].append((cyc_id, farm_id, sow_id, idx, c["status"], first_m["date"],
+                                len(c["matings"]), ended))
             stats["cycles"] += 1
             mat_ids = []
             for mn, m in enumerate(c["matings"], start=1):
@@ -230,6 +234,17 @@ def build_rows(farm_no, farm_id, src):
 
 # ── Postgres 적재 ────────────────────────────────────────────────────────────
 def upsert(pg, R):
+    """적재. 사이클은 재이관 시 상태가 갱신돼야 하므로 DO UPDATE.
+
+    반쪽 이관 사고(2026-07/08) 원인: 사이클을 ON CONFLICT (id) DO NOTHING 으로만 넣어
+    이미 만든 사이클이 원본에서 닫혀도(이유 완료) PigOS 는 MATED/FARROWED 로 고착됐다.
+    그 상태에서 다음 산차 사이클을 넣으려 하면 부분 유니크 인덱스
+    idx_one_active_cycle (sow_id WHERE cycle_status NOT IN ('WEANED','FAILED')) 에 걸려
+    UniqueViolation 으로 이관이 중단된다. (DO NOTHING 은 PK 충돌만 처리 — 부분 유니크는 못 막음)
+
+    ★ 순서: 닫힌 사이클(WEANED/FAILED)을 **먼저** UPDATE 해 부분 유니크를 해제한 뒤,
+      활성 사이클(MATED/FARROWED)을 넣는다. 이 순서가 아니면 같은 지점에서 다시 멈춘다.
+    """
     import psycopg2.extras as ex
     cur = pg.cursor()
 
@@ -240,16 +255,46 @@ def upsert(pg, R):
     run("""INSERT INTO sows (id, farm_id, ear_tag, rfid_tag, parity, breed, status,
              entry_date, entry_type, exit_date, genetics_id, nurse_sow_flag, ractopamine_free) VALUES %s
            ON CONFLICT (id) DO NOTHING""", R["sows"])
-    run("""INSERT INTO breeding_cycles (id, farm_id, sow_id, parity, cycle_status, started_at, mating_count)
-           VALUES %s ON CONFLICT (id) DO NOTHING""", R["cycles"])
+
+    # 사이클: 상태·교배횟수·종료일 동기화. ended_at 은 원본 이벤트일(닫힘일 때만).
+    cycle_sql = """INSERT INTO breeding_cycles
+             (id, farm_id, sow_id, parity, cycle_status, started_at, mating_count, ended_at)
+           VALUES %s
+           ON CONFLICT (id) DO UPDATE SET
+             cycle_status = EXCLUDED.cycle_status,
+             mating_count = EXCLUDED.mating_count,
+             ended_at     = EXCLUDED.ended_at,
+             updated_at   = now()"""
+    closed = [c for c in R["cycles"] if c[4] in ("WEANED", "FAILED")]
+    active = [c for c in R["cycles"] if c[4] not in ("WEANED", "FAILED")]
+    run(cycle_sql, closed)   # ★ 먼저 — 열린 사이클을 닫아 부분 유니크 해제
+    run(cycle_sql, active)   # 그 다음 — 신규 활성 사이클 삽입
+
     run("""INSERT INTO matings (id, farm_id, sow_id, breeding_cycle_id, mating_date, mating_type, mating_number)
            VALUES %s ON CONFLICT (id) DO NOTHING""", R["matings"])
+
+    # 분만/이유: 원본 사후정정(LOG_UPT_DT 갱신)이 실측되므로 실측치를 반영한다.
     run("""INSERT INTO farrowings (id, farm_id, sow_id, mating_id, breeding_cycle_id, farrowing_date,
              total_born, born_alive, stillborn, mummified, nursing_head, avg_birth_weight_kg)
-           VALUES %s ON CONFLICT (id) DO NOTHING""", R["farrowings"])
+           VALUES %s
+           ON CONFLICT (id) DO UPDATE SET
+             farrowing_date       = EXCLUDED.farrowing_date,
+             total_born           = EXCLUDED.total_born,
+             born_alive           = EXCLUDED.born_alive,
+             stillborn            = EXCLUDED.stillborn,
+             mummified            = EXCLUDED.mummified,
+             nursing_head         = EXCLUDED.nursing_head,
+             avg_birth_weight_kg  = EXCLUDED.avg_birth_weight_kg,
+             updated_at           = now()""", R["farrowings"])
     run("""INSERT INTO weanings (id, farm_id, sow_id, farrowing_id, breeding_cycle_id, weaning_date,
              weaned_count, weaning_age_days, avg_weaning_weight_kg)
-           VALUES %s ON CONFLICT (id) DO NOTHING""", R["weanings"])
+           VALUES %s
+           ON CONFLICT (id) DO UPDATE SET
+             weaning_date          = EXCLUDED.weaning_date,
+             weaned_count          = EXCLUDED.weaned_count,
+             weaning_age_days      = EXCLUDED.weaning_age_days,
+             avg_weaning_weight_kg = EXCLUDED.avg_weaning_weight_kg,
+             updated_at            = now()""", R["weanings"])
     pg.commit()
     cur.close()
 
