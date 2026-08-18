@@ -264,7 +264,10 @@ def upsert(pg, R):
              cycle_status = EXCLUDED.cycle_status,
              mating_count = EXCLUDED.mating_count,
              ended_at     = EXCLUDED.ended_at,
-             updated_at   = now()"""
+             updated_at   = now()
+           WHERE breeding_cycles.cycle_status IS DISTINCT FROM EXCLUDED.cycle_status
+              OR breeding_cycles.mating_count IS DISTINCT FROM EXCLUDED.mating_count
+              OR breeding_cycles.ended_at     IS DISTINCT FROM EXCLUDED.ended_at"""
     closed = [c for c in R["cycles"] if c[4] in ("WEANED", "FAILED")]
     active = [c for c in R["cycles"] if c[4] not in ("WEANED", "FAILED")]
     run(cycle_sql, closed)   # ★ 먼저 — 열린 사이클을 닫아 부분 유니크 해제
@@ -278,7 +281,11 @@ def upsert(pg, R):
              mating_type        = EXCLUDED.mating_type,
              mating_number      = EXCLUDED.mating_number,
              breeding_cycle_id  = EXCLUDED.breeding_cycle_id,
-             updated_at         = now()""", R["matings"])
+             updated_at         = now()
+           WHERE matings.mating_date       IS DISTINCT FROM EXCLUDED.mating_date
+              OR matings.mating_type       IS DISTINCT FROM EXCLUDED.mating_type
+              OR matings.mating_number     IS DISTINCT FROM EXCLUDED.mating_number
+              OR matings.breeding_cycle_id IS DISTINCT FROM EXCLUDED.breeding_cycle_id""", R["matings"])
 
     # 분만/이유: 원본 사후정정(LOG_UPT_DT 갱신)이 실측되므로 실측치를 반영한다.
     run("""INSERT INTO farrowings (id, farm_id, sow_id, mating_id, breeding_cycle_id, farrowing_date,
@@ -292,7 +299,14 @@ def upsert(pg, R):
              mummified            = EXCLUDED.mummified,
              nursing_head         = EXCLUDED.nursing_head,
              avg_birth_weight_kg  = EXCLUDED.avg_birth_weight_kg,
-             updated_at           = now()""", R["farrowings"])
+             updated_at           = now()
+           WHERE farrowings.farrowing_date      IS DISTINCT FROM EXCLUDED.farrowing_date
+              OR farrowings.total_born          IS DISTINCT FROM EXCLUDED.total_born
+              OR farrowings.born_alive          IS DISTINCT FROM EXCLUDED.born_alive
+              OR farrowings.stillborn           IS DISTINCT FROM EXCLUDED.stillborn
+              OR farrowings.mummified           IS DISTINCT FROM EXCLUDED.mummified
+              OR farrowings.nursing_head        IS DISTINCT FROM EXCLUDED.nursing_head
+              OR farrowings.avg_birth_weight_kg IS DISTINCT FROM EXCLUDED.avg_birth_weight_kg""", R["farrowings"])
     run("""INSERT INTO weanings (id, farm_id, sow_id, farrowing_id, breeding_cycle_id, weaning_date,
              weaned_count, weaning_age_days, avg_weaning_weight_kg)
            VALUES %s
@@ -301,7 +315,11 @@ def upsert(pg, R):
              weaned_count          = EXCLUDED.weaned_count,
              weaning_age_days      = EXCLUDED.weaning_age_days,
              avg_weaning_weight_kg = EXCLUDED.avg_weaning_weight_kg,
-             updated_at            = now()""", R["weanings"])
+             updated_at            = now()
+           WHERE weanings.weaning_date          IS DISTINCT FROM EXCLUDED.weaning_date
+              OR weanings.weaned_count          IS DISTINCT FROM EXCLUDED.weaned_count
+              OR weanings.weaning_age_days      IS DISTINCT FROM EXCLUDED.weaning_age_days
+              OR weanings.avg_weaning_weight_kg IS DISTINCT FROM EXCLUDED.avg_weaning_weight_kg""", R["weanings"])
     pg.commit()
     cur.close()
 
