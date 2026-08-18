@@ -21,6 +21,7 @@ import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+
 def _load_dotenv():
     """api/.env.harvest(gitignore됨)에서 하베스트 비밀값 로드 — 기존 os.environ 우선.
     앱의 pydantic Settings 는 api/.env(extra=forbid)만 읽으므로 여기 키를 섞지 않는다."""
@@ -322,6 +323,38 @@ def bootstrap_schema():
     eng.dispose()
 
 
+def verify_event_recency(pg, max_lag_days: int = 7) -> bool:
+    """이관 후 게이트 — 이벤트별 최종일이 서로 크게 어긋나면 경고.
+
+    사고 이력(2026-07/08): 07-22에 분만·이유만, 08-01에 교배만 이관 → 교배는 08-01까지
+    있는데 분만은 07-20까지라 코호트 분만율이 0%로 계산됨. 반쪽 이관이 원인이었다.
+    분만율은 "N일 전 교배가 분만했는가"를 보므로 교배가 분만보다 앞서면 실패로 잡힌다.
+
+    임계 7일 근거: 실제 사고의 lag가 12일(교배 08-01 vs 분만 07-20)이었으므로 14일이면
+    못 잡는다. 정상 이관은 같은 소스 스냅샷이라 lag가 며칠 이내여야 한다.
+    """
+    cur = pg.cursor()
+    latest: dict[str, object] = {}
+    for label, tbl, col in (("교배", "matings", "mating_date"),
+                            ("분만", "farrowings", "farrowing_date"),
+                            ("이유", "weanings", "weaning_date")):
+        cur.execute(f"SELECT max({col}) FROM {tbl} WHERE deleted_at IS NULL")  # noqa: S608
+        latest[label] = cur.fetchone()[0]
+    print("\n[게이트] 이벤트별 최종일:", {k: str(v) for k, v in latest.items()})
+
+    mating, farrow = latest.get("교배"), latest.get("분만")
+    if not mating or not farrow:
+        print("  ! 일부 이벤트가 비어 있음 — 검증 불가")
+        return False
+    lag = (mating - farrow).days
+    if lag > max_lag_days:
+        print(f"  !! 경고: 교배가 분만보다 {lag}일 앞섬(허용 {max_lag_days}일). "
+              f"반쪽 이관 가능성 — 분만·이유도 같은 시점까지 이관해야 분만율이 정상 계산됨.")
+        return False
+    print(f"  OK: 교배-분만 간격 {lag}일 (허용 {max_lag_days}일 이내)")
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--farm", type=int, help="단일 농장 파일럿")
@@ -404,6 +437,7 @@ def main():
               f"(orphan far={stats['orphan_far']} wea={stats['orphan_wea']})")
     print("\n합계:", dict(grand))
     print(f"계정가입: {len(creds)}건 (공통 PW={DEMO_PW}), 예: {creds[0]['username']}/{creds[0]['email']}")
+    verify_event_recency(pg)
     ora.close()
     pg.close()
 
