@@ -10,7 +10,11 @@ Create Date: 2026-07-10
 from alembic import op
 
 revision = "e1d2c3b4a5f6"
-down_revision = ("c1e3f5a7b9d2", "c3e5f7a9b1d4", "f2b4d6e8a0c1", "f7a1c3e5b9d0")
+# DAG 정정: 원래 4개 리프(c1e3·c3e5·f2b4·f7a1)를 직접 물었으나, 같은 리프들이
+# 8b817ad8587a(c1e3+f2b4)와 1e6172486c75(c3e5+f7a1)에서 이미 병합돼 있었다.
+# 같은 부모를 두 머지가 이중으로 물면 alembic 이 heads 집합에서 두 번 제거를 시도해
+# base→head 주행이 KeyError 로 죽는다. 이미 병합된 노드 2개만 문다(적용 순서·집합 동일).
+down_revision = ("8b817ad8587a", "1e6172486c75")
 branch_labels = None
 depends_on = None
 
