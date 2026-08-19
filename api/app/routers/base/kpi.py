@@ -10,9 +10,17 @@ from datetime import date
 from fastapi import APIRouter, Query
 
 from app.core.dependencies import DbDep, FarmDep
-from app.schemas.kpi import DashboardKpi, KpiPolicyOut, KpiTrend, NpdBreakdown, PsyDetail
+from app.schemas.kpi import (
+    DashboardKpi,
+    KpiPolicyOut,
+    KpiPresentationItem,
+    KpiPresentationOut,
+    KpiTrend,
+    NpdBreakdown,
+    PsyDetail,
+)
 from app.services import kpi_service
-from app.services.kpi_policy_resolver import resolve_display_kpis
+from app.services.kpi_policy_resolver import pick_headline, resolve_display_kpis
 
 router = APIRouter(prefix="/farms/{farm_id}/kpi", tags=["KPI"])
 
@@ -27,10 +35,31 @@ async def kpi_policy(farm: FarmDep, db: DbDep) -> list[KpiPolicyOut]:
             kpi_code=r.kpi_code, compute_enabled=r.compute_enabled, display_role=r.display_role,
             priority_class=r.priority_class, rule_enabled=r.rule_enabled,
             benchmark_exposure=r.benchmark_exposure, evidence_status=r.evidence_status,
-            display_order=r.display_order,
         )
         for r in rows
     ]
+
+
+@router.get("/presentation", response_model=KpiPresentationOut)
+async def kpi_presentation(farm: FarmDep, db: DbDep) -> KpiPresentationOut:
+    """국가별 KPI 표현 정책 — 어떤 KPI 를 어떤 이름으로 몇 번째에 보일지.
+
+    ★ 이 라우트는 직렬화만 한다. 조인·정렬·headline 선택은 전부 service 레이어
+      (resolve_display_kpis / pick_headline)에 있다 — 리포트·모바일·AI context 가
+      같은 함수를 그대로 재사용해야 하므로 여기에 로직을 복제하지 않는다.
+    """
+    rows = await resolve_display_kpis(db, country=farm.country)
+    return KpiPresentationOut(
+        country=farm.country,
+        headline_kpi=pick_headline(rows),
+        items=[
+            KpiPresentationItem(
+                kpi_code=r.kpi_code, display_order=r.display_order, local_label=r.local_label,
+                priority_class=r.priority_class, display_role=r.display_role,
+            )
+            for r in rows
+        ],
+    )
 
 
 @router.get("/dashboard", response_model=DashboardKpi)

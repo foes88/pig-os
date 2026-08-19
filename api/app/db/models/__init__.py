@@ -6,8 +6,6 @@ from app.db.models.benchmark import (  # noqa: F401
     KpiDefinition,
     SourceObservation,
 )
-from app.db.models.consent import ConsentRecord  # noqa: F401
-from app.db.models.kpi_policy import CountryKpiPolicy  # noqa: F401
 from app.db.models.config import (  # noqa: F401
     ComplianceProfile,
     DefaultMetricValue,
@@ -17,6 +15,7 @@ from app.db.models.config import (  # noqa: F401
     RegionDefault,
     ScopeKpiRecommendation,
 )
+from app.db.models.consent import ConsentRecord  # noqa: F401
 from app.db.models.content import (  # noqa: F401
     Announcement,
     SupportReply,
@@ -31,6 +30,8 @@ from app.db.models.events import (  # noqa: F401
     Weaning,
 )
 from app.db.models.health import FeedRecord, HealthEvent, Removal  # noqa: F401
+from app.db.models.kpi_policy import CountryKpiPolicy  # noqa: F401
+from app.db.models.kpi_presentation import CountryKpiPresentation  # noqa: F401
 from app.db.models.master import (  # noqa: F401
     DiseaseCode,
     EventDefinition,

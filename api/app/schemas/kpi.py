@@ -120,4 +120,22 @@ class KpiPolicyOut(BaseModel):
     rule_enabled: bool | None = None
     benchmark_exposure: str | None = None
     evidence_status: str | None = None
+    # ※ display_order/local_label 은 여기 없다 — 표현 축은 GET /kpi/presentation 소관.
+    #    country_kpi_policy = 써도 되는가 / country_kpi_presentation = 뭐라 부르고 몇 번째인가.
+
+
+class KpiPresentationItem(BaseModel):
+    """표시 KPI 1건 — 거버넌스(CKP) ⨝ 표현(CKPRES) 합성 결과.
+    Presentation row 가 없어도 CKP 가 visible 이면 포함되며, 이때 표현값만 null 이다."""
+    kpi_code: str
     display_order: int | None = None
+    local_label: str | None = None      # 현지 용어(i18n 번역 아님). null=공용 라벨 사용
+    priority_class: str | None = None
+    display_role: str | None = None
+
+
+class KpiPresentationOut(BaseModel):
+    """국가별 KPI 표현 정책. 순서는 백엔드가 확정한 것이며 프론트 재정렬 금지."""
+    country: str | None = None
+    headline_kpi: str | None = None     # priority_class='NORTH_STAR' (국가당 1개)
+    items: list[KpiPresentationItem] = []

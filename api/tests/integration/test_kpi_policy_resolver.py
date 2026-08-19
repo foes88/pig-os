@@ -75,30 +75,6 @@ async def test_display_list_filters_computed_visible(db: AsyncSession):
     codes = {r.kpi_code for r in await resolve_display_kpis(db, country="US")}
     assert "PSY" in codes and "HIDDENK" not in codes and "OFFK" not in codes
 
-
-# ── Presentation Policy STEP B — display_order ────────────────────────────────
-
-async def test_display_order_inherits_country_over_global(db: AsyncSession):
-    """게이트2: display_order 가 상속 체인(GLOBAL→COUNTRY)에 포함되는가."""
-    db.add(_global("ORD1", display_role="PRIMARY", display_order=30))
-    db.add(CountryKpiPolicy(scope_level="COUNTRY", country_code="BR", kpi_code="ORD1",
-                            display_order=10, decision_status="APPROVED", decided_by="test"))
-    await db.flush()
-    br = await resolve_kpi_policy(db, kpi_code="ORD1", country="BR")
-    kr = await resolve_kpi_policy(db, kpi_code="ORD1", country="KR")
-    assert br.display_order == 10, "COUNTRY 값이 GLOBAL 을 덮어야 함"
-    assert kr.display_order == 30, "COUNTRY 행 없으면 GLOBAL 유지"
-    assert br.display_role == "PRIMARY"  # 다른 축은 상속 그대로
-
-
-async def test_display_list_sorted_north_star_then_order(db: AsyncSession):
-    """게이트: NORTH_STAR 최상단 → display_order ASC → NULL 마지막."""
-    db.add(_global("SB", display_role="PRIMARY", display_order=20))
-    db.add(_global("SA", display_role="PRIMARY", display_order=10))
-    db.add(_global("SNULL", display_role="PRIMARY"))            # display_order 없음
-    db.add(_global("SHEAD", display_role="PRIMARY", display_order=99,
-                   priority_class="NORTH_STAR"))                 # headline
-    await db.flush()
-    codes = [r.kpi_code for r in await resolve_display_kpis(db, country="BR")]
-    codes = [c for c in codes if c in ("SHEAD", "SA", "SB", "SNULL")]
-    assert codes == ["SHEAD", "SA", "SB", "SNULL"], codes
+# Presentation Policy(display_order/local_label) 테스트는
+# tests/integration/test_kpi_presentation_resolver.py 로 이관됨(a7d9c3e5f1b8).
+# 이 파일은 거버넌스(CKP) 축만 다룬다.
