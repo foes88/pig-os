@@ -256,6 +256,22 @@ def upsert(pg, R):
              entry_date, entry_type, exit_date, genetics_id, nurse_sow_flag, ractopamine_free) VALUES %s
            ON CONFLICT (id) DO NOTHING""", R["sows"])
 
+    # ★ 유령 사이클 정리: 이번 재구성 결과에 없는데 DB에 활성으로 남은 사이클을 먼저 닫는다.
+    # 과거 이관본과 재구성 결과가 달라지면(소스 이벤트 추가·orphan 처리 변화로 idx 시프트)
+    # DB에만 남은 옛 활성 사이클이 생긴다. 그대로 두면 새 세트가 다른 사이클을 활성화할 때
+    # 같은 모돈에 활성이 2개가 되어 idx_one_active_cycle 위반으로 이관이 중단된다.
+    # 참조 무결성 때문에 삭제하지 않고 FAILED 로 종료만 한다(이벤트 행은 보존).
+    if R["cycles"]:
+        sow_ids = list({str(c[2]) for c in R["cycles"]})
+        cyc_ids = list({str(c[0]) for c in R["cycles"]})
+        cur.execute("""UPDATE breeding_cycles
+                       SET cycle_status = 'FAILED',
+                           ended_at     = COALESCE(ended_at, started_at),
+                           updated_at   = now()
+                       WHERE sow_id = ANY(%s::uuid[])
+                         AND cycle_status NOT IN ('WEANED','FAILED')
+                         AND NOT (id = ANY(%s::uuid[]))""", (sow_ids, cyc_ids))
+
     # 사이클: 상태·교배횟수·종료일 동기화. ended_at 은 원본 이벤트일(닫힘일 때만).
     cycle_sql = """INSERT INTO breeding_cycles
              (id, farm_id, sow_id, parity, cycle_status, started_at, mating_count, ended_at)
