@@ -15,7 +15,7 @@ UI_KIND 의미:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 # --- 법역 그룹 ------------------------------------------------------------
 

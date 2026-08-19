@@ -5,8 +5,9 @@
 - GET  /consent/current       현재 유효 상태(목적별 최신)
 - POST /consent/withdraw      철회/이의/제외요청
 """
-from fastapi import APIRouter, Query
 from uuid import UUID
+
+from fastapi import APIRouter, Query
 
 from app.core.dependencies import CurrentUser, DbDep
 from app.schemas.consent import (
