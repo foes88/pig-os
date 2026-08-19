@@ -27,6 +27,7 @@ async def kpi_policy(farm: FarmDep, db: DbDep) -> list[KpiPolicyOut]:
             kpi_code=r.kpi_code, compute_enabled=r.compute_enabled, display_role=r.display_role,
             priority_class=r.priority_class, rule_enabled=r.rule_enabled,
             benchmark_exposure=r.benchmark_exposure, evidence_status=r.evidence_status,
+            display_order=r.display_order,
         )
         for r in rows
     ]

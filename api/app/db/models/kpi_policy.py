@@ -14,6 +14,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     Index,
+    Integer,
     String,
     Text,
     func,
@@ -92,6 +93,10 @@ class CountryKpiPolicy(Base):
     compute_enabled: Mapped[bool | None] = mapped_column(Boolean)
     display_role: Mapped[str | None] = mapped_column(String(16))
     priority_class: Mapped[str | None] = mapped_column(String(16))  # v0.4
+    # Presentation Policy: 같은 표시군 내 정렬 순서(작을수록 앞). NULL=마지막.
+    # 간격 10 규약(10,20,30…) — 중간 삽입 시 전체 재배열 불필요.
+    # headline은 별도 컬럼이 아니라 priority_class='NORTH_STAR'로 표현(uq_ckp_north_star가 국가당 1개 강제).
+    display_order: Mapped[int | None] = mapped_column(Integer)
     rule_enabled: Mapped[bool | None] = mapped_column(Boolean)
     benchmark_exposure: Mapped[str | None] = mapped_column(String(16))
     prediction_feature: Mapped[bool | None] = mapped_column(Boolean)

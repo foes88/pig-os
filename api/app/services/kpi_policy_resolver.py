@@ -24,6 +24,7 @@ from app.db.models.kpi_policy import CountryKpiPolicy
 _VECTOR = (
     "compute_enabled", "display_role", "priority_class", "rule_enabled",
     "benchmark_exposure", "prediction_feature", "api_export_policy", "evidence_status",
+    "display_order",
 )
 _SCOPE_RANK = {"GLOBAL": 0, "COUNTRY": 1, "FARM_TYPE": 2, "TENANT": 3}
 
@@ -39,6 +40,7 @@ class ResolvedKpiPolicy:
     prediction_feature: bool | None = None
     api_export_policy: str | None = None
     evidence_status: str | None = None
+    display_order: int | None = None
     resolved_from: list[str] | None = None  # 어떤 scope들이 기여했나(감사)
 
 
@@ -108,4 +110,12 @@ async def resolve_display_kpis(
         )
         if rp and rp.compute_enabled and rp.display_role in ("PRIMARY", "SECONDARY"):
             out.append(rp)
+    # Presentation 정렬(SPEC): ① NORTH_STAR(headline) 최상단 ② display_order ASC(NULL 마지막)
+    #                          ③ 동순위는 kpi_code 로 결정론 고정.
+    # HIDDEN 은 위 필터에서 이미 제외됨.
+    out.sort(key=lambda r: (
+        0 if r.priority_class == "NORTH_STAR" else 1,
+        r.display_order if r.display_order is not None else 10**9,
+        r.kpi_code,
+    ))
     return out

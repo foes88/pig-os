@@ -120,3 +120,4 @@ class KpiPolicyOut(BaseModel):
     rule_enabled: bool | None = None
     benchmark_exposure: str | None = None
     evidence_status: str | None = None
+    display_order: int | None = None
