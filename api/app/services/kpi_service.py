@@ -24,6 +24,7 @@ from app.engine.rules import (
     disease as _disease_rules,  # noqa: F401
 )
 from app.engine.threshold_resolver import load_operational_defaults_map
+from app.repositories import npd_repo
 from app.schemas.kpi import Alert, DashboardKpi, KpiBenchmark, KpiTrend, NpdBreakdown, PsyDetail
 from app.services.kpi_status_assembler import DASHBOARD_POLICY_KPIS, assemble_kpi_status
 from app.services.rule_config_service import load_rule_configs
@@ -231,13 +232,12 @@ async def calculate_npd(
     avg_inv = float(row.avg_inv) if row.avg_inv else 0.0
     turnover = round(float(row.farrow_cnt) / avg_inv, 2) if avg_inv > 0 else None
 
-    # WEI(참고) — 기존 v_sow_npd
-    wei_row = (await db.execute(
-        text("SELECT AVG(wei_days) AS w FROM v_sow_npd WHERE farm_id = :fid "
-             "AND wei_days IS NOT NULL AND weaning_date BETWEEN :s AND :e"),
-        {"fid": str(farm_id), "s": ref_date - timedelta(days=365), "e": ref_date},
-    )).fetchone()
-    wei = round(float(wei_row.w), 1) if wei_row and wei_row.w is not None else None
+    # WEI(참고) — as_of=ref_date 기준. v_sow_npd(CURRENT_DATE 의존) 대신 repository 사용:
+    # 같은 ref_date 면 언제 실행하든 같은 값이 나와야 한다(월마감·과거 스냅샷 재현).
+    wei_raw = await npd_repo.avg_wei_days(
+        db, farm_id, start=ref_date - timedelta(days=365), end=ref_date, as_of=ref_date,
+    )
+    wei = round(wei_raw, 1) if wei_raw is not None else None
 
     return NpdBreakdown(
         farm_id=farm_id,
@@ -590,9 +590,8 @@ async def build_loss_inputs(db: AsyncSession, farm: Farm, window_days: int = 365
     # NPD(WEI) 총 지연일 합 — S9 ① 이유→교배 (보수적, v_sow_npd).
     # 손실 윈도우(최근 window_days)로 한정 — 다른 손실지표와 기간 일치(정합성) + 대형농장에서
     # 전체이력 LATERAL 스캔(대시보드 7s 근인)을 idx_weanings_farm_date로 제한(2026-07).
-    wei_total = (await db.execute(text(
-        "SELECT coalesce(sum(wei_days),0) FROM v_sow_npd WHERE farm_id=:fid "
-        "AND wei_days IS NOT NULL AND wei_days > 0 AND weaning_date BETWEEN :s AND :e"), p)).scalar() or 0
+    wei_total = await npd_repo.sum_wei_days(
+        db, farm.id, start=p["s"], end=p["e"], as_of=p["e"])
     price = await _load_price(db, farm)
     return {
         "price": price["price"] if price else None,
@@ -680,17 +679,21 @@ async def build_rule_context(
     )
 
 
-async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[KpiTrend]:
+async def get_trend(
+    db: AsyncSession, farm_id: UUID, months: int = 6, as_of: date | None = None,
+) -> list[KpiTrend]:
     """
     Monthly KPI trend for the last N months.
     PSY is annualized from monthly weanings / current active sow count.
     """
     months = max(1, min(months, 24))
+    # 기준일을 명시적으로 바인드 — 계산 SQL 안에서 CURRENT_DATE 를 읽지 않는다.
+    as_of = as_of or date.today()
     rows = await db.execute(
         text(
             """
             WITH months AS (
-                SELECT (date_trunc('month', CURRENT_DATE)
+                SELECT (date_trunc('month', (:as_of)::date)
                     - make_interval(months => s))::date AS m
                 FROM generate_series(0, :months - 1) AS s
             ),
@@ -711,7 +714,7 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
                 FROM weanings
                 WHERE farm_id = :farm_id
                   AND deleted_at IS NULL
-                  AND weaning_date >= (date_trunc('month', CURRENT_DATE)
+                  AND weaning_date >= (date_trunc('month', (:as_of)::date)
                       - make_interval(months => :months - 1))
                 GROUP BY 1
             ),
@@ -720,7 +723,7 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
                        COUNT(*)::float AS cnt
                 FROM farrowings
                 WHERE farm_id = :farm_id
-                  AND farrowing_date >= (date_trunc('month', CURRENT_DATE)
+                  AND farrowing_date >= (date_trunc('month', (:as_of)::date)
                       - make_interval(months => :months - 1))
                 GROUP BY 1
             ),
@@ -729,16 +732,19 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
                        COUNT(*)::float AS cnt
                 FROM matings
                 WHERE farm_id = :farm_id
-                  AND mating_date >= (date_trunc('month', CURRENT_DATE)
+                  AND mating_date >= (date_trunc('month', (:as_of)::date)
                       - make_interval(months => :months - 1))
                 GROUP BY 1
+            ),
+            wei_rows AS (
+                -- v_sow_npd(CURRENT_DATE 의존) 대신 as_of 바인드 — 같은 as_of면 실행일 무관 동일.
+                """ + npd_repo.WEI_ROWS_SQL + """
             ),
             npd_by_month AS (
                 SELECT date_trunc('month', weaning_date)::date AS m,
                        AVG(wei_days) AS avg_npd
-                FROM v_sow_npd
-                WHERE farm_id = :farm_id
-                  AND weaning_date >= (date_trunc('month', CURRENT_DATE)
+                FROM wei_rows
+                WHERE weaning_date >= (date_trunc('month', (:as_of)::date)
                       - make_interval(months => :months - 1))
                   AND wei_days IS NOT NULL
                 GROUP BY 1
@@ -767,7 +773,7 @@ async def get_trend(db: AsyncSession, farm_id: UUID, months: int = 6) -> list[Kp
             ORDER BY months.m
             """
         ),
-        {"farm_id": str(farm_id), "months": months},
+        {"farm_id": str(farm_id), "months": months, "as_of": as_of},
     )
     return [
         KpiTrend(
