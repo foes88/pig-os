@@ -2074,5 +2074,17 @@
     "phName": "เช่น สมชาย",
     "phUsername": "เช่น farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (วันไม่ผลิต)",
+    "labelFARROWING_RATE": "อัตราการคลอด",
+    "labelSOW_TURNOVER": "รอบหมุนแม่สุกร",
+    "descPSY": "ลูกหย่านมต่อแม่ต่อปี",
+    "descNPD": "วันไม่ผลิต",
+    "descFARROWING_RATE": "การคลอดต่อการผสม",
+    "unitDays": "วัน",
+    "unitPercent": "%",
+    "unitLitters": "ครอก/ปี"
   }
 }

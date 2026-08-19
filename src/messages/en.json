@@ -2074,5 +2074,17 @@
     "phName": "e.g. John Kim",
     "phUsername": "e.g. farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (non-productive days)",
+    "labelFARROWING_RATE": "Farrowing rate",
+    "labelSOW_TURNOVER": "Sow turnover",
+    "descPSY": "Annual weaned per sow",
+    "descNPD": "Non-productive days",
+    "descFARROWING_RATE": "Farrowings per service",
+    "unitDays": "d",
+    "unitPercent": "%",
+    "unitLitters": "litters/yr"
   }
 }

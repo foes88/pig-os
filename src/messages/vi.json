@@ -2074,5 +2074,17 @@
     "phName": "vd: Nguyễn Văn A",
     "phUsername": "vd: farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (ngày không sản xuất)",
+    "labelFARROWING_RATE": "Tỷ lệ đẻ",
+    "labelSOW_TURNOVER": "Vòng quay nái",
+    "descPSY": "Cai sữa/nái/năm",
+    "descNPD": "Ngày không sản xuất",
+    "descFARROWING_RATE": "Đẻ trên mỗi lần phối",
+    "unitDays": "ngày",
+    "unitPercent": "%",
+    "unitLitters": "lứa/năm"
   }
 }

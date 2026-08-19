@@ -2074,5 +2074,17 @@
     "phName": "ej. Juan Pérez",
     "phUsername": "ej. farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (días no productivos)",
+    "labelFARROWING_RATE": "Tasa de parto",
+    "labelSOW_TURNOVER": "Rotación de cerdas",
+    "descPSY": "Destetados anuales por cerda",
+    "descNPD": "Días no productivos",
+    "descFARROWING_RATE": "Partos por servicio",
+    "unitDays": "d",
+    "unitPercent": "%",
+    "unitLitters": "partos/año"
   }
 }

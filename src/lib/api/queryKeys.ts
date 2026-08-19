@@ -58,6 +58,7 @@ export const queryKeys = {
     dashboard: (farmId: string) => ["kpi", "dashboard", farmId] as const,
     trend: (farmId: string, kpi: string, months: number) =>
       ["kpi", "trend", farmId, kpi, months] as const,
+   presentation: (farmId: string) => ["kpi", "presentation", farmId] as const,
   },
 
   chat: {

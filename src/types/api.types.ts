@@ -566,6 +566,25 @@ export interface KpiDashboard {
   } | null;
 }
 
+/** GET /kpi/presentation — 국가별 표현 정책(country_kpi_presentation).
+ *  ★ items 는 서버가 정렬을 끝낸 상태로 내려온다. HIDDEN 도 서버가 이미 제외했다.
+ *  프론트는 재정렬·재필터·headline 탐색을 하지 않는다. */
+export interface KpiPresentationItem {
+  kpi_code: string;
+  display_order: number | null;
+  /** 현지 용어(i18n 번역 아님). null이면 공용 라벨 사용 */
+  local_label: string | null;
+  priority_class: string | null;
+  display_role: string | null;
+}
+
+export interface KpiPresentation {
+  country: string | null;
+  /** priority_class='NORTH_STAR' — 프론트가 찾지 않고 이 필드를 그대로 쓴다 */
+  headline_kpi: string | null;
+  items: KpiPresentationItem[];
+}
+
 export interface KpiBenchmark {
   avg: number | null;
   top25: number | null;

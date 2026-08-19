@@ -2074,5 +2074,17 @@
     "phName": "예: 홍길동",
     "phUsername": "예: farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (비생산일수)",
+    "labelFARROWING_RATE": "분만율",
+    "labelSOW_TURNOVER": "모돈회전율",
+    "descPSY": "연간 모돈두당 이유두수",
+    "descNPD": "비생산일수",
+    "descFARROWING_RATE": "교배 대비 분만 비율",
+    "unitDays": "일",
+    "unitPercent": "%",
+    "unitLitters": "회/년"
   }
 }

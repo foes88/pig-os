@@ -36,3 +36,18 @@ export const TIER_STYLE: Record<KpiTier, { text: string; dot: string; chip: stri
   critical:     { text: "text-danger",  dot: "bg-danger",  chip: "bg-red-soft text-danger border-danger/40" },
   insufficient: { text: "text-insufficient", dot: "bg-insufficient", chip: "bg-insufficient-soft text-insufficient border-insufficient-border" },
 };
+
+/** kpi_code → legacy 판정 함수. ADR-KPI-08 Phase 3 폴백 전용(백엔드 kpi_status 부재 시).
+ *  ★ 새 임계값을 여기 추가하지 말 것 — 판정은 백엔드 국가정책 소관.
+ *  Phase 4(백엔드 status 전면 적용)에서 이 맵과 위 함수들을 함께 제거한다. */
+export const LEGACY_TIER_FN: Record<string, (v: number | null | undefined) => KpiTier> = {
+  PSY: psyTier,
+  NPD: npdTier,
+  FARROWING_RATE: farrowingRateTier,
+};
+
+/** 레지스트리에 legacy 판정이 없는 KPI(SOW_TURNOVER 등)는 프론트가 판정하지 않는다. */
+export function legacyTier(kpiCode: string, v: number | null | undefined): KpiTier {
+  const fn = LEGACY_TIER_FN[kpiCode];
+  return fn ? fn(v) : "normal";
+}

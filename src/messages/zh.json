@@ -2074,5 +2074,17 @@
     "phName": "如：张伟",
     "phUsername": "如：farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (非生产天数)",
+    "labelFARROWING_RATE": "分娩率",
+    "labelSOW_TURNOVER": "母猪周转率",
+    "descPSY": "年度每头母猪断奶数",
+    "descNPD": "非生产天数",
+    "descFARROWING_RATE": "配种对应分娩比例",
+    "unitDays": "天",
+    "unitPercent": "%",
+    "unitLitters": "胎/年"
   }
 }

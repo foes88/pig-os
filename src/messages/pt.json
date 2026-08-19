@@ -2074,5 +2074,17 @@
     "phName": "ex. João Silva",
     "phUsername": "ex. farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (dias não produtivos)",
+    "labelFARROWING_RATE": "Taxa de partos",
+    "labelSOW_TURNOVER": "Rotatividade de matrizes",
+    "descPSY": "Desmamados/matriz/ano",
+    "descNPD": "Dias não produtivos",
+    "descFARROWING_RATE": "Partos por cobertura",
+    "unitDays": "d",
+    "unitPercent": "%",
+    "unitLitters": "partos/ano"
   }
 }

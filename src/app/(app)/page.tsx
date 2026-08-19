@@ -13,9 +13,10 @@ import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { useEffect } from "react";
 import { track } from "@/lib/analytics";
-import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
+import { psyTier, npdTier, farrowingRateTier, legacyTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
 import { reportStatusMismatches, resolveTier } from "@/lib/kpi/statusObservation";
-import type { Alert, Task, KpiBenchmark, KpiTrend } from "@/types/api.types";
+import { resolveKpiCards, reportPresentationGaps } from "@/lib/kpi/presentation";
+import type { Alert, Task, KpiBenchmark } from "@/types/api.types";
 
 const SEV_ORDER: Record<string, number> = { CRITICAL: 3, WARNING: 2, INFO: 1, OK: 0 };
 
@@ -78,6 +79,7 @@ function GettingStarted({ hasSow }: { hasSow: boolean }) {
 
 export default function Dashboard() {
   const t = useTranslations("dashboard");
+  const tc = useTranslations("kpiCards");  // 카드 라벨/설명/단위 — KPI 페이지와 공용
   const farmId = useAuthStore((s) => s.activeFarmId);
   const user = useAuthStore((s) => s.user);
 
@@ -94,6 +96,17 @@ export default function Dashboard() {
     queryFn: () => kpiApi.trend(farmId!, "PSY", 6),
     enabled: !!farmId,
   });
+  // 국가별 표현 정책 — 실패해도 기본 카드 순서로 렌더된다(A3 폴백). 국가 추정 없음.
+  const { data: presentation } = useQuery({
+    queryKey: queryKeys.kpi.presentation(farmId ?? ""),
+    queryFn: () => kpiApi.presentation(farmId!),
+    enabled: !!farmId,
+    retry: 1,
+  });
+  const kpiCards = resolveKpiCards(presentation);
+  useEffect(() => { reportPresentationGaps(kpiCards); },
+    [kpiCards.source, kpiCards.unknownCodes.join(",")]);
+
   const { data: overdueData } = useQuery({
     queryKey: queryKeys.alerts.overdue(farmId ?? ""),
     queryFn: () => alertsApi.overdue(farmId!),
@@ -145,9 +158,6 @@ export default function Dashboard() {
         const psyT = resolveTier(data.kpi_status, "PSY", psyTier(data.psy));
         const npdT = resolveTier(data.kpi_status, "NPD", npdTier(data.npd));
         const frT = resolveTier(data.kpi_status, "FARROWING_RATE", farrowingRateTier(data.farrowing_rate));
-        const psySeries = trendData?.map((x: KpiTrend) => x.psy);
-        const npdSeries = trendData?.map((x: KpiTrend) => x.npd);
-        const frSeries = trendData?.map((x: KpiTrend) => x.farrowing_rate);
         const alerts = dedupeAlerts(data.alerts ?? []);
         const topAlert = alerts[0];
         const insufficient: string[] = [];
@@ -240,12 +250,25 @@ export default function Dashboard() {
             {/* ── 보조: 핵심 지표 ── */}
             <div className="text-[11px] font-bold text-text3 uppercase tracking-widest mb-2">{t("kpiSummary")}</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-              <KpiCard t={t} label="PSY" tier={psyT} value={data.psy != null ? data.psy.toFixed(1) : ""} benchmark={data.benchmarks?.PSY} trend={psySeries} />
-              <KpiCard t={t} label={t("statNpd")} tier={npdT} value={data.npd != null ? `${data.npd.toFixed(1)}${t("unitDays")}` : ""} benchmark={data.benchmarks?.NPD} trend={npdSeries} />
-              {data.sow_turnover != null && (
-                <KpiCard t={t} label={t("statTurnover")} tier="normal" value={`${data.sow_turnover.toFixed(2)} ${t("unitLitters")}`} />
-              )}
-              <KpiCard t={t} label={t("statFarrowingRate")} tier={frT} value={frT === "insufficient" ? "" : `${data.farrowing_rate!.toFixed(1)}%`} benchmark={data.benchmarks?.FARROWING_RATE} trend={frSeries} />
+              {/* 카드 목록·순서·명칭은 서버(Presentation Policy) 확정 — 프론트 재정렬·재필터 금지 */}
+              {kpiCards.cards.map(({ meta, localLabel, isHeadline }) => {
+                const raw = meta.value(data);
+                if (raw == null && meta.kpi_code === "SOW_TURNOVER") return null;  // 값 없으면 카드 자체 미표시(기존 동작 유지)
+                const tier = resolveTier(data.kpi_status, meta.kpi_code, legacyTier(meta.kpi_code, raw));
+                const unit = meta.unitKey ? tc(meta.unitKey) : "";
+                return (
+                  <KpiCard
+                    key={meta.kpi_code}
+                    t={t}
+                    label={localLabel ?? meta.literalLabel ?? tc(meta.labelKey)}
+                    headline={isHeadline}
+                    tier={tier}
+                    value={raw != null ? `${raw.toFixed(meta.digits)}${unit}` : ""}
+                    benchmark={meta.benchKey ? data.benchmarks?.[meta.benchKey] : undefined}
+                    trend={meta.series && trendData ? meta.series(trendData) : undefined}
+                  />
+                );
+              })}
               <KpiCard
                 t={t}
                 label={t("statAiAlerts")}
@@ -347,8 +370,9 @@ function Sparkline({ data }: { data: (number | null)[] }) {
   );
 }
 
-function KpiCard({ t, label, tier, value, rawTierLabel, benchmark, trend }: {
-  t: ReturnType<typeof useTranslations>; label: string; tier: KpiTier; value: string; rawTierLabel?: string; benchmark?: KpiBenchmark; trend?: (number | null)[];
+function KpiCard({ t, label, tier, value, rawTierLabel, benchmark, trend, headline = false }: {
+  t: ReturnType<typeof useTranslations>; label: string; tier: KpiTier; value: string; rawTierLabel?: string;
+  benchmark?: KpiBenchmark; trend?: (number | null)[]; headline?: boolean;
 }) {
   const s = TIER_STYLE[tier];
   const tierLabel = rawTierLabel ?? t(
@@ -357,7 +381,9 @@ function KpiCard({ t, label, tier, value, rawTierLabel, benchmark, trend }: {
   return (
     <div className="rounded-2xl border border-border bg-surface px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] text-text3 font-semibold">{label}</span>
+        <span className="text-[11px] text-text3 font-semibold">
+          {headline && <span className="mr-1 text-primary" aria-hidden>★</span>}{label}
+        </span>
         {trend && <Sparkline data={trend} />}
       </div>
       {tier === "insufficient" ? (

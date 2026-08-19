@@ -2074,5 +2074,17 @@
     "phName": "напр. Иван Иванов",
     "phUsername": "напр. farmowner",
     "phEmail": "farmer@example.com"
+  },
+  "kpiCards": {
+    "labelPSY": "PSY",
+    "labelNPD": "NPD (непродуктивные дни)",
+    "labelFARROWING_RATE": "Процент опоросов",
+    "labelSOW_TURNOVER": "Оборот свиноматок",
+    "descPSY": "Отнятых на свиноматку в год",
+    "descNPD": "Непродуктивные дни",
+    "descFARROWING_RATE": "Опоросов на осеменение",
+    "unitDays": "дн.",
+    "unitPercent": "%",
+    "unitLitters": "опор./год"
   }
 }

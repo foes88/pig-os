@@ -7,12 +7,15 @@ import { kpiApi } from "@/lib/api/endpoints/kpi";
 import { queryKeys } from "@/lib/api/queryKeys";
 import { useAuthStore } from "@/store/auth.store";
 import { Spark, LineChart } from "@/components/ui/charts";
-import { psyTier, npdTier, farrowingRateTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
+import { legacyTier, TIER_STYLE, type KpiTier } from "@/lib/kpi/status";
 import { resolveTier } from "@/lib/kpi/statusObservation";
+import { resolveKpiCards, reportPresentationGaps } from "@/lib/kpi/presentation";
 import type { KpiDashboard, KpiTrend } from "@/types/api.types";
+import { useEffect } from "react";
 
 export default function KpiPage() {
   const t = useTranslations("kpi");
+  const tc = useTranslations("kpiCards");  // 카드 라벨/설명/단위 — 대시보드와 공용
   const farmId = useAuthStore((s) => s.activeFarmId);
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -27,6 +30,16 @@ export default function KpiPage() {
     queryFn: () => kpiApi.trend(farmId!, "PSY", 12),
     enabled: !!farmId,
   });
+
+  // 국가별 표현 정책 — 실패해도 화면은 기본 카드 순서로 뜬다(A3 폴백).
+  const { data: presentation } = useQuery({
+    queryKey: queryKeys.kpi.presentation(farmId ?? ""),
+    queryFn: () => kpiApi.presentation(farmId!),
+    enabled: !!farmId,
+    retry: 1,
+  });
+  const resolved = resolveKpiCards(presentation);
+  useEffect(() => { reportPresentationGaps(resolved); }, [resolved.source, resolved.unknownCodes.join(",")]);
 
   if (!farmId) {
     return (
@@ -73,23 +86,22 @@ export default function KpiPage() {
         <>
           {/* KPI cards with sparklines */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <KpiCard
-              label="PSY" desc={t("psyDesc")}
-              value={fmt(data.psy, 1)} bench={data.benchmarks?.PSY?.target ?? 28}
-              tier={resolveTier(data.kpi_status, "PSY", psyTier(data.psy))} spark={trend?.map((r) => r.psy)} t={t}
-            />
-            <KpiCard
-              label="NPD" desc={t("npdDesc")} unit={t("daysUnit")}
-              value={fmt(data.npd, 1)} bench={data.benchmarks?.NPD?.target ?? 35}
-              tier={resolveTier(data.kpi_status, "NPD", npdTier(data.npd))} invert spark={trend?.map((r) => r.npd)} t={t}
-            />
-            <KpiCard
-              label={t("frLabel")} desc={t("frDesc")} unit="%"
-              value={data.farrowing_rate != null ? data.farrowing_rate.toFixed(1) : "—"}
-              bench={data.benchmarks?.FARROWING_RATE?.target ?? 90}
-              tier={resolveTier(data.kpi_status, "FARROWING_RATE", farrowingRateTier(data.farrowing_rate))}
-              spark={trend?.map((r) => r.farrowing_rate)} t={t}
-            />
+            {/* 카드 목록·순서·명칭은 서버(Presentation Policy)가 확정. 프론트 재정렬 금지. */}
+            {resolved.cards.map(({ meta, localLabel, isHeadline }) => (
+              <KpiCard
+                key={meta.kpi_code}
+                label={localLabel ?? meta.literalLabel ?? tc(meta.labelKey)}
+                desc={meta.descKey ? tc(meta.descKey) : ""}
+                unit={meta.unitKey ? tc(meta.unitKey) : undefined}
+                value={fmt(meta.value(data), meta.digits)}
+                bench={meta.benchKey ? data.benchmarks?.[meta.benchKey]?.target ?? null : null}
+                tier={resolveTier(data.kpi_status, meta.kpi_code, legacyTier(meta.kpi_code, meta.value(data)))}
+                invert={meta.invert}
+                headline={isHeadline}
+                spark={meta.series && trend ? meta.series(trend) : undefined}
+                t={t}
+              />
+            ))}
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between">
               <span className="text-[11px] font-bold tracking-wide uppercase text-text3">{t("herdActiveTotal")}</span>
               <div className="font-mono text-3xl font-extrabold text-text">{data.active_sows}<span className="text-sm text-text3 font-semibold ml-1">{t("headUnit")}</span></div>
@@ -107,7 +119,6 @@ export default function KpiPage() {
                 <span className="text-sm font-bold text-text">{t("trendTitle")}</span>
                 <div className="flex gap-3 text-[11px] text-text3">
                   <Legend className="text-success" label="PSY" />
-                  <Legend className="text-warning" label="NPD" />
                   <Legend className="text-text3" label={t("benchmark")} dash />
                 </div>
               </div>
@@ -115,11 +126,8 @@ export default function KpiPage() {
                 <LineChart
                   h={210}
                   xLabels={trend.map((r) => r.period.slice(2))}
-                  bench={data.benchmarks?.PSY?.target ?? 28}
-                  series={[
-                    { data: trend.map((r) => r.psy ?? 0), colorClass: "text-success" },
-                    { data: trend.map((r) => (r.npd != null ? r.npd / 1.6 : 0)), colorClass: "text-warning", fill: false },
-                  ]}
+                  bench={data.benchmarks?.PSY?.target ?? undefined}
+                  series={[{ data: trend.map((r) => r.psy ?? 0), colorClass: "text-success" }]}
                 />
               ) : (
                 <div className="py-16 text-center text-text3 text-sm">{t("emptyTrend")}</div>
@@ -144,21 +152,25 @@ function fmt(v: number | null | undefined, d: number) {
 }
 
 function KpiCard({
-  label, desc, value, unit, bench, tier, invert = false, spark, t,
+  label, desc, value, unit, bench, tier, invert = false, headline = false, spark, t,
 }: {
   label: string; desc: string; value: string; unit?: string;
-  bench: number; tier: KpiTier; invert?: boolean; spark?: (number | null)[]; t: (k: string, v?: Record<string, string | number | Date>) => string;
+  // bench=null: 국가 벤치마크 미제공 → 비교 자체를 표시하지 않는다(임의 기본값 대체 금지)
+  bench: number | null; tier: KpiTier; invert?: boolean; headline?: boolean;
+  spark?: (number | null)[]; t: (k: string, v?: Record<string, string | number | Date>) => string;
 }) {
   const style = TIER_STYLE[tier];
   const num = parseFloat(value);
-  const delta = Number.isFinite(num) ? num - bench : null;
+  const delta = bench != null && Number.isFinite(num) ? num - bench : null;
   // invert(낮을수록 좋음, 예: NPD): delta ≤ 0 이 좋음
   const deltaGood = delta == null ? false : invert ? delta <= 0 : delta >= 0;
   const sparkData = (spark ?? []).filter((v): v is number => v != null && Number.isFinite(v));
   return (
     <div className="bg-surface border border-border rounded-xl p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold tracking-wide uppercase text-text3">{label}</span>
+        <span className="text-[11px] font-bold tracking-wide uppercase text-text3">
+          {headline && <span className="mr-1 text-primary" aria-hidden>★</span>}{label}
+        </span>
         <span className={`w-2 h-2 rounded-full ${style.dot}`} />
       </div>
       <div className="text-[10px] text-text3 -mt-1">{desc}</div>
@@ -166,14 +178,16 @@ function KpiCard({
         <span className={`font-mono text-3xl font-extrabold leading-none ${style.text}`}>{value}</span>
         {unit && value !== "—" && <span className="text-xs text-text3 font-semibold">{unit}</span>}
       </div>
-      <div className="flex items-center gap-1.5 text-[11px] text-text3">
-        {delta != null && (
-          <span className={`font-mono font-bold ${deltaGood ? "text-success" : style.text}`}>
-            {delta > 0 ? "+" : ""}{delta.toFixed(1)}
-          </span>
-        )}
-        <span>{t("vsBench", { v: bench })}</span>
-      </div>
+      {bench != null && (
+        <div className="flex items-center gap-1.5 text-[11px] text-text3">
+          {delta != null && (
+            <span className={`font-mono font-bold ${deltaGood ? "text-success" : style.text}`}>
+              {delta > 0 ? "+" : ""}{delta.toFixed(1)}
+            </span>
+          )}
+          <span>{t("vsBench", { v: bench })}</span>
+        </div>
+      )}
       {sparkData.length >= 2 && (
         <div className={style.text}>
           <Spark data={sparkData} w={210} h={30} />
