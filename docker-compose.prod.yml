@@ -29,6 +29,10 @@ services:
       ENVIRONMENT: production
       ACCESS_TOKEN_EXPIRE_MINUTES: 15
       REFRESH_TOKEN_EXPIRE_DAYS: 7
+      # DB 커넥션 풀 예산 — Supavisor 세션 모드 한도 pool_size:15(실측 2026-08-20).
+      # api 최대 5 + worker 최대 3 = 8, 여유 7(마이그레이션·백업·모니터링 몫).
+      DB_POOL_SIZE: ${API_DB_POOL_SIZE:-3}
+      DB_MAX_OVERFLOW: ${API_DB_MAX_OVERFLOW:-2}
       # 선택 — 미설정 시 기능 graceful fallback
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
@@ -57,6 +61,9 @@ services:
       ENVIRONMENT: production
       FCM_PROJECT_ID: ${FCM_PROJECT_ID:-}
       FCM_CREDENTIALS_PATH: ${FCM_CREDENTIALS_PATH:-}
+      # 워커는 배치성이라 api 보다 작게 — 풀러 슬롯을 사용자 트래픽에 양보한다.
+      DB_POOL_SIZE: ${WORKER_DB_POOL_SIZE:-2}
+      DB_MAX_OVERFLOW: ${WORKER_DB_MAX_OVERFLOW:-1}
     command: arq app.jobs.worker.WorkerSettings
     # worker는 HTTP 서버가 없으므로 api Dockerfile의 /health 헬스체크를 비활성화
     # (arq 프로세스는 redis 연결로 자체 동작 — false "unhealthy" 방지)

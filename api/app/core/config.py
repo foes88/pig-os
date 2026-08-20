@@ -9,6 +9,17 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+asyncpg://pigos:pigos@localhost:5432/pigos"
+
+    # DB 커넥션 풀 — Supabase Supavisor 세션 모드 한도가 pool_size:15(동시 클라이언트)다.
+    # api·worker 가 같은 엔진 설정을 공유하므로 컨테이너별 합이 그 한도를 넘으면 안 된다.
+    # 넘으면 EMAXCONNSESSION / ECHECKOUTTIMEOUT 이 나고, 마이그레이션·백업·모니터링이
+    # 들어갈 자리도 사라진다(2026-08-20 프로덕션 마이그레이션 실패의 실제 원인).
+    # 예산: api 최대 5(3+2) · worker 최대 3(2+1, compose env 로 하향) = 8, 여유 7.
+    # 대시보드에서 풀러 pool_size 를 올리면 코드 수정 없이 env 로 상향 가능.
+    db_pool_size: int = 3
+    db_max_overflow: int = 2
+    db_pool_timeout: int = 10        # 슬롯 대기 상한(초) — 매달리지 않고 빠르게 실패
+    db_pool_recycle: int = 1800      # 풀러가 끊은 묵은 커넥션 재사용 방지
     redis_url: str = "redis://localhost:6379/0"
     secret_key: str = "change-me-in-production-at-least-32-chars"
     algorithm: str = "HS256"
