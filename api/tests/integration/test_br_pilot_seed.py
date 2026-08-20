@@ -20,6 +20,8 @@ from app.db.br_pilot_seed import (
     policy_rows,
     presentation_rows,
 )
+from app.db.global_presentation_seed import GLOBAL_DISPLAY_ORDER
+from app.db.global_presentation_seed import presentation_rows as global_presentation_rows
 from app.db.models.kpi_policy import CountryKpiPolicy
 from app.db.models.kpi_presentation import CountryKpiPresentation
 from app.services.kpi_policy_resolver import (
@@ -51,6 +53,8 @@ async def _seed(db: AsyncSession, *, extra_global: tuple[str, ...] = ()) -> None
         ))
     for r in policy_rows():
         db.add(CountryKpiPolicy(id=uuid.uuid4(), **r))
+    for r in global_presentation_rows():
+        db.add(CountryKpiPresentation(id=uuid.uuid4(), **r))
     for r in presentation_rows():
         db.add(CountryKpiPresentation(id=uuid.uuid4(), **r))
     await db.flush()
@@ -134,12 +138,15 @@ async def test_g4_new_global_kpi_without_br_decision_is_detected(db: AsyncSessio
 # ── 회귀: HIDDEN 은 표현 행이 없어도 확실히 숨는다 ────────────────────────────
 
 async def test_hidden_kpi_has_no_presentation_row_and_stays_hidden(db: AsyncSession):
-    """SOW_TURNOVER: BR 에서 HIDDEN + 현지명 UNVERIFIED → 표현 행 자체가 없다."""
+    """SOW_TURNOVER: BR 에서 HIDDEN + 현지명 UNVERIFIED → BR 표현 행이 없다.
+
+    표현 축은 GLOBAL 값(order=40)을 상속하지만, 포함 여부는 CKP 소관이라
+    HIDDEN 이 이긴다 — 순서가 있어도 화면에 나오지 않는다."""
     await _seed(db)
     assert "SOW_TURNOVER" not in {r.kpi_code for r in await resolve_display_kpis(db, country=COUNTRY)}
     pres = await resolve_kpi_presentation(db, kpi_code="SOW_TURNOVER", country=COUNTRY)
     assert pres.local_label is None, "확정되지 않은 현지명을 넣지 않는다"
-    assert pres.display_order is None
+    assert pres.resolved_from == ["GLOBAL"], "BR 표현 행 없음 — GLOBAL 만 기여"
 
 
 async def test_seed_module_matches_spec_document(db: AsyncSession):
@@ -155,3 +162,25 @@ async def test_seed_module_matches_spec_document(db: AsyncSession):
     )
     for _code, _order, label in BR_PILOT_VISIBLE:
         assert label in section, f"현지명 '{label}' 이 문서 §2 에 없음"
+
+
+# ── 배포 회귀: Presentation 전환이 비-BR 화면 순서를 바꾸지 않는다 ──────────────
+
+async def test_non_br_card_order_is_preserved(db: AsyncSession):
+    """★ GLOBAL 시드만으로 켜면 정렬이 kpi_code ASC 로 떨어져 카드 순서가 알파벳순으로
+    바뀐다(리허설에서 검출). GLOBAL 표현 시드가 현행 순서를 보존하는지 고정한다.
+
+    기대값 출처: src/lib/kpi/cardRegistry.ts 의 KPI_CARD_REGISTRY 배열 순서."""
+    await _seed(db)
+    renderable = {c for c, _ in GLOBAL_DISPLAY_ORDER}
+    for country in ("US", "KR", None):
+        rows = await resolve_display_kpis(db, country=country)
+        drawn = [r.kpi_code for r in rows if r.kpi_code in renderable]
+        assert drawn == ["PSY", "NPD", "FARROWING_RATE", "SOW_TURNOVER"], (country, drawn)
+
+
+async def test_br_overrides_global_order(db: AsyncSession):
+    """BR 은 GLOBAL 순서를 덮는다 — override=true 인 COUNTRY 값이 이긴다."""
+    await _seed(db)
+    rows = await resolve_display_kpis(db, country=COUNTRY)
+    assert [r.kpi_code for r in rows] == ["PSY", "FARROWING_RATE", "NPD"]
