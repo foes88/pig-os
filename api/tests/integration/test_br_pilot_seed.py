@@ -20,6 +20,7 @@ from app.db.br_pilot_seed import (
     policy_rows,
     presentation_rows,
 )
+from app.db.global_policy_defaults import GLOBAL_HIDDEN, GLOBAL_VISIBLE
 from app.db.global_presentation_seed import GLOBAL_DISPLAY_ORDER
 from app.db.global_presentation_seed import presentation_rows as global_presentation_rows
 from app.db.models.kpi_policy import CountryKpiPolicy
@@ -32,14 +33,13 @@ from app.services.kpi_policy_resolver import (
 
 pytestmark = pytest.mark.anyio
 
-# GLOBAL seed(마이그레이션 c7d9e1f3a5b8)와 동일한 14개. 테스트 DB 는 create_all 이라
-# 마이그레이션 시드가 없으므로 여기서 동일하게 재현한다.
+# GLOBAL seed 형상 — d1a4c6e8b2f5(D-10-1 A) 적용 후: visible 3 + hidden 11.
+# 테스트 DB 는 create_all 이라 마이그레이션 시드가 없으므로 여기서 재현한다.
+# ※ 이전에는 14개 전부 visible 이었다. 그건 "라이브 동작 codify" 였지 표시 결정이
+#    아니었고, 프론트가 4개만 그릴 수 있어서 문제가 안 보였을 뿐이다.
 GLOBAL_SEED = (
-    ("PSY", "PRIMARY"), ("NPD", "PRIMARY"), ("FARROWING_RATE", "PRIMARY"),
-    ("SOW_TURNOVER", "SECONDARY"), ("MSY", "SECONDARY"), ("FCR", "SECONDARY"),
-    ("ADG", "SECONDARY"), ("WSI", "SECONDARY"), ("RTS_RATE", "SECONDARY"),
-    ("PWMR", "SECONDARY"), ("BORN_ALIVE", "SECONDARY"), ("WEANED_COUNT", "SECONDARY"),
-    ("SOW_MORTALITY", "SECONDARY"), ("STILLBORN_RATE", "SECONDARY"),
+    *((k, "PRIMARY") for k in GLOBAL_VISIBLE),
+    *((k, "HIDDEN") for k in GLOBAL_HIDDEN),
 )
 
 
@@ -78,9 +78,13 @@ async def test_g2_visible_count_is_exactly_three(db: AsyncSession):
 
 
 async def test_g2_other_country_still_sees_global_set(db: AsyncSession):
-    """BR 의 HIDDEN 은 BR 에만 적용된다 — 다른 국가는 GLOBAL 14개 그대로."""
+    """BR 의 HIDDEN 은 BR 에만 적용된다 — 다른 국가는 GLOBAL 기본값(최소 3개) 그대로.
+
+    BR 이 3개인 것과 US 가 3개인 것은 이유가 다르다: BR 은 명시 결정, US 는 미결정
+    기본값이다. 집합이 같아도 근거가 다르므로 둘 다 검사한다."""
     await _seed(db)
-    assert len(await resolve_display_kpis(db, country="US")) == len(GLOBAL_SEED)
+    us = {r.kpi_code for r in await resolve_display_kpis(db, country="US")}
+    assert us == set(GLOBAL_VISIBLE)
 
 
 # ── G3 ────────────────────────────────────────────────────────────────────────
@@ -176,7 +180,9 @@ async def test_non_br_card_order_is_preserved(db: AsyncSession):
     for country in ("US", "KR", None):
         rows = await resolve_display_kpis(db, country=country)
         drawn = [r.kpi_code for r in rows if r.kpi_code in renderable]
-        assert drawn == ["PSY", "NPD", "FARROWING_RATE", "SOW_TURNOVER"], (country, drawn)
+        # SOW_TURNOVER 는 d1a4c6e8b2f5 로 GLOBAL HIDDEN 이 됐다(카드 4장 → 3장).
+        # "화면 변화 0" 이 아니라 "결정 없는 노출 확대 0" 이 이번 결정의 내용이다.
+        assert drawn == ["PSY", "NPD", "FARROWING_RATE"], (country, drawn)
 
 
 async def test_br_overrides_global_order(db: AsyncSession):

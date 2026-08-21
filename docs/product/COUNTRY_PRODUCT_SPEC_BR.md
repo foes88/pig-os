@@ -1,6 +1,6 @@
 # Country Product Spec — BR (브라질)
 
-> **v0.3** · 2026-08-20 · SSOT
+> **v0.4** · 2026-08-21 · SSOT
 > 이 문서와 `api/app/db/br_pilot_seed.py` 는 같은 값을 말해야 한다.
 > seed 게이트(G1~G4)가 둘의 불일치를 테스트로 막는다.
 
@@ -52,7 +52,7 @@ headline 은 `priority_class='NORTH_STAR'` 로 표현한다(`uq_ckp_north_star` 
 
 | kpi_code | 제약 | 해소 조건 |
 |---|---|---|
-| `BORN_ALIVE` | `DashboardKpi` 페이로드에 값이 없음 | 대시보드 응답에 필드 추가(백엔드 별건) |
+| `BORN_ALIVE` | ~~페이로드에 값 없음~~ **해소됨**(`1d07768` metrics 맵) → 남은 제약은 **현지명 미확정** | 포르투갈어 명칭 확정 + D-10-2 확대 결정 |
 | `PWMR` | 〃 | 〃 |
 | `STILLBORN_RATE` | 〃 (+ 정의 상이로 외부 벤치마크 무효, GLOBAL 에서 `benchmark_exposure='NONE'`) | 〃 |
 | `FCR` | 유료 애드온 — `require_addon("ADDON_FCR")`. Entitlement Matrix 결재 대기 상태에서 무료 파일럿에 노출 불가 | Entitlement Matrix 승인 |
@@ -113,9 +113,48 @@ GLOBAL 에 KPI 를 추가하고 BR 결정을 빠뜨리면 이 테스트가 실�
 
 ---
 
+## 4-1. D-10 결정 (2026-08-21) — GLOBAL 의 의미 재정의
+
+`metrics` 맵 노출로 프론트가 그릴 수 있는 KPI 가 늘자, GLOBAL seed 가 14개를 전부
+visible 로 둔 것이 **결정한 적 없는 지표를 11개국에 자동 노출**하는 경로임이 드러났다.
+지금까지 4장만 보인 건 정책이 아니라 **프론트 구현 한계**였다.
+
+| 결정 | 내용 |
+|---|---|
+| **D-10-1 (A)** | GLOBAL = 미결정 국가의 **최소 안전값** 3개(`PSY`·`NPD`·`FARROWING_RATE`). 나머지 11개 HIDDEN. 확대는 COUNTRY 명시 승인으로만 |
+| **D-10-2 (B)** | BR 은 현행 3개 유지. 7개 확대는 UAT 완료 + 현지명 확정 후 별도 결정 |
+| **D-10-3 (C)** | 비타겟 6개국(**PH·MX·DE·ES·DK·NL**) = `UNKNOWN / PENDING CLASSIFICATION`. 농장 성격(CUSTOMER/PILOT/HARVEST/TEST/INTERNAL/UNKNOWN) 확인 전까지 제품 타겟 승격·노출 확대 금지 |
+| **D-10-4 (A)** | KR 도 별도 국가 정책 없이 GLOBAL 적용. 대표 검토용 전체 지표는 **국가 정책이 아니라 Admin KPI Preview** 로 분리(정책이 QA 도구 역할을 겸하면 "왜 KR만 14개냐" 예외가 생긴다) |
+
+### 운영 영향 — "화면 변화 0" 이 아니다
+
+`SOW_TURNOVER` 는 GLOBAL SECONDARY 였으므로 축소 시 **카드가 4장 → 3장이 된다.**
+정확한 표현은 **"결정 없는 노출 확대 0"** 이다.
+
+### GLOBAL visible 3개의 의미 범위
+
+"카드를 표시할 수 있다"까지만이다. **"3개는 모든 나라에서 현지 기준까지 검증됐다"는
+뜻이 아니다.** 축은 계속 분리된다.
+
+```
+Presentation policy   카드 표시 여부
+Definition/Evidence   정의 호환성 · 근거 승인
+Benchmark policy      국가 benchmark 사용 가능 여부 · severity 산출 가능 여부
+Entitlement           FCR 등 유료/제한 기능 노출 여부
+```
+
+미국에서 PSY 카드를 표시하더라도, 미국 benchmark 가 승인되지 않았다면 미국 기준인 것처럼
+severity·비교문구를 만들어서는 안 된다.
+
+### 회귀 잠금
+
+`tests/integration/test_global_visible_minimum.py` — **프론트 capability 증가 ≠ 제품
+노출 증가**. 새 KPI 를 시스템에 추가해도 미결정 국가의 visible 카드 수가 늘지 않는다.
+
 ## 5. 변경 이력
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| v0.4 | 2026-08-21 | D-10 확정 — GLOBAL 을 최소 안전값 3개로 재정의 · BR 3개 유지 · 비타겟 6개국 UNKNOWN · KR 은 GLOBAL 적용 + Admin Preview 분리. `BORN_ALIVE`·`PWMR`·`STILLBORN_RATE` 의 페이로드 제약 해소(남은 건 현지명) |
 | v0.3 | 2026-08-20 | Pilot v1 visible subset(3) 신설 · full target(7) 유지 · `SOW_TURNOVER` explicit HIDDEN(근거 부재·현지명 UNVERIFIED) · seed 원칙 OPTION A · G1~G4 |
 | v0.2 | — | full target 7개 확정 · 현지 명칭 3개 확정 |
