@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.kpi_policy import CountryKpiPolicy
@@ -100,20 +100,30 @@ def _row_matches(r, country: str | None, farm_type: str | None,
     return False
 
 
-async def resolve_kpi_policy(
-    db: AsyncSession, *, kpi_code: str, country: str | None = None,
-    farm_type: str | None = None, production_stage: str | None = None,
-    tenant_id: UUID | None = None, ref: date | None = None,
-) -> ResolvedKpiPolicy | None:
-    """거버넌스 벡터만 해석. 표현(display_order/local_label)은 여기서 다루지 않는다."""
-    ref = ref or date.today()
-    stmt = select(CountryKpiPolicy).where(
-        CountryKpiPolicy.kpi_code == kpi_code,
-        CountryKpiPolicy.decision_status == "APPROVED",
+def _scoped_policy_stmt(country: str | None, tenant_id: UUID | None):
+    """해석에 쓰일 가능성이 있는 스코프만 서버측에서 걸러 가져온다.
+
+    전 국가 행을 다 끌어오면 국가가 늘수록 커진다. GLOBAL + 해당 국가 + 해당 테넌트면 충분하다
+    (_row_matches 가 나머지 축을 다시 검사하므로 과다 포함은 안전, 과소 포함만 위험)."""
+    conds = [CountryKpiPolicy.scope_level == "GLOBAL"]
+    if country is not None:
+        conds.append(CountryKpiPolicy.country_code == country)
+    if tenant_id is not None:
+        conds.append(CountryKpiPolicy.tenant_id == tenant_id)
+    return select(CountryKpiPolicy).where(
+        CountryKpiPolicy.decision_status == "APPROVED", or_(*conds),
     )
+
+
+def _resolve_policy_rows(
+    kpi_code: str, rows: list[CountryKpiPolicy], ref: date,
+    country: str | None, farm_type: str | None, stage: str | None, tenant_id: UUID | None,
+) -> ResolvedKpiPolicy | None:
+    """이미 읽어온 행에서 거버넌스 벡터를 해석(쿼리 없음)."""
     rows = [
-        r for r in (await db.execute(stmt)).scalars().all()
-        if _effective(r, ref) and _row_matches(r, country, farm_type, production_stage, tenant_id)
+        r for r in rows
+        if r.kpi_code == kpi_code and _effective(r, ref)
+        and _row_matches(r, country, farm_type, stage, tenant_id)
     ]
     if not any(r.scope_level == "GLOBAL" for r in rows):
         return None  # fail-closed: GLOBAL 기준 없으면 미거버넌스
@@ -130,6 +140,59 @@ async def resolve_kpi_policy(
         if contributed:
             resolved.resolved_from.append(r.scope_level)
     return resolved
+
+
+async def resolve_kpi_policy(
+    db: AsyncSession, *, kpi_code: str, country: str | None = None,
+    farm_type: str | None = None, production_stage: str | None = None,
+    tenant_id: UUID | None = None, ref: date | None = None,
+) -> ResolvedKpiPolicy | None:
+    """거버넌스 벡터만 해석. 표현(display_order/local_label)은 여기서 다루지 않는다."""
+    ref = ref or date.today()
+    stmt = select(CountryKpiPolicy).where(
+        CountryKpiPolicy.kpi_code == kpi_code,
+        CountryKpiPolicy.decision_status == "APPROVED",
+    )
+    rows = list((await db.execute(stmt)).scalars().all())
+    return _resolve_policy_rows(
+        kpi_code, rows, ref, country, farm_type, production_stage, tenant_id)
+
+
+def _scoped_presentation_stmt(country: str | None, tenant_id: UUID | None):
+    """정책 쪽과 동일한 스코프 축소(_scoped_policy_stmt 주석 참조)."""
+    conds = [CountryKpiPresentation.scope_level == "GLOBAL"]
+    if country is not None:
+        conds.append(CountryKpiPresentation.country_code == country)
+    if tenant_id is not None:
+        conds.append(CountryKpiPresentation.tenant_id == tenant_id)
+    return select(CountryKpiPresentation).where(
+        CountryKpiPresentation.decision_status == "APPROVED", or_(*conds),
+    )
+
+
+def _resolve_presentation_rows(
+    kpi_code: str, rows: list[CountryKpiPresentation], ref: date,
+    country: str | None, farm_type: str | None, tenant_id: UUID | None,
+) -> ResolvedKpiPresentation:
+    """이미 읽어온 행에서 표현 벡터를 해석(쿼리 없음)."""
+    rows = [
+        r for r in rows
+        if r.kpi_code == kpi_code and _effective(r, ref)
+        and _row_matches(r, country, farm_type, None, tenant_id)
+    ]
+    rows.sort(key=lambda r: _SCOPE_RANK[r.scope_level])
+    out = ResolvedKpiPresentation(kpi_code=kpi_code)
+    for r in rows:
+        contributed = False
+        if r.display_order_override:
+            out.display_order = r.display_order  # NULL 이어도 채택 = 맨 뒤
+            contributed = True
+        if r.local_label is not None:
+            out.local_label = r.local_label
+            contributed = True
+        if contributed:
+            out.resolved_from.append(r.scope_level)
+    return out
 
 
 async def resolve_kpi_presentation(
@@ -150,23 +213,8 @@ async def resolve_kpi_presentation(
         CountryKpiPresentation.kpi_code == kpi_code,
         CountryKpiPresentation.decision_status == "APPROVED",
     )
-    rows = [
-        r for r in (await db.execute(stmt)).scalars().all()
-        if _effective(r, ref) and _row_matches(r, country, farm_type, None, tenant_id)
-    ]
-    rows.sort(key=lambda r: _SCOPE_RANK[r.scope_level])
-    out = ResolvedKpiPresentation(kpi_code=kpi_code)
-    for r in rows:
-        contributed = False
-        if r.display_order_override:
-            out.display_order = r.display_order  # NULL 이어도 채택 = 맨 뒤
-            contributed = True
-        if r.local_label is not None:
-            out.local_label = r.local_label
-            contributed = True
-        if contributed:
-            out.resolved_from.append(r.scope_level)
-    return out
+    rows = list((await db.execute(stmt)).scalars().all())
+    return _resolve_presentation_rows(kpi_code, rows, ref, country, farm_type, tenant_id)
 
 
 def sort_display_kpis(items: list[DisplayKpi]) -> list[DisplayKpi]:
@@ -197,24 +245,23 @@ async def resolve_display_kpis(
     포함 기준은 CKP 다: compute_enabled AND display_role in (PRIMARY, SECONDARY).
     Presentation row 가 없는 KPI 도 CKP 가 visible 이면 포함한다(표현값만 NULL).
     """
-    stmt = select(CountryKpiPolicy.kpi_code).where(
-        CountryKpiPolicy.scope_level == "GLOBAL",
-        CountryKpiPolicy.decision_status == "APPROVED",
-    ).distinct()
-    codes = [c for (c,) in (await db.execute(stmt)).all()]
+    ref = ref or date.today()
+    # ★ 쿼리 2회로 고정(정책 1 + 표현 1). KPI 개수만큼 왕복하면 커넥션을 오래 물고 있어
+    #   풀러 슬롯이 마르고, 대시보드 응답도 KPI 수에 비례해 느려진다.
+    pol_rows = list((await db.execute(_scoped_policy_stmt(country, tenant_id))).scalars().all())
+    pres_rows = list((await db.execute(_scoped_presentation_stmt(country, tenant_id))).scalars().all())
+
+    # 표시 후보는 GLOBAL 에 등재된 KPI (기존과 동일 기준)
+    codes = sorted({r.kpi_code for r in pol_rows if r.scope_level == "GLOBAL"})
 
     out: list[DisplayKpi] = []
     for code in codes:
-        rp = await resolve_kpi_policy(
-            db, kpi_code=code, country=country, farm_type=farm_type,
-            production_stage=production_stage, tenant_id=tenant_id, ref=ref,
-        )
+        rp = _resolve_policy_rows(
+            code, pol_rows, ref, country, farm_type, production_stage, tenant_id)
         if not (rp and rp.compute_enabled and rp.display_role in ("PRIMARY", "SECONDARY")):
             continue  # HIDDEN·미거버넌스는 여기서 탈락
-        pr = await resolve_kpi_presentation(
-            db, kpi_code=code, country=country, farm_type=farm_type,
-            tenant_id=tenant_id, ref=ref,
-        )
+        pr = _resolve_presentation_rows(
+            code, pres_rows, ref, country, farm_type, tenant_id)
         out.append(DisplayKpi(
             kpi_code=code,
             compute_enabled=rp.compute_enabled, display_role=rp.display_role,
