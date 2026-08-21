@@ -916,6 +916,8 @@ async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
         psy=psy_value,
         npd=npd_detail.avg_npd if npd_detail else None,
         sow_turnover=npd_detail.sow_turnover if npd_detail else None,
+        # 룰엔진 ctx.kpi 와 동일 소스 — 표시값과 판정값이 갈라지지 않는다.
+        metrics={**ctx.kpi, "SOW_TURNOVER": npd_detail.sow_turnover if npd_detail else None},
         kpi_status=kpi_status,
         # 스케일 SSOT: percent(0~100) 단일 통일(2026-06-25). 시드 benchmarks(f3a7c2e9b5d1)가 percent
         # (KR target 85.0, unit "%")이고 RuleEngine 입력(L654)·trend 모두 percent → 출력도 percent로 통일해

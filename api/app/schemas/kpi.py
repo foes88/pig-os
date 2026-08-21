@@ -58,6 +58,12 @@ class DashboardKpi(BaseModel):
     country: str | None = None
     benchmarks: dict[str, KpiBenchmark] = {}  # "PSY" | "NPD" | "FARROWING_RATE"
 
+    # 정본 kpi_code → 값. 카드를 하나 늘릴 때마다 스키마를 고치지 않기 위한 일반 맵.
+    # ★ 룰엔진이 판정에 쓰는 것과 "같은 dict" 를 그대로 노출한다 — 화면에 보이는 숫자와
+    #   경고를 낸 숫자가 갈라지지 않게 하려는 것이다.
+    # 위 psy/npd/farrowing_rate/sow_turnover 는 기존 계약 유지를 위해 남긴 중복이다.
+    metrics: dict[str, float | None] = {}
+
     # ADR-KPI-08 Phase 1 — 백엔드 소유 KPI 상태(국가별 Rule Engine 판정 결과).
     # 키 = metric_code(benchmarks와 동일 키). 프론트는 이 값을 렌더만 하고 자체 판정 금지.
     kpi_status: dict[str, KpiStatus] = {}
