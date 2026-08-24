@@ -43,6 +43,24 @@ for s in $SERVICES; do
   fi
 done
 
+echo "════ 2.5/5 빌드 컨텍스트 검증 ════"
+# ★ 소스를 부분 동기화하다 디렉토리가 통째로 빠지는 사고가 있었다(2026-08-24).
+#   api/content 가 서버에 없어서 가입 API 가 500 을 내고 있었는데 아무도 몰랐다.
+#   빌드 전에 필수 경로가 컨텍스트에 있는지 확인한다.
+REQUIRED_API=(app alembic content pyproject.toml Dockerfile)
+REQUIRED_WEB=(app components lib messages package.json)
+miss=0
+for s_ in $SERVICES; do
+  case "$s_" in
+    api|worker) for r in "${REQUIRED_API[@]}"; do
+        [ -e "$ROOT/api/$r" ] || { echo "  ❌ api/$r 없음"; miss=1; }; done ;;
+    web) for r in "${REQUIRED_WEB[@]}"; do
+        [ -e "$ROOT/src/$r" ] || { echo "  ❌ src/$r 없음"; miss=1; }; done ;;
+  esac
+done
+[ "$miss" -eq 0 ] || { echo "빌드 컨텍스트가 불완전합니다 — 소스 동기화를 다시 하십시오"; exit 1; }
+echo "  필수 경로 확인 완료"
+
 echo "════ 3/5 빌드 ════"
 # shellcheck disable=SC2086
 sudo docker compose $COMPOSE build $SERVICES
