@@ -1722,7 +1722,11 @@
   },
   "topbar": {
     "search": "搜索母猪ID、批次、栏位…",
-    "qi": "快速录入"
+    "qi": "快速录入",
+    "account": "账户",
+    "logout": "退出登录",
+    "logoutConfirm": "要退出 PigOS 吗？",
+    "cancel": "取消"
   },
   "quickInput": {
     "ev_mating": "配种",

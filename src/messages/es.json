@@ -1722,7 +1722,11 @@
   },
   "topbar": {
     "search": "Buscar cerda ID, lote, sala…",
-    "qi": "Entrada Rápida"
+    "qi": "Entrada Rápida",
+    "account": "Cuenta",
+    "logout": "Cerrar sesión",
+    "logoutConfirm": "¿Cerrar sesión en PigOS?",
+    "cancel": "Cancelar"
   },
   "quickInput": {
     "ev_mating": "Monta",

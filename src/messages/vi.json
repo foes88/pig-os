@@ -1722,7 +1722,11 @@
   },
   "topbar": {
     "search": "Tìm số nái, lô, khu…",
-    "qi": "Nhập nhanh"
+    "qi": "Nhập nhanh",
+    "account": "Tài khoản",
+    "logout": "Đăng xuất",
+    "logoutConfirm": "Đăng xuất khỏi PigOS?",
+    "cancel": "Hủy"
   },
   "quickInput": {
     "ev_mating": "Phối giống",

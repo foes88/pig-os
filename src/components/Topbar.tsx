@@ -1,7 +1,9 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Search, User } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { visibleLocales } from "@/i18n/config";
 import { FarmSwitcher } from "@/components/FarmSwitcher";
@@ -12,6 +14,101 @@ import type { Locale } from "@/i18n/config";
 const LANG_LABELS: Record<Locale, string> = {
   en: "EN", ko: "KO", zh: "中文", es: "ES", vi: "VI", th: "ไทย", pt: "PT", ru: "RU",
 };
+
+// 사용자 메뉴 — 로그아웃이 설정 페이지 3~4단 안쪽에만 있어 찾기 어려웠다.
+// 상시 노출하되 오클릭 방지를 위해 드롭다운 + 확인 단계를 둔다.
+function AccountMenu() {
+  const t = useTranslations("topbar");
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // 바깥 클릭·ESC 로 닫기 — 열어놓고 다른 걸 누르면 메뉴가 남아 가리는 걸 막는다.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); setConfirming(false); }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setOpen(false); setConfirming(false); }
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  const doLogout = () => {
+    clearAuth();
+    document.cookie = "pigos_session=; path=/; max-age=0";
+    router.replace("/login");
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => { setOpen((v) => !v); setConfirming(false); }}
+        data-testid="account-menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t("account")}
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-muted hover:bg-bg2 hover:text-text transition"
+      >
+        <User size={16} />
+        <span className="hidden sm:inline text-xs font-semibold max-w-[110px] truncate">
+          {user?.name ?? user?.username ?? t("account")}
+        </span>
+        <ChevronDown size={13} className={open ? "rotate-180 transition" : "transition"} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-1 w-56 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden"
+          style={{ boxShadow: "var(--shadow-card)" }}
+        >
+          {user && (
+            <div className="px-3 py-2.5 border-b border-border">
+              <div className="text-xs font-bold text-text truncate">{user.name ?? user.username}</div>
+              {user.email && <div className="text-[11px] text-text3 truncate">{user.email}</div>}
+            </div>
+          )}
+          {confirming ? (
+            <div className="p-3">
+              <p className="text-xs text-text2 mb-2.5">{t("logoutConfirm")}</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={doLogout}
+                  data-testid="logout-confirm"
+                  className="flex-1 text-xs font-bold text-white bg-danger px-3 py-2 rounded-lg hover:opacity-90 transition"
+                >
+                  {t("logout")}
+                </button>
+                <button
+                  onClick={() => setConfirming(false)}
+                  className="flex-1 text-xs font-semibold text-text2 border border-border px-3 py-2 rounded-lg hover:bg-bg2 transition"
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirming(true)}
+              role="menuitem"
+              data-testid="logout-button"
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-danger hover:bg-red-soft transition text-left"
+            >
+              <LogOut size={14} /> {t("logout")}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface TopbarProps {
   lang?: Locale;
@@ -86,6 +183,9 @@ export function Topbar({
           <span className="text-sm font-bold leading-none">+</span>
           {t("qi")}
         </button>
+
+        {/* Account / Logout — 상시 노출(설정 안쪽에만 있어 찾기 어려웠음) */}
+        <AccountMenu />
       </div>
     </header>
   );

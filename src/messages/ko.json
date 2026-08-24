@@ -1722,7 +1722,11 @@
   },
   "topbar": {
     "search": "모돈 ID, 배치, 구역 검색…",
-    "qi": "빠른 입력"
+    "qi": "빠른 입력",
+    "account": "계정",
+    "logout": "로그아웃",
+    "logoutConfirm": "PigOS에서 로그아웃할까요?",
+    "cancel": "취소"
   },
   "quickInput": {
     "ev_mating": "교배",

@@ -1722,7 +1722,11 @@
   },
   "topbar": {
     "search": "Buscar ID da matriz, lote, sala…",
-    "qi": "Registro rápido"
+    "qi": "Registro rápido",
+    "account": "Conta",
+    "logout": "Sair",
+    "logoutConfirm": "Sair do PigOS?",
+    "cancel": "Cancelar"
   },
   "quickInput": {
     "ev_mating": "Cobrição",

@@ -1722,7 +1722,11 @@
   },
   "topbar": {
     "search": "Search sow ID, batch, room…",
-    "qi": "Quick Input"
+    "qi": "Quick Input",
+    "account": "Account",
+    "logout": "Log out",
+    "logoutConfirm": "Log out of PigOS?",
+    "cancel": "Cancel"
   },
   "quickInput": {
     "ev_mating": "Mating",
