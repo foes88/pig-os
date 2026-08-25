@@ -4,13 +4,13 @@ Reports router — reproduction & grow-finish performance, sow breeding history.
 Reference: docs/SCREEN_MENU_SPEC.md → Reports.
 Aggregation lives in app.services.report_service (pure builders + DB wrappers).
 """
-from datetime import date, datetime
+from datetime import date
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query
 
 from app.core.dependencies import DbDep, FarmDep
+from app.core.farm_time import farm_today
 from app.schemas.report import (
     AnnualKpiTrend,
     CostSummary,
@@ -31,13 +31,10 @@ router = APIRouter(prefix="/farms/{farm_id}/reports", tags=["Reports"])
 MAX_RANGE_DAYS = 731  # ~2 years
 
 
-def _farm_today(farm) -> date:
-    """농장 타임존 기준 '오늘'. 서버(KST) date.today()를 그대로 쓰면 비-KST 농장이
-    날짜 경계에서 하루 어긋남(M5). tzdata 의존성으로 명명 타임존 해석."""
-    try:
-        return datetime.now(ZoneInfo(farm.timezone or "UTC")).date()
-    except Exception:  # noqa: BLE001 — 알 수 없는 tz는 UTC 폴백
-        return datetime.now(ZoneInfo("UTC")).date()
+# 2026-08-25: 이 파일에만 있던 _farm_today 를 app/core/farm_time.py 로 통합했다.
+# 원 주석은 "서버(KST)"를 전제했지만 **운영 컨테이너는 UTC** 다(실측). 같은 문제가
+# kpi_service·event_service·jobs 에도 있었고 거기서는 처리되지 않고 있었다.
+_farm_today = farm_today
 
 
 @router.get("/daily", response_model=DailyReport)

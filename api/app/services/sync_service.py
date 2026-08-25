@@ -105,6 +105,17 @@ async def _get_sow(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> Sow | None:
 
 
 def _is_future_date(event_date: date) -> bool:
+    """미래 이벤트 판정 — 여기는 **서버 기준 + 1일 여유**로 충분하다.
+
+    ★ 2026-08-25 TZ 점검 결론: 전 세계 최대 오프셋은 UTC+14 이므로 농장 현지 날짜는
+      서버(UTC)보다 최대 **1일** 앞선다. TOLERANCE=1 이 그 폭을 정확히 덮는다.
+      REST(event_service)는 이 여유가 없어서 서울 농장이 오전에 등록을 못 했고,
+      그쪽은 농장 현지 기준으로 고쳤다(app/core/farm_time.py).
+
+      여기서 농장 tz 를 다시 조회하지 않는 이유: 이 판정은 8개 호출부에서 배치 항목마다
+      돌고, 여유 1일이 이미 정확한 상한이라 조회를 추가해도 결과가 같다.
+      대신 하루치 진짜 미래 입력을 통과시키는 트레이드오프는 그대로 남는다 — 의도된 값이다.
+    """
     return event_date > date.today() + timedelta(days=_FUTURE_DATE_TOLERANCE_DAYS)
 
 

@@ -14,6 +14,19 @@
 - decision_status='APPROVED' 행만 반영(fail-closed). 미승인/미검증 무시.
 - 유효기간: effective_from <= as_of <= (effective_to or ∞). 두 리졸버 모두 동일 적용.
 - GLOBAL 행 없으면 정책은 None(미거버넌스 → 호출자가 안전 처리).
+
+## 기준일(ref)이 왜 서버 날짜인가 (2026-08-25 TZ 점검)
+
+이 모듈의 `ref` 는 **정책 발효일 게이트**다 — "이 결정이 언제부터 유효한가"를 본다.
+그 판단 주체는 농장이 아니라 **회사(거버넌스)** 이고 스코프도 country/tenant 이지
+farm 이 아니다. 그래서 여기서는 서버 날짜를 쓰는 것이 맞다.
+
+같은 이유로 **농장 현지 기준으로 바꾸면 안 된다**: 같은 국가의 두 농장이 타임존이
+다르다는 이유로 하루 동안 서로 다른 정책을 적용받게 되고, 그건 "승인된 정책이 언제
+켜지는가"를 농장이 흔드는 것이라 거버넌스 계약에 어긋난다.
+
+사용자에게 보이는 날짜(오늘·이번주·KPI 기준일)는 반대로 농장 현지여야 한다 —
+app/core/farm_time.py 참조.
 """
 from __future__ import annotations
 
@@ -148,7 +161,7 @@ async def resolve_kpi_policy(
     tenant_id: UUID | None = None, ref: date | None = None,
 ) -> ResolvedKpiPolicy | None:
     """거버넌스 벡터만 해석. 표현(display_order/local_label)은 여기서 다루지 않는다."""
-    ref = ref or date.today()
+    ref = ref or date.today()   # 정책 발효일 게이트 — 농장이 아니라 회사 기준(아래 주석)
     stmt = select(CountryKpiPolicy).where(
         CountryKpiPolicy.kpi_code == kpi_code,
         CountryKpiPolicy.decision_status == "APPROVED",
@@ -208,7 +221,7 @@ async def resolve_kpi_presentation(
     이 구분이 없으면 "브라질에서는 이 KPI 를 맨 뒤로" 를 표현할 수 없다.
     local_label 은 NULL=상속(현재 clear semantics 없음).
     """
-    ref = ref or date.today()
+    ref = ref or date.today()   # 정책 발효일 게이트 — 농장이 아니라 회사 기준(아래 주석)
     stmt = select(CountryKpiPresentation).where(
         CountryKpiPresentation.kpi_code == kpi_code,
         CountryKpiPresentation.decision_status == "APPROVED",
@@ -245,7 +258,7 @@ async def resolve_display_kpis(
     포함 기준은 CKP 다: compute_enabled AND display_role in (PRIMARY, SECONDARY).
     Presentation row 가 없는 KPI 도 CKP 가 visible 이면 포함한다(표현값만 NULL).
     """
-    ref = ref or date.today()
+    ref = ref or date.today()   # 정책 발효일 게이트 — 농장이 아니라 회사 기준(아래 주석)
     # ★ 쿼리 2회로 고정(정책 1 + 표현 1). KPI 개수만큼 왕복하면 커넥션을 오래 물고 있어
     #   풀러 슬롯이 마르고, 대시보드 응답도 KPI 수에 비례해 느려진다.
     pol_rows = list((await db.execute(_scoped_policy_stmt(country, tenant_id))).scalars().all())

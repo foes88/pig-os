@@ -308,6 +308,7 @@ async def get_annual_kpi_trend(db: AsyncSession, farm, years: int, end_year: int
     번식 연간집계(교배/분만/분만율)는 1회 조회, PSY/NPD는 연도별 계산.
     데이터 없는 연도는 null(추세선에서 끊김 처리는 프론트 몫).
     """
+    from app.core.farm_time import farm_today
     from app.services import kpi_service  # 지연 임포트(순환 방지)
 
     start_year = end_year - years + 1
@@ -318,10 +319,10 @@ async def get_annual_kpi_trend(db: AsyncSession, farm, years: int, end_year: int
 
     rows: list[dict] = []
     for y in range(start_year, end_year + 1):
-        psy = await kpi_service.calculate_psy(db, farm.id, min(date(y, 12, 31), date.today()))
-        npd = await kpi_service.calculate_npd(
-            db, farm.id, min(date(y, 12, 31), date.today())
-        )
+        # 농장 현지 오늘로 절단 — 서버(UTC) 기준이면 당해년도 "오늘까지"가 하루 어긋난다.
+        today = farm_today(farm)
+        psy = await kpi_service.calculate_psy(db, farm.id, min(date(y, 12, 31), today))
+        npd = await kpi_service.calculate_npd(db, farm.id, min(date(y, 12, 31), today))
         rr = repro_by_year.get(str(y), {})
         rows.append({
             "year": y,
