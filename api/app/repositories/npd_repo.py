@@ -7,12 +7,25 @@
 PostgreSQL 뷰는 파라미터를 받을 수 없으므로 뷰를 고치는 게 아니라, 계산 경로를
 :as_of 를 명시적으로 바인드하는 repository 쿼리로 옮긴다.
 
-★ 예외 하나(2026-08-25 추가): **as_of == 오늘인 핫패스에 한해** v_sow_npd 를 쓴다.
-  그 조건에서는 뷰의 CURRENT_DATE 와 기준일이 같아 결과가 동일하고, 뷰는 프로덕션
-  규모(weanings 52만행)에 맞는 인덱스를 타 인라인 서브쿼리보다 훨씬 빠르다.
-  과거 시점 재계산(월마감·스냅샷 재현)은 여전히 인라인 경로다.
-  등가성은 가정이 아니라 테스트로 고정한다 → tests/integration/test_npd_view_fastpath.py
-  (미래 날짜 교배가 유입되면 등가성이 깨진다는 의존까지 명시해 뒀다).
+v_sow_npd 는 "오늘 기준 convenience view" 로 남지만 **계산 경로에서는 쓰지 않는다.**
+
+★ 2026-08-25 에 "as_of == 오늘이면 뷰와 같으니 핫패스만 뷰로" 를 시도했다가 되돌렸다.
+  이유는 두 가지이고, 둘 다 다시 시도하기 전에 반드시 읽어야 한다.
+
+  ① **이득이 없다.** farrowings by-sow 인덱스(e2b5d7c9a1f3) 추가 후 프로덕션 실측:
+       1만두 농장  인라인 0.030s / 뷰 0.029s   (값 동일)
+       중앙값 농장 인라인 0.011s / 뷰 0.011s
+     원래 느렸던 건 _NPD_SQL 의 lact_open LATERAL(3.7s)이지 이 쿼리가 아니었다.
+
+  ② **틀릴 수 있다.** 등가성의 전제가 "뷰의 CURRENT_DATE == as_of" 인데,
+     **API 컨테이너 TZ 는 UTC, DB TZ 는 Asia/Seoul 이다**(실측 2026-08-25).
+     매일 00:00~09:00 KST 의 9시간 동안 DB 날짜가 컨테이너보다 하루 앞선다.
+     그 창에서 뷰의 cap 조건은 `weaning_date <= as_of - 59` 가 되어
+     인라인(`<= as_of - 60`)보다 하루 느슨해지고, 이유 후 59일 된 모돈이
+     하루 일찍 cap 60 으로 잡혀 평균 WEI 가 달라진다.
+     테스트 환경은 컨테이너·DB TZ 가 같아 이 결함을 재현하지 못한다.
+
+  재시도 금지 가드: tests/unit/test_npd_calc_path_isolation.py
 
 as_of 의 의미(둘 다 필요):
   ① 유휴 판정 기준일 — weaning_date <= as_of - 60 이면 60 cap
@@ -64,28 +77,12 @@ _SUM = text(f"SELECT coalesce(sum(wei_days), 0) FROM ({WEI_ROWS_SQL}) t "
             "WHERE wei_days IS NOT NULL AND wei_days > 0 AND weaning_date BETWEEN :s AND :e")
 
 
-# ── 핫패스 최적화 ─────────────────────────────────────────────────────────────
-# as_of == 오늘이면 v_sow_npd 의 CURRENT_DATE 와 기준일이 같으므로 결과가 동일하다.
-# 뷰는 프로덕션 규모(weanings 45만행)에 맞춰 인덱스가 붙어 있어 인라인 서브쿼리보다
-# 훨씬 빠르다(2026-08-21 대시보드 지연 장애). 과거 시점 재계산만 인라인 경로를 쓴다.
-#
-# ★ 결과 동등성 근거: 뷰의 cap 조건은 `weaning_date <= CURRENT_DATE - 60`, 인라인은
-#   `weaning_date <= (:as_of)::date - 60`. as_of=CURRENT_DATE 면 같은 식이다.
-#   인라인이 추가로 거는 `mating_date <= as_of`·`weaning_date <= as_of` 도 as_of=오늘이면
-#   미래 데이터가 없는 한 무제약이다(미래일 입력은 검증층이 차단한다).
-_AVG_VIEW = text("SELECT AVG(wei_days) AS w FROM v_sow_npd WHERE farm_id = :farm_id "
-                 "AND wei_days IS NOT NULL AND weaning_date BETWEEN :s AND :e")
-_SUM_VIEW = text("SELECT coalesce(sum(wei_days), 0) FROM v_sow_npd WHERE farm_id = :farm_id "
-                 "AND wei_days IS NOT NULL AND wei_days > 0 AND weaning_date BETWEEN :s AND :e")
-
-
 async def avg_wei_days(
     db: AsyncSession, farm_id: UUID, *, start: date, end: date, as_of: date,
 ) -> float | None:
     """기간 내 이유건의 평균 WEI. 값 없으면 None."""
-    stmt = _AVG_VIEW if as_of == date.today() else _AVG
     row = (await db.execute(
-        stmt, {"farm_id": str(farm_id), "s": start, "e": end, "as_of": as_of},
+        _AVG, {"farm_id": str(farm_id), "s": start, "e": end, "as_of": as_of},
     )).fetchone()
     return float(row.w) if row and row.w is not None else None
 
@@ -94,7 +91,6 @@ async def sum_wei_days(
     db: AsyncSession, farm_id: UUID, *, start: date, end: date, as_of: date,
 ) -> float:
     """기간 내 총 지연일 합(손실 추정용). 값 없으면 0."""
-    stmt = _SUM_VIEW if as_of == date.today() else _SUM
     return float((await db.execute(
-        stmt, {"farm_id": str(farm_id), "s": start, "e": end, "as_of": as_of},
+        _SUM, {"farm_id": str(farm_id), "s": start, "e": end, "as_of": as_of},
     )).scalar() or 0)
