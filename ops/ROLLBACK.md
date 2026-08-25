@@ -206,6 +206,11 @@ Supabase 시절의 `Database → Backups`(관리형 복원 지점)에 **해당�
 
 ### E-2. 덤프에서 복원
 
+> **리허설 실측(2026-08-25)**: 143M 덤프 → 별도 DB 복원 **24.1초 · ERROR 0건**.
+> 58테이블·sows 141,360·marker 일치, 덤프-복원본 테이블 차집합 0,
+> 성능 인덱스(`idx_farrowings_sow_date`)도 복원본에 살아남았다.
+> **운영 DB 를 건드리지 않고 리허설하는 법**은 아래 E-4.
+
 ```bash
 ls -lh ~/pigos-backups/                     # deploy 태그 붙은 게 배포 직전 스냅샷
 ```
@@ -262,6 +267,31 @@ curl -s -o /dev/null -w "%{http_code}\n" https://api.pigos.io/health
 ```bash
 $P -c "ANALYZE;"
 ```
+
+
+### E-4. 복원 리허설 (운영 DB 를 건드리지 않고)
+
+**백업은 복원해 본 적 있을 때만 백업이다.** 분기 1회는 돌린다.
+
+```bash
+B=$(ls -t ~/pigos-backups/pigos-full-*.sql.gz | head -1)
+P="sudo -u postgres psql -p 5434"
+
+$P -c "DROP DATABASE IF EXISTS pigos_restore_test"
+$P -c "CREATE DATABASE pigos_restore_test OWNER pigos"
+time gzip -dc "$B" | sudo -u postgres /usr/lib/postgresql/17/bin/psql -p 5434      -d pigos_restore_test -q -v ON_ERROR_STOP=0 2>/tmp/restore_err.txt
+grep -c '^ERROR' /tmp/restore_err.txt          # 로컬 PG 덤프면 0 이어야 한다
+
+# 덤프 목록과 복원본을 대조 — 둘 다 비어야 누락 0
+gzip -dc "$B" | grep '^CREATE TABLE public\.' | sed 's/CREATE TABLE public\.//; s/ .*//'   | tr -d '"' | sort > /tmp/dt.txt
+$P -d pigos_restore_test -tAc   "select tablename from pg_tables where schemaname='public'" | sort > /tmp/rt.txt
+comm -23 /tmp/dt.txt /tmp/rt.txt && comm -13 /tmp/dt.txt /tmp/rt.txt
+
+$P -c "DROP DATABASE pigos_restore_test"       # ★ 반드시 정리 — 디스크를 두 배로 먹는다
+```
+
+★ 덤프에 `ERROR` 가 나오는 경우: **Supabase 시절 덤프**라면 `realtime`·`storage`
+스키마 관련이라 정상이다(약 21건). **로컬 PG 덤프인데 ERROR 가 나오면 조사한다.**
 
 ---
 
