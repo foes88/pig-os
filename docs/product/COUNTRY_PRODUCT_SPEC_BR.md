@@ -52,7 +52,7 @@ headline 은 `priority_class='NORTH_STAR'` 로 표현한다(`uq_ckp_north_star` 
 
 | kpi_code | 제약 | 해소 조건 |
 |---|---|---|
-| `BORN_ALIVE` | ~~페이로드에 값 없음~~ **해소됨**(`1d07768` metrics 맵) → 남은 제약은 **현지명 미확정** | 포르투갈어 명칭 확정 + D-10-2 확대 결정 |
+| `BORN_ALIVE` | ~~페이로드에 값 없음~~ **해소됨**(`1d07768` metrics 맵) → 남은 제약은 **현지명 미확정** | 포르투갈어 명칭 확정 + K-01-2 확대 결정 |
 | `PWMR` | 〃 | 〃 |
 | `STILLBORN_RATE` | 〃 (+ 정의 상이로 외부 벤치마크 무효, GLOBAL 에서 `benchmark_exposure='NONE'`) | 〃 |
 | `FCR` | 유료 애드온 — `require_addon("ADDON_FCR")`. Entitlement Matrix 결재 대기 상태에서 무료 파일럿에 노출 불가 | Entitlement Matrix 승인 |
@@ -113,7 +113,7 @@ GLOBAL 에 KPI 를 추가하고 BR 결정을 빠뜨리면 이 테스트가 실�
 
 ---
 
-## 4-1. D-10 결정 (2026-08-21) — GLOBAL 의 의미 재정의
+## 4-1. K-01 결정 (2026-08-21) — GLOBAL 의 의미 재정의
 
 `metrics` 맵 노출로 프론트가 그릴 수 있는 KPI 가 늘자, GLOBAL seed 가 14개를 전부
 visible 로 둔 것이 **결정한 적 없는 지표를 11개국에 자동 노출**하는 경로임이 드러났다.
@@ -121,10 +121,10 @@ visible 로 둔 것이 **결정한 적 없는 지표를 11개국에 자동 노�
 
 | 결정 | 내용 |
 |---|---|
-| **D-10-1 (A)** | GLOBAL = 미결정 국가의 **최소 안전값** 3개(`PSY`·`NPD`·`FARROWING_RATE`). 나머지 11개 HIDDEN. 확대는 COUNTRY 명시 승인으로만 |
-| **D-10-2 (B)** | BR 은 현행 3개 유지. 7개 확대는 UAT 완료 + 현지명 확정 후 별도 결정 |
-| **D-10-3 (C)** | 비타겟 6개국(**PH·MX·DE·ES·DK·NL**) = `UNKNOWN / PENDING CLASSIFICATION`. 농장 성격(CUSTOMER/PILOT/HARVEST/TEST/INTERNAL/UNKNOWN) 확인 전까지 제품 타겟 승격·노출 확대 금지 |
-| **D-10-4 (A)** | KR 도 별도 국가 정책 없이 GLOBAL 적용. 대표 검토용 전체 지표는 **국가 정책이 아니라 Admin KPI Preview** 로 분리(정책이 QA 도구 역할을 겸하면 "왜 KR만 14개냐" 예외가 생긴다) |
+| **K-01-1 (A)** | GLOBAL = 미결정 국가의 **최소 안전값** 3개(`PSY`·`NPD`·`FARROWING_RATE`). 나머지 11개 HIDDEN. 확대는 COUNTRY 명시 승인으로만 |
+| **K-01-2 (B)** | BR 은 현행 3개 유지. 7개 확대는 UAT 완료 + 현지명 확정 후 별도 결정 |
+| **K-01-3 (C)** | 비타겟 6개국(**PH·MX·DE·ES·DK·NL**) = `UNKNOWN / PENDING CLASSIFICATION`. 농장 성격(CUSTOMER/PILOT/HARVEST/TEST/INTERNAL/UNKNOWN) 확인 전까지 제품 타겟 승격·노출 확대 금지 |
+| **K-01-4 (A)** | KR 도 별도 국가 정책 없이 GLOBAL 적용. 대표 검토용 전체 지표는 **국가 정책이 아니라 Admin KPI Preview** 로 분리(정책이 QA 도구 역할을 겸하면 "왜 KR만 14개냐" 예외가 생긴다) |
 
 ### 운영 영향 — "화면 변화 0" 이 아니다
 
@@ -155,6 +155,6 @@ severity·비교문구를 만들어서는 안 된다.
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
-| v0.4 | 2026-08-21 | D-10 확정 — GLOBAL 을 최소 안전값 3개로 재정의 · BR 3개 유지 · 비타겟 6개국 UNKNOWN · KR 은 GLOBAL 적용 + Admin Preview 분리. `BORN_ALIVE`·`PWMR`·`STILLBORN_RATE` 의 페이로드 제약 해소(남은 건 현지명) |
+| v0.4 | 2026-08-21 | K-01 확정 — GLOBAL 을 최소 안전값 3개로 재정의 · BR 3개 유지 · 비타겟 6개국 UNKNOWN · KR 은 GLOBAL 적용 + Admin Preview 분리. `BORN_ALIVE`·`PWMR`·`STILLBORN_RATE` 의 페이로드 제약 해소(남은 건 현지명) |
 | v0.3 | 2026-08-20 | Pilot v1 visible subset(3) 신설 · full target(7) 유지 · `SOW_TURNOVER` explicit HIDDEN(근거 부재·현지명 UNVERIFIED) · seed 원칙 OPTION A · G1~G4 |
 | v0.2 | — | full target 7개 확정 · 현지 명칭 3개 확정 |

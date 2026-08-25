@@ -33,7 +33,7 @@ from app.services.kpi_policy_resolver import (
 
 pytestmark = pytest.mark.anyio
 
-# GLOBAL seed 형상 — d1a4c6e8b2f5(D-10-1 A) 적용 후: visible 3 + hidden 11.
+# GLOBAL seed 형상 — d1a4c6e8b2f5(K-01-1 A) 적용 후: visible 3 + hidden 11.
 # 테스트 DB 는 create_all 이라 마이그레이션 시드가 없으므로 여기서 재현한다.
 # ※ 이전에는 14개 전부 visible 이었다. 그건 "라이브 동작 codify" 였지 표시 결정이
 #    아니었고, 프론트가 4개만 그릴 수 있어서 문제가 안 보였을 뿐이다.

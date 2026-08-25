@@ -1,4 +1,4 @@
-"""GLOBAL 정책 기본값 — "미결정 국가의 최소 안전값" (D-10-1).
+"""GLOBAL 정책 기본값 — "미결정 국가의 최소 안전값" (K-01-1).
 
 GLOBAL 은 원래 "현재 라이브 동작 codify"(c7d9e1f3a5b8)로 14개를 전부 visible 로 뒀다.
 그때는 프론트가 4개만 그릴 수 있어서 화면상 문제가 없었지만, 그건 **정책이 아니라
@@ -24,7 +24,7 @@ GLOBAL 은 원래 "현재 라이브 동작 codify"(c7d9e1f3a5b8)로 14개를 전
 """
 from __future__ import annotations
 
-# 미결정 국가에 노출할 최소 지표. 늘리려면 D-10 급 결정이 필요하다.
+# 미결정 국가에 노출할 최소 지표. 늘리려면 K-01 급 결정이 필요하다.
 GLOBAL_VISIBLE: tuple[str, ...] = ("PSY", "NPD", "FARROWING_RATE")
 
 # c7d9e1f3a5b8 GLOBAL seed 14개 중 위 3개를 뺀 나머지 — 명시적으로 숨긴다.
@@ -43,4 +43,4 @@ GLOBAL_HIDDEN: tuple[str, ...] = (
     "WSI",
 )
 
-DECISION = "D-10-1 (A) — GLOBAL 은 미결정 국가의 최소 안전값"
+DECISION = "K-01-1 (A) — GLOBAL 은 미결정 국가의 최소 안전값"

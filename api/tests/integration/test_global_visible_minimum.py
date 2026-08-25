@@ -1,4 +1,4 @@
-"""GLOBAL = 미결정 국가의 최소 안전값 (D-10-1 A).
+"""GLOBAL = 미결정 국가의 최소 안전값 (K-01-1 A).
 
 이번 발견의 핵심: **프론트 구현 한계가 정책처럼 보이고 있었다.**
 GLOBAL seed 는 14개를 전부 visible 로 뒀는데 프론트가 4개만 그릴 수 있어서
@@ -53,7 +53,7 @@ async def test_undecided_country_sees_only_minimum(db: AsyncSession):
 
 
 async def test_unknown_country_code_also_minimum(db: AsyncSession):
-    """분류 안 된 국가(D-10-3 UNKNOWN)도 동일 — 새 나라가 들어와도 자동 확대 없음."""
+    """분류 안 된 국가(K-01-3 UNKNOWN)도 동일 — 새 나라가 들어와도 자동 확대 없음."""
     await _seed_global(db)
     rows = await resolve_display_kpis(db, country="ZZ")
     assert {r.kpi_code for r in rows} == set(GLOBAL_VISIBLE)
@@ -107,4 +107,4 @@ async def test_country_can_opt_in_explicitly(db: AsyncSession):
 async def test_seed_lists_are_disjoint_and_complete(db: AsyncSession):
     """SSOT 무결성 — visible/hidden 이 겹치거나 비지 않아야 한다."""
     assert not (set(GLOBAL_VISIBLE) & set(GLOBAL_HIDDEN)), "visible 과 hidden 이 겹친다"
-    assert set(GLOBAL_VISIBLE) == {"PSY", "NPD", "FARROWING_RATE"}, "D-10-1 결정값"
+    assert set(GLOBAL_VISIBLE) == {"PSY", "NPD", "FARROWING_RATE"}, "K-01-1 결정값"
