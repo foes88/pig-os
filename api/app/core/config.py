@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # 30초면 화면 반복 조회는 즉시 응답하고, 입력 직후 최신값도 곧 반영된다.
     # 이벤트 입력 시에는 cache.invalidate_farm 으로 즉시 무효화한다.
     dashboard_cache_ttl: int = 30
+
+    # DB 커넥션 keepalive 주기(초). 0 이면 끔.
+    # 풀러가 유휴 커넥션을 끊으면 재수립에 수 초가 걸려 응답이 튄다(2026-08-25).
+    # 풀러 유휴 타임아웃보다 짧아야 의미가 있다.
+    db_keepalive_interval: int = 20
     redis_url: str = "redis://localhost:6379/0"
     secret_key: str = "change-me-in-production-at-least-32-chars"
     algorithm: str = "HS256"

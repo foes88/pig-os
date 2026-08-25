@@ -25,8 +25,15 @@ PG_IMAGE="${PG_IMAGE:-postgres:17-alpine}"
 
 mkdir -p "$INC_DIR"
 [ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE 없음"; exit 1; }
-URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+# ★ pg_dump/psql 은 트랜잭션 모드(6543)에서 동작하지 않는다 — 세션 모드가 필요하다.
+#   앱은 트랜잭션 모드를 쓰므로 DATABASE_URL 이 6543 일 수 있다. 백업은 5432 를 쓴다.
+URL=$(grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+[ -n "$URL" ] || URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
 [ -n "$URL" ] || { echo "ERROR: DATABASE_URL 미설정"; exit 1; }
+case "$URL" in
+  *:6543/*) echo "ERROR: 트랜잭션 모드 URL(6543)로는 덤프할 수 없습니다."
+            echo "       .env 에 MIGRATION_DATABASE_URL(포트 5432)을 설정하십시오."; exit 1 ;;
+esac
 PGURL=$(printf '%s' "$URL" | sed -E 's#\+asyncpg##; s#\?ssl=require#?sslmode=require#')
 
 sudo docker image inspect "$PG_IMAGE" >/dev/null 2>&1 || sudo docker pull -q "$PG_IMAGE"

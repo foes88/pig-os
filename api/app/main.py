@@ -20,6 +20,7 @@ from app.addons import AddonRegistry
 from app.core import cache
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
+from app.db import keepalive
 from app.routers.base import (
     alerts,
     analytics,
@@ -61,7 +62,12 @@ from app.routers.base import (
 async def lifespan(app: FastAPI):
     addons = AddonRegistry.all()
     print(f"[PigOS] {len(addons)} Addon(s) registered: {[a.code for a in addons]}")
-    yield
+    # 풀러가 유휴 커넥션을 끊어 재수립에 수 초가 걸리는 스파이크를 막는다(2026-08-25).
+    keepalive.start()
+    try:
+        yield
+    finally:
+        await keepalive.stop()
 
 
 app = FastAPI(
