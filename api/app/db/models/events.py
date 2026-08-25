@@ -67,6 +67,11 @@ class Farrowing(Base):
         # 분만율 코호트(mating LEFT JOIN farrowing ON mating_id)가 mating_id로 조회 →
         # 인덱스 없으면 대형농장 스캔(대시보드 지연, 2026-07).
         Index("idx_farrowings_mating", "mating_id"),
+        # NPD lact_open LATERAL(MAX(farrowing_date) WHERE sow_id=?)이 sow_id로 조회.
+        # matings·weanings 에는 같은 이유로 by-sow 인덱스를 붙였는데 farrowings 만 빠져 있었다
+        # → 플래너가 idx_farrowings_farm_sow(farm_id 선행)를 못 쓰고 모돈마다 스캔,
+        #   1만두 농장 _NPD_SQL 5.4s 중 3.7s 를 여기서 썼다(2026-08-25 실측).
+        Index("idx_farrowings_sow_date", "sow_id", "farrowing_date"),
     )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
