@@ -109,6 +109,30 @@ if [ "$LINES" -lt 5 ]; then
 fi
 echo "[$(date '+%F %T')] 완료 $SIZE"
 
+# ── 오프사이트 사본 (S3) ─────────────────────────────────────────────────────
+# ★ 이게 없으면 백업이 원본과 같은 EBS 볼륨에만 있다. 인스턴스·볼륨 장애가 나면
+#   DB 와 백업이 **같이** 사라진다. 2026-08-25 로컬 PG 이전 후 최대 위험 요소.
+#
+# 활성화 조건(둘 다 대표 승인 필요 — AWS 리소스 생성):
+#   1) S3 버킷 생성 (버전관리 + 수명주기 권장)
+#   2) 이 EC2 가 s3:PutObject 할 수 있는 IAM 인스턴스 역할 또는 자격증명
+#   3) .env 에 BACKUP_S3_BUCKET=<버킷명> (선택: BACKUP_S3_PREFIX)
+#
+# 셋 중 하나라도 없으면 **조용히 건너뛰지 않고 경고**한다 — 오프사이트 사본이
+# 없다는 사실이 로그에서 보이지 않으면 있다고 착각하게 된다.
+S3_BUCKET=$(grep -E '^BACKUP_S3_BUCKET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)
+S3_PREFIX=$(grep -E '^BACKUP_S3_PREFIX=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)
+S3_PREFIX="${S3_PREFIX:-pigos-db}"
+if [ -z "$S3_BUCKET" ]; then
+  echo "  ⚠ 오프사이트 사본 없음 — BACKUP_S3_BUCKET 미설정 (백업이 이 EBS 볼륨에만 있음)"
+elif ! command -v aws >/dev/null 2>&1; then
+  echo "  ⚠ 오프사이트 사본 실패 — aws CLI 미설치 (sudo apt install -y awscli)"
+elif ! aws s3 cp "$OUT" "s3://$S3_BUCKET/$S3_PREFIX/$(basename "$OUT")" --only-show-errors; then
+  echo "  ⚠ 오프사이트 사본 실패 — S3 업로드 오류(자격증명·권한 확인)"
+else
+  echo "  오프사이트 사본 OK → s3://$S3_BUCKET/$S3_PREFIX/$(basename "$OUT")"
+fi
+
 # 보존 정리 — deploy 태그가 붙은 것은 지우지 않는다(되돌릴 지점이라 오래 남긴다).
 find "$BACKUP_DIR" -name 'pigos-*.sql.gz' ! -name '*-deploy.sql.gz' \
      -mtime +"$KEEP_DAYS" -print -delete 2>/dev/null || true
