@@ -124,3 +124,13 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str = Field(..., min_length=1)
     new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class AccountDeleteRequest(BaseModel):
+    """계정 삭제 요청 — 비밀번호 재확인 필수.
+
+    되돌릴 수 없고 농장까지 비활성화하는 동작이라 방치된 세션·탈취 토큰만으로
+    실행되면 안 된다(대표 결정 2026-08-25). GitHub·Google 도 동일하게 재인증을 요구한다.
+    """
+
+    password: str = Field(..., min_length=1, description="현재 비밀번호(재인증)")

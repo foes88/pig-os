@@ -265,20 +265,22 @@ async def _sow_counts(db: AsyncSession, farm_id: UUID) -> dict[str, int]:
     return {row.status: row.cnt for row in rows}
 
 
-async def _recent_notifiable_diseases(db: AsyncSession, farm_id: UUID) -> list[dict]:
+async def _recent_notifiable_diseases(db: AsyncSession, farm) -> list[dict]:
     """
     Query health events from the last 30 days that have a notifiable disease_code.
     Returns aggregated list for disease rule injection.
     """
     from datetime import timedelta
-    cutoff = await farm_today_by_id(db, farm_id) - timedelta(days=30)
+    # farm 객체를 받는다 — farm_id 로 timezone 을 다시 조회하면 대시보드 핫패스에
+    # 쿼리가 하나 늘어난다(호출부가 이미 farm 을 들고 있다).
+    cutoff = farm_today(farm) - timedelta(days=30)
     rows = await db.execute(
         select(
             HealthEvent.disease_code,
             func.count().label("event_count"),
         )
         .where(
-            HealthEvent.farm_id == farm_id,
+            HealthEvent.farm_id == farm.id,
             HealthEvent.disease_code.isnot(None),
             HealthEvent.event_date >= cutoff,
             HealthEvent.deleted_at.is_(None),
@@ -658,7 +660,7 @@ async def build_rule_context(
         }
 
     # Disease prevalence extra context
-    notifiable_diseases = await _recent_notifiable_diseases(db, farm.id)
+    notifiable_diseases = await _recent_notifiable_diseases(db, farm)
 
     # 운영자 규칙 설정(임계/활성) — 행 없으면 빈 dict → 엔진이 코드 기본값으로 폴백
     rule_configs = await load_rule_configs(db)

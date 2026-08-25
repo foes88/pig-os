@@ -1,8 +1,11 @@
+import logging
+
 from fastapi import APIRouter
 
 from app.core.dependencies import CurrentUser, DbDep
 from app.core.permissions import effective_system_role, get_farm_access
 from app.schemas.auth import (
+    AccountDeleteRequest,
     LoginRequest,
     LoginResponse,
     MeResponse,
@@ -13,9 +16,10 @@ from app.schemas.auth import (
     RegisterRequest,
     TokenResponse,
 )
-from app.services import auth_service
+from app.services import account_deletion_service, auth_service
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+log = logging.getLogger(__name__)
 
 
 @router.post("/register", response_model=LoginResponse, status_code=201)
@@ -102,3 +106,22 @@ async def update_me(body: MeUpdate, current_user: CurrentUser, db: DbDep):
         farm_ids=farm_ids,
         farm_roles=farm_roles,
     )
+
+@router.delete("/me", status_code=204)
+async def delete_me(body: AccountDeleteRequest, current_user: CurrentUser, db: DbDep):
+    """계정 삭제(탈퇴) — Apple Guideline 5.1.1(v).
+
+    앱에서 계정을 만들 수 있으면 앱에서 삭제도 가능해야 한다. 되돌릴 수 없다.
+
+    204  삭제 완료
+    401  토큰 무효
+    403  비밀번호 불일치 (재인증 실패)
+    422  비밀번호 누락
+
+    처리 방식과 근거(익명화 · 농장 비활성화)는 app/services/account_deletion_service.py.
+    """
+    result = await account_deletion_service.delete_account(db, current_user, body.password)
+    log.info("account deleted user=%s farms_deactivated=%s memberships=%s purged=%s",
+             result.user_id, len(result.deactivated_farms),
+             result.released_memberships, result.purged)
+    await db.commit()
