@@ -14,4 +14,10 @@
 [PLACEHOLDER] Access, withdrawal, objection, exclusion request.
 
 ## Contact (연락처)
-[OPEN] DPO / EU-UK representative — 실명·주소 미정, 공란.
+
+| 구분 | 성명 | 소속·직위 | 연락처 |
+|---|---|---|---|
+| 개인정보 보호책임자 | 진교문 | 주식회사 와이즈레이크 / 대표이사 | gyomoon@wiselake.co.kr / +82-31-421-3418 |
+| 개인정보 보호 담당부서 | 경영지원팀 | 주식회사 와이즈레이크 | wiselake@wiselake.ai / +82-31-421-3418 |
+
+[OPEN] EU·GB 대리인 — 대행 계약 후 명칭·주소 기입 (현재 EU·GB 는 타겟 아님).

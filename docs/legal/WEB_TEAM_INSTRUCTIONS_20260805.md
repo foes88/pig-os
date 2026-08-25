@@ -54,3 +54,18 @@
 2. **개인정보 이메일 정본**: **`wiselake@wiselake.ai`** (publish_candidate 기준 유지). 기존 `wiselake@wiselake.co.kr`·`gyomoon@ezfarm.co.kr`은 **alias/forwarding으로 계속 수신**(진행 중 제외요청 유실 방지), 원장 통합. 새 주소만 남기고 기존 즉시 폐기 금지.
 
 → footer에 위 확정값(진교문 · +82-31-421-3418 · wiselake@wiselake.ai)으로 반영.
+
+### ⚠️ 2026-08-25 추가 — 이메일은 **두 갈래이며 둘 다 정본**이다
+
+`gyomoon@wiselake.co.kr` 을 "구 주소"로 보고 정리하면 안 된다. 용도가 다르다.
+
+| 위치 | 주소 | 용도 |
+|---|---|---|
+| footer · 부속조항 6벌 · 권리행사 창구 | `wiselake@wiselake.ai` | **조직 창구**(담당부서 경영지원팀) |
+| 처리방침 제1조 보호책임자 행 | `gyomoon@wiselake.co.kr` | **보호책임자(진교문) 개인 지정 연락처** |
+
+PIPA §30 은 보호책임자와 담당부서를 **각각** 기재하도록 하므로 둘을 하나로 합치지 않는다.
+폐기 대상은 `gyomoon@ezfarm.co.kr`(구 도메인)뿐이고, 그마저도 forwarding 은 유지한다.
+
+**대표 확인(2026-08-25)**: 진교문이 현 대표이사이며 개인정보 보호책임자를 겸임한다.
+`wiselake@wiselake.ai` 는 실제 수신·운영 중임이 확인됐다(v1.3 이후 미결이던 운영 확인 종결).

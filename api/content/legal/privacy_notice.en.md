@@ -13,5 +13,12 @@
 ## Data Subject Rights (정보주체 권리)
 [PLACEHOLDER] Access, withdrawal, objection, exclusion request.
 
-## Contact (연락처)
-[OPEN] DPO / EU-UK representative — 실명·주소 미정, 공란.
+## Contact
+
+| Role | Name | Affiliation / Title | Contact |
+|---|---|---|---|
+| Privacy Officer | Gyomoon Jin | WiseLake Inc. / Chief Executive Officer | gyomoon@wiselake.co.kr / +82-31-421-3418 |
+| Privacy Department | Management Support Team | WiseLake Inc. | wiselake@wiselake.ai / +82-31-421-3418 |
+
+[OPEN] EU/UK representative — name and address to be filled after the agency contract
+(EU/GB are not current target markets).

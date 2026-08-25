@@ -1,5 +1,5 @@
 {
-  "_comment": "법무 문서 매니페스트. 문구는 변호사 확정 전 DRAFT placeholder. 확정본으로 파일만 교체하고 version 을 올리면 renderer/consent_ledger 가 자동 반영. 여기에 사업조건(크레딧·환불·SLA)·DPO 실명 하드코딩 금지 — [OPEN] 은 빈 값 유지.",
+  "_comment": "법무 문서 매니페스트. 문구는 변호사 확정 전 DRAFT placeholder. 확정본으로 파일만 교체하고 version 을 올리면 renderer/consent_ledger 가 자동 반영. 여기(manifest)에 사업조건(크레딧·환불·SLA) 하드코딩 금지 — [OPEN] 은 빈 값 유지. ※ 개인정보 보호책임자는 2026-08-25 대표 확인으로 실값 확정(진교문/대표이사/gyomoon@wiselake.co.kr, 담당부서 경영지원팀/wiselake@wiselake.ai) — privacy_notice.{ko,en}.md 본문에 기입되어 있다. PIPA §30 이 처리방침 의무기재사항으로 요구하므로 공란으로는 게시할 수 없다. 값을 바꿀 때는 docs/legal/publish_candidate/ 게시후보본과 반드시 함께 고친다.",
   "documents": {
     "MASTER_TERMS": {
       "kind": "master",

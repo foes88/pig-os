@@ -9,7 +9,7 @@
 | # | 발견사항 | 심각도 | 조치 |
 |---|---|---|---|
 | F1 | 방침(pigplan.io) 서두 "2019-09-30 시행" vs 하단 "시행일 2026-05-30" 병존 | MED | 개정 이력 조항 형태로 정정 |
-| F2 | 방침 제11조 책임자 "진교문/CEO, gyomoon@ezfarm.co.kr(구 도메인)" vs 현 대표 안승환 | MED | 책임자·연락처 현행화. `COUNSEL_CONFIRMATION_REQUIRED`(CPO 지정 요건) |
+| ~~F2~~ **CLOSED** | 방침 제11조 책임자 "진교문/CEO, gyomoon@ezfarm.co.kr(구 도메인)" vs 현 대표 안승환 | MED | **2026-08-25 대표 확인**: 진교문=현 대표이사이며 개인정보 보호책임자 겸임(현행). "안승환"은 구 게시본 footer 오기. 구 도메인만 문제였음 → `gyomoon@wiselake.co.kr` 현행화, 담당부서 **경영지원팀** 확정, 전화 +82-31-421-3418 현행 확인. 반영처: publish_candidate(ko·en) · drafts · api/content/legal/privacy_notice.{ko,en}.md. 잔여: CPO 지정 요건(PIPA §31 예외 해당성)은 `COUNSEL_CONFIRMATION_REQUIRED` 유지 |
 | F3 | 방침 제1조 수집항목 "이메일" 중복 기재 | LOW | 정정 |
 | F4 | 방침·약관이 정보통신망법 중심 인용, "개인정보취급방침" 구용어 | MED | 개인정보 보호법 기준 현행화 |
 | F5 | **동의 모델 상충**: pigplan.io(익명화 후 기본 활용·판매+옵트아웃+소급회수 불가 명시) vs pigos.ai("별도 동의한 경우에 한하며", 유상판매·소급회수 미표기) | **HIGH** | 실제 가입 UI·동의 로그 확인(UNVERIFIED) → 게시본·운영 일치화. KR_legal R2 연결 |

@@ -14,8 +14,8 @@ WiseLake Inc. (hereinafter the "Company") complies with the personal data protec
 
 | Category | Name | Affiliation·Title | Contact |
 |---|---|---|---|
-| Data Protection Officer | 진교문 | WiseLake / CEO | wiselake@wiselake.ai / +82-31-421-3418 |
-| Data Protection Department | Data Protection Officer in charge | WiseLake Inc. | wiselake@wiselake.ai |
+| Privacy Officer (개인정보 보호책임자) | Gyomoon Jin (진교문) | WiseLake Inc. / Chief Executive Officer | gyomoon@wiselake.co.kr / +82-31-421-3418 |
+| Privacy Department (개인정보 보호 담당부서) | Management Support Team (경영지원팀) | WiseLake Inc. | wiselake@wiselake.ai / +82-31-421-3418 |
 
 ③ Where the designation of a local representative or agent is required on a country-by-country basis (e.g., an EU/GB representative, a local representative in Thailand, etc.), such information shall be stated in the Country-specific Notice.
 
