@@ -50,3 +50,28 @@ class TestJtiUniqueness:
         # jti 추가가 기존 디코드(sub 추출)를 깨지 않는지
         uid = uuid4()
         assert decode_refresh_token(create_refresh_token(uid)) == str(uid)
+
+
+# ── 깨진 해시 (2026-08-25) ───────────────────────────────────────────────────
+
+def test_malformed_hash_fails_closed_instead_of_raising():
+    """★ 검증 불가능한 해시는 **예외가 아니라 인증 실패**여야 한다.
+
+    bcrypt.checkpw 는 형식이 아닌 문자열에 ValueError('Invalid salt') 를 던진다.
+    그대로 두면 탈퇴 계정(익명화 시 bcrypt 가 아닌 자리표시 해시가 들어간다)이나
+    손상된 행에서 **인증 실패가 아니라 500** 이 난다.
+
+    fail-closed 여야 한다 — 검증할 수 없으면 통과시키지 않는다."""
+    from app.core.security import verify_password
+
+    for broken in ("", "not-a-hash", "!deleted!abc123", "$2b$xx$short", "$2b$"):
+        assert verify_password("anything", broken) is False, f"{broken!r} 에서 실패해야 한다"
+
+
+def test_valid_hash_still_works():
+    """폴백이 정상 경로를 망가뜨리지 않았는지."""
+    from app.core.security import hash_password, verify_password
+
+    h = hash_password("Correct-Horse-1")
+    assert verify_password("Correct-Horse-1", h) is True
+    assert verify_password("wrong", h) is False

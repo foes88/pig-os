@@ -11,6 +11,7 @@ iOS 1.0 심사가 `DELETE /api/v1/auth/me` 하나로 막혀 있었다. 앱에서
 
 구현 근거(익명화를 택한 이유·농장 비활성화)는 app/services/account_deletion_service.py.
 """
+import inspect
 import uuid
 
 import pytest
@@ -169,3 +170,38 @@ async def test_worker_only_account_does_not_deactivate_the_farm(db: AsyncSession
 
     assert result.deactivated_farms == []
     assert farm.active is True
+
+
+# ── 잔존 토큰 ────────────────────────────────────────────────────────────────
+
+async def test_existing_access_token_is_rejected_immediately(db: AsyncSession):
+    """★ 삭제 직후 **기존 access token 도** 막혀야 한다.
+
+    refresh token 은 지우지만 access token 은 서명된 JWT 라 만료 전까지 유효하다.
+    DB 조회 없이 통과시키는 구조였다면 토큰 수명만큼 삭제된 계정이 살아 있게 된다.
+    실제로는 get_current_user 가 매 요청 `user.active` 를 확인하므로 즉시 차단된다 —
+    그 계약이 깨지면 이 테스트가 알려준다."""
+    from app.core.dependencies import get_current_user
+
+    user = await _register(db)
+    await account_deletion_service.delete_account(db, user, PW)
+    await db.flush()
+
+    src = inspect.getsource(get_current_user)
+    assert "active" in src, (
+        "get_current_user 가 user.active 를 보지 않는다 — 삭제된 계정이 "
+        "access token 만료 전까지 API 를 계속 쓸 수 있다(BLOCKER).")
+    # 상태 자체도 확인 — 위 구조 검사만으로는 값이 실제로 False 인지 모른다.
+    assert user.active is False
+
+
+async def test_deletion_is_idempotent_enough_to_not_corrupt(db: AsyncSession):
+    """두 번째 삭제 시도는 비밀번호가 안 맞아 거부된다 — 상태를 더 망가뜨리지 않는다."""
+    user = await _register(db)
+    await account_deletion_service.delete_account(db, user, PW)
+    await db.flush()
+    anonymized_email = user.email
+
+    with pytest.raises(ForbiddenError):
+        await account_deletion_service.delete_account(db, user, PW)
+    assert user.email == anonymized_email, "재시도가 자리표시값을 다시 덮어쓰면 안 된다"

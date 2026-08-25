@@ -12,7 +12,18 @@ def hash_password(plain: str) -> str:
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _bcrypt.checkpw(plain.encode(), hashed.encode())
+    """비밀번호 검증. **해시가 깨져 있으면 예외가 아니라 실패로 처리한다.**
+
+    bcrypt.checkpw 는 형식이 아닌 해시에 `ValueError: Invalid salt` 를 던진다.
+    그대로 두면 탈퇴 계정(익명화 시 bcrypt 가 아닌 자리표시 해시를 넣는다)이나
+    데이터 손상 행에 대해 **인증 실패가 아니라 500** 이 난다(2026-08-25 실측).
+
+    ★ fail-closed: 검증할 수 없는 해시는 통과시키지 않는다. 보안상 이 방향만 안전하다.
+    """
+    try:
+        return _bcrypt.checkpw(plain.encode(), hashed.encode())
+    except (ValueError, TypeError):
+        return False
 
 
 def _make_token(data: dict, expires_delta: timedelta) -> str:
