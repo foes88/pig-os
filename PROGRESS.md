@@ -22,14 +22,26 @@
   택한 것이므로 **포기한 것**(PITR·오프사이트·이중화)을 표로 명시.
 - **테스트**: `test_db_pool_budget.py` 가 지키는 제약 교체 — 풀러 15 슬롯 → PG
   max_connections(200)·work_mem 메모리 예산.
-- **⚠️ 미해결 / 사람 액션 필요**
-  1. **오프사이트 백업 없음** — 백업이 원본과 같은 EBS 볼륨에만 있다. EC2 장애 시 동반
-     소실. 스크립트·경고는 준비됨(`BACKUP_S3_BUCKET`), **S3 버킷 + IAM 생성은 대표 승인 필요**
-  2. 09:43 덤프 ~ 12:20 전환 사이 Supabase 쓰기 검증 미완 — users·farms·audit_log·
-     notifications 는 0 확인, sows/matings/farrowings/weanings 는 Supabase 응답 불가로 대조 못 함
-  3. 마이그레이션 2건 미배포: `d1a4c6e8b2f5`(K-01-1, SOW_TURNOVER 카드 사라짐) ·
-     `e2b5d7c9a1f3`(인덱스, 프로덕션엔 이미 수동 적용)
-  4. 복원 리허설 미실시 — 백업은 복원해 본 적 있을 때만 백업이다
+- **오프사이트 백업 완료** (`e530dca`): 대표 승인으로 S3 `pigos-db-backup` + EC2 역할
+  `pigos-ec2-backup-role` 생성 → 전체·스키마·증분 모두 업로드. 143M 30.8초, SSE AES256,
+  객체 크기 149,553,529 = 로컬과 일치. ★ 크론 PATH(`/usr/bin:/bin`)에 aws CLI v2 경로가
+  없어 **손으로는 되고 크론에서만 조용히 실패**할 뻔한 것을 `env -i` 실측으로 잡았다.
+- **데이터 손실 0 확정**: Supabase 마지막 쓰기 = **08:26:12 KST**, 덤프(09:43)보다 1h17m 전.
+  audit_log 기준(`after_dump = 0`)이며, REST 이벤트·오프라인 sync·모돈 등록 **모든 쓰기
+  경로가 같은 트랜잭션에 AuditLog 를 남기는 것**을 코드로 확인해 근거로 삼았다.
+- **마이그레이션 배포 완료**: `d1a4c6e8b2f5` + `e2b5d7c9a1f3` → marker `e2b5d7c9a1f3`.
+  GLOBAL PRIMARY 3 / HIDDEN 11, `compute_enabled` 는 14개 전부 유지(표시만 숨김).
+  리졸버 실측: BR 3개(PSY·FARROWING_RATE·NPD, headline=PSY) / 그 외 전부 GLOBAL 3개.
+  api·worker 재빌드로 이미지에 리비전을 심어 `alembic current`=`heads` 일치시킴 —
+  안 하면 컨테이너 재생성 시 "Can't locate revision" 으로 장애 때 오진을 부른다.
+- **복원 리허설 완료** (`ea13fd7`): 143M → 24.1초·ERROR 0, 인덱스까지 복원 확인. 절차는
+  `ops/ROLLBACK.md` E-4 에 고정(운영 DB 를 건드리지 않는 방식).
+- **⚠️ 남은 것**
+  1. **에러 메시지 정형화** — `Server error. Please try again` 이 모든 실패에 동일하게 뜬다
+  2. 버킷 수명주기·버전관리 미설정 (매일 143MB 누적, 1년 ≈ 52GB) — 대표 콘솔 작업
+  3. S3 **복원 경로** 미검증 — 다운로드가 훅 정책(AWS 조회만 허용)에 막혀 head-object
+     크기 대조까지만 함. 다음 리허설 때 실제로 받아봐야 한다
+  4. 이중화 부재 — DB 가 죽으면 복구 시간만큼 서비스 정지(RDS 전환 트리거는 INFRA 문서 §5)
 
 ## [현재상태 2026-07-23] — 동의 인프라 + KPI PigPlan 정합 + i18n 규칙4 (브랜치 feat/consent-infra, **PR #1 draft push됨, 배포 미실시**)
 > 원격 https://github.com/wiselake/pig-os/pull/1 (draft). 11커밋. prod 배포·게시 안 함.
