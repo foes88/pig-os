@@ -18,6 +18,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, PeriodLockedError, ValidationError
+from app.core.farm_time import farm_today_by_id
 from app.db.models.config import ComplianceProfile, RegionDefault
 from app.db.models.events import (
     Farrowing,
@@ -181,7 +182,10 @@ async def record_mating(
     await _ensure_period_unlocked(db, farm_id, req.mating_date)
 
     # 미래 교배일 거부(웅돈 입식일과 동일 가드) — 미래일은 NPD·분만예정 KPI를 왜곡.
-    if req.mating_date > date.today():
+    # ★ 기준은 **농장 현지 오늘**이다. 서버 date.today()(컨테이너 UTC)를 쓰면 서버보다
+    #   앞선 타임존 농장이 자기 오늘 날짜를 넣지 못한다 — 서울(UTC+9)은 매일 00:00~09:00
+    #   에 등록이 막혔다(2026-08-25 재현). app/core/farm_time.py 참조.
+    if req.mating_date > await farm_today_by_id(db, farm_id):
         raise ValidationError(f"mating_date {req.mating_date} cannot be in the future")
 
     # 교배 가능 상태 + 웅돈 순서 검증 (P0-BE-9: boar 슬롯 인자 전달)
@@ -905,7 +909,7 @@ async def update_mating(db, farm_id, user_id, mating_id, body) -> Mating:
     if "mating_date" in data and data["mating_date"]:
         await _ensure_period_unlocked(db, farm_id, data["mating_date"])
         # 미래 교배일 거부 — record_mating과 동일 가드(PATCH 검증 비대칭 마감).
-        if data["mating_date"] > date.today():
+        if data["mating_date"] > await farm_today_by_id(db, farm_id):  # 농장 현지 오늘
             raise ValidationError(f"mating_date {data['mating_date']} cannot be in the future")
     for k, v in data.items():
         setattr(m, k, v)

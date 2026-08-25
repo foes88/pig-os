@@ -12,6 +12,7 @@ from fastapi import APIRouter, Query
 from app.core import cache
 from app.core.config import settings
 from app.core.dependencies import DbDep, FarmDep
+from app.core.farm_time import farm_today
 from app.schemas.kpi import (
     DashboardKpi,
     KpiPolicyOut,
@@ -99,7 +100,9 @@ async def psy(
     year: int = Query(default=date.today().year, ge=2000, le=2099),
 ):
     """PSY (rolling 12개월, 해당 연도 말 기준 — 당해년도는 오늘까지)."""
-    return await kpi_service.calculate_psy(db, farm.id, min(date(year, 12, 31), date.today()))
+    # 농장 현지 오늘 기준 — 서버 UTC 로 자르면 농장의 "오늘까지"가 하루 어긋난다.
+    return await kpi_service.calculate_psy(
+        db, farm.id, min(date(year, 12, 31), farm_today(farm)))
 
 
 @router.get("/trend", response_model=list[KpiTrend])
@@ -121,7 +124,7 @@ async def npd(
     end: date = Query(default=None, description="Period end (default: today)"),
 ):
     """NPD breakdown: 비생산일수(여집합, rolling 12개월 as-of end) + 회전율 + WEI 참고값."""
-    today = date.today()
+    today = farm_today(farm)   # 농장 현지 오늘
     ref = end or today
     detail = await kpi_service.calculate_npd(db, farm.id, ref)
     if detail is None:

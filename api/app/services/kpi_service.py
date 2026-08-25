@@ -12,6 +12,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.farm_time import farm_today, farm_today_by_id
 from app.db.models.health import HealthEvent
 from app.db.models.master import DiseaseCode
 from app.db.models.platform import Farm
@@ -270,7 +271,7 @@ async def _recent_notifiable_diseases(db: AsyncSession, farm_id: UUID) -> list[d
     Returns aggregated list for disease rule injection.
     """
     from datetime import timedelta
-    cutoff = date.today() - timedelta(days=30)
+    cutoff = await farm_today_by_id(db, farm_id) - timedelta(days=30)
     rows = await db.execute(
         select(
             HealthEvent.disease_code,
@@ -390,7 +391,7 @@ async def build_herd_kpis(
     롤링 window의 번식·자돈·비육 herd KPI를 실데이터로 집계해 RuleContext.kpi에 주입한다.
     값이 없으면 None → 규칙은 빈 결과(날조 0). 국가별 임계는 benchmarks/rule_configs가 조정.
     """
-    today = date.today()
+    today = farm_today(farm)   # 농장 현지 오늘 — 서버 UTC 면 롤링창이 하루 어긋난다
     p = {"fid": str(farm.id), "s": today - timedelta(days=window_days), "e": today}
 
     def _f(v) -> float | None:
@@ -574,7 +575,7 @@ def _summer_drop(smat, sfar) -> float | None:
 async def build_loss_inputs(db: AsyncSession, farm: Farm, window_days: int = 365) -> dict:
     """손실계산 입력(실 count + 출하두당가). 가격 없으면 price=None → 손실룰 미발화(위조 0)."""
     from app.services.insight_service import _load_price
-    today = date.today()
+    today = farm_today(farm)
     p = {"fid": str(farm.id), "s": today - timedelta(days=window_days), "e": today}
     pw_deaths = (await db.execute(text(
         "SELECT coalesce(sum(piglet_count),0) FROM piglet_events WHERE farm_id=:fid "
@@ -608,7 +609,7 @@ async def build_boar_stats(
     db: AsyncSession, farm: Farm, window_days: int = 365, min_matings: int = 10
 ) -> list[dict]:
     """웅돈별 분만율(farrowings/matings) — 멀티개체 룰(boar.farrow_rate_low)용. 표본 부족 제외."""
-    today = date.today()
+    today = farm_today(farm)
     rows = (await db.execute(text(
         "SELECT m.boar_id, b.ear_tag, count(DISTINCT m.id) matings, count(DISTINCT f.id) farrows "
         "FROM matings m JOIN boars b ON b.id = m.boar_id "
@@ -634,7 +635,7 @@ async def build_rule_context(
     Assemble RuleContext from live KPI values and benchmarks.
     kpi_overrides lets callers pass pre-computed KPI values (e.g. from snapshots).
     """
-    today = date.today()
+    today = farm_today(farm)
     year  = today.year
 
     # Sow counts
@@ -648,7 +649,7 @@ async def build_rule_context(
     if kpi_overrides:
         kpi = {**herd, **kpi_overrides}
     else:
-        psy_detail = await calculate_psy(db, farm.id, min(date(year, 12, 31), date.today()))
+        psy_detail = await calculate_psy(db, farm.id, min(date(year, 12, 31), today))
         npd_detail = await calculate_npd(db, farm.id, today)
         kpi = {
             **herd,
@@ -688,7 +689,7 @@ async def get_trend(
     """
     months = max(1, min(months, 24))
     # 기준일을 명시적으로 바인드 — 계산 SQL 안에서 CURRENT_DATE 를 읽지 않는다.
-    as_of = as_of or date.today()
+    as_of = as_of or await farm_today_by_id(db, farm_id)   # 농장 현지 오늘
     rows = await db.execute(
         text(
             """
@@ -789,7 +790,9 @@ async def get_trend(
 
 
 async def get_dashboard(db: AsyncSession, farm: Farm) -> DashboardKpi:
-    today = date.today()
+    # ★ 농장 현지 오늘. 서버(컨테이너 UTC) 기준이면 시카고 농장은 일요일 19시부터
+    #   '이번주'가 다음 주로 넘어가 그날 실적이 0으로 보인다(2026-08-25 재현).
+    today = farm_today(farm)
     year  = today.year
 
     # PSY — 대시보드는 오늘 기준 rolling 12개월(스펙 §1)

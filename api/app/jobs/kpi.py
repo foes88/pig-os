@@ -18,6 +18,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.farm_time import today_in_tz
 from app.db.models.events import Farrowing, Mating, Weaning
 from app.db.models.ops import KpiSnapshot
 from app.db.models.platform import Farm
@@ -154,20 +155,32 @@ async def _upsert_snapshot(
 
 # ── ARQ job functions ─────────────────────────────────────────────────────────
 
+async def _active_farms(db) -> list[tuple]:
+    """활성 농장의 (id, timezone) — 기간 산출에 타임존이 필요하다."""
+    return list((await db.execute(
+        select(Farm.id, Farm.timezone).where(Farm.active.is_(True))
+    )).all())
+
+
+# ★ 스냅샷 기간은 **농장 현지 오늘** 기준으로 농장마다 따로 잡는다.
+#   서버(컨테이너 UTC) 기준 하나로 잡으면, 잡이 도는 시각에 아직 하루가 끝나지 않은
+#   농장의 스냅샷이 진행 중인 날짜로 찍힌다 — 예: 잡이 00:00 UTC 에 돌면 그 시각
+#   America/Chicago 는 아직 전날 19:00 이라 "어제"가 실제로는 그 농장의 오늘이다.
+#   상세: app/core/farm_time.py (2026-08-25 TZ 전수 점검)
+
+
 async def daily_kpi_aggregation(ctx: dict) -> str:
     """Aggregate daily KPI snapshots for all active farms."""
-    today = date.today()
-    period_start, period_end = _period_bounds("DAILY", today - timedelta(days=1))
-
     async with AsyncSessionLocal() as db:
-        farm_ids = list(await db.scalars(
-            select(Farm.id).where(Farm.active.is_(True))
-        ))
+        farms = await _active_farms(db)
 
-    processed = 0
-    errors = 0
-    for farm_id in farm_ids:
+    processed = errors = 0
+    last_period = None
+    for farm_id, tz in farms:
         try:
+            period_start, period_end = _period_bounds(
+                "DAILY", today_in_tz(tz) - timedelta(days=1))
+            last_period = period_start
             async with AsyncSessionLocal() as db:
                 kpi = await _calculate_farm_kpi(db, farm_id, "DAILY", period_start, period_end)
                 await _upsert_snapshot(db, farm_id, "DAILY", period_start, period_end, kpi)
@@ -176,25 +189,23 @@ async def daily_kpi_aggregation(ctx: dict) -> str:
             log.error("daily_kpi farm=%s error=%s", farm_id, e)
             errors += 1
 
-    result = f"daily KPI done: {processed} farms, {errors} errors, period={period_start}"
+    result = f"daily KPI done: {processed} farms, {errors} errors, period={last_period}"
     log.info(result)
     return result
 
 
 async def weekly_kpi_aggregation(ctx: dict) -> str:
     """Aggregate weekly KPI snapshots."""
-    today = date.today()
-    last_week = today - timedelta(weeks=1)
-    period_start, period_end = _period_bounds("WEEKLY", last_week)
-
     async with AsyncSessionLocal() as db:
-        farm_ids = list(await db.scalars(
-            select(Farm.id).where(Farm.active.is_(True))
-        ))
+        farms = await _active_farms(db)
 
     processed = 0
-    for farm_id in farm_ids:
+    last_period = (None, None)
+    for farm_id, tz in farms:
         try:
+            period_start, period_end = _period_bounds(
+                "WEEKLY", today_in_tz(tz) - timedelta(weeks=1))
+            last_period = (period_start, period_end)
             async with AsyncSessionLocal() as db:
                 kpi = await _calculate_farm_kpi(db, farm_id, "WEEKLY", period_start, period_end)
                 await _upsert_snapshot(db, farm_id, "WEEKLY", period_start, period_end, kpi)
@@ -202,23 +213,22 @@ async def weekly_kpi_aggregation(ctx: dict) -> str:
         except Exception as e:
             log.error("weekly_kpi farm=%s error=%s", farm_id, e)
 
-    return f"weekly KPI done: {processed} farms, period={period_start}~{period_end}"
+    return f"weekly KPI done: {processed} farms, period={last_period[0]}~{last_period[1]}"
 
 
 async def monthly_kpi_aggregation(ctx: dict) -> str:
     """Aggregate monthly KPI snapshots."""
-    today = date.today()
-    last_month = (today.replace(day=1) - timedelta(days=1))
-    period_start, period_end = _period_bounds("MONTHLY", last_month)
-
     async with AsyncSessionLocal() as db:
-        farm_ids = list(await db.scalars(
-            select(Farm.id).where(Farm.active.is_(True))
-        ))
+        farms = await _active_farms(db)
 
     processed = 0
-    for farm_id in farm_ids:
+    last_period = (None, None)
+    for farm_id, tz in farms:
         try:
+            today = today_in_tz(tz)
+            period_start, period_end = _period_bounds(
+                "MONTHLY", today.replace(day=1) - timedelta(days=1))
+            last_period = (period_start, period_end)
             async with AsyncSessionLocal() as db:
                 kpi = await _calculate_farm_kpi(db, farm_id, "MONTHLY", period_start, period_end)
                 await _upsert_snapshot(db, farm_id, "MONTHLY", period_start, period_end, kpi)
@@ -226,7 +236,7 @@ async def monthly_kpi_aggregation(ctx: dict) -> str:
         except Exception as e:
             log.error("monthly_kpi farm=%s error=%s", farm_id, e)
 
-    return f"monthly KPI done: {processed} farms, period={period_start}~{period_end}"
+    return f"monthly KPI done: {processed} farms, period={last_period[0]}~{last_period[1]}"
 
 
 async def recalculate_farm_kpi(ctx: dict, farm_id: str, period_start: str, period_end: str) -> str:
