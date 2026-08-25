@@ -17,6 +17,9 @@ from __future__ import annotations
 SUPPORTED_LOCALES: tuple[str, ...] = ("en", "ko", "zh", "es", "vi", "th", "pt")
 DEFAULT_LOCALE = "en"
 
+# 어떤 intent 키워드에도 걸리지 않은 질문. renderer/chat_service 가 공유한다.
+UNKNOWN_INTENT = "unknown"
+
 # "pt-BR" / "zh_Hans" / "EN" 같은 변형을 지원 로케일로 접는다.
 _ALIASES = {
     "pt-br": "pt", "zh-hans": "zh", "zh-cn": "zh", "zh-hant": "zh", "zh-tw": "zh",
@@ -886,3 +889,131 @@ UI_LABELS: dict[str, dict[str, str]] = {
         "en": "🔴 Critical", "ko": "🔴 위험", "zh": "🔴 严重", "es": "🔴 Crítico",
         "vi": "🔴 Nghiêm trọng", "th": "🔴 วิกฤต", "pt": "🔴 Crítico"},
 }
+
+
+# ── intent 분류 키워드 ────────────────────────────────────────────────────────
+# 질문(소문자)에 부분일치하면 해당 intent. 언어를 가리지 않고 한 리스트에 모아두므로
+# 사용자의 표시 언어와 질문 언어가 달라도 잡힌다.
+# **순서가 곧 우선순위**다 — 가장 포괄적인 "dashboard"를 맨 뒤에 둔다.
+# 여기 없는 언어로 물으면 intent가 안 잡혀 "unknown"이 되므로, 언어를 늘리면 여기도 채울 것.
+INTENT_KEYWORDS: dict[str, list[str]] = {
+    "psy": [
+        "psy", "piglets per sow", "productivity",
+        "생산성", "이유두수",
+        "每头母猪", "断奶仔猪数", "生产力",
+        "productividad", "lechones por cerda",
+        "năng suất", "heo con cai sữa trên nái",
+        "ผลิตภาพ", "ลูกหย่านมต่อแม่",
+        "produtividade", "leitões por matriz",
+    ],
+    "npd": [
+        "npd", "non-productive", "idle", "weaning interval",
+        "비생산일", "이유 간격",
+        "非生产天数", "断奶间隔",
+        "días no productivos", "dnp", "intervalo destete",
+        "ngày không sản xuất", "khoảng cách cai sữa",
+        "วันไม่ให้ผลผลิต", "ช่วงหย่านม",
+        "dias não produtivos", "intervalo desmame",
+    ],
+    "farrowing": [
+        "farrowing rate", "farrowing", "conception",
+        "분만율", "분만", "수태",
+        "分娩率", "分娩", "受胎",
+        "tasa de partos", "concepción",
+        "tỷ lệ đẻ", "thụ thai",
+        "อัตราการคลอด", "การคลอด", "ผสมติด",
+        "taxa de parto", "concepção",
+    ],
+    "inventory": [
+        "sow count", "inventory",
+        "모돈 수", "재고",
+        "母猪存栏", "存栏",
+        "censo", "inventario", "número de cerdas",
+        "tổng đàn nái", "số nái", "tồn đàn",
+        "จำนวนแม่สุกร", "จำนวนคงเหลือ",
+        "plantel", "inventário", "número de matrizes",
+    ],
+    # "fcr" → base tier에 fcr 룰이 없어 findings 0. Addon에서 활성화된다.
+    "fcr": [
+        "fcr", "feed conversion", "feed efficiency",
+        "사료효율", "사료요구율",
+        "料肉比", "饲料转化率", "饲料效率",
+        "conversión alimenticia", "índice de conversión", "eficiencia alimentaria",
+        "hệ số chuyển hóa thức ăn", "hiệu quả thức ăn",
+        "อัตราแลกเนื้อ", "ประสิทธิภาพอาหาร",
+        "conversão alimentar", "eficiência alimentar",
+    ],
+    # 포괄 질문("우리 농장 어때?") — 반드시 마지막.
+    "dashboard": [
+        "farm status", "overall", "summary", "dashboard", "kpi", "how is",
+        "농장 상태", "상태", "전체", "요약", "현황",
+        "农场状况", "猪场", "整体", "概况", "汇总", "状况",
+        "estado de la granja", "estado", "resumen", "general",
+        "tình hình", "tổng quan", "tóm tắt",
+        "สถานะฟาร์ม", "ภาพรวม", "สรุป",
+        "situação", "resumo", "geral",
+    ],
+}
+
+# intent 표시명 — "OO 지표는 정상 범위" 문구에 끼워 넣는다.
+INTENT_LABELS: dict[str, dict[str, str]] = {
+    "psy": {
+        "en": "PSY", "ko": "PSY(모돈당 연간 이유두수)", "zh": "PSY(每头母猪年断奶仔猪数)",
+        "es": "PSY (lechones destetados por cerda y año)", "vi": "PSY (số heo cai sữa/nái/năm)",
+        "th": "PSY (ลูกหย่านมต่อแม่ต่อปี)", "pt": "PSY (leitões desmamados por matriz/ano)"},
+    "npd": {
+        "en": "non-productive days", "ko": "비생산일(NPD)", "zh": "非生产天数",
+        "es": "días no productivos", "vi": "ngày không sản xuất",
+        "th": "วันไม่ให้ผลผลิต", "pt": "dias não produtivos"},
+    "farrowing": {
+        "en": "farrowing rate", "ko": "분만율", "zh": "分娩率",
+        "es": "tasa de partos", "vi": "tỷ lệ đẻ",
+        "th": "อัตราการคลอด", "pt": "taxa de parto"},
+    "inventory": {
+        "en": "sow inventory", "ko": "모돈 재고", "zh": "母猪存栏",
+        "es": "censo de cerdas", "vi": "tổng đàn nái",
+        "th": "จำนวนแม่สุกรคงเหลือ", "pt": "plantel de matrizes"},
+    "fcr": {
+        "en": "feed conversion", "ko": "사료요구율(FCR)", "zh": "料肉比",
+        "es": "conversión alimenticia", "vi": "hệ số chuyển hóa thức ăn",
+        "th": "อัตราแลกเนื้อ", "pt": "conversão alimentar"},
+}
+
+UI_LABELS.update({
+    # 질문을 어떤 intent로도 분류하지 못했을 때. 답을 아예 안 주는 대신
+    # "못 알아들었다"고 밝히고 농장 전체 요약으로 이어간다.
+    "unknown_intent": {
+        "en": "I could not match that question to a farm metric. "
+              "I can answer about PSY, farrowing rate, non-productive days, sow inventory, "
+              "and feed conversion. Here is the overall farm summary instead:",
+        "ko": "질문을 농장 지표로 연결하지 못했습니다. "
+              "PSY·분만율·비생산일·모돈 재고·사료요구율에 대해 답할 수 있습니다. "
+              "대신 농장 전체 요약을 보여드립니다:",
+        "zh": "无法将该问题对应到农场指标。"
+              "我可以回答PSY、分娩率、非生产天数、母猪存栏和料肉比相关问题。"
+              "以下为猪场整体概况：",
+        "es": "No he podido asociar esa pregunta a un indicador de la granja. "
+              "Puedo responder sobre PSY, tasa de partos, días no productivos, censo de cerdas "
+              "y conversión alimenticia. En su lugar, este es el resumen general:",
+        "vi": "Tôi không khớp được câu hỏi đó với chỉ số của trại. "
+              "Tôi có thể trả lời về PSY, tỷ lệ đẻ, ngày không sản xuất, tổng đàn nái "
+              "và hệ số chuyển hóa thức ăn. Dưới đây là tổng quan toàn trại:",
+        "th": "ไม่สามารถจับคู่คำถามนี้กับตัวชี้วัดของฟาร์มได้ "
+              "ระบบตอบได้เกี่ยวกับ PSY อัตราการคลอด วันไม่ให้ผลผลิต จำนวนแม่สุกร "
+              "และอัตราแลกเนื้อ ด้านล่างคือภาพรวมของฟาร์ม:",
+        "pt": "Não consegui associar essa pergunta a um indicador da granja. "
+              "Posso responder sobre PSY, taxa de parto, dias não produtivos, plantel de matrizes "
+              "e conversão alimentar. Segue o resumo geral da granja:",
+    },
+    # 특정 지표를 물었는데 그 지표 룰이 아무 문제도 못 찾은 경우.
+    # 기존엔 "모든 KPI가 정상 범위입니다"로 뭉개져서 무엇을 물었는지 사라졌다.
+    "intent_within_target": {
+        "en": "{kpi}: no issues detected — currently within the target range.",
+        "ko": "{kpi}: 특이사항 없음 — 현재 목표 범위입니다.",
+        "zh": "{kpi}：未发现异常——当前处于目标范围内。",
+        "es": "{kpi}: sin incidencias — actualmente dentro del rango objetivo.",
+        "vi": "{kpi}: không phát hiện vấn đề — hiện trong ngưỡng mục tiêu.",
+        "th": "{kpi}: ไม่พบปัญหา — ขณะนี้อยู่ในเกณฑ์เป้าหมาย",
+        "pt": "{kpi}: sem ocorrências — atualmente dentro da faixa-alvo.",
+    },
+})

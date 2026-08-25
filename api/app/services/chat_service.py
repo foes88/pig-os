@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.platform import AddonSubscription, Farm
 from app.engine import RuleContext, RuleEngine
+from app.engine.i18n import INTENT_KEYWORDS, UNKNOWN_INTENT
 from app.engine.llm_renderer import render as llm_render
 from app.engine.rules import base as _base_rules  # noqa: F401  ensure registration
 from app.schemas.chat import ChatQuery, ChatResponse, FindingOut
@@ -41,23 +42,18 @@ async def _has_ai_insight(db: AsyncSession, farm_id: UUID) -> bool:
 
 # ── Intent classifier ─────────────────────────────────────────────────────────
 # Keyword-based for Base tier. Replace with embedding classifier in Addon.
-_INTENT_KEYWORDS: dict[str, list[str]] = {
-    "psy":       ["psy", "piglets per sow", "생산성", "이유두수", "productivity"],
-    "npd":       ["npd", "non-productive", "비생산일", "이유 간격", "idle", "weaning interval"],
-    "farrowing": ["farrowing rate", "분만율", "farrowing", "conception"],
-    "inventory": ["sow count", "모돈 수", "inventory", "재고"],
-    # "fcr"      → requires Addon; classifier returns "fcr" but RuleEngine will
-    #              produce no findings at base tier (no fcr rules registered yet).
-    "fcr":       ["fcr", "feed conversion", "사료효율", "feed efficiency"],
-}
+# 키워드 사전은 app/engine/i18n.py 가 SSOT (7개 언어). 예전엔 여기에 en/ko 만 있어서
+# 비영어·비한국어 질문은 무엇을 묻든 전부 "dashboard"로 떨어졌다.
 
 
 def classify_intent(question: str) -> str:
+    """매칭 실패 시 "unknown". 예전엔 "dashboard"로 뭉개서 '오늘 날씨' 같은 질문에도
+    KPI를 덤프했다. 호출측이 unknown을 보고 못 알아들었음을 밝힌 뒤 요약으로 이어간다."""
     q = question.lower()
-    for intent, keywords in _INTENT_KEYWORDS.items():
+    for intent, keywords in INTENT_KEYWORDS.items():
         if any(kw in q for kw in keywords):
             return intent
-    return "dashboard"  # default: run all base rules
+    return UNKNOWN_INTENT
 
 
 async def handle_query(
@@ -78,7 +74,11 @@ async def handle_query(
     ctx: RuleContext = await build_rule_context(db, farm)
 
     # Base tier only; pass active addon codes here when Addon subscriptions are checked
-    result = await RuleEngine.evaluate(ctx, intent=intent, tiers=["base"])
+    # unknown 은 도메인 룰이 없으므로 dashboard 룰로 평가하되, intent 는 unknown 으로 유지한다
+    # (렌더러가 "못 알아들었다" 안내를 붙일 수 있도록).
+    eval_intent = "dashboard" if intent == UNKNOWN_INTENT else intent
+    result = await RuleEngine.evaluate(ctx, intent=eval_intent, tiers=["base"])
+    result.intent = intent
 
     from app.core.config import settings
     if settings.use_governance_benchmarks:  # flag ON: 비교 맥락 + §7 trace 첨부

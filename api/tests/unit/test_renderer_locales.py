@@ -55,7 +55,11 @@ def test_non_english_locales_do_not_leak_english_labels(locale):
 
 @pytest.mark.parametrize("locale", SUPPORTED_LOCALES)
 def test_empty_findings_message_is_localized(locale):
-    text = render_text(make_result(findings=[]), locale)
+    """전체 요약(dashboard)에서 이상이 없을 때의 포괄 문구.
+    특정 지표를 물었을 때의 지표별 문구는 test_chat_intent.py 가 검증한다."""
+    result = make_result(findings=[])
+    result.intent = "dashboard"
+    text = render_text(result, locale)
     assert text == ui("all_normal", locale)
 
 

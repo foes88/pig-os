@@ -9,7 +9,9 @@ Addon tier swaps this for an LLM call; the Rule Engine is not touched.
 from app.engine.i18n import (
     ACTION_LABELS,
     CAUSE_LABELS,
+    INTENT_LABELS,
     SUPPORTED_LOCALES,  # noqa: F401  재수출(호출측 편의)
+    UNKNOWN_INTENT,
     label,
     normalize_locale,
     ui,
@@ -41,10 +43,22 @@ def render_text(result: StructuredResult, locale: str = "en") -> str:
     warning_findings  = [f for f in result.findings if f.severity == Severity.WARNING]
     info_findings     = [f for f in result.findings if f.severity == Severity.INFO]
 
-    if not result.findings:
-        return ui("all_normal", loc)
+    # 질문을 지표로 연결하지 못한 경우: 그 사실을 먼저 밝히고 전체 요약으로 이어간다.
+    # (예전엔 조용히 dashboard 로 뭉개서 '오늘 날씨' 질문에도 KPI가 그대로 나갔다.)
+    prelude: list[str] = [ui("unknown_intent", loc), ""] if result.intent == UNKNOWN_INTENT else []
 
-    lines: list[str] = []
+    if not result.findings:
+        # 특정 지표를 물었는데 그 지표에 이상이 없으면 "무엇이" 정상인지 밝힌다.
+        # 전체 요약(dashboard/unknown)일 때만 포괄 문구를 쓴다.
+        if result.intent in INTENT_LABELS:
+            body = ui("intent_within_target", loc).format(
+                kpi=label(INTENT_LABELS, result.intent, loc)
+            )
+        else:
+            body = ui("all_normal", loc)
+        return "\n".join([*prelude, body]).strip()
+
+    lines: list[str] = list(prelude)
 
     for f in critical_findings + warning_findings + info_findings:
         prefix = _severity_prefix(f.severity, loc)
