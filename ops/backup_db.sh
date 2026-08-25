@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
-# PigOS 프로덕션 DB 백업 — Supabase 독립 사본.
+# PigOS 프로덕션 DB 백업.
 #
 # 왜 필요한가: 2026-08-24 배포 사고 때 롤백 이미지가 사라져 되돌릴 수단이 없었고,
-# DB 백업 상태도 확인되지 않았다. Supabase 자체 백업이 1차 방어선이고, 이건 그 계정
-# 자체에 문제가 생겼을 때를 위한 독립 사본이다.
+# DB 백업 상태도 확인되지 않았다.
 #
-# ★ 전송량 주의: pg_dump 는 데이터를 원본 크기(약 825MB)로 받아 로컬에서 압축한다.
-#   Supabase egress 쿼터를 먹으므로 full 은 주 1회 + 배포 직전으로 제한한다.
+# ★ 2026-08-25 DB 이전: Supabase 풀러가 쿼리 도중 연결을 끊어(ConnectionDoesNotExist)
+#   운영이 불가능해져 같은 EC2 의 로컬 PostgreSQL 17(포트 5434)로 옮겼다. 그러면서
+#   백업 대상도 바뀐다 — Supabase 는 자체 백업이 1차 방어선이었지만 로컬 PG 는
+#   **이 스크립트가 유일한 방어선**이다. 따라서 대상 선택 규칙을 뒤집었다:
+#   "앱이 실제로 쓰는 DB(DATABASE_URL)를 백업한다"가 원칙이고, MIGRATION_DATABASE_URL
+#   은 DATABASE_URL 이 덤프 불가능한 트랜잭션 모드일 때만 쓰는 대체 경로다.
+#   (이전엔 MIGRATION 을 우선했는데, 이전 후 그 값이 죽은 Supabase 를 가리키는 바람에
+#    라이브가 아닌 DB 를 백업할 뻔했다.)
+#
+# ★ 전송량: 로컬 PG 는 egress 가 없다. full 주기를 늘려도 비용이 들지 않는다.
 #
 # 사용:
 #   ./backup_db.sh schema      스키마만 (수십 KB, 매일)
@@ -24,14 +31,22 @@ mkdir -p "$BACKUP_DIR"
 
 # DATABASE_URL 은 .env 에서만 읽는다 — 스크립트에 자격증명을 두지 않는다.
 [ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE 없음"; exit 1; }
-# ★ pg_dump/psql 은 트랜잭션 모드(6543)에서 동작하지 않는다 — 세션 모드가 필요하다.
-#   앱은 트랜잭션 모드를 쓰므로 DATABASE_URL 이 6543 일 수 있다. 백업은 5432 를 쓴다.
-URL=$(grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
-[ -n "$URL" ] || URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+# ★ 대상 = 앱이 실제로 쓰는 DB. 백업이 라이브를 따라가지 못하면 백업이 아니다.
+#   예외는 하나뿐이다: DATABASE_URL 이 트랜잭션 모드(6543)면 pg_dump 가 동작하지
+#   않으므로 그때만 MIGRATION_DATABASE_URL(세션 모드)로 넘어간다.
+#   (이전엔 MIGRATION 을 우선했는데, 2026-08-25 DB 이전 후 그 값이 죽은 Supabase 를
+#    가리켜 라이브가 아닌 DB 를 백업할 뻔했다.)
+URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+case "$URL" in
+  ''|*:6543/*)
+    ALT=$(grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+    [ -n "$ALT" ] || { echo "ERROR: DATABASE_URL 이 덤프 불가(6543)인데 MIGRATION_DATABASE_URL 이 없습니다."; exit 1; }
+    echo "  주의: DATABASE_URL 이 덤프 불가(6543) → MIGRATION_DATABASE_URL 로 대체"
+    URL="$ALT" ;;
+esac
 [ -n "$URL" ] || { echo "ERROR: DATABASE_URL 미설정"; exit 1; }
 case "$URL" in
-  *:6543/*) echo "ERROR: 트랜잭션 모드 URL(6543)로는 덤프할 수 없습니다."
-            echo "       .env 에 MIGRATION_DATABASE_URL(포트 5432)을 설정하십시오."; exit 1 ;;
+  *:6543/*) echo "ERROR: 대체 URL 도 트랜잭션 모드(6543)입니다 — 세션 모드가 필요합니다."; exit 1 ;;
 esac
 # SQLAlchemy 드라이버 표기를 libpq 가 이해하는 형태로
 PGURL=$(printf '%s' "$URL" | sed -E 's#\+asyncpg##; s#\?ssl=require#?sslmode=require#')
@@ -53,14 +68,30 @@ case "$MODE" in
   *)      echo "usage: $0 {schema|full} [tag]"; exit 2 ;;
 esac
 
-# ★ pg_dump 는 서버보다 낮은 버전이면 거부한다(Supabase = PG 17.6, 우분투 기본 = 16.x).
-#   호스트에 apt 로 깔지 않고 버전 고정 컨테이너를 쓴다 — 운영 서버 상태를 안 바꾼다.
+# ★ pg_dump 는 서버보다 낮은 버전이면 거부한다(대상 = PG 17, 우분투 PATH 기본 = 16.x).
+#   이 EC2 에는 PG16(다른 프로젝트)과 PG17(PigOS)이 함께 있어 PATH 의 pg_dump 가
+#   16.13 이다. 버전별 바이너리를 직접 찾고, 없을 때만 컨테이너로 넘어간다.
 PG_IMAGE="${PG_IMAGE:-postgres:17-alpine}"
-if command -v pg_dump >/dev/null 2>&1 &&    [ "$(pg_dump --version | grep -oE '[0-9]+' | head -1)" -ge 17 ]; then
+# ★ `|| true` 필수: 두 glob 중 하나만 존재해도 ls 는 2 를 반환하고,
+#   set -euo pipefail 아래에서 그대로 스크립트가 죽는다(실측 2026-08-25).
+PG17_BIN=$( { ls -d /usr/lib/postgresql/1[7-9]/bin/pg_dump /usr/lib/postgresql/2*/bin/pg_dump 2>/dev/null || true; } | sort -V | tail -1)
+if [ -n "$PG17_BIN" ]; then
+  DUMP=("$PG17_BIN")
+elif command -v pg_dump >/dev/null 2>&1 &&    [ "$(pg_dump --version | grep -oE '[0-9]+' | head -1)" -ge 17 ]; then
   DUMP=(pg_dump)
 else
   sudo docker image inspect "$PG_IMAGE" >/dev/null 2>&1 || sudo docker pull -q "$PG_IMAGE"
   DUMP=(sudo docker run --rm -i "$PG_IMAGE" pg_dump)
+  NATIVE=0
+fi
+: "${NATIVE:=1}"
+
+# ★ .env 의 DATABASE_URL 은 **컨테이너 기준** 주소다(도커 브리지 게이트웨이 172.1x.0.1).
+#   호스트에서 네이티브 pg_dump 로 붙으면 출발지가 EC2 사설 IP(172.31.x.x)라
+#   pg_hba 에 안 걸린다. pg_hba 를 넓히는 대신 호스트에서는 루프백으로 붙는다
+#   — 같은 서버의 같은 인스턴스이고, 접근 범위를 늘리지 않는다.
+if [ "$NATIVE" = "1" ]; then
+  PGURL=$(printf '%s' "$PGURL" | sed -E 's#@172\.1[6-9]\.0\.1:#@127.0.0.1:#; s#@172\.2[0-9]\.0\.1:#@127.0.0.1:#')
 fi
 
 echo "[$(date '+%F %T')] $MODE 백업 시작 → $OUT"

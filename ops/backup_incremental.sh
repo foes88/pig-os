@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# PigOS 일일 증분 백업 — Supabase egress 를 거의 쓰지 않고 손실 위험을 줄인다.
+# PigOS 증분 백업 — 전체 덤프 사이의 시간 간격을 메운다.
 #
-# 왜 필요한가: Supabase Free 플랜은 **자동 백업이 없다.** ops/backup_db.sh 의 주간 전체
-# 덤프가 유일한 방어선이면 최악의 경우 7일치가 사라진다. 그런데 전체 덤프는 원본
-# 825MB 를 전송하므로 매일 돌리면 월 25GB — Free egress 쿼터(5GB)를 5배 초과한다.
+# 왜 필요한가: 2026-08-25 DB 이전 후 DB 는 같은 EC2 의 로컬 PostgreSQL 이고,
+# **자동 백업이 전혀 없다.** ops/backup_db.sh 가 유일한 방어선이다.
 #
-# 그래서 매일은 "최근 변경분"만 받는다. 하루 수 MB 수준이라 쿼터에 영향이 없다.
-#   전체(주1회) + 증분(매일) → 손실 위험 7일 → 1일
+# ★ 전제 변경: 원래 이 스크립트는 Supabase Free egress 쿼터(5GB) 때문에 존재했다.
+#   전체 덤프가 원본 825MB 를 전송해 매일 돌리면 쿼터를 5배 초과했으므로 매일은
+#   변경분만 받았다. 로컬 PG 는 egress 가 없어 그 제약이 사라졌고, 전체 덤프를
+#   매일 돌린다(ops/deploy.sh·crontab). 증분은 이제 "매일 사이"를 메우는 역할이다 —
+#   전체가 하루 1회면 최악 24시간이 날아가는데, 증분이 그 창을 좁힌다.
 #
 # ★ created_at/updated_at 컬럼이 있는 테이블을 자동 탐색한다. 테이블 목록을 하드코딩하면
 #   새 테이블이 생겼을 때 조용히 백업에서 빠진다.
@@ -25,15 +27,16 @@ PG_IMAGE="${PG_IMAGE:-postgres:17-alpine}"
 
 mkdir -p "$INC_DIR"
 [ -f "$ENV_FILE" ] || { echo "ERROR: $ENV_FILE 없음"; exit 1; }
-# ★ pg_dump/psql 은 트랜잭션 모드(6543)에서 동작하지 않는다 — 세션 모드가 필요하다.
-#   앱은 트랜잭션 모드를 쓰므로 DATABASE_URL 이 6543 일 수 있다. 백업은 5432 를 쓴다.
-URL=$(grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
-[ -n "$URL" ] || URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
-[ -n "$URL" ] || { echo "ERROR: DATABASE_URL 미설정"; exit 1; }
+# ★ 대상 = 앱이 실제로 쓰는 DB(DATABASE_URL). 백업이 라이브를 따라가지 못하면 백업이 아니다.
+#   DATABASE_URL 이 덤프 불가능한 트랜잭션 모드(6543)일 때만 MIGRATION_DATABASE_URL 로 넘어간다.
+URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
 case "$URL" in
-  *:6543/*) echo "ERROR: 트랜잭션 모드 URL(6543)로는 덤프할 수 없습니다."
-            echo "       .env 에 MIGRATION_DATABASE_URL(포트 5432)을 설정하십시오."; exit 1 ;;
+  ''|*:6543/*)
+    ALT=$(grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+    [ -n "$ALT" ] || { echo "ERROR: DATABASE_URL 이 덤프 불가(6543)인데 MIGRATION_DATABASE_URL 이 없습니다."; exit 1; }
+    URL="$ALT" ;;
 esac
+[ -n "$URL" ] || { echo "ERROR: DATABASE_URL 미설정"; exit 1; }
 PGURL=$(printf '%s' "$URL" | sed -E 's#\+asyncpg##; s#\?ssl=require#?sslmode=require#')
 
 sudo docker image inspect "$PG_IMAGE" >/dev/null 2>&1 || sudo docker pull -q "$PG_IMAGE"
