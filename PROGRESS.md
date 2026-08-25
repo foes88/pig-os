@@ -1,5 +1,36 @@
 # PigOS 진행 상황
 
+## [현재상태 2026-08-25] — 운영 DB 이전(Supabase → EC2 로컬 PG17) + 대시보드 성능 복구
+> 장애 대응 세션. 프로덕션 반영됨(DB 전환·인덱스). 코드는 로컬 커밋만, push·배포 미실시.
+
+- **DB 이전 완료**: Supabase 풀러가 쿼리 도중 연결을 끊는 상태(`ConnectionDoesNotExistError`)
+  까지 악화 — 앱에서 고칠 수 없어 **같은 EC2 의 PostgreSQL 17(포트 5434)** 로 옮겼다.
+  복원 24.7초 / 59테이블·sows 141,359·farms 66·marker `c9f3e5a7b1d4`.
+  덤프 목록 대조로 누락 0 확인. 도커 브리지만 ufw 허용(인터넷 비노출), 부팅 자동시작 고정.
+  - 실측: 커넥션 획득 **0.001s**(이전엔 절단) · 로그인 17초→**0.34초** · 동시 20 로그인 500 0건
+  - 같은 143M 덤프: Supabase **67분 35초** vs 로컬 **29초**
+- **대시보드 5.67초 → 0.57초** (`c262f5f`): DB 를 옮기고도 느렸다 — **원인이 둘이었다.**
+  `_NPD_SQL` 의 `lact_open` LATERAL 이 모돈마다 `MAX(farrowing_date)` 를 조회하는데
+  `farrowings` 에만 `(sow_id, farrowing_date)` 인덱스가 없어 3,691ms 를 썼다
+  (matings·weanings 는 2026-07 에 같은 이유로 받았고 farrowings 만 누락).
+  NPD 10,251두 5.447→0.269s / 1,508두 2.634→0.056s. 값 불변, 관련 59테스트 green.
+- **백업 체계 재구성** (`de4e68d`·`694ff1a`): 대상을 `MIGRATION_DATABASE_URL`(이전 후
+  죽은 Supabase) → **앱이 실제로 쓰는 `DATABASE_URL`** 로 뒤집었다. egress 제약이
+  사라져 전체 덤프를 매일로 상향. schema 37K / full 143M·30초 / 증분 20K·22초 검증.
+- **문서**: `ops/ROLLBACK.md` 로컬 PG 전제로 개정(§E "관리형 자동 백업 없음"이 핵심),
+  `docs/INFRA_DB_STRATEGY.md` 전면 개정 — 이전 판이 "비추"로 분류했던 EC2 self-host 를
+  택한 것이므로 **포기한 것**(PITR·오프사이트·이중화)을 표로 명시.
+- **테스트**: `test_db_pool_budget.py` 가 지키는 제약 교체 — 풀러 15 슬롯 → PG
+  max_connections(200)·work_mem 메모리 예산.
+- **⚠️ 미해결 / 사람 액션 필요**
+  1. **오프사이트 백업 없음** — 백업이 원본과 같은 EBS 볼륨에만 있다. EC2 장애 시 동반
+     소실. 스크립트·경고는 준비됨(`BACKUP_S3_BUCKET`), **S3 버킷 + IAM 생성은 대표 승인 필요**
+  2. 09:43 덤프 ~ 12:20 전환 사이 Supabase 쓰기 검증 미완 — users·farms·audit_log·
+     notifications 는 0 확인, sows/matings/farrowings/weanings 는 Supabase 응답 불가로 대조 못 함
+  3. 마이그레이션 2건 미배포: `d1a4c6e8b2f5`(K-01-1, SOW_TURNOVER 카드 사라짐) ·
+     `e2b5d7c9a1f3`(인덱스, 프로덕션엔 이미 수동 적용)
+  4. 복원 리허설 미실시 — 백업은 복원해 본 적 있을 때만 백업이다
+
 ## [현재상태 2026-07-23] — 동의 인프라 + KPI PigPlan 정합 + i18n 규칙4 (브랜치 feat/consent-infra, **PR #1 draft push됨, 배포 미실시**)
 > 원격 https://github.com/wiselake/pig-os/pull/1 (draft). 11커밋. prod 배포·게시 안 함.
 
