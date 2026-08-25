@@ -123,11 +123,14 @@ echo "[$(date '+%F %T')] 완료 $SIZE"
 S3_BUCKET=$(grep -E '^BACKUP_S3_BUCKET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)
 S3_PREFIX=$(grep -E '^BACKUP_S3_PREFIX=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)
 S3_PREFIX="${S3_PREFIX:-pigos-db}"
+# ★ 크론은 PATH 가 제한적이라(/usr/bin:/bin) aws CLI v2 의 /usr/local/bin 을 못 찾는다.
+#   command -v 만 믿으면 손으로 돌릴 땐 되고 크론에서만 조용히 실패한다.
+AWS_BIN=$(command -v aws || echo /usr/local/bin/aws)
 if [ -z "$S3_BUCKET" ]; then
   echo "  ⚠ 오프사이트 사본 없음 — BACKUP_S3_BUCKET 미설정 (백업이 이 EBS 볼륨에만 있음)"
-elif ! command -v aws >/dev/null 2>&1; then
-  echo "  ⚠ 오프사이트 사본 실패 — aws CLI 미설치 (sudo apt install -y awscli)"
-elif ! aws s3 cp "$OUT" "s3://$S3_BUCKET/$S3_PREFIX/$(basename "$OUT")" --only-show-errors; then
+elif [ ! -x "$AWS_BIN" ]; then
+  echo "  ⚠ 오프사이트 사본 실패 — aws CLI 없음 ($AWS_BIN)"
+elif ! "$AWS_BIN" s3 cp "$OUT" "s3://$S3_BUCKET/$S3_PREFIX/$(basename "$OUT")" --only-show-errors; then
   echo "  ⚠ 오프사이트 사본 실패 — S3 업로드 오류(자격증명·권한 확인)"
 else
   echo "  오프사이트 사본 OK → s3://$S3_BUCKET/$S3_PREFIX/$(basename "$OUT")"

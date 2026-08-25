@@ -83,4 +83,20 @@ fi
 tar -czf "$OUT" -C "$WORK" .
 echo "[$(date '+%F %T')] 완료 $(du -h "$OUT" | cut -f1) / 총 ${TOTAL}행"
 
+# ── 오프사이트 사본 (S3) — backup_db.sh 와 동일 규칙 ─────────────────────────
+# 증분이야말로 오프사이트가 중요하다: 전체 덤프 사이의 하루치가 여기에만 있다.
+S3_BUCKET=$(grep -E '^BACKUP_S3_BUCKET=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)
+S3_PREFIX=$(grep -E '^BACKUP_S3_PREFIX=' "$ENV_FILE" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)
+S3_PREFIX="${S3_PREFIX:-pigos-db}"
+AWS_BIN=$(command -v aws || echo /usr/local/bin/aws)
+if [ -z "$S3_BUCKET" ]; then
+  echo "  ⚠ 오프사이트 사본 없음 — BACKUP_S3_BUCKET 미설정"
+elif [ ! -x "$AWS_BIN" ]; then
+  echo "  ⚠ 오프사이트 사본 실패 — aws CLI 없음"
+elif ! "$AWS_BIN" s3 cp "$OUT" "s3://$S3_BUCKET/$S3_PREFIX/incremental/$(basename "$OUT")" --only-show-errors; then
+  echo "  ⚠ 오프사이트 사본 실패 — S3 업로드 오류(자격증명·권한 확인)"
+else
+  echo "  오프사이트 사본 OK → s3://$S3_BUCKET/$S3_PREFIX/incremental/$(basename "$OUT")"
+fi
+
 find "$INC_DIR" -name 'inc-*.tar.gz' -mtime +"$KEEP_DAYS" -print -delete 2>/dev/null || true
