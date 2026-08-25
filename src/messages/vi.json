@@ -325,7 +325,13 @@
     "periodLocked": "Kỳ này đã bị khóa. Liên hệ quản lý để mở khóa.",
     "sowNotFound": "Không tìm thấy nái hoặc đã bị xóa.",
     "statusConflict": "Không thể thực hiện thao tác này với trạng thái nái hiện tại.",
-    "futureDate": "Ngày sự kiện không thể là ngày tương lai."
+    "futureDate": "Ngày sự kiện không thể là ngày tương lai.",
+    "timeout": "Máy chủ phản hồi quá lâu. Vui lòng thử lại.",
+    "conflict": "Dữ liệu bị xung đột. Vui lòng tải lại và thử lại.",
+    "validation": "Một số thông tin không hợp lệ. Vui lòng kiểm tra và thử lại.",
+    "rateLimited": "Quá nhiều lần thử. Vui lòng đợi một lát rồi thử lại.",
+    "dbUnavailable": "Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau giây lát.",
+    "serverError": "Đã xảy ra sự cố từ phía chúng tôi. Vui lòng liên hệ hỗ trợ kèm mã này:"
   },
   "upgrade": {
     "title": "Nâng cấp để mở khóa tính năng này",

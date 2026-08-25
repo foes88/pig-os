@@ -10,6 +10,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { authApi } from "@/lib/api/endpoints/auth";
+import { resolveApiError, withRequestId } from "@/lib/api/errors";
 import { useAuthStore } from "@/store/auth.store";
 import { identifyUser } from "@/lib/analytics";
 
@@ -173,6 +174,7 @@ export default function LoginPage() {
   };
 
   const t = useTranslations("login");
+  const tErr = useTranslations("errors");
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -216,10 +218,13 @@ export default function LoginPage() {
       const dest = data.system_role === "SUPER_ADMIN" ? "/admin" : (searchParams.get("next") ?? "/");
       router.replace(dest);
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 401) setServerError(t("errInvalid"));
-      else if (status === 422) setServerError(t("errFormat"));
-      else setServerError(t("errServer"));
+      // ★ 실패 종류마다 사용자가 할 행동이 다르다 — 하나의 "Server error" 로 뭉치지 않는다.
+      //   로그인 화면에서만 예외가 둘 있다: 401 은 "세션 만료"가 아니라 자격증명 불일치이고,
+      //   422 는 서버 검증이 아니라 입력 형식 문제로 안내해야 한다.
+      const e = resolveApiError(err);
+      if (e.status === 401) setServerError(t("errInvalid"));
+      else if (e.status === 422) setServerError(t("errFormat"));
+      else setServerError(withRequestId(tErr(e.messageKey), e.requestId));
     }
   };
 

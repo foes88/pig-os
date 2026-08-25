@@ -325,7 +325,13 @@
     "periodLocked": "该期间已锁定，请联系管理员解锁。",
     "sowNotFound": "未找到该母猪或已被删除。",
     "statusConflict": "当前母猪状态下不允许此操作。",
-    "futureDate": "事件日期不能为未来日期。"
+    "futureDate": "事件日期不能为未来日期。",
+    "timeout": "服务器响应超时，请重试。",
+    "conflict": "与现有数据冲突，请刷新后重试。",
+    "validation": "输入的信息有误，请检查后重试。",
+    "rateLimited": "尝试次数过多，请稍候再试。",
+    "dbUnavailable": "服务暂时不可用，请稍后重试。",
+    "serverError": "我们这边出现了问题。请提供以下代码联系支持："
   },
   "upgrade": {
     "title": "升级以解锁此功能",

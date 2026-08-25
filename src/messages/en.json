@@ -325,7 +325,13 @@
     "periodLocked": "This period is locked. Contact your manager to unlock.",
     "sowNotFound": "Sow not found or has been removed.",
     "statusConflict": "This action is not allowed for the current sow status.",
-    "futureDate": "Event date cannot be in the future."
+    "futureDate": "Event date cannot be in the future.",
+    "timeout": "The server took too long to respond. Please try again.",
+    "conflict": "This conflicts with existing data. Refresh and try again.",
+    "validation": "Some information is invalid. Please check and try again.",
+    "rateLimited": "Too many attempts. Please wait a moment and try again.",
+    "dbUnavailable": "Service is temporarily unavailable. Please try again in a moment.",
+    "serverError": "Something went wrong on our side. Please contact support with this code:"
   },
   "upgrade": {
     "title": "Upgrade to unlock this feature",

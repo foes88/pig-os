@@ -325,7 +325,13 @@
     "periodLocked": "Este período está bloqueado. Contate o gerente.",
     "sowNotFound": "Matriz não encontrada ou removida.",
     "statusConflict": "Ação não permitida para o status atual.",
-    "futureDate": "A data do evento não pode ser futura."
+    "futureDate": "A data do evento não pode ser futura.",
+    "timeout": "O servidor demorou muito para responder. Tente novamente.",
+    "conflict": "Isso conflita com dados existentes. Atualize e tente novamente.",
+    "validation": "Algumas informações são inválidas. Verifique e tente novamente.",
+    "rateLimited": "Muitas tentativas. Aguarde um momento e tente novamente.",
+    "dbUnavailable": "O serviço está temporariamente indisponível. Tente novamente em instantes.",
+    "serverError": "Ocorreu um problema do nosso lado. Contate o suporte com este código:"
   },
   "upgrade": {
     "title": "Faça upgrade para liberar este recurso",
