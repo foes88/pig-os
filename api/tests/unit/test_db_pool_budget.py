@@ -16,11 +16,11 @@ POOLER_MAX_CLIENTS = 15
 
 # 앱이 쓰지 않고 남겨야 하는 몫 — 마이그레이션·백업·psql·모니터링.
 # 이 여유가 없으면 운영 작업을 할 때마다 서비스와 충돌한다.
-RESERVED_FOR_OPS = 7
+RESERVED_FOR_OPS = 7   # 2026-08-24: 앱 13이면 유령 세션에 밀려 자기 풀도 못 채웠다
 
 # compose 가 컨테이너별로 주입하는 값(docker-compose.prod.yml 과 일치해야 함)
-API_BUDGET = (3, 2)      # pool_size, max_overflow → 최대 5
-WORKER_BUDGET = (2, 1)   # → 최대 3
+API_BUDGET = (4, 2)      # pool_size, max_overflow → 최대 6
+WORKER_BUDGET = (1, 1)   # → 최대 2
 
 
 def _max_conns(pool_size: int, max_overflow: int) -> int:

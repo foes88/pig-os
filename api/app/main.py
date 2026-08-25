@@ -10,12 +10,14 @@ To add a new Addon:
   2. Import it in app/routers/addons/__init__.py
   3. Restart → router appears automatically at /addons/<url_prefix>/
 """
+import re
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.addons import AddonRegistry
+from app.core import cache
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.routers.base import (
@@ -79,6 +81,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── 캐시 무효화 ───────────────────────────────────────────────────────────────
+# 대시보드는 짧은 TTL 캐시를 쓴다(app/core/cache.py). 이벤트를 입력했는데 옛 숫자가
+# 남아 보이면 사용자가 "입력이 안 됐다"고 판단하므로 쓰기 직후 즉시 무효화한다.
+#
+# ★ 라우터마다 무효화를 넣지 않고 미들웨어 한 곳에서 처리한다 — 쓰기 엔드포인트가
+#   수십 개라 개별 처리하면 반드시 누락이 생기고, 누락은 "가끔 안 바뀐다"로 나타나
+#   재현·추적이 어렵다.
+_FARM_PATH = re.compile(r"/farms/([0-9a-fA-F-]{36})")
+
+
+@app.middleware("http")
+async def _invalidate_farm_cache(request: Request, call_next):
+    response = await call_next(request)
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and response.status_code < 400:
+        m = _FARM_PATH.search(request.url.path)
+        if m:
+            await cache.invalidate_farm(m.group(1))
+    return response
+
 
 # ── Exception handlers ────────────────────────────────────────────────────────
 register_exception_handlers(app)

@@ -14,12 +14,20 @@ class Settings(BaseSettings):
     # api·worker 가 같은 엔진 설정을 공유하므로 컨테이너별 합이 그 한도를 넘으면 안 된다.
     # 넘으면 EMAXCONNSESSION / ECHECKOUTTIMEOUT 이 나고, 마이그레이션·백업·모니터링이
     # 들어갈 자리도 사라진다(2026-08-20 프로덕션 마이그레이션 실패의 실제 원인).
-    # 예산: api 최대 5(3+2) · worker 최대 3(2+1, compose env 로 하향) = 8, 여유 7.
+    # 예산: api 최대 6(4+2) · worker 최대 2(1+1, compose env 로 하향) = 8, 여유 7.
     # 대시보드에서 풀러 pool_size 를 올리면 코드 수정 없이 env 로 상향 가능.
-    db_pool_size: int = 3
+    # pool_size = 상시 유지 커넥션. 이게 작으면 초과 요청마다 새로 연결하는데,
+    # 풀러 경유 신규 연결은 수 초가 걸린다(2026-08-21 로그인 7.4s 회귀의 원인).
+    # max_overflow 는 임시 커넥션이라 반환 후 닫힌다 — 지연 해소에 도움이 안 된다.
+    db_pool_size: int = 4
     db_max_overflow: int = 2
     db_pool_timeout: int = 10        # 슬롯 대기 상한(초) — 매달리지 않고 빠르게 실패
-    db_pool_recycle: int = 1800      # 풀러가 끊은 묵은 커넥션 재사용 방지
+    db_pool_recycle: int = 3600      # 묵은 커넥션 방지. 짧으면 강제 재연결이 잦아 느려진다
+
+    # 대시보드 응답 캐시 TTL(초). 0 이면 캐시 끔.
+    # 30초면 화면 반복 조회는 즉시 응답하고, 입력 직후 최신값도 곧 반영된다.
+    # 이벤트 입력 시에는 cache.invalidate_farm 으로 즉시 무효화한다.
+    dashboard_cache_ttl: int = 30
     redis_url: str = "redis://localhost:6379/0"
     secret_key: str = "change-me-in-production-at-least-32-chars"
     algorithm: str = "HS256"

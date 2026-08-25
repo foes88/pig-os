@@ -9,6 +9,8 @@ from datetime import date
 
 from fastapi import APIRouter, Query
 
+from app.core import cache
+from app.core.config import settings
 from app.core.dependencies import DbDep, FarmDep
 from app.schemas.kpi import (
     DashboardKpi,
@@ -68,8 +70,26 @@ async def dashboard(farm: FarmDep, db: DbDep):
     Main KPI dashboard.
     Returns PSY, NPD, sow counts, and Rule Engine alerts.
     No Addon subscription required.
+
+    ★ 짧은 TTL 캐시. 이 엔드포인트는 요청마다 KPI 30여 개를 실시간 계산하느라
+      DB 커넥션을 ~0.5초 붙들고, 화면 하나가 API 를 7개 부르므로 동시성에서 무너진다
+      (2026-08-24 측정: 동시 10건 → 절반 504).
+      근본 해법은 kpi_snapshots 조회(CLAUDE.md 설계)이며 이건 그때까지의 완화다.
+
+    캐시는 FarmDep 권한 해석을 통과한 뒤에만 사용하고, 키에 farm_id 를 포함한다
+    (테넌트 간 유출 방지). 캐시 사용 여부는 응답 내용에 영향을 주지 않는다.
     """
-    return await kpi_service.get_dashboard(db, farm)
+    ttl = settings.dashboard_cache_ttl
+    key = cache.farm_key("dashboard", farm.id)
+    if ttl > 0:
+        hit = await cache.get_json(key)
+        if hit is not None:
+            return DashboardKpi.model_validate(hit)
+
+    result = await kpi_service.get_dashboard(db, farm)
+    if ttl > 0:
+        await cache.set_json(key, result.model_dump(mode="json"), ttl)
+    return result
 
 
 @router.get("/psy", response_model=PsyDetail | None)
