@@ -39,7 +39,11 @@
 
 - ✅ 약관 **문구 하드코딩 안 함** — `content/legal/*.md` DRAFT placeholder, 확정본 파일 교체로 반영
 - ✅ 사업조건(크레딧·환불·SLA) 하드코딩 안 함 — master_terms `[OPEN]` 공란
-- ✅ DPO/대리인 실명 없음 — privacy notice `[OPEN]` 공란
+- ✅ **보호책임자 확정**(2026-08-26) — 진교문 / 대표이사 / 경영지원팀 /
+  wiselake@wiselake.ai / +82-31-421-3418. PIPA §30 필수기재사항이라 공란 게시 불가.
+  반영: publish_candidate(ko·en) · drafts · api/content/legal/privacy_notice.{ko,en}.md
+- ⬜ **EU·GB·TH 대리인 실명은 여전히 `[OPEN]`** — 대행 계약 체결 후 기입.
+  현재 EU·GB 는 타겟 아님(CLAUDE.md), TH 는 출시 게이트 항목.
 - ✅ 코호트 k(D-05/06) 등 미결 수치 없음 — 매트릭스는 규칙만
 - ✅ 배포·게시 안 함 — 브랜치 작업, `any_draft=true`가 게시 차단 신호
 

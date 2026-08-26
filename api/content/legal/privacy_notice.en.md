@@ -17,7 +17,7 @@
 
 | Role | Name | Affiliation / Title | Contact |
 |---|---|---|---|
-| Privacy Officer | Gyomoon Jin | WiseLake Inc. / Chief Executive Officer | gyomoon@wiselake.co.kr / +82-31-421-3418 |
+| Privacy Officer | Gyomoon Jin | WiseLake Inc. / Chief Executive Officer | wiselake@wiselake.ai / +82-31-421-3418 |
 | Privacy Department | Management Support Team | WiseLake Inc. | wiselake@wiselake.ai / +82-31-421-3418 |
 
 [OPEN] EU/UK representative — name and address to be filled after the agency contract
