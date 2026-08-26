@@ -1,32 +1,30 @@
-"""룰 엔진이 emit 하는 cause/action 코드가 번역맵에 **전 로케일** 존재하는지 가드.
+"""룰 엔진이 emit하는 cause/action 코드가 i18n 카탈로그에 **7개 로케일 전부** 존재하는지 가드.
 
-누락 시 `_label` 폴백이 raw 코드를 Title-Case 로 노출한다 → ko·zh 로케일에서도 영문이
-그대로 보인다(QA i18n 갭). 새 rule 에 코드를 추가했으면 `app/engine/i18n.py` 의
-`CAUSE_LABELS`/`ACTION_LABELS` 에도 등록해야 한다.
+누락 시 label() 폴백이 raw 코드를 Title-Case로 노출하거나 영어로 새어나간다.
+(실제로 이 가드가 en/ko 2종만 검사하던 동안, zh/es/vi/th/pt 는 전부 영어로 폴백되고 있었다.)
 
-## 구조가 바뀌었다 (2026-08-26 회수)
-
-번역맵이 `renderer.py` 의 `_CAUSE_EN`/`_CAUSE_KO`(en·ko 2개어)에서
-`i18n.py` 의 `CAUSE_LABELS[code][locale]`(**7개어**)로 옮겨졌다.
-
-★ 이 리팩터는 **운영 서버에만 있고 git 에는 없던 코드**였다. 서버 코드에 남은 주석이
-  이유를 설명한다 — "예전엔 여기에 en/ko 만 있어서 비영어·비한국어 질문은 무엇을 묻든
-  전부 dashboard 로 떨어졌다." 배포 시 덮어쓸 뻔한 것을 회수했다.
-
-그래서 이 테스트도 2개어가 아니라 **SUPPORTED_LOCALES 전체**를 검사한다. 로케일이
-늘어나면 자동으로 그것까지 요구한다 — 목록을 손으로 유지하지 않는다.
+이 테스트가 깨지면: 새 rule에 추가한 cause/action 코드를 app/engine/i18n.py 의
+CAUSE_LABELS / ACTION_LABELS 에 **SUPPORTED_LOCALES 전부** 채워서 등록할 것.
 """
 import glob
 import os
 import re
 
-from app.engine.i18n import ACTION_LABELS, CAUSE_LABELS, SUPPORTED_LOCALES
+from app.engine.i18n import (
+    ACTION_LABELS,
+    CAUSE_LABELS,
+    DEFAULT_LOCALE,
+    SUPPORTED_LOCALES,
+    UI_LABELS,
+    label,
+    normalize_locale,
+)
 
 _RULES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "app", "engine", "rules")
 
 
 def _emitted(kind: str) -> set[str]:
-    """rules/*.py 에서 causes=[...]/actions=[...] 리터럴 코드 수집(멀티라인 포함)."""
+    """rules/*.py에서 causes=[...]/actions=[...] 리터럴 코드 수집(멀티라인 포함)."""
     codes: set[str] = set()
     for path in glob.glob(os.path.join(_RULES_DIR, "*.py")):
         with open(path, encoding="utf-8") as f:
@@ -36,47 +34,56 @@ def _emitted(kind: str) -> set[str]:
     return codes
 
 
-def _missing_locales(labels: dict, codes: set[str]) -> dict[str, list[str]]:
-    """코드별로 어떤 로케일이 비었는지 — 어디를 채워야 하는지 바로 보이게."""
+def _missing(catalog: dict[str, dict[str, str]], emitted: set[str]) -> dict[str, list[str]]:
+    """로케일별 누락 코드. 코드 자체가 없으면 전 로케일 누락으로 잡힌다."""
     out: dict[str, list[str]] = {}
-    for code in sorted(codes):
-        entry = labels.get(code)
-        if entry is None:
-            out[code] = ["(코드 자체 없음)"]
-            continue
-        gaps = [loc for loc in SUPPORTED_LOCALES if not entry.get(loc)]
+    for loc in SUPPORTED_LOCALES:
+        gaps = sorted(c for c in emitted if not (catalog.get(c) or {}).get(loc))
         if gaps:
-            out[code] = gaps
+            out[loc] = gaps
     return out
 
 
-def test_all_emitted_cause_codes_translated():
-    gaps = _missing_locales(CAUSE_LABELS, _emitted("causes"))
-    assert not gaps, f"CAUSE_LABELS 번역 누락(코드→빈 로케일): {gaps}"
+def test_all_emitted_cause_codes_translated_in_every_locale():
+    assert not _missing(CAUSE_LABELS, _emitted("causes"))
 
 
-def test_all_emitted_action_codes_translated():
-    gaps = _missing_locales(ACTION_LABELS, _emitted("actions"))
-    assert not gaps, f"ACTION_LABELS 번역 누락(코드→빈 로케일): {gaps}"
+def test_all_emitted_action_codes_translated_in_every_locale():
+    assert not _missing(ACTION_LABELS, _emitted("actions"))
 
 
-def test_every_entry_covers_every_locale():
-    """★ 한 로케일만 추가하는 드리프트 방지 — 등록된 코드는 전 로케일을 갖춰야 한다.
+def test_catalog_entries_cover_every_supported_locale():
+    """카탈로그에 등록된 코드는 전부 7개 로케일을 채워야 한다(한 언어만 추가하는 드리프트 방지)."""
+    gaps: dict[str, list[str]] = {}
+    for name, catalog in (
+        ("CAUSE_LABELS", CAUSE_LABELS),
+        ("ACTION_LABELS", ACTION_LABELS),
+        ("UI_LABELS", UI_LABELS),
+    ):
+        for code, entry in catalog.items():
+            miss = sorted(set(SUPPORTED_LOCALES) - {k for k, v in entry.items() if v})
+            if miss:
+                gaps[f"{name}.{code}"] = miss
+    assert not gaps
 
-    예전 en/ko 2개어 시절의 `set(_CAUSE_EN) == set(_CAUSE_KO)` 검사를 대체한다."""
-    for name, labels in (("CAUSE_LABELS", CAUSE_LABELS), ("ACTION_LABELS", ACTION_LABELS)):
-        gaps = {
-            code: [loc for loc in SUPPORTED_LOCALES if not entry.get(loc)]
-            for code, entry in labels.items()
-            if any(not entry.get(loc) for loc in SUPPORTED_LOCALES)
-        }
-        assert not gaps, f"{name} 로케일 불균형: {gaps}"
+
+def test_supported_locales_match_app_languages():
+    """앱/웹이 지원하는 7개 언어와 동기. 언어를 늘리면 카탈로그도 같이 늘려야 한다."""
+    assert set(SUPPORTED_LOCALES) == {"en", "ko", "zh", "es", "vi", "th", "pt"}
+    assert DEFAULT_LOCALE == "en"
 
 
-def test_supported_locales_is_not_silently_shrunk():
-    """지원 로케일이 줄면 그 언어 사용자가 조용히 영문을 보게 된다.
+def test_normalize_locale_folds_variants_and_unknowns():
+    assert normalize_locale("pt-BR") == "pt"
+    assert normalize_locale("zh_Hans") == "zh"
+    assert normalize_locale("es-419") == "es"
+    assert normalize_locale("TH") == "th"
+    assert normalize_locale("ru") == DEFAULT_LOCALE   # 미지원 언어는 영어 폴백
+    assert normalize_locale(None) == DEFAULT_LOCALE
+    assert normalize_locale("") == DEFAULT_LOCALE
 
-    UI 는 8개어(ru 포함)지만 룰 엔진 번역은 7개어다 — ru 는 아직 없다.
-    줄어드는 것만 막고, 늘리는 것은 자유롭게 둔다."""
-    assert set(SUPPORTED_LOCALES) >= {"en", "ko", "zh", "es", "vi", "th", "pt"}, (
-        f"지원 로케일이 줄었다: {SUPPORTED_LOCALES}")
+
+def test_label_falls_back_to_en_then_humanized_code():
+    catalog = {"only_en": {"en": "Only English"}}
+    assert label(catalog, "only_en", "th") == "Only English"      # 로케일 누락 → en
+    assert label(catalog, "brand_new_code", "ko") == "Brand New Code"  # 미등록 → humanize
