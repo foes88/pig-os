@@ -10,10 +10,11 @@ RUN pip install --no-cache-dir uv \
 
 # Dependencies (layer cache)
 COPY pyproject.toml .
-RUN uv pip install --system --no-cache-dir \
-    "fastapi[standard]" "sqlalchemy[asyncio]" asyncpg alembic psycopg2-binary \
-    "pydantic-settings" "python-jose[cryptography]" "passlib[bcrypt]" \
-    redis arq python-multipart httpx email-validator
+# ★ pyproject 의 dependencies 를 **그대로** 설치한다.
+#   예전에는 여기에 패키지를 손으로 나열했다. pyproject 에 의존성을 추가해도 이미지에
+#   들어가지 않아 배포 후에야 ModuleNotFoundError 로 죽는다(2026-08-26 실측: markdown).
+#   같은 이유로 boto3·tzdata 도 빠져 있었다 — 목록 이중관리는 반드시 어긋난다.
+RUN uv pip install --system --no-cache-dir -r pyproject.toml
 
 # App source
 COPY . .
