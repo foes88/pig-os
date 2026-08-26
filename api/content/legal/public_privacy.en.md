@@ -100,7 +100,7 @@ The Company does not currently automatically make decisions that produce legal o
 | Tool | Provider | Information Collected | Purpose |
 |---|---|---|---|
 | Google Analytics | Google LLC (USA) | Cookies·online identifiers, access·usage statistics | Service usage analysis·improvement |
-| [Other analytics·error-collection tools — to be confirmed after operational verification] | [ ] | [ ] | [ ] |
+| Other analytics·error-collection tools | — | — | **None currently adopted** — upon adoption, this table will be updated and notified in advance |
 
 ③ **Means of refusal**: Users may refuse automatic collection through (i) refusing·deleting cookie storage via browser settings, (ii) the Google Analytics opt-out browser add-on (https://tools.google.com/dlpage/gaoptout), and (iii) the cookie settings tool provided by the Service (where provided).
 ④ **Prior consent for non-essential analytics cookies (EU·GB, etc.)**: In countries that require prior consent (opt-in) before execution for non-essential analytics·measurement cookies (including Google Analytics), such as the EU·GB, the Company shall, through a consent management platform (CMP) or cookie banner, **block the execution of non-essential tags such as Google Analytics until consent is obtained, obtain consent on a country-by-country basis, manage the consent·withdrawal history as logs, and deactivate the relevant tags upon withdrawal**. The specific implementation matters (banner·CMP·tag control·consent logs) are determined in `TERMS_DISPLAY_SPEC.md` and the development scope, and this is **[operational actual measurement required — V process]** such that its enforcement is not asserted as definite until actual implementation is confirmed.
@@ -127,8 +127,8 @@ The Company does not currently automatically make decisions that produce legal o
 
 | Processor | Delegated Work | Country of Processing | Remarks |
 |---|---|---|---|
-| **[External AI processor list — PLACEHOLDER: upon confirmation of external AI vendors such as OCR, enter the processor name·processing items·country·retention period]** | Document image recognition (OCR), etc., AI processing | [third country possible] | **no-training·zero-retention contractual principle** (Article 12 of the Terms) |
-| Google LLC | Usage analysis (Google Analytics) | USA, etc. | See Article 6 |
+| External AI processors | AI response generation, document image recognition (OCR) and other AI processing | — | **No processing currently entrusted** — the AI Insight add-on has not commenced and no external AI vendor has been selected. Upon adoption, the processor name·processing items·country·retention period will be reflected in this table and notified in advance |
+| Google LLC | Usage analytics (Google Analytics) — **limited to the marketing website (pigos.io)**; not applied to the Service application | United States, etc. | See Article 6 |
 | Amazon Web Services, Inc. (AWS) | Cloud infrastructure operation, data storage·backup | Republic of Korea (Seoul region) | Domestic region — does not constitute a cross-border transfer |
 | Payment Gateway (PG) | Paid payment processing | — | **No processing currently entrusted** — paid payments have not commenced. Upon commencement, this table will be updated and notified in advance |
 
