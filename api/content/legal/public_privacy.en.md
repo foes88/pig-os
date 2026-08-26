@@ -1,8 +1,8 @@
-# PigOS Global Privacy Notice — Draft
+# PigOS Global Privacy Notice
 
-> **DRAFT — Not for publication. Pending legal review.**
-
-> **Publication candidate v1.0-rc (2026-08-04) — Final confirmation required before publication.** This document is a clean version for customer disclosure, with internal review annotations removed. Conditions for publication: confirm the [OPEN]·[COUNSEL]·[V] items within the body → obtain legal counsel's confirmation → obtain the CEO's approval → enter the date of notice and effective date. Processing under PigSignal Purpose ② (anonymized/aggregated statistics) shall remain inactive (OFF) until the execution gates are satisfied.
+> **Effective date: 26 August 2026** · Date of notice: 26 August 2026 · Version 1.0
+>
+> This is the Company's published notice. If its contents change, the Company will announce the changes and their effective date in advance. Processing for PigSignal Purpose ② (provision of anonymized/aggregated statistics to third parties) remains inactive (OFF) until the separate execution gates are satisfied.
 ---
 
 WiseLake Inc. (hereinafter the "Company") complies with the personal data protection laws of each country applicable to the Company, including the "Personal Information Protection Act," and establishes and discloses this notice in order to protect the personal data of Data Subjects who use the PigOS service (hereinafter the "Service").
@@ -84,7 +84,7 @@ The Company does not currently automatically make decisions that produce legal o
 | Payment Gateway (PG) | Payment processing results, payment·refund status information | [V — actual verification required] |
 | Publicly available sources | Public information within the scope permitted by law | [V — actual verification required] |
 
-② Where an Organization Administrator·Farm Owner·Integrator enters the personal data of its employees or contract farmers into the Service, the responsibility for securing a lawful basis for the collection·processing of, and for notifying, such Data Subjects lies in principle with the relevant organizational customer, and the roles between the Company and the organizational customer are determined in Article 7 and in a separate **B2B Data Processing Addendum (DPA — `PIGOS_B2B_DPA_DRAFT.md`)**.
+② Where an Organization Administrator·Farm Owner·Integrator enters the personal data of its employees or contract farmers into the Service, the responsibility for securing a lawful basis for the collection·processing of, and for notifying, such Data Subjects lies in principle with the relevant organizational customer, and the roles between the Company and the organizational customer are determined in Article 7 and in a separate **B2B Data Processing Addendum (DPA)**.
 ③ **Duty to give notice of indirect collection**: In countries that require the Data Subject to be notified of the fact·source·items, etc., of personal data collected from sources other than the Data Subject, such as the EU·GB, the Company or the relevant organizational customer shall give notice in accordance with the deadline·method prescribed by the applicable law (e.g., Article 14 of the GDPR·UK GDPR), and the specific procedure·allocation of responsibility shall be determined in the Country-specific Notice and the B2B DPA.
 
 ## Article 5 (Children's Personal Data)
@@ -117,7 +117,7 @@ The Company does not currently automatically make decisions that produce legal o
 | Processing for the purpose of producing·providing Anonymized·aggregated statistics (PigSignal) | **WiseLake = controller**, or, depending on the data-contribution·purpose-setting structure, **joint controller possible** |
 | Provision of data for the research purposes of a specific enterprise (Purpose ④) | **Joint controller possible** depending on the contract structure — determined by whether the purpose·means are jointly decided |
 
-② Where the Company processes personal data as a processor of an enterprise customer, the processing conditions such as the limitation of processing instructions, sub-processors, security measures, support for Data Subject rights, deletion·return, and cross-border transfer are determined in a separate **B2B Data Processing Addendum (DPA — `PIGOS_B2B_DPA_DRAFT.md`)**.
+② Where the Company processes personal data as a processor of an enterprise customer, the processing conditions such as the limitation of processing instructions, sub-processors, security measures, support for Data Subject rights, deletion·return, and cross-border transfer are determined in a separate **B2B Data Processing Addendum (DPA)**.
 ③ Where the parties constitute joint controllers, the scope of each party's responsibilities·the Data Subject contact point are determined in accordance with the relevant contract and the applicable law (e.g., Article 26 of the GDPR), and the essence thereof is notified to the Data Subject.
 
 ## Article 8 (Delegation of Processing and Cross-border Transfer)
@@ -129,7 +129,8 @@ The Company does not currently automatically make decisions that produce legal o
 |---|---|---|---|
 | **[External AI processor list — PLACEHOLDER: upon confirmation of external AI vendors such as OCR, enter the processor name·processing items·country·retention period]** | Document image recognition (OCR), etc., AI processing | [third country possible] | **no-training·zero-retention contractual principle** (Article 12 of the Terms) |
 | Google LLC | Usage analysis (Google Analytics) | USA, etc. | See Article 6 |
-| [Cloud·payment-gateway and other infrastructure processors — to be confirmed after operational verification] | [ ] | [ ] | [ ] |
+| Amazon Web Services, Inc. (AWS) | Cloud infrastructure operation, data storage·backup | Republic of Korea (Seoul region) | Domestic region — does not constitute a cross-border transfer |
+| Payment Gateway (PG) | Paid payment processing | — | **No processing currently entrusted** — paid payments have not commenced. Upon commencement, this table will be updated and notified in advance |
 
 ③ Where the delegated processing entails cross-border transfer, the Company discloses, through this Article and the Country-specific Notice, the items transferred, the country of transfer, the date·method of transfer, the name·contact of the transferee, the purpose of use, and the retention·use period, and where the applicable law requires separate consent or additional safeguards (conclusion of Standard Contractual Clauses, transfer impact assessment, etc.), it implements them.
 ④ Where a processor re-transfers the processing work to a third country, the Company reflects that fact in the table of this Article and gives notice thereof.
@@ -160,7 +161,7 @@ The Company does not currently automatically make decisions that produce legal o
 | Records on payment settlement and supply of goods, etc. (including payment·credit transactions) | Act on the Consumer Protection in Electronic Commerce, etc. | 5 years |
 | Records on consumer complaints or dispute resolution | Act on the Consumer Protection in Electronic Commerce, etc. | 3 years |
 | Website visit records (access logs) | Protection of Communications Secrets Act | 3 months |
-| [Transaction evidence under tax law, etc. — to be added after legal counsel's confirmation] | [Framework Act on National Taxes, etc.] | [ ] |
+| Books and supporting documents concerning transactions under tax law | Framework Act on National Taxes, Article 85-3 | 5 years |
 
 ③ **Treatment of Anonymized Statistical Output**: Statistical output that, prior to a Member's withdrawal, has already been irreversibly anonymized in accordance with the standards of Article 10, Paragraph 6 of the Terms of Service **constitutes information from which a specific individual cannot be identified and does not constitute personal data**, is not subject to the retention·destruction provisions of this Article, and may continue to exist. **[D-03]** Source farm data and personal data for which anonymization has not been completed are processed in accordance with Paragraphs 1·2.
 ④ Method of destruction: Electronic files are deleted by technical means that make recovery·reproduction impossible, and printouts are shredded or incinerated.
