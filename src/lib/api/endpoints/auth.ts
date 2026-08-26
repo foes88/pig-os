@@ -28,6 +28,12 @@ export const authApi = {
 
   logout: () => apiClient.post(`${BASE}/logout`),
 
+  // 계정 삭제(탈퇴) — Apple Guideline 5.1.1(v). 되돌릴 수 없다.
+  // 비밀번호 재확인 필수: 방치된 세션·탈취 토큰만으로 실행되면 안 되는 동작이다.
+  // axios 는 DELETE 에 본문을 실으려면 config.data 를 써야 한다(두 번째 인자가 body 가 아님).
+  deleteAccount: (password: string) =>
+    apiClient.delete(`${BASE}/me`, { data: { password } }),
+
   onboard: (body: OnboardingRequest) =>
     apiClient.post<OnboardingResponse>("/api/v1/onboarding/complete", body).then((r) => r.data),
 
