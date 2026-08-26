@@ -15,6 +15,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from app.addons import AddonRegistry
 from app.core import cache
@@ -48,6 +49,7 @@ from app.routers.base import (
     tasks,
     thresholds,
 )
+from app.services import public_notice
 
 # ── Import Addon packages here to trigger AddonRegistry.register() ──────────
 # from app.addons import fcr      # uncomment when Addon #1 is ready
@@ -183,3 +185,16 @@ for addon in AddonRegistry.all():
 @app.get("/health", tags=["System"])
 async def health():
     return {"status": "ok", "version": app.version}
+
+
+# ── 공개 개인정보 처리방침 ────────────────────────────────────────────────────
+# App Store Connect 의 방침 URL(필수 입력값)이 여기를 가리킨다.
+#
+# ★ 2026-08-26: 손으로 쓴 정적 HTML(app/static/privacy.html, 2026-06-29 자)을 서빙하다
+#   정본과 어긋났다 — 대표 개인 메일 노출·쓰지 않는 FCM 기재·상호 오기·보호책임자 누락.
+#   심사자가 앱 문구와 대조 가능한 부분이라 위험했다.
+#   지금은 **정본 마크다운을 렌더링**한다. 손으로 쓴 HTML 을 다시 두지 않는다.
+@app.get("/legal/privacy", response_class=HTMLResponse, include_in_schema=False)
+async def privacy_notice(request: Request, lang: str | None = None):
+    chosen = public_notice.normalize_lang(lang or request.headers.get("accept-language"))
+    return HTMLResponse(public_notice.render(chosen))

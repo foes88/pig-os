@@ -19,6 +19,9 @@ dependencies = [
     "email-validator>=2.0",
     "tzdata>=2026.2",
     "boto3>=1.43.39",
+    # /legal/privacy 가 정본 마크다운(표 포함)을 렌더링한다. 법무 문서라
+    # 직접 파서를 쓰지 않고 검증된 라이브러리를 쓴다 — 표가 깨지면 고지가 깨진다.
+    "markdown>=3.7",
 ]
 
 [tool.uv]
