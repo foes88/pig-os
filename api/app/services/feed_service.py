@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationError
+from app.core.farm_time import farm_today_by_id
 from app.db.models.health import FeedRecord
 from app.db.models.ops import FinisherGroup
 from app.db.models.sow import Building, Sow
@@ -51,6 +52,11 @@ async def create_feed_record(
     targets = [t for t in (body.sow_id, body.group_id, body.building_id) if t is not None]
     if len(targets) > 1:
         raise ValidationError("Specify at most one target among sow_id / group_id / building_id")
+    # ★ 미래 급여일 거부 — **농장 현지 오늘** 기준. 스키마는 농장을 몰라 +1일까지만
+    #   거르므로 정확한 판정은 여기서 한다(app/core/farm_time.py).
+    if body.record_date > await farm_today_by_id(db, farm_id):
+        raise ValidationError(
+            f"record_date {body.record_date} cannot be in the future")
     # 대상이 해당 농장 소속인지 검증 (크로스테넌트 차단)
     await _ensure_target_in_farm(db, farm_id, body)
     # 월마감 잠금 검사 (잠긴 기간이면 PeriodLockedError → 423)

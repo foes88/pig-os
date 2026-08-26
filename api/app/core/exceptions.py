@@ -9,15 +9,65 @@
 `Server error. Please try again.` 하나로 보여줬고, 사용자는 재시도해야 할지
 문의해야 할지 알 수 없었다. 아래 catch-all 이 그 구멍을 막는다.
 """
+import asyncio
 import logging
 import uuid
 
-from asyncpg.exceptions import PostgresConnectionError
+from asyncpg.exceptions import PostgresConnectionError, PostgresError
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, InterfaceError, OperationalError
+
+from app.core.config import settings
 
 logger = logging.getLogger("pigos.error")
+
+
+# ── DB 연결 장애 판정 ─────────────────────────────────────────────────────────
+# ★ 새 연결을 **맺지 못하는** 경우는 SQLAlchemy 를 거치지 않고 asyncpg/OS 예외가 그대로
+#   올라온다(ConnectionRefusedError, TimeoutError 등). 타입 목록만 열거하면 그 경로가
+#   500 으로 샌다 — 독립검증 2026-08-25 에서 실제로 잡혔다(DB 중지 후 로그인 → 500).
+#   그래서 **예외 체인 전체**를 훑어 연결 계열인지 본다.
+_CONN_TYPES = (
+    OperationalError, InterfaceError,        # SQLAlchemy 래핑 경로
+    PostgresConnectionError,                 # asyncpg 연결 계열
+    ConnectionError,                         # ConnectionRefused/Reset/Aborted 의 상위
+    asyncio.TimeoutError, TimeoutError,      # 연결·풀 대기 타임아웃
+)
+
+
+def _is_db_connection_failure(exc: BaseException) -> bool:
+    seen, cur = 0, exc
+    while cur is not None and seen < 10:      # 순환 참조 방어
+        if isinstance(cur, _CONN_TYPES):
+            return True
+        # asyncpg 의 다른 연결 오류는 이름으로 판정(버전마다 클래스가 다르다)
+        if isinstance(cur, PostgresError) and "connection" in type(cur).__name__.lower():
+            return True
+        cur = cur.__cause__ or cur.__context__
+        seen += 1
+    return False
+
+
+def _cors_headers(request: Request) -> dict[str, str]:
+    """500·503 응답에 CORS 를 직접 붙인다.
+
+    ★ Starlette 의 catch-all(ServerErrorMiddleware)은 **CORSMiddleware 바깥**에서 돌아
+      일반 500 만 CORS 를 못 받는다. 그러면 브라우저가 본문을 읽지 못해 프론트가
+      code·request_id 를 쓸 수 없다 — 에러 정형화를 해놓고 정작 못 읽는 상황이 된다.
+      (독립검증 2026-08-25: access-control-allow-origin=None)
+    """
+    origin = request.headers.get("origin")
+    if not origin:
+        return {}
+    allowed = ["*"] if not settings.is_production else settings.cors_origins
+    if "*" not in allowed and origin not in allowed:
+        return {}
+    return {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Vary": "Origin",
+    }
 
 
 class PigOSError(Exception):
@@ -87,6 +137,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(OperationalError)
+    @app.exception_handler(InterfaceError)
     @app.exception_handler(PostgresConnectionError)
     async def db_unavailable_handler(request: Request, exc: Exception) -> JSONResponse:
         """DB 에 못 붙거나 쿼리 도중 연결이 끊긴 경우 → 503.
@@ -102,7 +153,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             status_code=503,
             content={"code": "DB_UNAVAILABLE", "detail": "Database temporarily unavailable",
                      "request_id": rid},
-            headers={"Retry-After": "5"},
+            headers={"Retry-After": "5", **_cors_headers(request)},
         )
 
     @app.exception_handler(Exception)
@@ -115,9 +166,21 @@ def register_exception_handlers(app: FastAPI) -> None:
           를 추적할 방법이 없다(이번 장애 때 실제로 그랬다).
         """
         rid = uuid.uuid4().hex[:12]
+        # ★ 연결을 못 맺는 경우는 여기로 온다(SQLAlchemy 래핑 전) — 503 으로 재분류한다.
+        #   500 이면 프론트가 "다시 시도"가 아니라 "문의"를 안내하게 된다.
+        if _is_db_connection_failure(exc):
+            logger.error("[%s] DB unreachable on %s %s: %s",
+                         rid, request.method, request.url.path, exc, exc_info=True)
+            return JSONResponse(
+                status_code=503,
+                content={"code": "DB_UNAVAILABLE",
+                         "detail": "Database temporarily unavailable", "request_id": rid},
+                headers={"Retry-After": "5", **_cors_headers(request)},
+            )
         logger.exception("[%s] Unhandled on %s %s", rid, request.method, request.url.path)
         return JSONResponse(
             status_code=500,
             content={"code": "INTERNAL_ERROR",
                      "detail": "An unexpected error occurred", "request_id": rid},
+            headers=_cors_headers(request),
         )

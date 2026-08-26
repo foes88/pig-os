@@ -23,12 +23,14 @@ Conflict resolution matrix (see docs/specs/2026-05-19_offline-sync-spec.md):
 from __future__ import annotations
 
 import json
+from contextvars import ContextVar
 from datetime import UTC, date, datetime, timedelta
 from uuid import UUID, uuid4
 
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.farm_time import farm_today
 from app.db.models.events import (
     Farrowing,
     Mating,
@@ -104,18 +106,26 @@ async def _get_sow(db: AsyncSession, farm_id: UUID, sow_id: UUID) -> Sow | None:
     )
 
 
+# 처리 중인 농장의 현지 오늘. process_sync 가 배치 시작 시 한 번 설정한다.
+# ★ 8개 처리기가 farm_id 만 받으므로 전부의 시그니처를 고치는 대신 컨텍스트로 넘긴다.
+#   ContextVar 는 async 태스크별로 격리돼 동시 요청이 서로의 값을 보지 않는다.
+_farm_today_ctx: ContextVar[date | None] = ContextVar("sync_farm_today", default=None)
+
+
 def _is_future_date(event_date: date) -> bool:
-    """미래 이벤트 판정 — 여기는 **서버 기준 + 1일 여유**로 충분하다.
+    """미래 이벤트 판정 — **REST 와 같은 기준**(농장 현지 오늘)이어야 한다.
 
-    ★ 2026-08-25 TZ 점검 결론: 전 세계 최대 오프셋은 UTC+14 이므로 농장 현지 날짜는
-      서버(UTC)보다 최대 **1일** 앞선다. TOLERANCE=1 이 그 폭을 정확히 덮는다.
-      REST(event_service)는 이 여유가 없어서 서울 농장이 오전에 등록을 못 했고,
-      그쪽은 농장 현지 기준으로 고쳤다(app/core/farm_time.py).
+    ★ 독립검증 2026-08-25: 같은 이벤트를 REST 는 거부하고 sync 는 통과시켰다.
+      sync 가 `date.today() + 1일` 여유를 쓰는데 REST 는 농장 현지 오늘로 정확히
+      자르기 때문이다. UTC·Chicago 농장에서 "내일" 날짜가 sync 로는 들어가고 REST 로는
+      안 들어간다 — 입력 경로에 따라 데이터가 갈리면 정합성이 깨진다.
 
-      여기서 농장 tz 를 다시 조회하지 않는 이유: 이 판정은 8개 호출부에서 배치 항목마다
-      돌고, 여유 1일이 이미 정확한 상한이라 조회를 추가해도 결과가 같다.
-      대신 하루치 진짜 미래 입력을 통과시키는 트레이드오프는 그대로 남는다 — 의도된 값이다.
+      농장 컨텍스트가 있으면 그 기준을 쓴다. 없을 때만(단위 테스트 등) 서버+1일로
+      폴백한다 — 폴백 값 자체는 여전히 정확한 상한이다(최대 오프셋 UTC+14).
     """
+    farm_today_value = _farm_today_ctx.get()
+    if farm_today_value is not None:
+        return event_date > farm_today_value
     return event_date > date.today() + timedelta(days=_FUTURE_DATE_TOLERANCE_DAYS)
 
 
@@ -990,6 +1000,25 @@ async def process_sync(
 ) -> SyncResponse:
     now = datetime.now(UTC)
     started_at = now
+
+    # ★ 이 배치 동안의 '오늘'을 농장 현지로 고정한다 — REST 와 같은 기준이어야
+    #   같은 이벤트가 입력 경로에 따라 갈리지 않는다(독립검증 2026-08-25).
+    #   배치 시작 시 한 번만 계산: 항목마다 다시 구하면 자정을 넘길 때 배치 안에서
+    #   기준일이 바뀐다.
+    _tok = _farm_today_ctx.set(farm_today(farm))
+    try:
+        return await _process_sync_inner(db, farm, req, now, started_at)
+    finally:
+        _farm_today_ctx.reset(_tok)
+
+
+async def _process_sync_inner(
+    db: AsyncSession,
+    farm: Farm,
+    req: SyncRequest,
+    now: datetime,
+    started_at: datetime,
+) -> SyncResponse:
 
     # Stale client check
     require_full_sync = False

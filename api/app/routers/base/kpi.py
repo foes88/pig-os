@@ -97,12 +97,16 @@ async def dashboard(farm: FarmDep, db: DbDep):
 async def psy(
     farm: FarmDep,
     db: DbDep,
-    year: int = Query(default=date.today().year, ge=2000, le=2099),
+    # ★ default 를 여기서 계산하면 **import 시점 UTC 연도로 고정**된다.
+    #   프로세스가 연말을 넘겨 계속 살아 있으면 새해에도 작년이 기본값이다
+    #   (독립검증 2026-08-25). None 으로 받아 요청 시점 농장 현지 연도를 쓴다.
+    year: int | None = Query(default=None, ge=2000, le=2099),
 ):
     """PSY (rolling 12개월, 해당 연도 말 기준 — 당해년도는 오늘까지)."""
     # 농장 현지 오늘 기준 — 서버 UTC 로 자르면 농장의 "오늘까지"가 하루 어긋난다.
+    today = farm_today(farm)
     return await kpi_service.calculate_psy(
-        db, farm.id, min(date(year, 12, 31), farm_today(farm)))
+        db, farm.id, min(date(year or today.year, 12, 31), today))
 
 
 @router.get("/trend", response_model=list[KpiTrend])

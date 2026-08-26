@@ -51,10 +51,14 @@ class WorkerSettings:
         cron(db_keepalive, hour=12, minute=0),
         # 매일 00:05 UTC — 전날 일별 KPI 집계
         cron(daily_kpi_aggregation, hour=0, minute=5),
-        # 매주 월요일 00:10 UTC — 지난 주 KPI
-        cron(weekly_kpi_aggregation, weekday=0, hour=0, minute=10),
-        # 매월 1일 00:15 UTC — 지난 달 KPI
-        cron(monthly_kpi_aggregation, day=1, hour=0, minute=15),
+        # ★ 주간·월간을 **매일** 돌린다(2026-08-25 독립검증).
+        #   예전엔 "월요일 00:10 UTC", "1일 00:15 UTC" 처럼 cron 시각이 기간을 정했는데,
+        #   그 순간 아직 주·달이 끝나지 않은 농장(America/Chicago 는 UTC 보다 5~6h 뒤)
+        #   의 스냅샷이 한 주·한 달 늦어졌다.
+        #   지금은 잡이 각 농장의 **직전 완료 기간**을 계산하고 멱등 upsert 하므로
+        #   매일 돌아도 중복이 생기지 않는다. 어느 타임존이든 하루 안에 반영된다.
+        cron(weekly_kpi_aggregation, hour=0, minute=10),
+        cron(monthly_kpi_aggregation, hour=0, minute=15),
         # 매일 05:30 UTC — alert 기반 Task 자동배정
         cron(generate_tasks_job, hour=5, minute=30),
         # 매일 06:00 UTC — alert→IN_APP 영구 알림 생성

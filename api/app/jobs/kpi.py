@@ -44,6 +44,33 @@ def _period_bounds(period_type: str, ref: date) -> tuple[date, date]:
     return ref.replace(month=1, day=1), ref.replace(month=12, day=31)
 
 
+def _last_completed_period(period_type: str, farm_today_value: date) -> tuple[date, date]:
+    """농장 현지 오늘 기준으로 **이미 끝난** 직전 기간을 돌려준다.
+
+    ★ 왜 이 함수가 필요한가 (독립검증 2026-08-25)
+      예전에는 cron 이 도는 **시각**이 기간을 정했다. 월간 잡이 UTC 1일 00:15 에 돌면서
+      농장 현지 날짜로 기간을 계산하니, America/Chicago 는 그 순간 **전월 마지막 날**이라
+      한 달 전 기간을 계산했다 → 8월 스냅샷이 10월 1일까지 한 달 늦어진다.
+      주간도 같은 방식으로 최신 주가 일주일 늦었다.
+
+      그래서 "언제 도느냐"와 "무슨 기간을 계산하느냐"를 분리한다. 잡은 매일 돌고,
+      각 농장의 현지 날짜 기준으로 **끝난 기간**을 집계한다. 이미 계산된 기간은
+      같은 값으로 다시 upsert 되므로(멱등) 매일 돌아도 안전하다.
+    """
+    if period_type == "DAILY":
+        d = farm_today_value - timedelta(days=1)          # 어제 = 마지막으로 끝난 하루
+        return d, d
+    if period_type == "WEEKLY":
+        this_week_start = farm_today_value - timedelta(days=farm_today_value.weekday())
+        last_week_start = this_week_start - timedelta(days=7)
+        return last_week_start, last_week_start + timedelta(days=6)
+    if period_type == "MONTHLY":
+        this_month_start = farm_today_value.replace(day=1)
+        last_month_end = this_month_start - timedelta(days=1)
+        return last_month_end.replace(day=1), last_month_end
+    raise ValueError(f"unsupported period_type: {period_type}")
+
+
 async def _calculate_farm_kpi(
     db: AsyncSession,
     farm_id: UUID,
@@ -178,8 +205,7 @@ async def daily_kpi_aggregation(ctx: dict) -> str:
     last_period = None
     for farm_id, tz in farms:
         try:
-            period_start, period_end = _period_bounds(
-                "DAILY", today_in_tz(tz) - timedelta(days=1))
+            period_start, period_end = _last_completed_period("DAILY", today_in_tz(tz))
             last_period = period_start
             async with AsyncSessionLocal() as db:
                 kpi = await _calculate_farm_kpi(db, farm_id, "DAILY", period_start, period_end)
@@ -203,8 +229,7 @@ async def weekly_kpi_aggregation(ctx: dict) -> str:
     last_period = (None, None)
     for farm_id, tz in farms:
         try:
-            period_start, period_end = _period_bounds(
-                "WEEKLY", today_in_tz(tz) - timedelta(weeks=1))
+            period_start, period_end = _last_completed_period("WEEKLY", today_in_tz(tz))
             last_period = (period_start, period_end)
             async with AsyncSessionLocal() as db:
                 kpi = await _calculate_farm_kpi(db, farm_id, "WEEKLY", period_start, period_end)
@@ -225,9 +250,7 @@ async def monthly_kpi_aggregation(ctx: dict) -> str:
     last_period = (None, None)
     for farm_id, tz in farms:
         try:
-            today = today_in_tz(tz)
-            period_start, period_end = _period_bounds(
-                "MONTHLY", today.replace(day=1) - timedelta(days=1))
+            period_start, period_end = _last_completed_period("MONTHLY", today_in_tz(tz))
             last_period = (period_start, period_end)
             async with AsyncSessionLocal() as db:
                 kpi = await _calculate_farm_kpi(db, farm_id, "MONTHLY", period_start, period_end)

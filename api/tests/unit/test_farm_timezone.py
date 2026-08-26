@@ -22,6 +22,7 @@ America/Mexico_City 3 · Asia/Manila 1 — **실고객 농장이 실제로 비-U
 
 ★ 두 결함은 방향이 반대다. 한쪽만 고치면 다른 쪽이 남는다.
 """
+import inspect
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -140,3 +141,51 @@ def test_user_facing_modules_do_not_use_server_wallclock():
             f"{mod.__name__} 이 서버 벽시계를 쓴다: {offenders}\n"
             "농장 현지 기준이어야 한다 — app/core/farm_time.py 의 farm_today/"
             "farm_today_by_id/today_in_tz 를 쓰십시오.")
+
+
+# ── KPI 스냅샷 기간: cron 시각이 아니라 농장 현지 완료 기간 ─────────────────
+
+def test_snapshot_period_is_the_last_completed_one():
+    """★ 아직 끝나지 않은 기간을 집계하지 않는다.
+
+    예전엔 cron 이 도는 **시각**이 기간을 정했다. 월간 잡이 UTC 1일 00:15 에 도는데
+    America/Chicago 는 그 순간 아직 전월 마지막 날이라, 함수가 **한 달 전**을 계산하고
+    직전 달 스냅샷은 다음 달 1일까지 밀렸다(독립검증 2026-08-25).
+    """
+    from app.jobs.kpi import _last_completed_period as period
+
+    # 시카고가 8/31(8월이 아직 안 끝남) → 끝난 달은 7월
+    assert period("MONTHLY", date(2026, 8, 31)) == (date(2026, 7, 1), date(2026, 7, 31))
+    # 현지가 9/1 이 되는 순간 → 8월이 집계된다(하루 안에 반영)
+    assert period("MONTHLY", date(2026, 9, 1)) == (date(2026, 8, 1), date(2026, 8, 31))
+
+
+def test_weekly_snapshot_uses_the_week_that_actually_ended():
+    from app.jobs.kpi import _last_completed_period as period
+
+    # 일요일(8/30)은 그 주가 아직 안 끝났다 → 직전 완료 주는 8/17~8/23
+    assert period("WEEKLY", date(2026, 8, 30)) == (date(2026, 8, 17), date(2026, 8, 23))
+    # 월요일(8/31)이 되면 직전 주(8/24~8/30)가 완료된다
+    assert period("WEEKLY", date(2026, 8, 31)) == (date(2026, 8, 24), date(2026, 8, 30))
+
+
+def test_daily_snapshot_is_yesterday_local():
+    from app.jobs.kpi import _last_completed_period as period
+
+    assert period("DAILY", date(2026, 8, 26)) == (date(2026, 8, 25), date(2026, 8, 25))
+
+
+def test_every_timezone_gets_its_period_within_a_day():
+    """★ 어느 타임존이든 기간 종료 후 하루 안에 집계된다 — 잡이 매일 돌기 때문이다.
+
+    잡을 '월요일만', '1일만' 돌리면 그 순간 아직 기간이 안 끝난 타임존은 다음 주기까지
+    기다려야 한다. 이 테스트는 그 설계로 되돌아가는 것을 막는다."""
+    from app.jobs import worker as W
+
+    src = inspect.getsource(W)
+    assert "cron(weekly_kpi_aggregation, hour=" in src and "weekday=" not in src.split(
+        "cron(weekly_kpi_aggregation")[1].split(")")[0], (
+        "주간 잡이 특정 요일에만 돈다 — 그 시각에 주가 안 끝난 타임존이 일주일 늦는다")
+    monthly = src.split("cron(monthly_kpi_aggregation")[1].split(")")[0]
+    assert "day=" not in monthly, (
+        "월간 잡이 특정 날짜에만 돈다 — 그 시각에 달이 안 끝난 타임존이 한 달 늦는다")

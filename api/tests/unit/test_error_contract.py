@@ -34,6 +34,20 @@ from app.core.exceptions import (
 SECRET = "table pigos_secret column password_hash"   # 노출되면 안 되는 내부 문자열
 
 
+def _wrapped_connection_error() -> Exception:
+    """연결 오류가 다른 예외 안에 감싸인 상황 — 래핑 방식은 라이브러리·버전마다 다르다."""
+    try:
+        raise ConnectionRefusedError("refused")
+    except ConnectionRefusedError as inner:
+        return RuntimeError("wrapper").with_traceback(None) if False else _chain(inner)
+
+
+def _chain(inner: BaseException) -> Exception:
+    outer = RuntimeError("some higher-level failure")
+    outer.__cause__ = inner
+    return outer
+
+
 @pytest.fixture
 def client() -> TestClient:
     app = FastAPI()
@@ -52,6 +66,9 @@ def client() -> TestClient:
             "dbdown": OperationalError(SECRET, {}, Exception(SECRET)),
             "pgconn": PostgresConnectionError(SECRET),
             "bug": RuntimeError(SECRET),
+            "refused": ConnectionRefusedError("connection refused"),
+            "timeout": TimeoutError("pool timeout"),
+            "wrapped": _wrapped_connection_error(),
         }[kind]
 
     # raise_server_exceptions=False: catch-all 핸들러의 응답을 실제로 받아본다
@@ -136,3 +153,49 @@ def test_all_pigos_errors_define_code_and_status():
             assert c.code != PigOSError.code, (
                 f"{c.__name__} 이 기본 code(INTERNAL_ERROR)를 그대로 쓴다 — "
                 "프론트가 코드 결함과 구분하지 못한다")
+
+
+# ── 독립검증 2026-08-25 회귀 ─────────────────────────────────────────────────
+
+def test_connection_refused_is_503_not_500(client: TestClient):
+    """★ **새 연결을 못 맺는** 경우도 503 이어야 한다.
+
+    DB 가 죽어 있으면 SQLAlchemy 래핑 전에 ConnectionRefusedError 가 그대로 올라온다.
+    타입 목록만 열거하면 이 경로가 500 으로 새고, 프론트는 "다시 시도"가 아니라
+    "문의"를 안내하게 된다(독립검증에서 실제로 잡힘: DB 중지 후 로그인 → 500).
+    """
+    r = client.get("/boom/refused")
+    assert r.status_code == 503, f"연결 거부가 {r.status_code} 로 왔다"
+    assert r.json()["code"] == "DB_UNAVAILABLE"
+    assert r.headers.get("Retry-After") == "5"
+
+
+def test_wrapped_connection_error_is_detected_through_the_chain(client: TestClient):
+    """예외 체인 안쪽에 연결 오류가 있어도 찾아낸다 — 래핑 방식은 버전마다 다르다."""
+    r = client.get("/boom/wrapped")
+    assert r.status_code == 503 and r.json()["code"] == "DB_UNAVAILABLE"
+
+
+def test_timeout_is_retryable(client: TestClient):
+    """풀 대기·연결 타임아웃도 재시도 대상이다."""
+    assert client.get("/boom/timeout").status_code == 503
+
+
+@pytest.mark.parametrize(("kind", "status"), [("bug", 500), ("dbdown", 503)])
+def test_error_responses_carry_cors_headers(client: TestClient, kind, status):
+    """★ 500·503 을 브라우저가 읽을 수 있어야 한다.
+
+    Starlette 의 catch-all 은 CORSMiddleware **바깥**에서 돌아 일반 500 이 CORS 를
+    못 받는다. 그러면 에러를 정형화해 놓고도 프론트가 code·request_id 를 못 읽는다
+    (독립검증: access-control-allow-origin=None)."""
+    r = client.get(f"/boom/{kind}", headers={"Origin": "https://app.example"})
+    assert r.status_code == status
+    assert r.headers.get("access-control-allow-origin") == "https://app.example", (
+        f"{kind}: CORS 헤더가 없다 — 브라우저가 본문을 읽지 못한다")
+    assert "Origin" in (r.headers.get("vary") or "")
+
+
+def test_no_cors_header_without_origin(client: TestClient):
+    """Origin 이 없으면(서버-투-서버) CORS 헤더를 붙이지 않는다."""
+    r = client.get("/boom/bug")
+    assert r.headers.get("access-control-allow-origin") is None

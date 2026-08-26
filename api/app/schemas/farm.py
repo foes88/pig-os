@@ -1,7 +1,8 @@
 from datetime import datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.common import UUIDMixin
 
@@ -24,6 +25,23 @@ class FarmLocalConfig(BaseModel):
     market_code: str | None
 
 
+def _validate_timezone(v: str | None) -> str | None:
+    """IANA 타임존인지 저장 전에 확인한다.
+
+    ★ 검증이 없으면 오타 하나가 그대로 저장되고, farm_today 가 조용히 UTC 로 폴백해
+      **날짜 경계 결함이 그 농장에서만 재발**한다(독립검증 2026-08-25).
+      "Asia/Seoul" 을 "Asia/Seuol" 로 적어도 아무도 모르는 상태였다.
+    """
+    if v is None:
+        return v
+    try:
+        ZoneInfo(v)
+    except Exception as e:  # noqa: BLE001 — ZoneInfoNotFoundError 외에도 올 수 있다
+        raise ValueError(
+            f"invalid IANA timezone {v!r} (예: Asia/Seoul, America/Chicago, UTC)") from e
+    return v
+
+
 class FarmCreate(BaseModel):
     name: str = Field(..., max_length=200)
     country: str = Field(..., min_length=2, max_length=2)
@@ -36,10 +54,14 @@ class FarmCreate(BaseModel):
     internet_reliability: str = Field(default="HIGH", pattern="^(HIGH|LOW|NONE)$")
     notification_channel: str = Field(default="EMAIL")
 
+    _tz = field_validator("timezone")(classmethod(lambda cls, v: _validate_timezone(v)))
+
 
 class FarmUpdate(BaseModel):
     name: str | None = Field(None, max_length=200)
     timezone: str | None = None
+
+    _tz = field_validator("timezone")(classmethod(lambda cls, v: _validate_timezone(v)))
     language: str | None = None
     currency: str | None = None
     notification_channel: str | None = None

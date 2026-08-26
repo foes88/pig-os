@@ -21,6 +21,8 @@ Revision ID: e2b5d7c9a1f3
 Revises: d1a4c6e8b2f5
 Create Date: 2026-08-25
 """
+import sqlalchemy as sa
+
 from alembic import op
 
 revision = "e2b5d7c9a1f3"
@@ -29,14 +31,39 @@ branch_labels = None
 depends_on = None
 
 
+_NAME = "idx_farrowings_sow_date"
+_WANT = "(sow_id, farrowing_date)"
+
+
 def upgrade() -> None:
     # IF NOT EXISTS: 장애 대응 중 프로덕션에 CONCURRENTLY 로 먼저 만들어 둔 상태에서도
     # 안전하게 통과해야 한다(재실행·부분적용 안전).
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_farrowings_sow_date "
-        "ON farrowings (sow_id, farrowing_date)"
-    )
+    #
+    # ★ 다만 IF NOT EXISTS 는 **이름만** 본다. 같은 이름으로 다른 컬럼 조합의 인덱스가
+    #   있으면 조용히 통과해 성능 문제가 그대로 남는다(독립검증 2026-08-25).
+    #   그래서 이미 있으면 정의까지 확인한다.
+    bind = op.get_bind()
+    existing = bind.execute(sa.text(
+        "SELECT indexdef FROM pg_indexes WHERE schemaname = current_schema() "
+        "AND indexname = :n"), {"n": _NAME}).scalar()
+    if existing:
+        normalized = existing.replace(" ", "").lower()
+        if _WANT.replace(" ", "").lower() not in normalized:
+            raise RuntimeError(
+                f"{_NAME} 이 이미 있는데 정의가 다릅니다: {existing}. "
+                f"기대: ... ON farrowings {_WANT}. "
+                "이름만 같고 컬럼이 다르면 NPD LATERAL 이 여전히 느립니다. "
+                "기존 인덱스를 확인한 뒤 수동으로 정리하십시오.")
+        return
+
+    op.execute(f"CREATE INDEX {_NAME} ON farrowings {_WANT}")
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS idx_farrowings_sow_date")
+    # ★ 이 마이그레이션이 만든 경우에만 지운다. 운영에 손으로 먼저 만들어져 있었다면
+    #   upgrade 가 건너뛰었으므로 downgrade 가 지우면 **남의 객체를 파괴**한다.
+    #   구분할 방법이 없으므로 안전한 쪽(보존)을 택하고 로그로 알린다.
+    # ★ ASCII 로만 쓴다. 콘솔 인코딩(cp949 등)에 따라 print 가 UnicodeEncodeError 로
+    #   죽으면 **마이그레이션 자체가 실패**한다(2026-08-25 실측).
+    print(f"[downgrade] keeping {_NAME}: cannot tell whether this migration created it. "
+          "Drop it manually if you really need to.")

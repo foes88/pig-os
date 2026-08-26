@@ -103,6 +103,11 @@ class Farm(Base):
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+    # 마이그레이션이 만든 인덱스를 모델에도 선언한다 — 선언이 없으면 alembic check 가
+    # "모델이 원하지 않는 인덱스"로 보고 drop 을 제안한다(독립검증 2026-08-25 드리프트).
+        Index("idx_users_system_role", "system_role"),
+    )
 
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     org_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("organizations.id"))

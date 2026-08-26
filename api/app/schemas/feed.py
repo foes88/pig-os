@@ -3,7 +3,7 @@
 Core 누락 고리(handoff/FINDING_feed_input_gap.md) 해소: FCR 계산의 입력원.
 대상은 선택(농장 전체/사bldg/그룹/모돈). quantity_kg는 필수(>0).
 """
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -23,9 +23,17 @@ class FeedRecordCreate(BaseModel):
 
     @field_validator("record_date")
     @classmethod
-    def _no_future_date(cls, v: date) -> date:
-        # 미래일자 사료는 기간 리포트 왜곡 → 거부 (M5). 오늘까지 허용.
-        if v > datetime.now(UTC).date():
+    def _no_far_future_date(cls, v: date) -> date:
+        """미래일자 사료는 기간 리포트를 왜곡한다 → 거부 (M5).
+
+        ★ 여기서는 **서버 날짜 +1일**까지만 본다 — 스키마는 농장을 모른다.
+          UTC 서버 기준으로 자르면 서버보다 앞선 타임존 농장(서울 UTC+9)이 자기 오늘
+          날짜를 넣지 못한다(2026-08-25 독립검증에서 이 경로가 남아 있었다).
+          전 세계 최대 오프셋이 UTC+14 라 +1일이 정확한 상한이다.
+
+          정밀 판정은 농장 현지 기준으로 feed_service.create_feed_record 가 한다.
+        """
+        if v > datetime.now(UTC).date() + timedelta(days=1):
             raise ValueError("record_date cannot be in the future")
         return v
 

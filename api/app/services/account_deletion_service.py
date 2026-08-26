@@ -82,9 +82,14 @@ async def _owned_farms_to_deactivate(db: AsyncSession, user: User) -> tuple[list
         return [], []
 
     # 각 농장의 **다른** 구성원 수 — 남아 있으면 그 농장은 타인의 것이기도 하다.
+    # ★ **active 사용자만** 센다. 비활성(이미 탈퇴한) 구성원의 오래된 membership 이
+    #   남아 있으면 "공유 농장"으로 오판해 농장을 active 로 두게 되고, 접근 가능한
+    #   사용자가 아무도 없는 **고아 농장**이 된다(독립검증 2026-08-25).
     others = dict((await db.execute(
         select(UserFarm.farm_id, func.count())
-        .where(UserFarm.farm_id.in_(owned_ids), UserFarm.user_id != user.id)
+        .join(User, User.id == UserFarm.user_id)
+        .where(UserFarm.farm_id.in_(owned_ids), UserFarm.user_id != user.id,
+               User.active.is_(True))
         .group_by(UserFarm.farm_id)
     )).all())
 

@@ -19,7 +19,12 @@
 
 이 모듈의 `ref` 는 **정책 발효일 게이트**다 — "이 결정이 언제부터 유효한가"를 본다.
 그 판단 주체는 농장이 아니라 **회사(거버넌스)** 이고 스코프도 country/tenant 이지
-farm 이 아니다. 그래서 여기서는 서버 날짜를 쓰는 것이 맞다.
+farm 이 아니다. 그래서 농장 타임존을 쓰지 않는다.
+
+★ 다만 대안이 **배포 호스트의 암묵적 타임존**이어서도 안 된다(독립검증 2026-08-25).
+  컨테이너가 UTC 로 뜨면 한국 회사 기준 자정보다 9시간 늦게 발효된다 — 컨테이너
+  설정을 바꾸면 정책 발효 시점이 따라 바뀌는 셈이라 거버넌스 값이 인프라에 종속된다.
+  명시적인 회사 기준 타임존(`GOVERNANCE_TIMEZONE`, 기본 Asia/Seoul)을 쓴다.
 
 같은 이유로 **농장 현지 기준으로 바꾸면 안 된다**: 같은 국가의 두 농장이 타임존이
 다르다는 이유로 하루 동안 서로 다른 정책을 적용받게 되고, 그건 "승인된 정책이 언제
@@ -37,6 +42,7 @@ from uuid import UUID
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.farm_time import governance_today
 from app.db.models.kpi_policy import CountryKpiPolicy
 from app.db.models.kpi_presentation import CountryKpiPresentation
 
@@ -161,7 +167,7 @@ async def resolve_kpi_policy(
     tenant_id: UUID | None = None, ref: date | None = None,
 ) -> ResolvedKpiPolicy | None:
     """거버넌스 벡터만 해석. 표현(display_order/local_label)은 여기서 다루지 않는다."""
-    ref = ref or date.today()   # 정책 발효일 게이트 — 농장이 아니라 회사 기준(아래 주석)
+    ref = ref or governance_today()   # 정책 발효일 게이트 — 회사 기준일(아래 주석)
     stmt = select(CountryKpiPolicy).where(
         CountryKpiPolicy.kpi_code == kpi_code,
         CountryKpiPolicy.decision_status == "APPROVED",
@@ -221,7 +227,7 @@ async def resolve_kpi_presentation(
     이 구분이 없으면 "브라질에서는 이 KPI 를 맨 뒤로" 를 표현할 수 없다.
     local_label 은 NULL=상속(현재 clear semantics 없음).
     """
-    ref = ref or date.today()   # 정책 발효일 게이트 — 농장이 아니라 회사 기준(아래 주석)
+    ref = ref or governance_today()   # 정책 발효일 게이트 — 회사 기준일(아래 주석)
     stmt = select(CountryKpiPresentation).where(
         CountryKpiPresentation.kpi_code == kpi_code,
         CountryKpiPresentation.decision_status == "APPROVED",
@@ -258,7 +264,7 @@ async def resolve_display_kpis(
     포함 기준은 CKP 다: compute_enabled AND display_role in (PRIMARY, SECONDARY).
     Presentation row 가 없는 KPI 도 CKP 가 visible 이면 포함한다(표현값만 NULL).
     """
-    ref = ref or date.today()   # 정책 발효일 게이트 — 농장이 아니라 회사 기준(아래 주석)
+    ref = ref or governance_today()   # 정책 발효일 게이트 — 회사 기준일(아래 주석)
     # ★ 쿼리 2회로 고정(정책 1 + 표현 1). KPI 개수만큼 왕복하면 커넥션을 오래 물고 있어
     #   풀러 슬롯이 마르고, 대시보드 응답도 KPI 수에 비례해 느려진다.
     pol_rows = list((await db.execute(_scoped_policy_stmt(country, tenant_id))).scalars().all())

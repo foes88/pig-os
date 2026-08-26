@@ -21,6 +21,27 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+# ★ autogenerate 가 **비교할 수 없는** 인덱스들.
+#   부분 인덱스(WHERE 절)와 표현식 인덱스는 alembic 이 DB 정의를 모델과 대조하지 못해
+#   매번 "removed index" 로 오탐한다. 실제로는 모델·마이그레이션·DB 모두에 존재한다.
+#   여기서 제외하지 않으면 `alembic check` 가 영구히 실패해 **진짜 드리프트를 가린다**
+#   (독립검증 2026-08-25: 이 오탐들 때문에 진짜 드리프트 6건이 묻혀 있었다).
+#
+#   ⚠️ 이 목록에 추가할 때는 "정말 비교 불가능한가"를 확인한다. 단순히 시끄럽다고
+#      넣으면 그 객체의 드리프트를 영영 못 잡는다.
+_UNCOMPARABLE_INDEXES = {
+    "uq_ckp_north_star",      # 부분 unique (WHERE display_role='NORTH_STAR')
+    "uq_ckpres_scope_kpi",    # COALESCE 표현식 포함 unique
+    "idx_pilot_signups_email",  # lower(email) 표현식 unique — 대소문자 무시 유일성
+}
+
+
+def _include_object(obj, name, type_, reflected, compare_to):  # noqa: ANN001, ANN202
+    if type_ == "index" and name in _UNCOMPARABLE_INDEXES:
+        return False
+    return True
+
+
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -29,6 +50,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        include_object=_include_object,
     )
     with context.begin_transaction():
         context.run_migrations()
@@ -39,6 +61,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        include_object=_include_object,
     )
     with context.begin_transaction():
         context.run_migrations()

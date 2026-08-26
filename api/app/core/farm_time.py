@@ -31,6 +31,8 @@
 """
 from __future__ import annotations
 
+import logging
+import os
 from datetime import date, datetime
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -38,7 +40,10 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+logger = logging.getLogger(__name__)
 _UTC = ZoneInfo("UTC")
+# 같은 잘못된 tz 로 매 요청 경고하지 않도록 값 단위로 기억한다.
+_WARNED_TZ: set[str] = set()
 
 
 def farm_today(farm) -> date:
@@ -56,9 +61,19 @@ def today_in_tz(tz: str | None) -> date:
 
 
 def _today_in(tz: str | None) -> date:
+    if not tz:
+        return datetime.now(_UTC).date()
     try:
-        return datetime.now(ZoneInfo(tz)).date() if tz else datetime.now(_UTC).date()
+        return datetime.now(ZoneInfo(tz)).date()
     except Exception:  # noqa: BLE001 — 알 수 없는 tz 는 UTC 폴백
+        # ★ 조용히 폴백하면 tz 오타 하나가 **원래의 날짜 경계 결함을 그대로 재발**시키고
+        #   아무도 모른다(독립검증 2026-08-25). 폴백은 유지하되 반드시 남긴다.
+        #   농장마다 매 요청 찍히면 시끄러우므로 값 단위로 한 번만 경고한다.
+        if tz not in _WARNED_TZ:
+            _WARNED_TZ.add(tz)
+            logger.warning(
+                "invalid farm timezone %r — falling back to UTC. "
+                "날짜 경계가 농장 현지와 어긋납니다. farms.timezone 을 확인하십시오.", tz)
         return datetime.now(_UTC).date()
 
 
@@ -71,3 +86,18 @@ async def farm_today_by_id(db: AsyncSession, farm_id: UUID) -> date:
 
     tz = await db.scalar(select(Farm.timezone).where(Farm.id == farm_id))
     return _today_in(tz)
+
+
+# ── 회사(거버넌스) 기준일 ────────────────────────────────────────────────────
+# 정책 발효일처럼 **농장이 아니라 회사가 정하는** 날짜. 배포 호스트의 암묵적 타임존에
+# 맡기면 컨테이너 설정을 바꿀 때 발효 시점이 따라 바뀐다 — 거버넌스 값이 인프라에
+# 종속되면 안 된다(독립검증 2026-08-25). 명시적으로 고정한다.
+#
+# 기본값이 Asia/Seoul 인 이유: 회사가 대한민국 법인이고 결재·공지가 그 시각 기준이다.
+# 바꿔야 하면 env 로 바꾸되, 바꾸는 순간 전 국가의 발효 시점이 함께 움직인다는 뜻이다.
+GOVERNANCE_TZ = os.getenv("GOVERNANCE_TIMEZONE", "Asia/Seoul")
+
+
+def governance_today() -> date:
+    """회사 기준 오늘 — 정책 발효일 게이트 등 국가 무관 판정에 쓴다."""
+    return _today_in(GOVERNANCE_TZ)
