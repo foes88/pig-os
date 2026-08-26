@@ -36,10 +36,13 @@ mkdir -p "$BACKUP_DIR"
 #   않으므로 그때만 MIGRATION_DATABASE_URL(세션 모드)로 넘어간다.
 #   (이전엔 MIGRATION 을 우선했는데, 2026-08-25 DB 이전 후 그 값이 죽은 Supabase 를
 #    가리켜 라이브가 아닌 DB 를 백업할 뻔했다.)
-URL=$(grep -E '^DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+# ★ `|| true` 필수: 키가 없으면 grep 이 1 을 반환하고, set -euo pipefail 아래에서
+#   **아래 case 문(폴백·오류 안내)에 닿기도 전에 무출력으로 죽는다**
+#   (독립검증 2026-08-25: stdout/stderr 0 byte, exit 1). 모니터링이 원인을 못 본다.
+URL=$( { grep -E '^DATABASE_URL=' "$ENV_FILE" || true; } | head -1 | cut -d= -f2- | tr -d '"'"'"'')
 case "$URL" in
   ''|*:6543/*)
-    ALT=$(grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d '"'"'"'')
+    ALT=$( { grep -E '^MIGRATION_DATABASE_URL=' "$ENV_FILE" || true; } | head -1 | cut -d= -f2- | tr -d '"'"'"'')
     [ -n "$ALT" ] || { echo "ERROR: DATABASE_URL 이 덤프 불가(6543)인데 MIGRATION_DATABASE_URL 이 없습니다."; exit 1; }
     echo "  주의: DATABASE_URL 이 덤프 불가(6543) → MIGRATION_DATABASE_URL 로 대체"
     URL="$ALT" ;;
