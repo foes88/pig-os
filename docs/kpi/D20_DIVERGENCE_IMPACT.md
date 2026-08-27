@@ -13,6 +13,68 @@ Date     : 2026-08-27
 
 ---
 
+---
+
+# ★ 정정 (2026-08-27, 같은 날 추가 조회) — 아래 본문은 모집단을 잘못 잡았다
+
+본문 §3·§4 의 "44 농장"을 **`data_origin` 으로 분리하지 않고 통으로 계산했다.**
+분리하면 그림이 달라진다.
+
+```sql
+SELECT f.data_origin, count(DISTINCT fa.farm_id) farms, count(*) farrowings
+FROM farrowings fa JOIN farms f ON f.id = fa.farm_id
+WHERE fa.deleted_at IS NULL AND fa.farrowing_date > CURRENT_DATE - 365
+GROUP BY 1;
+```
+
+| data_origin | classification | 농장 | 분만(365일) |
+|---|---|---|---|
+| `pigplan_migration` | `internal_reference` | **42** | 54,031 |
+| `native_signup` | `live_customer` | **2** | **3** |
+
+### 무엇이 달라지는가
+
+**① 표시 불일치의 실고객 노출은 사실상 0 이다.**
+flip 이 난 13 농장은 전부 하베스트 참조 농장이다. 대시보드를 보는 실사용자가 아니다.
+실고객은 분만 기록이 있는 농장이 4곳, 최근 365일로는 2곳·3건이다.
+→ **인시던트가 아니다.** 코드 수준의 정합성 부채이고, 실고객이 늘기 전에 고치면 된다.
+  본문 §3-2 의 "인시던트" 판정을 철회한다.
+
+**② PWM 의 `DEATH` 0건은 하베스트 범위 문제다.** 세 가설 중 셋째였다.
+
+```
+piglet_events 전건:  native_signup 2건 / pigplan_migration 0건
+웹 입력 경로:        src/app/(app)/record/page.tsx:382  eventType==="piglet_death"
+                    → PigletDeathPanel (:933) — 도달 가능
+```
+
+즉 **"농가가 안 쓴다"도 "UI 가 없다"도 아니다.** 웹 UI 는 살아 있고 실고객이 실제로
+입력했다(2건). `pigplan_migration` 농장에 0건인 것은 **PigPlan 하베스트가 자돈 폐사
+이벤트를 가져오지 않았기** 때문이다.
+→ 본문 §4-1 의 "경로 ①이 실질적으로 작동하지 않는다" 는 **하베스트 데이터에 한해서만**
+  참이다. 실고객 표본(3건)으로는 판단할 수 없다.
+
+**③ 그러나 `FOSTER` 는 진짜 제품 갭이다.**
+`FOSTER_IN` / `FOSTER_OUT` 은 스키마(`eventSchemas.ts:49`)와 API(`POST /piglet_events`)에
+있으나 **웹에 패널이 없다.** `record/page.tsx` 의 eventType 분기에 foster 항목 자체가
+없다. → 실고객이 유모돈을 시작하면 기록할 방법이 없고, 그때 경로 ②의 구조적 약점
+(전출 자돈이 폐사로 계상)이 발현된다. **선제 대응 대상.**
+
+### 내 오류
+
+`farms.data_origin` 은 내가 마이그레이션 `f3c6a8d0b2e4` 로 직접 추가한 컬럼이다.
+있는 줄 알면서 쓰지 않았다. 그 결과 **참조 데이터의 통계를 운영 인시던트로 보고**했다.
+"뒤집힘 → 인시던트" 라는 판정 규칙 자체는 맞았지만, **누가 뒤집혔는지를 확인하지 않았다.**
+
+### 유효하게 남는 것
+
+- 코드 divergence 는 실재한다(D-13 §4-8·4-9). 모집단과 무관하다.
+- 격차 크기(사산 2.52%p / PWM 7.24%p)와 flip 비율(38.6% / 9.1%)은
+  **하베스트 참조 데이터 기준 통계**로 유효하다 — 실고객 예측치가 아니다.
+- §5 `origin = code_default` 29/29 는 **그대로 유효**하다. 모집단과 무관한 스키마 사실이다.
+
+---
+
 ## 0. 결론
 
 | | 사산 계열 | PRE_WEANING_MORTALITY |
