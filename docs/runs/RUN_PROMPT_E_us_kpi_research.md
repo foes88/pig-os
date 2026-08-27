@@ -1,122 +1,189 @@
-# RUN PROMPT E — US 국가 KPI 확정 리서치
+# RUN PROMPT E — US 국가 KPI 근거 수집 (Collector pass)
 
-> 작성 2026-08-27 · 상태 **의뢰 대기** · 산출물 `docs/kpi/US_KPI_RESEARCH_<날짜>.md`
+> 작성 2026-08-27 · **v2 (출처 계약 v2 반영)** · 상태 **의뢰 대기**
+> 산출물 `docs/kpi/US_KPI_RESEARCH_<날짜>.md`
+> 정본: [COUNTRY_KPI_EVIDENCE_ARCHITECTURE v1.1](../specs/COUNTRY_KPI_EVIDENCE_ARCHITECTURE_v1.1.md)
 > 선행 완료: P1 US Template LOCK 게이트 L1~L6 통과 (`api/tests/integration/test_us_template_lock.py`)
 
----
-
-## 0. 왜 이 리서치가 필요한가 — 먼저 읽을 것
-
-Template LOCK 검증이 끝나서 **US 를 켜는 데 필요한 것은 INSERT 뿐**임이 증명됐다.
-남은 것은 "무엇을 INSERT 할 것인가" 이고, 그게 이 리서치다.
-
-그런데 이전에 같은 목적으로 받은 `gpt_country_draft_UNVERIFIED.md` 는 격리됐다.
-**표는 전부 채워져 왔는데 인용 기관이 원문 대조된 적이 없었다.** 그런 값이 코드에
-들어가면 미국 농장에 잘못된 기준으로 경고가 뜬다. 그래서 이번에는 규칙을 먼저 건다.
-
-**빈칸으로 오는 것이 틀린 값으로 오는 것보다 낫다.** 이 문장이 이 의뢰의 전부다.
+> **v2 변경 (2026-08-27)** — v1 은 아키텍처 v1.1 과 4곳에서 충돌했고, 그 충돌이 정확히
+> **1라운드 과잉기각**을 만든 규칙이었다:
+> ① cohort 를 전 항목에 요구 → CN 完全成本 정의·MX PIC DHA 산식·TH PSY 산식이
+>    "정의 근거인데 표본이 없다"는 이유로 통째로 버려졌다. PIC 산식을 검증하는 데
+>    멕시코 단독 농장 표본이 있을 이유가 없다.
+> ② `source_year` 단일 필드 → edition / reference_period / published_at 셋으로 분리.
+> ③ 행 단위 단일 태그 → 축별 태그. benchmark VERIFIED + formula UNVERIFIED 가 정상이다.
+> ④ "PigOS 코드에 매핑" → `kpi_code_candidate` 로만. 동치 판정은 D-8 소관.
 
 ---
 
-## 1. 하드 규칙 — 위반 시 산출물 전체 폐기
+## 0. 이 의뢰의 성격 — Collector pass 다
+
+아키텍처 §0: **Collector pass 와 Verifier pass 를 분리한다. Collector 는 recall 우선.**
+
+당신은 Collector 다. 원문에 인쇄된 것을 **있는 그대로 많이** 가져오는 것이 임무이고,
+"이게 PigOS 의 무엇에 해당하는가"를 판정하는 것은 임무가 아니다(D-8 소관).
+
+그래서 **버리지 마라.** 애매하면 애매하다고 적고 가져온다. 단, **원문이 말하지 않은 것을
+출처의 주장으로 기록하는 것**은 금지다. 이 둘의 구분이 이 의뢰의 전부다.
 
 ```
-출처      URL 또는 발간물명 + 페이지 번호. "업계 통념"·"일반적으로" 금지
-연도      source_year 명시. 없으면 그 행은 UNVERIFIED
-표본      cohort(농장 수·지역·기간) 명시. 없으면 UNVERIFIED
-빈칸      모르면 "미확보". 추정·보간·유추·평균내기 전부 금지
-현지명    미국 양돈업계가 실제로 쓰는 표기만. 기계번역·직역 금지
-국가묶기  금지. "북미 공통" 같은 것 없음. US 만
+가져오되 해석하지 않는다.
+빈칸이 틀린 값보다 낫다.
+원문 직접 열람 실패 → UNVERIFIED. 2차 인용은 검증이 아니다.
 ```
 
-- 항목마다 **`[VERIFIED]` / `[UNVERIFIED]` 태그를 반드시** 단다.
-- 하나의 수치에 출처가 둘이고 값이 다르면 **둘 다 적고 차이를 서술**한다. 고르지 마라.
-- 원문을 직접 열어보지 못했으면 `[UNVERIFIED]` 다. 2차 인용은 검증이 아니다.
+---
+
+## ★ 1. 출처 계약 v2 — 증거 종류별 (위반 시 해당 항목 빈칸)
+
+### 공통 (전 claim_type)
+
+- `source_locator` : URL 또는 발간물명 + 페이지. **"업계 통념"·"일반적으로" 금지**
+- `source_asset` / `source_edition`
+- `source_published_at` : 발간·완료 시점
+- `raw_claim_text` : 원문 그대로
+- 원문 직접 열람 실패 → `UNVERIFIED`. 2차 인용은 검증이 아니다
+
+> **세 날짜를 하나로 합치지 마라.** 실례: MetaFarms `source_edition = 2021–2025`,
+> `reference_period = 2025`, `source_published_at = 2026-06-01`. 전부 다른 의미다.
+
+### claim_type = TERMINOLOGY
+
+- `local_label` : 원문에 인쇄된 표기 그대로. **기계번역·직역 금지**
+- `script` : LATIN | HAN | THAI | CYRILLIC …
+- **cohort 불요 · reference_period 불요**
+
+### claim_type = FORMULA
+
+- 분자 / 분모 / 포함·제외 규칙
+- `source_linkage` : `SAME_SOURCE` | `SAME_EDITION` | `EXPLICIT_CROSS_REFERENCE`
+  | `RELATED_SOURCE` | `UNLINKED` | `UNKNOWN`
+- **cohort 불요 · reference_period 불요**
+  (정의 근거에 표본을 요구하면 쓸 수 있는 자료를 계속 버리게 된다)
+
+> `source_linkage` 가 필요한 이유: 타 문헌의 산식을 **현재 benchmark 출처의 산식으로
+> 덮어쓰는 것**을 막는다. 같은 나라 논문이라고 같은 정의가 아니다.
+
+### claim_type = BENCHMARK
+
+- `value` / `source_statistic_label`(원문 라벨 그대로) / `statistic_position`
+- `measure_kind` / `unit` / `unit_system`(원문 단위, **환산값 금지**) / `currency`
+- `reference_period`
+- `population_scope`
+- **`cohort_or_population_basis` 필수** — 또는 `CENSUS` / `ADMIN_UNIVERSE` 명시
+  (행정 전수통계에 억지 cohort 를 요구하지 않기 위함)
 
 ---
 
-## 2. 조사 대상
+## 2. 태그 — 축별로 단다. 행 단위 단일 태그 금지
 
-### 2-1. 지표 집합 (필수)
+```
+terminology : VERIFIED | UNVERIFIED
+formula     : VERIFIED | UNVERIFIED | NOT_APPLICABLE
+benchmark   : VERIFIED | UNVERIFIED
+```
 
-미국 양돈 생산성 벤치마크의 표준 출처는 **PigCHAMP Benchmark** 와 **MetaFarms /
-Swine Management Services(SMS) Production Analysis Summary** 다. 두 곳이 같은 지표를
-다르게 부르거나 다르게 계산하는 경우가 있으므로 **정의까지 같이** 가져온다.
+**한 지표에서 benchmark VERIFIED / formula UNVERIFIED 가 정상 상태다.**
+미국이 지금 정확히 그 상태다 — 값은 많이 나와 있는데 산식이 인쇄돼 있지 않다.
+행 하나에 태그 하나만 달면 이 정상 상태를 표현할 수 없어서, 값까지 같이 버리게 된다.
 
-각 지표에 대해:
+`formula = NOT_APPLICABLE` 은 **산식이 구조적으로 존재하지 않을 때만**이다.
+"산식을 못 찾음" 은 `UNVERIFIED` 다. 이건 escape hatch 가 아니다.
 
-| 필요 항목 | 설명 |
-|---|---|
-| `kpi_code` | PigOS 코드에 매핑 (PSY, FARROWING_RATE, NPD, PWMR, BORN_ALIVE, WSI, ...) |
-| 미국 현지 명칭 | 업계 문서에 실제로 인쇄된 표기 (예: "Pigs Weaned/Mated Female/Year") |
-| 정의·계산식 | 분자·분모를 문장으로. PigOS 계산식과 다르면 **그 차이를 명시** |
-| 대표값 | 평균 / 상위 10% / 하위 10% 중 원문이 제공하는 것 |
-| 단위 | 마리·%·일·kg(lb 인지 kg 인지 반드시) |
-| source_year | |
-| cohort | 농장 수, 지역, 기간 |
-| 출처 | URL 또는 발간물명 + 페이지 |
-| 태그 | `[VERIFIED]` / `[UNVERIFIED]` |
+## 3. kpi_code
 
-> ★ **단위 함정**: 미국 자료는 lb 를 쓴다. kg 로 환산했으면 환산했다고 적어라.
-> 환산값을 원문 값인 것처럼 적으면 그것도 위조다.
+`kpi_code_candidate` 로만 기재한다. PigOS 동치 판정은 **D-8 소관**이며
+D-13 완료 전에는 전건 **`판단보류`** 다.
 
-> ★ **정의 함정**: PSY 만 해도 "Pigs Weaned per Sow per Year" 와 "per **Mated
-> Female** per Year" 는 분모가 다르다. 이름이 같다고 같은 지표가 아니다.
-> PigOS 의 PSY 정의는 `docs/specs/` 의 KPI 계산식을 열어 대조한다.
-
-### 2-2. 규제 요건 (부수)
-
-`vfd_required_us` 컬럼이 코드에 이미 있다 — US 의 **Veterinary Feed Directive**
-때문이다. 관련해 확인할 것:
-
-- VFD 대상 약제의 범위와 근거 규정 (FDA CFR 조항 번호까지)
-- VFD 외에 미국 양돈 농장 기록에 법적으로 요구되는 항목이 있는가
-- 각 항목이 **농장 기록 시스템에 저장을 요구**하는지, 아니면 수의사 측 의무인지
-
-### 2-3. 미확보로 남겨도 되는 것
-
-조사해서 안 나오면 **"미확보"로 적고 넘어간다.** 이것들은 없어도 US 를 켤 수 있다:
-- 주(state)별 차이
-- 통합업체(integrator)별 내부 기준
-- 유료 보고서 안에만 있는 값 (구매 여부는 대표 결정)
+> 왜: `kpi_code` 는 source fact 가 아니라 **collector 의 해석**이다. identity 에 넣으면
+> 후보를 정정할 때 source claim 의 정체성까지 흔들린다. 그리고 PigOS canonical 산식이
+> 아직 실사(D-13) 전이라, 지금 매핑하면 **없는 기준에 맞추는 셈**이다.
 
 ---
 
-## 3. 산출물 형식
+## 4. 조사 대상
 
-`docs/kpi/US_KPI_RESEARCH_<날짜>.md` 하나. 아래 구조를 지킨다.
+### 4-1. 지표 (terminology + formula + benchmark 3종을 각각)
+
+미국 표준 출처는 **PigCHAMP Benchmark** 와 **MetaFarms / Swine Management
+Services(SMS) Production Analysis Summary** 다. 두 곳이 같은 지표를 다르게 부르거나
+다르게 계산하므로 **출처별로 행을 분리한다.** 합치지 마라 — 둘 다 옳을 수 있다.
+
+각 지표에 대해 §1 의 claim_type 별 필수 항목을 채운다.
+
+> ★ **단위 함정**: 미국 자료는 lb 를 쓴다. `unit_system: IMPERIAL`, `unit: lb` 로
+> **원문 그대로** 적는다. kg 환산값을 `value` 에 넣지 마라 — 환산은 별도 derived 행이다.
+>
+> ★ **통계량 함정**: `source_statistic_label` 은 원문 라벨 그대로다
+> ("Upper 10 percentile"). 이를 "상위 10%" 같은 성과등급으로 번역하면 **방향이
+> 뒤집힌다** — PWM 의 Upper 10 percentile = 21.59 는 나쁜 쪽이다.
+>
+> ★ **COUNT/RATE 함정**: `Average stillborn pigs = 1.18` 은 COUNT 다. `%` 를 붙이지 마라.
+>
+> ★ **정의 함정**: "Pigs Weaned per **Sow** per Year" 와 "per **Mated Female** per
+> Year" 는 분모가 다르다. 이름이 같다고 같은 지표가 아니다. 그래서 §3 대로
+> `kpi_code_candidate` 로만 적고 판정하지 않는다.
+
+### 4-2. 규제 요건 (부수)
+
+`vfd_required_us` 컬럼이 코드에 있다 — Veterinary Feed Directive 때문이다.
+
+- VFD 대상 약제 범위와 근거 규정 (CFR 조항 번호까지)
+- 각 요건이 **농장 기록 시스템 저장을 요구**하는지, 수의사 측 의무인지
+
+> ★ **조건부 적용 주의.** 9 CFR 166.9 는 licensed garbage treatment facility 한정,
+> 9 CFR 71.19 는 interstate movement / production health plan 참여 조건부,
+> 21 CFR 530.5 의 primary duty 는 veterinarian 이다.
+> **일반 농장 기록의무로 일반화하지 마라.**
+
+### 4-3. 미확보로 남겨도 되는 것
+
+- 주(state)별 차이 · 통합업체 내부 기준 · 유료 보고서 안에만 있는 값
+
+---
+
+## 5. 산출물 형식
+
+`docs/kpi/US_KPI_RESEARCH_<날짜>.md` 하나.
 
 ```markdown
 # US KPI Research (<날짜>)
 
-## A. 요약 — VERIFIED 몇 건 / UNVERIFIED 몇 건 / 미확보 몇 건
+## A. 요약
+    claim 건수 — TERMINOLOGY / FORMULA / BENCHMARK 각각
+    축별 VERIFIED · UNVERIFIED · NOT_APPLICABLE 건수
+    미확보 항목 수
 
-## B. 지표표 (§2-1 항목 전부, 지표당 1행)
-
-## C. 정의 차이 — PigOS 계산식과 US 관행이 다른 지점만
-
-## D. 규제 요건 (§2-2)
+## B. TERMINOLOGY claims   (§1 TERMINOLOGY 항목, claim 당 1행)
+## C. FORMULA claims       (§1 FORMULA 항목, source_linkage 포함)
+## D. BENCHMARK claims     (§1 BENCHMARK 항목, cohort 필수)
 
 ## E. 출처 목록 — 실제로 열어본 것만. 열지 못한 것은 "미열람"으로 분리
-
-## F. 조사자가 판단하지 못한 것 — 질문 형태로
+## F. 규제 요건 (§4-2)
+## G. 조사자가 판단하지 못한 것 — 질문 형태로
 ```
 
-> **§F 를 비워서 보내지 마라.** 애매한 것이 하나도 없었다면 조사를 얕게 한 것이다.
+> **§G 를 비워서 보내지 마라.** 애매한 것이 하나도 없었다면 조사를 얕게 한 것이다.
 
 ---
 
-## 4. 이 결과가 어디로 가는가 (조사자는 몰라도 되지만, 무게를 알기 위해)
+## 6. 이 결과가 어디로 가는가
 
 ```
-리서치 산출물 (docs/kpi/, UNVERIFIED 포함 전량 격리 보관)
-   ↓  대표 결재 (Decision Register APPROVED)
-   ↓  ★ VERIFIED 항목만 통과
-country_kpi_policy / country_kpi_presentation / default_metric_values 에 INSERT
+Collector 산출물 (이 문서)
+   ↓  Verifier pass — 원문 직접 확인, append-only overlay (원행 수정 금지)
+   ↓  D-13 완료 후  D-8 mapping 판정 (PigOS canonical ↔ source, 항상 1:1)
+   ↓  G2 rights × policy 판정 (source asset / edition 단위)
+   ↓  Decision Register APPROVED
    ↓
-미국 농장 대시보드 · 경고 임계값
+INSERT (selected_evidence_id 동반)
+   ↓  G3 회귀 통과 확인
+미국 농장 대시보드
 ```
 
-UNVERIFIED 는 `docs/kpi/` 에 **격리 보관만** 하고 코드·seed 에 반영하지 않는다.
-결재 없이 코드에 들어가는 경로는 없다 — 리졸버가 `decision_status='APPROVED'` 행만
-읽고, 그 fail-closed 동작은 게이트 L5 로 잠겨 있다.
+★ **`benchmark = VERIFIED` 만으로는 절대 활성화되지 않는다.** 아키텍처 §4-4.
+그러니 "이 값이 제품에 쓰일 만한가"를 걱정하며 걸러내지 마라 — 거르는 것은 뒤 단계의
+일이고, 지금 버린 것은 되살아나지 않는다.
+
+**benchmark 가 하나도 안 나와도 미국은 런치 가능하다** (아키텍처 §6-1
+NO-BENCHMARK COUNTRY LAUNCH). 그러니 값을 못 찾았다고 없는 값을 만들지 마라.
