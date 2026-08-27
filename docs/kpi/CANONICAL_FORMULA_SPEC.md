@@ -1,5 +1,58 @@
 # CANONICAL_FORMULA_SPEC
 
+> # ⚠ 반증됨 — 재실사 필요 (2026-08-27, Codex 독립검증 + 자체 추가 발견)
+>
+> **§3 의 `CONFIRMED 7` 과 §6 의 `NPD/WEI verdict: CLEAN` 은 무효다.**
+> "경로가 하나임을 확인" 한 것이 아니라 **하나만 찾은 것**이었다.
+>
+> ### ① 단일 경로 판정 무효 (Codex C-2 REFUTED)
+>
+> | KPI | 추가로 발견된 live 경로 |
+> |---|---|
+> | FARROWING_RATE | 보고서 동기간 `farrowings/matings` `report_service.py:182` · snapshot job `jobs/kpi.py:138-144` |
+> | WSI | REST mating insight 단일 이벤트 간격 `insight_service.py:244-257` |
+> | WEANED_PER_LITTER | REST weaning insight 단건 `insight_service.py:219-230` · 보고서 복별 평균 `report_service.py:175-179` |
+> | PSY | snapshot job 별도 산식 `jobs/kpi.py:132-135` (latent writer — 현재 reader 없음) |
+>
+> 보고서 경로에는 사산·PWM 산식도 따로 있다(`report_service.py:185-197`) — 웹에 실제
+> 표시된다(`src/app/(app)/reports/reproduction/page.tsx:40-44`). C-1 의 divergence 목록도
+> 완전하지 않았다.
+>
+> ### ② ★ `NPD/WEI CLEAN` 은 틀렸다 — 오염이 재발해 있다 (자체 발견, Codex 도 놓침)
+>
+> ```sql
+> -- kpi_service.py get_trend()  →  GET /kpi/trend (kpi.py:112, 프론트 소비 kpi.ts:10-12)
+> npd_by_month AS (
+>     SELECT date_trunc('month', weaning_date)::date AS m,
+>            AVG(wei_days) AS avg_npd        ← WEI 다. 여집합 NPD 가 아니다
+>     FROM wei_rows )
+> ...
+> KpiTrend(npd=row.npd)                      ← npd 필드에 WEI 가 담긴다
+> ```
+>
+> **M1 STEP 1 이 고친 그 오염이 트렌드 경로에 그대로 남아 있다.**
+> 실행 스펙 §4 가 "변수명·필드명만으로 NPD/WEI 를 판정하지 마라" 고 이름까지 붙여
+> 경고한 지점에서, `calculate_npd` 하나만 읽고 CLEAN 을 찍었다.
+> 같은 함수의 `farrowing_rate` 도 동월 나눗셈이라 코호트 산식이 아니다.
+>
+> → **verdict 를 `CONTAMINATED` 로 정정한다.**
+>
+> ### ③ 그 밖의 판정 조정
+>
+> - §9 모바일 — iOS 에 **현재 `benchmarks` 모델과 표시 코드가 있다.** "benchmark 필드
+>   자체가 없다" 는 서술은 낡았다(Codex C-4 OVERSTATED). 하드코딩·presentation
+>   미소비는 양쪽 다 유효.
+> - §7-3 `_avg_active_inventory` 결함은 **CONFIRMED** — 운영 internal-reference 에
+>   해당 행 110,010개(후보돈 13,779 / 산차돈 96,231). live 표본에는 0개.
+> - Template LOCK 은 **resolver 계약 10건에 한해** 통과. "제품 전체가 INSERT 만으로
+>   활성화된다" 는 결론은 과장이다(HTTP·모바일·threshold·권한 범위 밖).
+>
+> ### ④ 결론
+>
+> **현 상태로 D-8 mapping 에 넘길 수 없다.** `CONFIRMED` 7건 중 최소 4건이 재판정
+> 대상이고, 전 경로(서비스·보고서·인사이트·job·trend)를 관통한 D-13 재실사가 필요하다.
+> 상세 근거: `handoff/CODEX_RESULT_2026-08-27.md`
+
 ```
 CANONICAL_FORMULA_SPEC : PigOS 내부 계산 의미
 COUNTRY_KPI_RULE_SPEC  : 국가 정책·표시·룰 적용

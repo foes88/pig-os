@@ -1,5 +1,32 @@
 # D-19 — Threshold Source 감사 (본실사)
 
+> # ⚠ §2 반증됨 (2026-08-27, Codex 독립검증)
+>
+> **"`default_metric_values` 가 32룰 severity 를 전부 만든다" 는 거짓이다.**
+> flag=False · `rule_configs` 0행까지는 재현됐으나, **B-resolve 29 중 14 룰이 적용
+> 농장에서 임계 한쪽 또는 양쪽이 DMV 에 없어 인라인 코드 상수로 폴백**한다.
+>
+> ```
+> A-bench                    3   DMV 임계 존재
+> B-resolve · DMV 완전충족   15   DMV
+> B-resolve · DMV 누락       14   code default 전부/일부 폴백
+> ```
+>
+> DMV 에 아예 없는 것: `ACCIDENT_P1_RATIO` `BATCH_DOW_CONCENTRATION` `BOAR_FARROW_RATE`
+> `CONCEPTION_RATE` `CRUSHING_RATE` `DEATH_AGE_0_3_RATIO` `MSY` `REPLACEMENT_RATE`
+> `SECOND_LITTER_DROP` `SUMMER_FARROW_DROP`.
+> 한쪽만 빠진 것: `CULLING_RATE` `WEANING_AGE_LOW` `RTS_RATE` `SOW_MORTALITY`.
+>
+> → 현재 운영은 **DMV + 인라인 상수의 혼합 source** 다. 내가 "하나로 수렴한다" 고
+> 단순화했다. 세 번째 오진이며, 앞의 둘과 마찬가지로 **한 단계만 보고 판정**했다.
+>
+> §3 "승인 이력 0" 도 **OVERSTATED** 다 — DB 안에 이력이 없는 것은 확인했으나
+> `threshold_basis IS NULL` 이 승인 부재와 동의어는 아니고, DB 밖 승인까지 0 임을
+> 증명할 수는 없다.
+>
+> §4 "BR 전면 무채색" 도 **OVERSTATED** — BR 표시 KPI 3개는 전부 A-bench 라 그 카드
+> 색은 사라지지만, 숨김 KPI·categorical/composite 룰까지 전부 무채색이 되지는 않는다.
+
 ```
 Mode     : READ-ONLY (코드 정적분석 + 프로덕션 SELECT) — 대표 승인 2026-08-27
 Machine  : bjh · PigOS 70a56a9 · api.pigos.io PostgreSQL 17 :5434 / db=pigos
