@@ -5,7 +5,7 @@
 Mode      READ-ONLY. 코드·seed·마이그레이션·설정 변경 0
 Baseline  e7133fa   (선언 2fedb9c → 문서 5건만 변경돼 재고정, 근거 §0-1)
 Machine   bjh
-진행      B축 주요 KPI 완료 · A축 부분 · ②③ 실시 완료 · B′축 미착수
+진행      B축 주요 · A축 부분 · ②③ 완료 · B′축 완료 · U-4~U-8 미착수
 ```
 
 > **이 문서는 완료되지 않았다.** 실행 스펙 §8 "STOP 시에도 거기까지의 전수표는 남긴다"
@@ -157,11 +157,56 @@ Codex 는 "sync 에는 insight 부착이 없다"고 했으나 **KPI 값 자체�
 
 ## 3. B′축 — 모바일 DTO 매핑
 
-**미착수.** 실행 스펙 §3 의 완료 기준에 포함된 축이다.
+**완료.** 핵심 질문의 답: **라벨만이 아니다. "판정" 도 자체 계산한다.**
 
-핵심 질문(미해결): 모바일이 하드코딩하는 것이 **라벨인가 산식인가.**
-단서 — iOS 가 알림 severity 를 다시 매칭해 색을 낸다(Codex C-4). 서버 판정을 그대로
-쓰지 않는 계층이 최소 하나 있고, **값에도 손대는지는 확인되지 않았다.**
+### 3-1. 값(산식)은 건드리지 않는다 ✓
+
+| 확인 | 결과 |
+|---|---|
+| Android DTO 계산 프로퍼티 | 0건 (`data/remote/dto/*.kt` 전수) |
+| iOS 모델 계산 프로퍼티 | 0건 (`Domain/` · `Data/` 전수) |
+| Android `KpiDetailScreen.kt:54-93` | `PsyDetail` · `NpdBreakdown` 표시 전용. `weaningToMatingDays`(WEI)를 **별도 라벨로 정확히** 씀 ✓ |
+
+→ `/kpi/trend` 형태의 **산식 오염은 모바일에 없다.**
+
+### 3-2. ★ 그러나 severity 를 자체 판정한다 — ADR-KPI-08 위반
+
+`ADR-KPI-08` 은 `kpi_status`(백엔드 소유 판정)를 두고 **"프론트는 이 값을 렌더만 하고
+자체 판정 금지"** 라고 못박았다.
+
+```
+kpi_status 소비 여부
+  웹        ✓  resolveTier(data.kpi_status, "PSY", psyTier(data.psy))
+               + reportStatusMismatches() 로 괴리 관측          (app)/page.tsx:120,158-160
+  Android   ✗  전 소스 0건
+  iOS       ✗  전 소스 0건
+```
+
+**둘 다 `kpi_status` 를 소비하지 않고 각자 다른 방식으로 색을 만든다.**
+
+| | 판정 방식 | 문제 |
+|---|---|---|
+| **iOS** `DashboardScreen.swift:241-246` | `alerts` 에서 해당 KPI 알림을 찾아 색. **없으면 `AppColor.success`(초록)** | "판정 없음" 과 "정상" 을 구분하지 못한다 |
+| **Android** `DashboardScreen.kt:238-243` | `meetsAvg = myValue >= b.avg` → Success/Warning. **벤치마크 평균과 직접 비교** | G3 ① **"benchmark 기반 severity 없음"** 정면 위반 |
+
+> Android 는 `null → TextMuted`(회색) 를 두어 값·벤치마크가 없을 때는 fail-closed 다.
+> 그러나 값이 있고 벤치마크가 있으면 **서버 판정과 무관하게 자체로 색을 낸다.**
+
+### 3-3. ★★ 이것이 D-17(G3) 을 무력화한다
+
+G3 ③ 이 서버에서 `code_default` severity 를 DENY 하면 알림이 사라진다. 그때:
+
+```
+웹        kpi_status 를 읽으므로 "insufficient" 를 그대로 표시          → G3 성립
+iOS       alert 이 없으니 → 전 KPI 초록                                → G3 무력화
+Android   서버 판정과 무관하게 benchmark 로 계속 색을 냄               → G3 무력화
+```
+
+**서버에서 G3 를 강제해도 모바일에서 뚫린다.** D-17 은 API 응답 계약만으로 끝나지 않고
+**모바일이 `kpi_status` 를 소비하도록 바꾸는 것까지** 포함해야 한다.
+
+→ `MOBILE_PARITY` §1-3 을 갱신할 것: "KPI 목록 하드코딩" 만이 아니라
+  **"판정 자체 계산"** 이 더 큰 갭이다.
 
 ---
 
@@ -254,8 +299,9 @@ CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
 |---|---|---|
 | ~~U-1~~ | ~~③ 수기 검산~~ | **완료** — §6. 10개 KPI 전건 대조(8 일치 · 1 산출불가 · 1 결함확인) |
 | ~~U-2~~ | ~~② 테스트 대조~~ | **완료** — 산식 테스트 27건 PASSED. 다만 4개 KPI 는 산식 테스트 자체가 없음(U-8) |
+| **U-9** | **모바일이 `kpi_status` 미소비 · severity 자체 판정** | 신규(B′). D-17 범위를 API 계약 밖으로 넓힌다 |
 | **U-8** | **MUMMIFIED_RATE·WSI·WEANED_PER_LITTER·MSY 산식 테스트 부재** | 신규. ② 미충족 원인. 값은 맞으나 회귀 보호가 없다 |
-| U-3 | **B′축(모바일 DTO) 전체** | 미착수 |
+| ~~U-3~~ | ~~B′축(모바일 DTO)~~ | **완료** — §3. 산식 오염 없음 / severity 자체판정 발견(U-9) |
 | U-4 | `sync_service` 의 KPI 값 반환 여부 | 미확인 |
 | U-5 | `analytics.py` · `finisher.py:55 mortality()` 계산 프로퍼티 | 미추적 — 응답 모델 안에서 계산하는 형태라 B축 대상 |
 | U-6 | DEFERRED 21개 KPI(`ADG`·`FCR`·`RTS_RATE` 등)의 B축 | 우선범주 밖으로 뒀으나 B축은 전수여야 함 |
