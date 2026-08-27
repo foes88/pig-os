@@ -220,3 +220,65 @@ G0(소급 자동 revoke 금지)가 필요했던 이유이고, 그 적용 범위�
 
 코드 수정 0 · migration 0 · seed 0 · 설정 변경 0 · git add/commit/push 0(실사 중).
 프로덕션은 `SELECT` 와 설정 조회만. 본 문서 1건 갱신.
+
+---
+
+## 8. 정정 (같은 날, resolver 실측 후) — US 결론이 틀렸다
+
+§2 에서 "US 는 승인 벤치마크가 없어 severity None" 이라고 썼다. **틀렸다.**
+
+`country_kpi_policy` 에 US COUNTRY 행이 없다는 사실에서 `default_metric_values` 에도
+US 행이 없다고 **추론**했다. **다른 테이블이다.** 프로덕션 실측:
+
+| KPI | US warning / critical | source_ref |
+|---|---|---|
+| PSY | 26.00 / 23.00 | `PigCHAMP2024` |
+| NPD | 38.00 / 53.00 | **없음** |
+| FARROWING_RATE | 82.00 / 78.00 | `PorkCheckoff2024` |
+| STILLBORN_RATE | 8.00 / 12.00 | `PigCHAMP2023` |
+
+→ **US 를 켜면 즉시 severity 가 난다.** 카드가 무채색으로 뜨지 않는다.
+그리고 그 판정은 `threshold_basis` 가 비어 있고 승인 이력이 없는 값에서 나온다.
+§4 "US 는 자연히 None 이므로 추가 차단 불요" 도 함께 철회한다 — **G3 ③ 의 신규 국가
+차단이 US 에 실제로 걸린다.**
+
+### 8-1. 다섯 번째 임계 소스 — 벤치마크 로더 안의 하드코딩
+
+```python
+# kpi_service.py:337-341  _all_benchmarks()
+fr = out.setdefault("FARROWING_RATE", {"direction": "below"})
+if fr.get("warning")  is None: fr["warning"]  = 85.0
+if fr.get("critical") is None: fr["critical"] = 80.0
+```
+
+룰도 아니고 `operational_defaults` 도 아닌 **벤치마크 로더 자체**가 상수를 주입한다.
+국가 행이 있으면 발현되지 않으나(US 82/78 존재), **행이 없는 국가에서는 이것이 판정값이
+된다.** 임계 소스 목록에 넣어야 한다.
+
+### 8-2. 키 매핑 확인 (D-19 §2 의 전제)
+
+`kpi_service.py:325-326` 에서 `warning_threshold → "warning"`,
+`critical_threshold → "critical"` 로 매핑된다. **§2 의 전제는 유효하다.**
+
+### 8-3. resolver 최종값 실측 (로컬 재현, 설정 변경 없음)
+
+```
+stillborn.rate_high        flag OFF (현재 prod)    flag ON (가상)
+BR                         8.20 / 12.00           8.00 / 12.00   ← 달라진다
+KR / US / SYSTEM           8.00 / 12.00           8.00 / 12.00
+```
+
+★ **BR 은 8.20 으로 판정되고 있다** — 코드 상수도 `operational_defaults` 도 아니다.
+flag 를 켜면 유일한 파일럿 국가의 warning 이 조여진다.
+
+### 8-4. 이번 오류의 성격
+
+D-19 는 이미 오진 2회를 §0 에 기록했다. 이것이 **세 번째**다.
+패턴이 §0 의 ①·② 와 또 다르다 — 이번엔 **두 테이블을 같은 것으로 취급**했다.
+
+```
+country_kpi_policy      국가별 KPI 표시·거버넌스 정책   ← US 행 없음
+default_metric_values   벤치마크 + (사실상) 임계값      ← US 행 있음
+```
+
+교훈: **"X 가 없다"를 다른 테이블의 부재에서 추론하지 않는다. 그 테이블을 조회한다.**
