@@ -5,7 +5,7 @@
 Mode      READ-ONLY. 코드·seed·마이그레이션·설정 변경 0
 Baseline  e7133fa   (선언 2fedb9c → 문서 5건만 변경돼 재고정, 근거 §0-1)
 Machine   bjh
-진행      B축 주요 KPI 완료 · A축 부분 · B′축 미착수
+진행      B축 주요 KPI 완료 · A축 부분 · ②③ 실시 완료 · B′축 미착수
 ```
 
 > **이 문서는 완료되지 않았다.** 실행 스펙 §8 "STOP 시에도 거기까지의 전수표는 남긴다"
@@ -174,32 +174,70 @@ Codex 는 "sync 에는 insight 부착이 없다"고 했으나 **KPI 값 자체�
 | N-3 | **FARROWING_RATE 산식 넷.** canonical docstring 이 "제거한다"고 한 비코호트 방식이 3경로에 살아 있음 | 높음 |
 | N-4 | **PSY snapshot job 이 point-in-time 분모** — canonical docstring 이 결함으로 명시한 그 방식. 현재 latent 이나 CLAUDE.md 설계가 이 경로로의 이관을 지시하고 있음 | 중(잠복) |
 | N-5 | 같은 응답 필드(`pwmr_b`)가 **호출 인자 유무로 다른 산식**을 담음 (`report_service.py:185`) | 중 |
+| N-6 | **내 과장 정정** — D-13 §7-3 의 재고 분모 divergence 를 신규 발견처럼 보고했으나, `tests/unit/test_inventory_denominator_divergence.py` 가 **이미 D-2 진단으로 기록·고정**해 뒀다(`main @ b71bb20` 판독 명시). 현상은 실재하나 **발견이 아니다** | — |
 
 ---
 
 ## 5. KPI 별 판정 — ①②③
 
-> 기준: ①코드라인 ②테스트 통과 ③실데이터 수기검산. **하나라도 비면 UNVERIFIED.**
+> 기준: ①코드라인 ②**산식**테스트 통과 ③실데이터 수기검산. **하나라도 비면 UNVERIFIED.**
+> ★ ②는 "KPI 이름이 나오는 테스트"가 아니라 **산식을 단언하는 테스트**여야 한다.
+>   WSI·MSY·WEANED 테스트는 "값이 주어졌을 때 룰이 어떻게 동작하는가" 만 본다 → ② 미충족.
 
-| KPI | ① | ② | ③ | 판정 |
+**③ 검산 대상 농장**: `cb548b14…3563`
+`population_scope = INTERNAL_REFERENCE` (`data_origin=pigplan_migration`, country US)
+이유: 실고객 농장은 표본이 3분만이라 검산 불가. **실고객 예측치가 아니다.**
+
+| KPI | ① 코드 | ② 산식 테스트 | ③ 수기 검산 | 판정 |
 |---|---|---|---|---|
-| PSY | `kpi_service.py:60-121` | 미실시 | 미실시 | **UNVERIFIED** |
-| NPD | `kpi_service.py:216-256` | 미실시 | 미실시 | **UNVERIFIED** |
-| SOW_TURNOVER | `kpi_service.py:234` | 미실시 | 미실시 | **UNVERIFIED** |
-| FARROWING_RATE | `kpi_service.py:370-386` | 미실시 | 미실시 | **UNVERIFIED** (+ 산식 4개 미정리) |
-| WSI | `kpi_service.py:425-429` | 미실시 | 미실시 | **UNVERIFIED** |
-| MSY | `kpi_service.py:559` | 미실시 | 미실시 | **UNVERIFIED** |
-| WEANED_PER_LITTER | `kpi_service.py:530` | 미실시 | 미실시 | **UNVERIFIED** |
-| 사산 계열 | 위 §1-5 | 미실시 | 미실시 | **AMBIGUOUS** |
-| PRE_WEANING_MORTALITY | 위 §1-2 | 미실시 | 미실시 | **AMBIGUOUS** (경로 5개) |
+| **PSY** | `kpi_service.py:60-121` | `test_psy_denominator.py` PASSED | 47,078 ÷ 1608.4167 = **29.27** = API 29.27 ✓ | **CONFIRMED** |
+| **NPD** | `kpi_service.py:216-256` | `test_npd_complement.py` · `test_npd_as_of_determinism.py` · `test_npd_idle_cap.py` PASSED | 365×76,534÷584,670 = 47.7789 → **47.8** = API 47.8 ✓ | **CONFIRMED** |
+| **FARROWING_RATE** | `kpi_service.py:370-386` | `test_farrowing_rate_cohort.py` · `test_npd_culled_and_dashboard_fr.py` PASSED | mated 482 / farrowed 268 = **55.6** = API 55.6 ✓ | **CONFIRMED** (canonical 경로 한정 — §1-3 참조) |
+| **SOW_TURNOVER** | `kpi_service.py:234` | `test_dashboard_metrics_map.py` PASSED (metrics↔flat 동일성) | 3,701 ÷ 1608.42 = **2.30** = API 2.3 ✓ | **CONFIRMED** |
+| **STILLBORN_RATE**(경로①) | `kpi_service.py:523` | `test_dashboard_metrics_map.py:58` `2/25 → 8.0` 산식 단언 PASSED | sum(sb)÷sum(tb) = **2.2** = API 2.2 ✓ | **CONFIRMED** (경로① 정의에 한해) |
+| MUMMIFIED_RATE | `kpi_service.py:524` | 산식 단언 없음 | **1.6** = API 1.6 ✓ | **UNVERIFIED** (② 미충족) |
+| WSI | `kpi_service.py:425-429` | 산식 단언 없음(룰 동작만) | **10.5** = API 10.5 ✓ | **UNVERIFIED** (② 미충족) |
+| WEANED_PER_LITTER | `kpi_service.py:530` | 산식 단언 없음 | **12.5** = API 12.5 ✓ | **UNVERIFIED** (② 미충족) |
+| MSY | `kpi_service.py:559` | 산식 단언 없음 | **산출 불가** (출하 데이터 없어 API=None) | **UNVERIFIED** (②③ 미충족) |
+| 사산 계열(전체) | §1-5 | — | — | **AMBIGUOUS** — 같은 이름 두 산식 |
+| PRE_WEANING_MORTALITY | §1-2 | — | API=0.0 (DEATH 이벤트 0건) | **AMBIGUOUS** — 분모 3종 |
 
-**CONFIRMED 0.** ②③ 을 한 건도 실시하지 않았으므로 승격 가능한 항목이 없다.
+```
+CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
+```
+
+★ **③은 전건 일치했다.** 손계산과 API 가 소수점까지 맞았다. 그런데도 4건이
+`UNVERIFIED` 인 이유는 **② 산식 테스트가 없기 때문**이다. 값이 맞는 것과 그 값이
+앞으로도 맞으리라는 보장은 다르다 — 테스트가 없으면 다음 수정에서 조용히 깨진다.
+
+★ FARROWING_RATE 의 `CONFIRMED` 는 **canonical 경로(`_cohort_farrowing_rate`)에 한해서**다.
+§1-3 의 나머지 3산식은 별개 문제로 남는다. 판정을 KPI 단위가 아니라 **경로 단위**로
+읽어야 한다.
 
 ---
 
 ## 6. ③ 수기 검산 기록
 
-**미실시.** 실행 스펙 §2 가 "이번 런의 핵심"이라고 지정한 항목이다.
+`population_scope = INTERNAL_REFERENCE` · 농장 `cb548b14…3563` (US, 경산 6,997두)
+
+| KPI | 손계산 (독립 재작성 SQL) | API | 일치 |
+|---|---|---|---|
+| PSY | 분자 47,078 / 분모 1608.4167 = 29.27 | 29.27 (`total_weaned=47078`, `avg_sow_count=1608.42`) | ✓ |
+| NPD | sow_days 584,670 · 365×76,534÷584,670 = 47.7789 | 47.8 (`empty_days=76534`) | ✓ (반올림) |
+| FARROWING_RATE | mated 482 · farrowed 268 → 55.6 | 55.6 | ✓ |
+| SOW_TURNOVER | farrow_cnt 3,701 / avg_inv 1608.42 = 2.30 | 2.3 | ✓ |
+| WSI | avg(mating−직전이유), wsi≥0 → 10.5 | 10.5 | ✓ |
+| WEANED_PER_LITTER | avg(weaned_count) → 12.5 | 12.5 | ✓ |
+| STILLBORN_RATE | Σsb ÷ Σtb → 2.2 | 2.2 | ✓ |
+| MUMMIFIED_RATE | Σmum ÷ Σtb → 1.6 | 1.6 | ✓ |
+| MSY | 출하(head_out) 데이터 없음 | None | 산출 불가 |
+| PWMR | DEATH 이벤트 0건 → 0.0 | 0.0 | ✓ (경로① 동작 확인) |
+
+★ NPD 역산 `sow_days` 584,412 vs 손계산 584,670 — 차 258일(0.044%)은 `avg_npd` 를
+`round(x,1)` 로 반올림해 생긴 것이다. `365×76534÷584670 = 47.7789 → 47.8` 로 일치 확인.
+
+★ **PWMR = 0.0 이 경로① 결함의 직접 증거다.** DEATH 이벤트가 0건인 하베스트 농장에서
+경로①은 구조적으로 0 이 나온다(D-20 §4).
 
 ---
 
@@ -214,8 +252,9 @@ Codex 는 "sync 에는 insight 부착이 없다"고 했으나 **KPI 값 자체�
 
 | # | 항목 | 왜 못 했는지 |
 |---|---|---|
-| U-1 | **③ 수기 검산 전건** | 프로덕션 SELECT + 손계산 미실시 |
-| U-2 | **② 테스트 대조 전건** | KPI 별 대응 테스트 식별·실행 미실시 |
+| ~~U-1~~ | ~~③ 수기 검산~~ | **완료** — §6. 10개 KPI 전건 대조(8 일치 · 1 산출불가 · 1 결함확인) |
+| ~~U-2~~ | ~~② 테스트 대조~~ | **완료** — 산식 테스트 27건 PASSED. 다만 4개 KPI 는 산식 테스트 자체가 없음(U-8) |
+| **U-8** | **MUMMIFIED_RATE·WSI·WEANED_PER_LITTER·MSY 산식 테스트 부재** | 신규. ② 미충족 원인. 값은 맞으나 회귀 보호가 없다 |
 | U-3 | **B′축(모바일 DTO) 전체** | 미착수 |
 | U-4 | `sync_service` 의 KPI 값 반환 여부 | 미확인 |
 | U-5 | `analytics.py` · `finisher.py:55 mortality()` 계산 프로퍼티 | 미추적 — 응답 모델 안에서 계산하는 형태라 B축 대상 |
