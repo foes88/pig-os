@@ -888,7 +888,17 @@
     "pcmVisual": "Visual",
     "pcmBlood": "Análisis de sangre",
     "pcmOther": "Otro",
-    "savedPregCheck": "Diagnóstico de gestación guardado para {tag}: {label}"
+    "savedPregCheck": "Diagnóstico de gestación guardado para {tag}: {label}",
+    "tabFoster": "Adopción",
+    "fosterDirection": "Dirección *",
+    "fosterOut": "Salida — desde esta cerda",
+    "fosterIn": "Entrada — hacia esta cerda",
+    "fosterDate": "Fecha de adopción *",
+    "fosterCount": "Lechones *",
+    "fosterTarget": "Cerda contraparte *",
+    "fosterTargetHint": "Solo se pueden seleccionar cerdas lactantes",
+    "fosterNoTarget": "No hay otra cerda lactante disponible",
+    "savedFoster": "{tag} adopción de {n} lechones registrada"
   },
   "addons": {
     "storeTitle": "Tienda de Addons",

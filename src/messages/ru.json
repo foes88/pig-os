@@ -888,7 +888,17 @@
     "pcmVisual": "Визуальный",
     "pcmBlood": "Анализ крови",
     "pcmOther": "Другое",
-    "savedPregCheck": "Проверка супоросности сохранена для {tag}: {label}"
+    "savedPregCheck": "Проверка супоросности сохранена для {tag}: {label}",
+    "tabFoster": "Подсадка",
+    "fosterDirection": "Направление *",
+    "fosterOut": "Отдача — от этой свиноматки",
+    "fosterIn": "Приём — к этой свиноматке",
+    "fosterDate": "Дата подсадки *",
+    "fosterCount": "Поросят *",
+    "fosterTarget": "Встречная свиноматка *",
+    "fosterTargetHint": "Можно выбрать только лактирующих свиноматок",
+    "fosterNoTarget": "Нет других лактирующих свиноматок",
+    "savedFoster": "{tag} подсадка {n} поросят записана"
   },
   "addons": {
     "storeTitle": "Магазин дополнений",

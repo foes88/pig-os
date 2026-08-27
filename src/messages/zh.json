@@ -888,7 +888,17 @@
     "pcmVisual": "目视",
     "pcmBlood": "血检",
     "pcmOther": "其他",
-    "savedPregCheck": "已保存 {tag} 的妊娠鉴定：{label}"
+    "savedPregCheck": "已保存 {tag} 的妊娠鉴定：{label}",
+    "tabFoster": "寄养",
+    "fosterDirection": "方向 *",
+    "fosterOut": "转出 — 从该母猪",
+    "fosterIn": "转入 — 到该母猪",
+    "fosterDate": "寄养日期 *",
+    "fosterCount": "头数 *",
+    "fosterTarget": "对方母猪 *",
+    "fosterTargetHint": "仅可选择哺乳期母猪",
+    "fosterNoTarget": "没有其他哺乳期母猪",
+    "savedFoster": "{tag} 寄养 {n} 头已记录"
   },
   "addons": {
     "storeTitle": "插件商店",

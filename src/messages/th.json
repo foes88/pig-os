@@ -888,7 +888,17 @@
     "pcmVisual": "สังเกต",
     "pcmBlood": "ตรวจเลือด",
     "pcmOther": "อื่นๆ",
-    "savedPregCheck": "บันทึกการตรวจท้องของ {tag} แล้ว: {label}"
+    "savedPregCheck": "บันทึกการตรวจท้องของ {tag} แล้ว: {label}",
+    "tabFoster": "ฝากเลี้ยง",
+    "fosterDirection": "ทิศทาง *",
+    "fosterOut": "ย้ายออก — จากแม่สุกรนี้",
+    "fosterIn": "ย้ายเข้า — มาที่แม่สุกรนี้",
+    "fosterDate": "วันที่ฝากเลี้ยง *",
+    "fosterCount": "จำนวนลูกสุกร *",
+    "fosterTarget": "แม่สุกรปลายทาง *",
+    "fosterTargetHint": "เลือกได้เฉพาะแม่สุกรที่กำลังให้นม",
+    "fosterNoTarget": "ไม่มีแม่สุกรให้นมรายอื่น",
+    "savedFoster": "{tag} ฝากเลี้ยง {n} ตัว บันทึกแล้ว"
   },
   "addons": {
     "storeTitle": "ร้านแอดออน",

@@ -888,7 +888,17 @@
     "pcmVisual": "Quan sát",
     "pcmBlood": "Xét nghiệm máu",
     "pcmOther": "Khác",
-    "savedPregCheck": "Đã lưu khám thai cho {tag}: {label}"
+    "savedPregCheck": "Đã lưu khám thai cho {tag}: {label}",
+    "tabFoster": "Ghép bầy",
+    "fosterDirection": "Chiều *",
+    "fosterOut": "Chuyển đi — từ nái này",
+    "fosterIn": "Nhận về — cho nái này",
+    "fosterDate": "Ngày ghép *",
+    "fosterCount": "Số heo con *",
+    "fosterTarget": "Nái đối ứng *",
+    "fosterTargetHint": "Chỉ chọn được nái đang nuôi con",
+    "fosterNoTarget": "Không có nái đang nuôi con nào khác",
+    "savedFoster": "{tag} ghép bầy {n} con đã ghi"
   },
   "addons": {
     "storeTitle": "Cửa hàng Addon",

@@ -888,7 +888,17 @@
     "pcmVisual": "Visual",
     "pcmBlood": "Exame de sangue",
     "pcmOther": "Outro",
-    "savedPregCheck": "Diagnóstico de gestação salvo para {tag}: {label}"
+    "savedPregCheck": "Diagnóstico de gestação salvo para {tag}: {label}",
+    "tabFoster": "Adoção cruzada",
+    "fosterDirection": "Direção *",
+    "fosterOut": "Saída — desta matriz",
+    "fosterIn": "Entrada — para esta matriz",
+    "fosterDate": "Data da adoção *",
+    "fosterCount": "Leitões *",
+    "fosterTarget": "Matriz contraparte *",
+    "fosterTargetHint": "Somente matrizes lactantes podem ser selecionadas",
+    "fosterNoTarget": "Nenhuma outra matriz lactante disponível",
+    "savedFoster": "{tag} adoção de {n} leitões registrada"
   },
   "addons": {
     "storeTitle": "Loja de Add-ons",

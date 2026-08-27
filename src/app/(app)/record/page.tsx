@@ -35,7 +35,7 @@ import type {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-type EventType = "farrowing" | "mating" | "weaning" | "preg_check" | "repro" | "cull" | "piglet_death";
+type EventType = "farrowing" | "mating" | "weaning" | "preg_check" | "repro" | "cull" | "piglet_death" | "foster";
 
 // label은 record.tabXxx 키로 해석
 const EVENT_TYPES: { value: EventType; labelKey: string; color: string; bg: string }[] = [
@@ -46,6 +46,7 @@ const EVENT_TYPES: { value: EventType; labelKey: string; color: string; bg: stri
   { value: "repro",        labelKey: "tabRepro",       color: "#5F4B2C", bg: "#5F4B2C18" },
   { value: "cull",         labelKey: "tabCull",        color: "#DC2626", bg: "#DC262618" },
   { value: "piglet_death", labelKey: "tabPigletDeath", color: "#9D174D", bg: "#9D174D18" },
+  { value: "foster",       labelKey: "tabFoster",      color: "#7C3AED", bg: "#7C3AED18" },
 ];
 
 const STATUS_BADGE: Record<SowStatus, string> = {
@@ -114,7 +115,7 @@ const PAGE_SIZE = 50;
 const TAB_ALIASES: Record<string, EventType> = {
   farrowing: "farrowing", mating: "mating", weaning: "weaning",
   preg_check: "preg_check", repro: "repro", cull: "cull",
-  piglet_death: "piglet_death",
+  piglet_death: "piglet_death", foster: "foster",
 };
 
 export default function RecordPage() {
@@ -380,6 +381,9 @@ export default function RecordPage() {
                   )}
                   {eventType === "piglet_death" && (
                     <PigletDeathPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
+                  )}
+                  {eventType === "foster" && (
+                    <FosterPanel farmId={farmId} sow={selectedSow} onSaved={handleSaved} />
                   )}
                 </div>
 
@@ -997,6 +1001,123 @@ function PigletDeathPanel({ farmId, sow, onSaved }: PanelProps) {
           <Check size={15} /> {t("save")}
         </button>
         <button type="button" disabled={!form.event_date || mutation.isPending} onClick={() => submit(true)}
+          className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
+          {mutation.isPending ? t("saving") : t("saveNext")}
+        </button>
+      </RecordFooter>
+    </div>
+  );
+}
+
+
+/**
+ * 양자(cross-foster) 입력 — FOSTER_IN / FOSTER_OUT.
+ *
+ * 왜 이제야 붙는가: 스키마(eventSchemas.ts)·API(POST /piglet_events)·백엔드 검증은
+ * 진작 있었는데 **웹에 패널이 없어서** 실고객이 유모돈을 기록할 방법이 없었다.
+ * 즉 프로덕션에 FOSTER 이벤트가 0건인 것은 "안 한다"가 아니라 "못 한다"였다.
+ *
+ * ★ 이 갭이 KPI 정합성과 연결된다 — 포유폐사율 경로 ②는
+ *   (born_alive − weaned) / born_alive 라서, 유모돈이 기록되지 않으면 전출 자돈이
+ *   폐사로 계상된다. 지금은 유모돈 0건이라 발현되지 않을 뿐 잠복해 있다.
+ *
+ * 백엔드가 이미 강제하는 것(event_service.py:768~)을 UI 에서 **먼저** 막는다 —
+ * 서버 에러로 알려주는 것보다 선택 자체를 못 하게 하는 편이 낫다.
+ *   · target_sow_id 필수 · 자기 자신 금지 · 상대 모돈은 LACTATING
+ *   · FOSTER_IN 과혼잡 상한 / FOSTER_OUT 음수 가드는 서버 판정(UI 는 에러만 표시)
+ */
+function FosterPanel({ farmId, sow, onSaved }: PanelProps) {
+  const t = useTranslations("record");
+  const tv = useTranslations("validation");
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<CreatePigletEventRequest>({
+    sow_id: sow.id,
+    event_date: today(),
+    event_type: "FOSTER_OUT",
+    piglet_count: 1,
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  // 상대 후보 = 같은 농장의 포유 중 모돈에서 자기 자신 제외.
+  const { data: lactating } = useQuery({
+    queryKey: queryKeys.sows.list(farmId, { status: "LACTATING", per_page: 200 }),
+    queryFn: () => sowsApi.list(farmId, { status: "LACTATING", per_page: 200 }),
+    enabled: !!farmId,
+  });
+  const targets = (lactating?.items ?? []).filter((s) => s.id !== sow.id);
+
+  // 모돈을 바꾸면 이전 선택이 남지 않게 초기화(다른 농장·다른 상태일 수 있다).
+  useEffect(() => {
+    setForm((f) => ({ ...f, sow_id: sow.id, target_sow_id: undefined }));
+  }, [sow.id]);
+
+  const mutation = useMutation({
+    mutationFn: (goNext: boolean) =>
+      eventsApi.pigletEvents.create(farmId, { ...form, sow_id: sow.id }).then(() => goNext),
+    onSuccess: (goNext) => {
+      onSaved(t("savedFoster", { tag: sow.ear_tag, n: form.piglet_count }), sow.id, goNext);
+      queryClient.invalidateQueries({ queryKey: queryKeys.sows.list(farmId, {}) });
+      setForm({ sow_id: sow.id, event_date: today(), event_type: "FOSTER_OUT", piglet_count: 1 });
+      setError(null);
+    },
+    onError: (err: unknown) => setError(apiError(err, t("errGeneric"))),
+  });
+
+  function submit(goNext: boolean) {
+    const err = firstError(pigletEventSchema, {
+      event_type: form.event_type, event_date: form.event_date,
+      piglet_count: form.piglet_count, target_sow_id: form.target_sow_id,
+    }, tv);
+    if (err) { setError(err); return; }
+    mutation.mutate(goNext);
+  }
+
+  const canSave = !!form.event_date && !!form.target_sow_id && !mutation.isPending;
+
+  return (
+    <div className="max-w-lg space-y-4">
+      <SowChip tag={sow.ear_tag} meta={sow.breed ?? undefined} tone="blue" />
+      <ValidationBanner tone="amber" title={t("fosterDesc")} />
+      <Group label={t("fosterDate")} accent="blue">
+        <Field label={t("fosterDirection")}>
+          <select value={form.event_type}
+            onChange={(e) => setForm((f) => ({ ...f, event_type: e.target.value as CreatePigletEventRequest["event_type"] }))}
+            className="input" data-testid="foster-direction">
+            <option value="FOSTER_OUT">{t("fosterOut")}</option>
+            <option value="FOSTER_IN">{t("fosterIn")}</option>
+          </select>
+        </Field>
+        <DateField label={t("fosterDate")} value={form.event_date}
+          onChange={(v) => setForm((f) => ({ ...f, event_date: v }))} />
+        <Field label={t("fosterCount")}>
+          <div className="-my-1">
+            <Stepper label="" value={form.piglet_count}
+              onChange={(v) => setForm((f) => ({ ...f, piglet_count: v }))}
+              min={1} max={30} colorClass="text-primary" />
+          </div>
+        </Field>
+        <Field label={t("fosterTarget")}>
+          <select value={form.target_sow_id ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, target_sow_id: e.target.value || undefined }))}
+            className="input" disabled={targets.length === 0} data-testid="foster-target">
+            <option value="">{targets.length === 0 ? t("fosterNoTarget") : t("selectNone")}</option>
+            {targets.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.ear_tag}{s.breed ? ` · ${s.breed}` : ""}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-text3">{t("fosterTargetHint")}</p>
+        </Field>
+      </Group>
+      {error && <ValidationBanner tone="red" title={error} />}
+      <RecordFooter>
+        <button type="button" disabled={!canSave} onClick={() => submit(false)}
+          data-testid="event-save"
+          className="px-4 py-2.5 rounded-[9px] border border-border-strong text-text2 text-sm font-semibold bg-surface hover:bg-bg2 disabled:opacity-50 transition inline-flex items-center gap-1.5">
+          <Check size={15} /> {t("save")}
+        </button>
+        <button type="button" disabled={!canSave} onClick={() => submit(true)}
           className="px-4 py-2.5 rounded-[9px] bg-success text-white text-sm font-bold hover:opacity-90 disabled:opacity-50 transition">
           {mutation.isPending ? t("saving") : t("saveNext")}
         </button>

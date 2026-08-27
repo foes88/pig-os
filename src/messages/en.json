@@ -888,7 +888,17 @@
     "pcmVisual": "Visual",
     "pcmBlood": "Blood test",
     "pcmOther": "Other",
-    "savedPregCheck": "Pregnancy check saved for {tag}: {label}"
+    "savedPregCheck": "Pregnancy check saved for {tag}: {label}",
+    "tabFoster": "Cross-foster",
+    "fosterDirection": "Direction *",
+    "fosterOut": "Out — from this sow",
+    "fosterIn": "In — to this sow",
+    "fosterDate": "Foster date *",
+    "fosterCount": "Piglets *",
+    "fosterTarget": "Counterpart sow *",
+    "fosterTargetHint": "Only lactating sows can be selected",
+    "fosterNoTarget": "No other lactating sow available",
+    "savedFoster": "{tag} cross-foster {n} piglets recorded"
   },
   "addons": {
     "storeTitle": "Addon Store",
