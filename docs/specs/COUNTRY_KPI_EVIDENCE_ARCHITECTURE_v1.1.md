@@ -129,6 +129,30 @@ geography:
 
 **cohort 요구는 `claim_type = BENCHMARK` 에만 적용된다.** TERMINOLOGY / FORMULA는 cohort 면제 — 정의 근거에 표본을 요구하면 쓸 수 있는 자료를 계속 버리게 된다.
 
+### 2-1-A. 내부 분석 산출물에도 population_scope 를 요구한다 (v1.2 안건, 2026-08-27)
+
+위 `population_scope` 는 **외부 증거에만** 걸려 있었다. CN 상장사 IR 을 `ENTERPRISE` 로,
+VN YVN 을 `GENETIC_LINE` 으로 태깅하라고 해놓고 **내부 쿼리 산출물에는 같은 요구가
+없었다.** 그 구멍이 실제로 사고를 냈다.
+
+> **D-20 이 증명 사례다.** 하베스트 참조 농장 42곳과 실고객 2곳을 합산해 flip 38.6% 를
+> 계산하고 이를 **운영 인시던트로 보고**했다. 실제로 뒤집힌 13곳은 전부
+> `internal_reference` 였고 실고객 노출은 사실상 0 이었다.
+> 외부 자료였다면 `population_scope` 없이는 `UNVERIFIED` 로 걸렸을 것이다.
+> 내부 쿼리라 그냥 통과했다.
+
+```
+내부 분석 산출물도 population_scope 를 명시한다.
+  farms.data_origin = 'pigplan_migration'  →  INTERNAL_REFERENCE
+  farms.data_origin = 'native_signup'      →  LIVE_CUSTOMER
+
+두 모집단을 합산한 통계는 그 사실을 명시하지 않으면 사용 금지.
+운영 판정(인시던트 등급·고객 영향 산정 등)은 LIVE_CUSTOMER 모집단으로만 한다.
+```
+
+★ 이것은 사람이 기억할 일이 아니라 **규칙이 잡을 일**이다. 같은 함정을 다음번에도
+만나게 되어 있고, 그때 기억에 의존하면 또 놓친다.
+
 ### DERIVED value 저장 경로
 
 원문 값을 정규화값으로 **덮어쓰지 않는다.** 환산은 별도 행이다.
