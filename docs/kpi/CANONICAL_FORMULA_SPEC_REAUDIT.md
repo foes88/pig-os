@@ -5,7 +5,7 @@
 Mode      READ-ONLY. 코드·seed·마이그레이션·설정 변경 0
 Baseline  e7133fa   (선언 2fedb9c → 문서 5건만 변경돼 재고정, 근거 §0-1)
 Machine   bjh
-진행      B축 주요 · A축 부분 · ②③ 완료 · B′축 완료 · U-4~U-8 미착수
+진행      B축 완료 · A축 부분(sync 해소) · ②③ 완료 · B′축 완료 · 잔여 U-8·U-9
 ```
 
 > **이 문서는 완료되지 않았다.** 실행 스펙 §8 "STOP 시에도 거기까지의 전수표는 남긴다"
@@ -132,6 +132,27 @@ top-level 과 `metrics[...]` 가 갈라지지 않는다. 룰엔진 판정값과�
 | `ScorecardRequest.*` | 사용자 입력. 측정 아님 ✓ |
 | `KpiTrend.npd` | `5abb8a4` 로 노출 차단됨(값은 WEI) |
 
+
+### 1-7. U-4~U-7 — 나머지 B축
+
+| 대상 | 결과 |
+|---|---|
+| **U-4** `sync_service` / `schemas/sync.py` | **KPI 계산·반환 0건.** `sync_service.py:268` 의 KPI 언급은 `breeding_cycle_id` 누락이 parity별 KPI 에 영향 준다는 **주석**일 뿐 ✓ |
+| **U-5** 응답 모델 내 계산 프로퍼티 | `finisher.py:55 mortality()` = `head_count_in − head_count_out` → **COUNT** 다. herd 의 `FINISH_MORTALITY` 는 `(hin−hout)/hin×100` → **RATE**. **이름·measure_kind 가 둘 다 다르므로 오염 아님** ✓ (`events.py:64 set_total_born` 은 입력 검증용 validator) |
+| **U-6** DEFERRED KPI 의 B축 | `report_service` 에 `adg_g` · `fcr` · `mortality_rate` 가 별도로 있으나 **`aggregation_scope` 가 다르다** — report 는 **그룹(finisher_group) 단위**, herd 는 **농장 단위**. 아래 참조 |
+| **U-7** `alert.py`·`farm.py`·`events.py`·`sync.py` | KPI **값**을 담는 필드 없음. `farm.py:92 npd_alert_threshold` 는 설정값, `alert.py` 는 알림 메타, `events.py` 는 원자료(`stillborn`/`mummified` 등) ✓ |
+
+#### ★ 판별 기준 하나 — "같은 산식 · 다른 `aggregation_scope`" 는 divergence 가 아니다
+
+| KPI | herd (농장) | report (그룹) | 판정 |
+|---|---|---|---|
+| FCR | `Σfeed / Σgain` `:535` | `feed_total / gain_total` `:373` | 같은 정의, 다른 스코프 ✓ |
+| 비육폐사 | `(hin−hout)/hin×100` `:536` | `(head_in−head_out)/head_in×100` `:363` | 같은 정의, 다른 스코프 ✓ |
+| ADG | `Σ((exit−entry)×head_out) / Σ((end−start)×head_out) ×1000` `:534` — **두수 가중** | `(exit_w−entry_w)/days×1000` `:355` — 그룹 단순 | 스코프가 달라 **비교 대상이 아니다**. 단 report 행들을 평균내면 herd 와 다르다 — 그렇게 쓰면 안 된다 |
+
+★ 이 기준이 필요한 이유: 스코프 차이를 divergence 로 세면 **가짜 발견이 늘어난다.**
+divergence 는 **같은 스코프·같은 이름인데 산식이 다를 때**다.
+
 ---
 
 ## 2. A축 — 산식 함수 → 호출자 (부분)
@@ -150,8 +171,7 @@ top-level 과 `metrics[...]` 가 갈라지지 않는다. 룰엔진 판정값과�
 | `scorecard_service` | `POST /scorecard` | LIVE | 입력값 채점(측정 아님) |
 | `report_service.*` | `GET /reports/*` | LIVE | 웹 `reports/reproduction/page.tsx:40-44` |
 
-**미완**: `sync_service` 경로에서 KPI 를 계산·반환하는지 미확인.
-Codex 는 "sync 에는 insight 부착이 없다"고 했으나 **KPI 값 자체는 확인되지 않았다.**
+**해소**: `sync_service` 는 KPI 를 계산·반환하지 않는다(§1-7 U-4). A축 미완 항목 없음.
 
 ---
 
@@ -302,9 +322,9 @@ CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
 | **U-9** | **모바일이 `kpi_status` 미소비 · severity 자체 판정** | 신규(B′). D-17 범위를 API 계약 밖으로 넓힌다 |
 | **U-8** | **MUMMIFIED_RATE·WSI·WEANED_PER_LITTER·MSY 산식 테스트 부재** | 신규. ② 미충족 원인. 값은 맞으나 회귀 보호가 없다 |
 | ~~U-3~~ | ~~B′축(모바일 DTO)~~ | **완료** — §3. 산식 오염 없음 / severity 자체판정 발견(U-9) |
-| U-4 | `sync_service` 의 KPI 값 반환 여부 | 미확인 |
-| U-5 | `analytics.py` · `finisher.py:55 mortality()` 계산 프로퍼티 | 미추적 — 응답 모델 안에서 계산하는 형태라 B축 대상 |
-| U-6 | DEFERRED 21개 KPI(`ADG`·`FCR`·`RTS_RATE` 등)의 B축 | 우선범주 밖으로 뒀으나 B축은 전수여야 함 |
-| U-7 | `alert.py` · `farm.py` · `events.py` · `sync.py` 의 KPI 성 필드 | 스키마 목록만 뽑고 추적 미실시 |
+| ~~U-4~~ | ~~sync 의 KPI 반환~~ | **완료** — 계산·반환 0건 (§1-7) |
+| ~~U-5~~ | ~~응답 모델 계산 프로퍼티~~ | **완료** — `finisher.mortality()` 는 COUNT, 이름·measure_kind 모두 달라 오염 아님 (§1-7) |
+| ~~U-6~~ | ~~DEFERRED KPI B축~~ | **완료** — report 는 그룹 스코프. "같은 산식·다른 aggregation_scope" 판별 기준 신설 (§1-7) |
+| ~~U-7~~ | ~~기타 스키마 KPI 필드~~ | **완료** — KPI 값 필드 없음 (설정값·알림메타·원자료) (§1-7) |
 
 **다음 런은 U-1 부터 시작한다.** ②③ 없이는 어떤 항목도 CONFIRMED 로 갈 수 없다.
