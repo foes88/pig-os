@@ -47,3 +47,6 @@ async def test_trend_psy_uses_weaned_count_and_monthly_inventory(db: AsyncSessio
     assert jun is not None, [t.period for t in trend]
     assert jun.psy == pytest.approx(48.0, abs=0.1), \
         f"당월 이유자돈 40/활성 10 ×12 = 48.0 이어야 함(옛 건수기반이면 4.8), got {jun.psy}"
+    # HOTFIX(2026-08-27): 트렌드 npd는 WEI 오노출이라 응답에서 항상 null. 실호출로 억제 확인.
+    assert all(t.npd is None for t in trend), \
+        f"트렌드 npd는 전 기간 null이어야 함(WEI 오노출 억제), got {[(t.period, t.npd) for t in trend]}"

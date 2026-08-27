@@ -220,7 +220,9 @@ class AnnualKpiRow(BaseModel):
     """연도별 핵심 KPI 1행 (추세 리포트). 데이터 부족 연도는 null."""
     year: int
     psy: float | None = None            # 모돈두당 연간 이유두수
-    npd: float | None = None            # 평균 비생산일수(이유~재교배)
+    # 여집합 NPD(모돈-년) — report_service.py:325 가 calculate_npd().avg_npd 를 넣는다.
+    # 옛 주석은 '이유~재교배'(= WEI)라고 적혀 있었으나 값과 무관한 낡은 오기였다(2026-08-27 정정).
+    npd: float | None = None
     avg_sows: float | None = None       # 연평균 활성 모돈수(PSY 분모)
     total_weaned: int = 0
     total_farrowings: int = 0

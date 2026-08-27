@@ -688,6 +688,34 @@ async def get_trend(
     """
     Monthly KPI trend for the last N months.
     PSY is annualized from monthly weanings / current active sow count.
+
+    ## npd 는 반환하지 않는다 — 노출 중단 (HOTFIX 2026-08-27, 반환부 주석 참조)
+
+    노출 중단의 근거·범위는 아래 `KpiTrend(npd=None)` 지점 주석에 있다. 여기에는
+    **그 조치가 충분한지 확인한 결과**만 남긴다 — 중복 서술은 두지 않는다.
+
+    ### 오염원이 이 경로 하나임을 열거로 확인했다 (가정 아님)
+
+    응답 스키마에서 `npd` 필드를 가진 표면을 전수 대조했다(B방향):
+
+        /kpi/dashboard  kpi.py:43    calculate_npd().avg_npd   여집합  ✓
+        NpdBreakdown    kpi.py:101   calculate_npd             여집합  ✓
+        /kpi/trend      kpi.py:116   AVG(wei_days)             WEI     ✗ ← 오염
+        /reports 연도별 report.py:223 calculate_npd().avg_npd  여집합  ✓
+        /scorecard      scorecard.py:13  사용자 입력           측정 아님
+
+    ★ `report.py:223` 의 주석 "평균 비생산일수(이유~재교배)" 는 **낡은 오기**다.
+      값은 `calculate_npd()` 여집합이라 정상이고 주석만 WEI 를 말한다. 별도 수정 대상.
+
+    ### 소비처 4곳의 null 처리를 실측했다
+
+        kpi/page.tsx:261-264   mk()           null → "—", delta 중립 회색(녹색 아님)
+        MiniLineChart:19-21    전건 null      "—" placeholder, 크래시 없음
+        MiniLineChart:32       부분 null      선을 끊는다(보간 없음)
+        reports/page.tsx:302                  "-"
+        대시보드 tier          영향 없음      data.npd(= 여집합)를 쓴다
+
+    "0 으로 떠서 완벽한 성적으로 읽히는" 경우도, severity 가 녹색으로 남는 경우도 없다.
     """
     months = max(1, min(months, 24))
     # 기준일을 명시적으로 바인드 — 계산 SQL 안에서 CURRENT_DATE 를 읽지 않는다.
@@ -759,7 +787,7 @@ async def get_trend(
                     THEN ROUND(((weans_by_month.cnt / inv_by_month.n) * 12)::numeric, 1)
                     ELSE NULL
                 END AS psy,
-                ROUND(npd_by_month.avg_npd::numeric, 1) AS npd,
+                ROUND(npd_by_month.avg_npd::numeric, 1) AS npd,  -- HOTFIX 2026-08-27: 계산 유지하되 응답에서 null로 억제(WEI 오노출). 원인은 D-13.
                 CASE
                     WHEN matings_by_month.cnt > 0 AND farrows_by_month.cnt IS NOT NULL
                     THEN ROUND(
@@ -782,7 +810,11 @@ async def get_trend(
         KpiTrend(
             period=row.period,
             psy=float(row.psy) if row.psy is not None else None,
-            npd=float(row.npd) if row.npd is not None else None,
+            # HOTFIX(2026-08-27): 이 트렌드 npd는 실제로 WEI(이유→교배 간격, npd_by_month=AVG(wei_days))를
+            # NPD로 잘못 노출해 왔다 — 실고객 계정에서 오표시 실측 확인. API shape 유지 위해 필드는 남기되
+            # 값은 항상 null. WEI 계산(wei_rows/npd_by_month)·SQL은 유지 — 원인 수정은 D-13 재실사 후.
+            # 이것은 '노출 차단'이지 'NPD 공식 수정'이 아니다(D-13 결과와 섞지 말 것).
+            npd=None,
             farrowing_rate=(
                 float(row.farrowing_rate) if row.farrowing_rate is not None else None
             ),
