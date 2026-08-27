@@ -288,9 +288,42 @@ approved_by:  approved_at:  approval_reason:
 
 | 사례 | 상태 |
 |---|---|
-| `preweaning_survival = 1 − pre-weaning mortality` + direction 반전 | 후보. D-13 후 판정 |
-| PigOS 사산공식 `(stillborn+mummified) ÷ total born` ↔ PigCHAMP 구성요소 | 후보. 구성요소는 확보(아래) |
+| `preweaning_survival = 1 − pre-weaning mortality` + direction 반전 | **보류.** D-13 결과 PWM 자체가 AMBIGUOUS(아래) |
+| ~~PigOS 사산공식 `(stillborn+mummified) ÷ total born`~~ ↔ PigCHAMP 구성요소 | **⚠ 전제 오류 — 정정됨(아래)** |
 | MetaFarms `Piglet Survival = 100 − %stillborn − %PWM` | **NOT_EQUIVALENT 후보.** 이름 유사에 의한 오매핑 차단 대상 |
+
+> ## ⚠ 정정 (2026-08-27, D-13 실사 결과)
+>
+> 위 표의 2행은 **"PigOS 사산공식 = `(stillborn+mummified) ÷ total born`" 을 사실로
+> 전제**했다. D-13 이 코드를 읽은 결과 그 전제가 틀렸다 — **PigOS 에는 사산공식이
+> 하나가 아니라 둘이고, 둘 다 live 다.**
+>
+> ```
+> 경로 ①  stillborn ÷ total_born              services/kpi_service.py:523   (미라 제외)
+>         + MUMMIFIED_RATE 를 별도 지표로 산출 services/kpi_service.py:524
+> 경로 ②  (stillborn + mummified) ÷ total_born services/insight_service.py:211
+> ```
+>
+> 따라서 **"관행 대비 ~3%p 높다"는 진단은 경로 ② 에만 성립**하고, 사용자가 대시보드에서
+> 보는 값(경로 ①)은 관행과 같은 정의다. 한쪽 경로만 읽고 쓴 서술이었다.
+>
+> ★ **여기서 경로 ① 을 정답으로 확정하지 않는다.** 그것도 같은 잘못이다 —
+> 어느 쪽을 canonical 로 삼을지는 **P0-2 결정 사항**이고, 결정 후에도
+> `code alignment + 회귀 테스트 → D-13 재실사` 를 거쳐야 CONFIRMED 다.
+> 현재 상태는 `AMBIGUOUS · LIVE_DIVERGENCE` 이며 **D-8 mapping 금지 대상**이다.
+>
+> ★ 외부 노출 점검 완료 — UI 메시지(`cStillbornRate` / `cMummifiedRate` 별도 라벨)와
+> `LANDING_SYNC.md` 에 이 주장이 나가지 않았다. **전파는 내부 문서에 한정된다.**
+> 영향 문서 목록과 처리는 `docs/kpi/CANONICAL_FORMULA_SPEC.md` §8 · 아래 목록 참조.
+>
+> **같은 전제를 담고 있어 정정 대상인 문서 (P0-2 확정 시 일괄 갱신):**
+> `docs/KPI_DEFINITIONS.md` §2-1 · `docs/PIGOS_WEB_FULLSPEC_QA_PROMPT.md` INV2 ·
+> `docs/specs/2026-06-16_event-insight-mapping.md` · `docs/specs/2026-06-16_threshold-research-comparison.md` ·
+> `handoff/KPI_GOVERNANCE_v3.1.md` · `handoff/pigos-overnight-qa-prompt.md` ·
+> `docs/runs/RUN_PROMPT_D13_canonical_formula_audit.md` v1.4 근거②
+>
+> 이 문서들은 지금 **DISPUTED** 다. 경로 ① 로 뒤집어 쓰지 않는다 — P0-2 전에
+> 승자를 적으면 위조 우회로가 된다.
 
 **PigCHAMP 사산 구성요소 (USA 2023, 167농장):**
 
@@ -400,11 +433,40 @@ US NPD처럼 benchmark가 없어도 **별도 APPROVED된 threshold가 있으면 
    country_kpi_presentation 행이 없거나 priority_class IS NULL 이면
    /kpi/presentation 응답 카드 수가 자동 증가하지 않는다
 
-③ threshold_source ∈ {rule_configs, operational_default} 인 경우에만 severity 발화
-   threshold_source = code_default  →  severity 없음
-     · 기존 활성 국가 : FLAGGED_FOR_REVIEW (자동 revoke 금지 — G0 와 동일 처리)
-     · 신규 국가 활성화 : 차단
+③ severity_source 로 판정한다
+     ALLOW   rule_configs
+     ALLOW   operational_default
+     DENY    code_default            (결재 기록 없음)
+     REVIEW  benchmark_derived       (_severity_from_bench — 아래)
+       · 기존 활성 국가 : FLAGGED_FOR_REVIEW (자동 revoke 금지 — G0 와 동일 처리)
+       · 신규 국가 활성화 : 차단
 ```
+
+> **③ 은 D-19(2026-08-27) 실측으로 한 번 수정됐다.** 최초 문안은
+> `threshold_source ∈ {rule_configs, operational_default}` 만 인정했는데,
+> 그것은 **모든 룰이 `threshold_resolver` 체인을 탄다는 추론**에 근거했고 그 추론이
+> 틀렸다. severity 메커니즘은 둘이다:
+>
+> ```
+> A  _severity_from_bench   base.py:17   ctx.benchmarks[code]["warning"/"critical"]
+>      → npd.overdue · psy.below_target · farrowing.low_rate  (base.py:69,118,162)
+>      → warning is None 이면 None 반환 — fail-closed
+> B  gov_resolve_thresholds threshold_resolver.py:25
+>      → rule_configs → operational_defaults → code_default — fail-open
+> ```
+>
+> ★ 메커니즘 A 의 대상이 하필 `GLOBAL_VISIBLE` **3개 전부**(`PSY` · `NPD` ·
+> `FARROWING_RATE`)다. 즉 **이 조항과 ① 의 "benchmark 기반 severity 없음" 이
+> 이미 위반돼 있다** — 벤치마크 값이 직접 Severity 를 만들고 있다.
+>
+> ★ 그래서 최초 문안대로 즉시 강제하면 **운영 중인 BR 이 세 KPI 의 색을 전부 잃는다.**
+> `REVIEW` 로 분리한 이유다.
+>
+> ★ 그리고 §6-1 의 "APPROVED threshold = severity 권한" 은 **이 3개 KPI 에 대해
+> 성립하지 않는다.** `operational_defaults` 에 APPROVED 행을 넣어도 이 룰들은 읽지
+> 않는다. 필요한 것은 임계값 추출이 아니라 **메커니즘 이관(A → B)** 이다.
+>
+> 상세: `docs/kpi/D19_THRESHOLD_SOURCE_AUDIT.md`
 
 > **③ 은 2026-08-27 실측에서 나왔다.** benchmark 쪽에서 ① 이 막은 silent fallback 이
 > threshold 쪽에는 그대로 열려 있었다.
