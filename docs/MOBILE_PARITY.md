@@ -32,6 +32,43 @@
 
 ## 1. 지금 NEEDED — 우선순위 순
 
+### 1-0. ★★ 모바일이 severity 를 자체 판정한다 — `kpi_status` 미소비
+
+> **§1-3(KPI 목록 하드코딩)보다 이쪽이 더 크다.** 2026-08-27 D-13 재실사 B′축에서 확인.
+
+`ADR-KPI-08` 은 백엔드 소유 판정 `kpi_status` 를 두고 **"프론트는 렌더만 하고 자체 판정
+금지"** 라고 못박았다. 웹은 지키는데 **모바일 양쪽 다 `kpi_status` 를 소비하지 않는다.**
+
+| | `kpi_status` | 색을 만드는 방식 | 근거 |
+|---|---|---|---|
+| 웹 | ✓ 소비 | `resolveTier(kpi_status, …)` + `reportStatusMismatches` | `(app)/page.tsx:120,158-160` |
+| **Android** | **✗ 0건** | `meetsAvg = myValue >= b.avg` → **벤치마크와 직접 비교** | `ui/screens/dashboard/DashboardScreen.kt:238-243` |
+| **iOS** | **✗ 0건** | `alerts` 역산, **없으면 무조건 `AppColor.success`(초록)** | `UI/Screens/Dashboard/DashboardScreen.swift:241-246` |
+
+**무엇이 문제인가**
+
+- Android 는 G3 불변조건 ① **"benchmark 기반 severity 없음"** 을 정면 위반한다.
+- iOS 는 **"판정 없음" 과 "정상" 을 구분하지 못한다.** 서버가 severity 를 못 낸
+  상황(임계 없음·데이터 부족·insufficient)이 전부 초록으로 표시된다.
+
+**★ 이것이 D-17(G3) 을 무력화한다**
+
+```
+G3 ③ 이 서버에서 code_default severity 를 DENY  →  알림이 사라진다
+   웹        insufficient 를 그대로 표시            → G3 성립
+   iOS       알림 없음 → 전 KPI 초록                → G3 무력화
+   Android   benchmark 로 계속 색을 냄              → G3 무력화
+```
+
+**서버에서 G3 를 강제해도 모바일에서 뚫린다.** D-17 의 범위는 API 응답 계약이 아니라
+**모바일이 `kpi_status` 를 소비하도록 바꾸는 것까지**다.
+
+상태 **NEEDED** — 우선순위 §1-3 보다 위.
+
+> 참고: **산식 오염은 모바일에 없다.** Android DTO·iOS 모델에 계산 프로퍼티 0건이고,
+> `KpiDetailScreen` 은 `weaningToMatingDays`(WEI)를 별도 라벨로 정확히 쓴다.
+> 문제는 값이 아니라 **판정**이다.
+
 ### 1-1. ★ 계정 삭제 화면 (iOS) — App Store 심사 요건
 
 | | |
