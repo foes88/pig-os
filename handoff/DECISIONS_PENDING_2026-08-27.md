@@ -19,7 +19,10 @@
 
 ---
 
-## D-2. Addon #1 AI 벤더 **[진행중]** — 지금 안 정해도 됩니다
+## D-2. Addon #1 AI 벤더 **[DEFERRED → P4 후]** — 지금 안 정해도 됩니다
+
+> 상태를 **`DEFERRED`** 로 명시한다. "권고가 미루기였으니 목록에서 빼도 된다" 로 두면
+> **의도적 보류와 트래킹 누락이 문서상 구분되지 않는다.** 해제 시점은 P4 완료.
 
 **현황**: `llm_renderer.py` 는 Anthropic·OpenAI 둘 다 읽게 돼 있고, 키가 없으면
 `render_text()` 템플릿으로 폴백합니다. **키가 없어도 Q&A 는 정상 동작**합니다.
@@ -76,8 +79,16 @@ KR 은 레퍼런스 전용 시장인데 미국 농장 리포트에 한국 값이
 
 ## D-5. US 지표 확정 리서치 발주 **[막힘]** — P1 다음 단계
 
-Template LOCK 이 통과해서 US 활성화에 필요한 것은 **INSERT 뿐**입니다. 남은 것은
-"무엇을 INSERT 할 것인가"이고, 그건 외부 조사가 필요합니다.
+Template LOCK 이 통과해서 US 활성화에 필요한 것은 **백엔드 리졸버 축에 한해** INSERT 뿐입니다.
+
+> ⚠ **한정 사유 (2026-08-27 추가).** 이 증명은 `resolver 계약 10건`에만 유효합니다.
+> **모바일 Android·iOS 는 KPI 목록을 코드에 하드코딩하고 `/kpi/presentation` 을 소비하지
+> 않습니다** — 신규 국가를 데이터로 켜도 모바일 화면은 `PSY/NPD/FARROWING_RATE` 에
+> 고정된 채 남습니다. HTTP·threshold·권한도 이 테스트 범위 밖입니다.
+> **US 런치 계획을 "INSERT 뿐" 이라는 전제 위에 세우면 안 됩니다.**
+> 상세: `docs/MOBILE_PARITY.md` §1-3
+
+남은 것은 "무엇을 INSERT 할 것인가"이고, 그건 외부 조사가 필요합니다.
 
 의뢰 프롬프트를 만들어 뒀습니다: [RUN_PROMPT_E_us_kpi_research.md](../docs/runs/RUN_PROMPT_E_us_kpi_research.md)
 

@@ -19,7 +19,9 @@
 
   NEEDED     모바일에 반영 필요, 아직 안 됨
   N/A        모바일에는 해당 없음 (사유를 반드시 적는다)
-  DONE       반영 완료 (커밋 해시 또는 확인 근거)
+  DONE       반영 완료 — **근거는 `파일:행` 또는 커밋 해시로 적는다. 서술 금지.**
+             (CANONICAL_FORMULA_SPEC 의 CONFIRMED 기준과 형식을 맞춘다 —
+              한 저장소에 기준이 두 개면 느슨한 쪽으로 수렴한다)
 ```
 
 ★ **`N/A` 를 사유 없이 쓰지 않는다.** "모바일엔 없어도 되겠지" 는 판단이지 사실이 아니다.
@@ -109,22 +111,31 @@ piglet_count 1~30
 
 | | 결과 |
 |---|---|
-| Android `KpiTrendDto.npd` | `Double? = null` — **nullable, 크래시 없음** |
-| iOS `KpiTrend.npd` | `Double?` — **nullable, 크래시 없음** |
-| 모바일 NPD 표시 경로 | 대시보드 payload(`kpi.npd`)·`/kpi/npd`(`NpdBreakdown`) — **둘 다 여집합 NPD 정상** |
-| 영향 | trend 차트의 npd 계열만 비게 된다 |
+| 근거 | 위치 |
+|---|---|
+| Android nullable | `app/src/main/java/io/pigos/app/data/remote/dto/KpiDto.kt:8` `val npd: Double? = null` |
+| iOS nullable | `PigOS/Domain/Model/KPI.swift:42` `let npd: Double?` |
+| Android NPD 표시 | `ui/screens/dashboard/DashboardScreen.kt:101` — dashboard payload |
+| iOS NPD 표시 | `UI/Screens/Dashboard/DashboardScreen.swift:82` — dashboard payload |
+| iOS NPD 상세 | `UI/Screens/KPI/AnalyticsScreens.swift:26` — `repo.npd()` = `/kpi/npd` |
+| 웹 hotfix | `5abb8a4` (`api/app/services/kpi_service.py` `get_trend` 반환부) |
 
-→ **DONE (조치 불요).** 다만 trend npd 계열을 그리는 화면이 있다면 빈 계열이 어떻게
-  보이는지는 모바일 팀이 확인할 것.
+→ **DONE — 크래시 없음.** 두 표시 경로 모두 dashboard·`/kpi/npd`(여집합 정상)라 값이
+  틀리지도 않는다. 영향은 trend 차트의 npd 계열이 비는 것뿐이며, 그 계열을 그리는
+  화면이 있는지는 **모바일 팀 확인 대상(미확인)**.
 
 ### 2-2. benchmark null 처리
 
 | | 상태 |
 |---|---|
-| Android | `DashboardBenchmarks? = null`, `KpiBenchmark? = null`, `benchmarkAvg: Double?` — 처리함 |
-| iOS | Codex 검증(2026-08-27) 기준 `benchmarks` 모델·표시 코드 **존재** |
+| 근거 | 위치 |
+|---|---|
+| Android nullable | `data/remote/dto/KpiDto.kt:26,31-33,49,51` (`DashboardBenchmarks?`, `KpiBenchmark?`, `benchmarkAvg: Double?`) |
+| Android null 가드 | `ui/screens/dashboard/DashboardScreen.kt:131` `data.benchmarks?.let { }` |
+| iOS 모델 존재 | Codex 독립검증 `handoff/CODEX_RESULT_2026-08-27.md` C-4 (iOS HEAD `321d4e8`) |
 
-→ **DONE.** (D-13 §9 의 "iOS 에 benchmark 필드 자체가 없다" 는 낡은 서술이었다 — 정정됨)
+→ **DONE.** D-13 §9 의 "iOS 에 benchmark 필드 자체가 없다" 는 **내 서술이 낡았던 것**이다
+  — 당시 `DashboardScreen.swift` 만 grep 했고 모델 계층을 안 봤다. Codex C-4 가 정정.
 
 ---
 
