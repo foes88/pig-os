@@ -135,13 +135,13 @@ COUNTRY_KPI_RULE_SPEC  : 국가 정책·표시·룰 적용
 
 | code | formula_id | v | measure_kind | output_unit | direction | status |
 |---|---|---|---|---|---|---|
-| PSY | `PSY_ROLLING12M` | 1 | RATIO | pigs/sow/year | UNKNOWN | **CONFIRMED** |
-| NPD | `NPD_COMPLEMENT_SOWYEAR` | 1 | DURATION | days/sow-year | UNKNOWN | **CONFIRMED** |
-| SOW_TURNOVER | `SOW_TURNOVER_FARROWINGS_PER_INV` | 1 | RATIO | litters/sow/year | UNKNOWN | **CONFIRMED** |
-| FARROWING_RATE | `FARROWING_RATE_COHORT_110_150` | 1 | RATE | percent_0_100 | UNKNOWN | **CONFIRMED** |
-| WSI | `WSI_WEAN_TO_SERVICE` | 1 | DURATION | days | UNKNOWN | **CONFIRMED** |
-| MSY | `MSY_HEADOUT_PER_INV` | 1 | RATIO | pigs/sow/year | UNKNOWN | **CONFIRMED** ⚠ §7-3 |
-| WEANED_PER_LITTER | `WEANED_AVG_PER_WEANING` | 1 | COUNT | pigs/litter | UNKNOWN | **CONFIRMED** |
+| PSY | `PSY_ROLLING12M` | 1 | RATIO | pigs/sow/year | UNKNOWN | **REVOKED → UNVERIFIED** |
+| NPD | `NPD_COMPLEMENT_SOWYEAR` | 1 | DURATION | days/sow-year | UNKNOWN | **REVOKED → UNVERIFIED** (trend 오염) |
+| SOW_TURNOVER | `SOW_TURNOVER_FARROWINGS_PER_INV` | 1 | RATIO | litters/sow/year | UNKNOWN | **PENDING_RECHECK** (기준 ②③ 미충족) |
+| FARROWING_RATE | `FARROWING_RATE_COHORT_110_150` | 1 | RATE | percent_0_100 | UNKNOWN | **REVOKED → UNVERIFIED** |
+| WSI | `WSI_WEAN_TO_SERVICE` | 1 | DURATION | days | UNKNOWN | **REVOKED → UNVERIFIED** |
+| MSY | `MSY_HEADOUT_PER_INV` | 1 | RATIO | pigs/sow/year | UNKNOWN | **PENDING_RECHECK** ⚠ §7-3 |
+| WEANED_PER_LITTER | `WEANED_AVG_PER_WEANING` | 1 | COUNT | pigs/litter | UNKNOWN | **REVOKED → UNVERIFIED** |
 | 사산 계열 | — | — | RATE | percent_0_100 | UNKNOWN | **AMBIGUOUS · LIVE_DIVERGENCE** |
 | PRE_WEANING_MORTALITY | — | — | RATE | percent_0_100 | UNKNOWN | **AMBIGUOUS · LIVE_DIVERGENCE** |
 
@@ -150,6 +150,38 @@ COUNTRY_KPI_RULE_SPEC  : 국가 정책·표시·룰 적용
 > **"사산율이니까 LOWER_IS_BETTER" 는 코드-only 원칙 위반이라 쓰지 않았다.**
 >
 > AMBIGUOUS 2건에는 §3 규율대로 확정 `formula_id` 를 부여하지 않았다.
+
+### ★ CONFIRMED 판정 기준 (2026-08-27 신설 — 재실사부터 적용)
+
+`CONFIRMED 7` 중 4건이 무효였다는 것은 **검증 절차 자체에 결함이 있었다**는 뜻이다.
+같은 절차로 재실사하면 재실사 결과도 뒤집힌다. 그래서 기준을 먼저 고정한다.
+
+```
+셋을 동시에 충족해야만 CONFIRMED
+  ① 실제 코드 라인 인용 (파일:행)
+  ② 해당 산식의 테스트 통과
+  ③ 실데이터 1건 수기 검산 일치
+
+하나라도 빠지면 UNVERIFIED. 문서 대조만으로 CONFIRMED 금지.
+
+★ 이 기준을 소급 적용하면 **기존 7건 전부가 미충족**이다(②③ 을 한 건도 하지 않았다).
+  반증된 5건은 REVOKED, 반증되지 않은 2건은 PENDING_RECHECK 다.
+  "반증 안 됐으니 유효" 는 이 기준의 정반대다 — 입증 책임은 CONFIRMED 쪽에 있다.
+```
+
+### 재실사 완료 기준 — 탐색이 아니라 열거
+
+"전 경로를 안 훑었으므로 더 있을 수 있다" 가 끝나고도 남으면 그건 재실사가 아니라
+**부분 탐색 3회차**다. `/kpi/trend` 사례가 방향을 알려준다 — **필드명은 `npd` 인데
+값은 WEI 였다.** 산식 함수에서 호출자로 내려가는 추적만으로는 이걸 못 잡는다.
+
+```
+A. 산식 함수 → 호출자 역추적 (call graph 전수)
+B. 응답 스키마 필드명 → 실제 담기는 산식 대조표
+   서비스 · 보고서 · 인사이트 · job · trend 전 경로
+
+완료 기준 = A ∩ B 교차 대조.  A 만 하면 오늘과 같은 결과가 나온다.
+```
 
 ---
 
