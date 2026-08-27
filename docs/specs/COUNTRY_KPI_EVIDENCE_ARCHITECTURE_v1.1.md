@@ -389,7 +389,7 @@ US NPD처럼 benchmark가 없어도 **별도 APPROVED된 threshold가 있으면 
 
 **모바일까지 적용된다.** 백엔드가 null을 반환해도 모바일이 KPI 목록을 하드코딩하고 null 미처리면 거기서 깨진다. D-13 STEP 3의 모바일 실사 결과가 이 게이트의 입력이다.
 
-**회귀 불변조건 2건:**
+**회귀 불변조건 3건:**
 
 ```
 ① visible KPI + benchmark 없음
@@ -399,7 +399,34 @@ US NPD처럼 benchmark가 없어도 **별도 APPROVED된 threshold가 있으면 
 ② registry 에 KPI 추가 시
    country_kpi_presentation 행이 없거나 priority_class IS NULL 이면
    /kpi/presentation 응답 카드 수가 자동 증가하지 않는다
+
+③ threshold_source ∈ {rule_configs, operational_default} 인 경우에만 severity 발화
+   threshold_source = code_default  →  severity 없음
+     · 기존 활성 국가 : FLAGGED_FOR_REVIEW (자동 revoke 금지 — G0 와 동일 처리)
+     · 신규 국가 활성화 : 차단
 ```
+
+> **③ 은 2026-08-27 실측에서 나왔다.** benchmark 쪽에서 ① 이 막은 silent fallback 이
+> threshold 쪽에는 그대로 열려 있었다.
+>
+> ```
+> benchmark  : GLOBAL silent fallback  → ① 이 금지          ✅
+> threshold  : code_default fallback   → 아무도 안 막음      ❌
+> ```
+>
+> `threshold_resolver` 의 해소 순서는 `rule_configs → operational_defaults →
+> code_default` 이고, 등록 룰 40개 대비 `operational_defaults` 시드는 29키다.
+> 나머지는 **룰 함수 안의 하드코딩 상수**로 색을 낸다 — 국가 인식도 결재 기록도 없다.
+> 그 상태로 §6-1 의 "APPROVED threshold 필수" 판정을 통과한 것처럼 보이는 것이 문제다.
+>
+> ★ ③ 을 소급 적용하면 **운영 중인 BR 이 색을 잃는다.** 그래서 G0 와 같은 처리를 한다 —
+> 기존 활성 국가는 유지·FLAGGED, 신규 국가만 차단. 게이트는 전방향 통제 장치다.
+>
+> ★ 그리고 **Track 4 전체를 끝낼 필요는 없다.** US 런치에 필요한 사실은 하나다 —
+> *커버 안 된 11룰 중 US 에서 visible 한 KPI 를 건드리는 것이 몇 개인가.*
+> 0개면 US 는 Track 4 와 무관하게 진행하고, N개면 그 KPI 만 severity 없이 출발하거나
+> (① 이 정상 처리한다) **그 룰만** operational_default 로 추출한다. 전체 추출이 아니라
+> US 교집합만이다. → **D-19**
 
 검증은 **API 응답 레벨**에서. 프론트는 registry-map 렌더링이므로 country branching을 추가하지 않는다.
 
@@ -481,7 +508,7 @@ threshold         별도 승인된 판정 기준
 |---|---|---|
 | terminology (현지 명칭) | ✅ | 표시에 필요 |
 | presentation policy (priority_class / display_order) | ✅ | 없으면 GLOBAL 기본 |
-| threshold (rule_configs 또는 operational_default) | ✅ | severity 권한 |
+| threshold (rule_configs 또는 operational_default) | ✅ | severity 권한. **`code_default` 는 이 요건을 충족하지 않는다** — G3 ③ |
 | formula mapping | benchmark 쓸 때만 | |
 | benchmark | ❌ | 없으면 `NO_VERIFIED_BENCHMARK` 로 정상 렌더 |
 | rights × policy clearance | benchmark 쓸 때만 | |
@@ -582,7 +609,12 @@ external formula mapping / benchmark / benchmark rights
 | D-14 | `source_edition` 필수 + **serving 계층 `selected_evidence_id`** | P1 |
 | **D-17** | **G3 표시 안전 계약** — API 응답 스키마 + 회귀 2건 + 모바일 | **P1 (US 런치 필수)** |
 | **D-18** | **`rights_scope` / `policy_scope` 2축 분리.** A-rule을 policy_scope로 강제 | P1 |
+| **D-19** | **threshold source 감사** — 40룰 각각이 `rule_configs` / `operational_default` / `code_default` 중 무엇으로 해소되는지 + 각 룰이 붙는 KPI. read-only | **P0 (D-13 직후)** |
 | D-16 | `vfd_required_us` 재설계 — `country=US AND condition=USES_VFD_FEED` | **병렬 트랙** |
+
+> **D-19 를 D-13 과 같은 run 에 넣지 않는다.** 목적과 STOP 조건이 다르고,
+> "한 배포 스텝에 변수 하나" 원칙에 걸린다. D-13 종료 후 별도로 돌린다.
+> 산출물은 G3 불변조건 ③ 과 §6-1 "APPROVED threshold" 판정의 입력이다.
 
 `D-15` 실사 범위 (한 번에 끝낼 것): KPI values · cohort definition · inclusion/exclusion · calculation notes · **copyright/rights wording** · cross-edition historical values.
 
@@ -595,6 +627,8 @@ D-13  canonical formula 실사 (bjh, read-only)  ┐
                                                ├─ 병렬
 D-15  MetaFarms 2021–2025 원문 실사             ┘
         ↓
+D-19  threshold source 감사 (D-13 직후, 별도 run)
+        ↓  ★ US 교집합만 판정 — Track 4 전체를 끝내지 않는다
 D-8   source별 1:1 mapping 판정
         ↓
 D-14  versioned evidence + selected_evidence_id
