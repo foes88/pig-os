@@ -1,348 +1,275 @@
-# Codex 독립검증 결과 — 2026-08-25
+# Codex 독립검증 결과 — 2026-08-25 세션
 
-## 검증 기준과 범위
+검증일: 2026-08-26 KST
 
-- 검증 시작 시 코드 기준은 `26a28d2`(`7417b01` fast-path 제거)였다.
-- 검증 도중 HEAD가 문서 전용 커밋 `4b76322`로 이동했지만, 이 보고서의 대상 코드
-  (`c262f5f`, `26a28d2`, `fa1ef3d`, `de4e68d`, `e530dca`)에는 변화가 없었다.
-- 16:24 KST 이후 별도 작업자가 `api/app/core/farm_time.py`와 관련 미커밋 변경을 만들기
-  시작했다. 이는 검증 시작 시점의 배포 대상이 아니며 전체 게이트도 그 변경 전 실행됐으므로,
-  아래 TZ 결함 판정에서 제외했다. 작성 시점에도 부분 적용 상태라 별도 재검증이 필요하다.
-- 코드 수정은 하지 않았다. 운영은 시계·스키마·인덱스·실행계획만 읽기 조회했고,
-  DB 중단 실험과 마이그레이션 충돌 실험은 로컬 Docker DB에서만 수행했다.
+검증 HEAD: `8476d16` (`main`)
 
-## 게이트 실측
+대상 커밋: `c262f5f`, `26a28d2`(및 되돌린 `7417b01`), `011c972`, `bfa8774`, `32b032d`, `fa1ef3d`, `de4e68d`, `e530dca`
+
+원칙: 소스 수정 없음. 로컬·운영 DB에는 읽기 전용 조회만 수행했다. 기존 사용자 변경 `docs/adr/ADR-KPI-08-backend-owned-kpi-status.md`는 건드리지 않았다.
+
+## 결론 요약
+
+**최종 판정: NO-GO**
+
+출시 전에 최소한 다음 사항이 해소되고 동일한 적대 시나리오가 다시 통과해야 한다.
+
+1. 계정 삭제 화면이 실제 `DELETE /auth/me`를 호출하고, 소유자가 아닌 일반 계정도 앱 안에서 삭제를 시작할 수 있어야 한다.
+2. 실제 DB 단절이 `503 DB_UNAVAILABLE` + `Retry-After` + 브라우저에서 읽을 수 있는 CORS 응답으로 귀결되어야 한다.
+3. Alembic head만으로 ORM이 요구하는 스키마를 재현해야 한다.
+4. 농장 현지 날짜를 도입하면서 남은 feed 검증, 서부 시간대 KPI 스케줄, PSY 기본 연도, sync/REST 불일치를 해소해야 한다.
+5. 백업 URL 누락의 무출력 종료와 증분 백업의 부분 성공을 실패로 감지할 수 있어야 한다.
+
+회귀 테스트가 모두 통과한다는 사실은 아래 런타임·운영 경로 결함을 반증하지 않는다. 현재 테스트는 실제 DB 연결 단절, 브라우저 CORS, 앱 삭제 버튼과 배포 가능한 Alembic 스키마를 통과시키지 않는다.
+
+## 환경과 실행 결과
 
 | 항목 | 결과 |
 |---|---|
-| 백엔드 전체 | `1136 passed, 1 skipped in 106.34s` |
-| NPD·표시정책·에러 표적 | `57 passed in 4.80s` |
-| 프론트 에러+i18n | `34 passed` (Node 22.11.0, node environment, threads) |
-| TypeScript | `tsc_exit=0` |
-| ruff | 기존 9건 재현, 이번 대상 파일 신규 건 없음 |
-| 로컬 Alembic marker | 최종 `e2b5d7c9a1f3`로 복구 |
-| `alembic check` | **실패** — 모델/마이그레이션 드리프트 다수 |
-
-테스트 수는 인계문의 기대값과 일치하지만, 아래 실측 결함들은 기존 테스트가 모의 예외,
-`Base.metadata.create_all()`, 구조 검사만 사용해 잡지 못했다.
-
----
+| 로컬 Alembic | `e2b5d7c9a1f3 (head)` |
+| 운영 Alembic | `e2b5d7c9a1f3`; PostgreSQL 17.11, DB TZ `Asia/Seoul` |
+| 운영 데이터 개요 | farms 68, sows 141,361, farrowings 531,760 |
+| 운영 농장 TZ | UTC 47, Asia/Seoul 12, America/Chicago 5, America/Mexico_City 3, Asia/Manila 1 |
+| 백엔드 전체 | `1167 passed, 1 skipped in 114.54s` |
+| 계정삭제·TZ·NPD 경로격리·에러계약 | `52 passed` |
+| NPD·표시정책·BR pilot | `34 passed` |
+| 프론트 apiErrors+i18n | `34 passed` (Node 22.11.0, node env, threads) |
+| TypeScript | `npx tsc --noEmit`, exit 0 |
+| Ruff | 기존 9건으로 exit 1; 모두 테스트 파일의 미사용 import/변수 또는 import 정렬 |
+| Alembic check | exit 1; 모델/마이그레이션 드리프트 다수 검출 |
 
 ## 결함
 
-[MAJOR] [DB 마이그레이션] Alembic head가 실행 가능한 애플리케이션 스키마를 재현하지 못함
+[BLOCKER] [계정 삭제/App Review] 삭제 화면이 API를 호출하지 않아 앱 내 계정 삭제가 불가능함
+
+  재현: `/settings/delete-account`에서 확인 문자열을 입력하고 활성화된 “계정 영구 삭제” 버튼을 누른다. 네트워크 요청·상태 변경·페이지 이동이 모두 없다. 소유자가 아닌 계정은 화면 자체가 `ownerOnly`로 차단된다.
+
+  기대: 계정을 생성할 수 있는 모든 사용자가 앱 안에서 삭제를 시작할 수 있고, 재인증용 비밀번호를 입력한 뒤 `DELETE /api/v1/auth/me`가 호출되어야 한다. Apple은 계정 생성을 지원하는 앱이 앱 내부에서 삭제를 시작하도록 요구하며, 모든 사용자가 대상이라고 명시한다. 재인증 요구는 허용된다. 근거: [Apple 계정 삭제 지원 문서](https://developer.apple.com/support/offering-account-deletion-in-your-app/), [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/).
+
+  실제: `src/app/(app)/settings/delete-account/page.tsx:72-76`의 삭제 버튼에는 `onClick`이 없고, 페이지에는 백엔드가 필수로 요구하는 password 입력도 없다. 프론트 API endpoint 모듈에도 `/auth/me` 삭제 호출이 없다. `page.tsx:14-25`는 `canOwn(useActiveRole())`로 일반 구성원의 개인 계정 삭제를 막는다.
+
+  분류: BUG
+
+[MAJOR] [DB 마이그레이션] Alembic head가 ORM 스키마를 재현하지 못함
 
   재현:
-  ```bash
+  ```text
   cd api
-  uv run alembic upgrade head
+  uv run alembic current
+  uv run alembic heads
   uv run alembic check
-  docker exec pigos-postgres psql -U pigos -d pigos -c \
-    "SELECT column_name FROM information_schema.columns
-       WHERE table_name='farms' AND column_name IN ('data_origin','data_classification');"
   ```
 
-  기대: `e2b5d7c9a1f3`가 `api/app/db/models`와 일치하고, head DB에서 ORM이 정상 동작해야 한다.
+  기대: `e2b5d7c9a1f3`까지 적용한 DB가 모델과 일치하고 `alembic check`가 통과해야 한다.
 
-  실제:
-  - marker는 head지만 로컬 DB에는 `farms.data_origin`, `farms.data_classification`이 없다.
-    `Farm` ORM INSERT는 `UndefinedColumn: column farms.data_origin does not exist`로 실패했다.
-  - 위 두 컬럼은 모델에만 있고 Alembic 버전 파일에는 없다. 운영에는 수동으로 존재한다.
-  - 모델이 선언한 `idx_farms_classification`은 로컬 head와 운영 모두에 없다.
-  - 로컬 head에는 `idx_matings_sow_date`, `idx_weanings_sow_date`,
-    `idx_farrowings_mating`, `idx_removals_sow_date`도 없다. 운영의 앞 세 인덱스는 수동 존재한다.
-  - `alembic check`는 위 컬럼/인덱스 외 nullable·unique/index 드리프트도 다수 보고하고 실패했다.
-  - 통합 테스트는 `tests/integration/conftest.py:59-60`에서 Alembic 대신
-    `Base.metadata.create_all()`을 사용하므로 이 결함을 숨긴다.
+  실제: current/head는 모두 `e2b5d7c9a1f3`지만 check는 exit 1이다. 특히 모델이 요구하는 `farms.data_origin`, `farms.data_classification`, `idx_farms_classification`이 로컬 head DB에 없으며, 네 개의 sow/date 계열 인덱스 등 추가 드리프트도 검출된다. 운영에는 두 컬럼과 네 인덱스가 수동으로 존재하지만 `idx_farms_classification`은 없다. 즉 운영의 수동 보정이 새 환경·복구 환경에서 재현되지 않는다. 통합 테스트는 Alembic이 아니라 `Base.metadata.create_all()`을 사용하므로 이 결함을 숨긴다.
 
   분류: BUG
 
-[MAJOR] [에러 계약] 실제 DB 순단이 503이 아니라 500으로 매핑됨
+[MAJOR] [에러 계약/DB 장애] 실제 DB 단절이 503이 아니라 500으로 반환됨
 
-  재현:
-  ```text
-  1) 실제 app에 get_db 세션으로 SELECT 1을 실행하는 검증 라우트를 메모리에서 추가
-  2) 요청 -> 200
-  3) docker compose stop postgres
-  4) 동일 프로세스/풀로 재요청
-  5) docker compose start postgres, healthy 대기 후 재요청
-  ```
+  재현: 로컬 `pigos-postgres`를 중지하고 실제 앱에 `POST /api/v1/auth/login`을 보낸 뒤 DB를 다시 시작하여 같은 요청을 재시도했다.
 
-  기대: `api/app/core/exceptions.py:89-106` 계약대로 `503 DB_UNAVAILABLE`,
-  `Retry-After: 5`, CORS 헤더가 있어야 한다.
+  기대: 장애 중 `503`, body `DB_UNAVAILABLE`, `Retry-After: 5`; 복구 후 새 연결로 정상 응답.
 
-  실제:
-  ```text
-  before  200
-  during  500 INTERNAL_ERROR / Retry-After 없음 / CORS 없음
-  after   200
-  ```
-  중단 시 실제 예외는 asyncpg 연결 단계의 `ConnectionError: unexpected connection_lost() call`이었다.
-  풀은 DB 복구 뒤 자동 정상화됐지만 실패 종류 계약은 지켜지지 않았다.
-
-  원인: 현재 SQLAlchemy asyncpg 어댑터에서 연결 실패가 항상
-  `sqlalchemy.exc.OperationalError` 또는 원본 `PostgresConnectionError`로 올라오지 않는다.
-  어댑터 매핑상 `CannotConnectNow`, `TooManyConnections`, `QueryCanceled`, deadlock,
-  serialization, invalid password, `PostgresConnectionError` 등 대부분의 `PostgresError`가
-  generic DBAPI `Error`로 번역될 수 있다. 접속 거절은 이번처럼 일반 `ConnectionError`도 된다.
-  현재 핸들러 두 개는 이들을 놓친다.
-
-  잘못된 SQL(`SyntaxOrAccessError`, `UndefinedTable`)은 `ProgrammingError`로 번역되어 500에
-  남으므로, 요청에서 우려한 “코드 버그가 무조건 503으로 둔갑”하는 과대 매핑은 현재
-  asyncpg 경로에서는 확인되지 않았다. 반대로 실제 장애를 못 잡는 과소 매핑이 결함이다.
+  실제: 장애 중 `500 INTERNAL_ERROR`, `Retry-After` 없음, CORS 없음이었다. 원인은 새 asyncpg 연결 실패가 `ConnectionRefusedError`/`TimeoutError`로 올라오지만 `api/app/core/exceptions.py:87-103`은 `sqlalchemy.exc.OperationalError`와 `asyncpg.PostgresConnectionError`만 503으로 처리하기 때문이다. DB 재시작 후에는 같은 프로세스가 정상적인 `401` 로그인 실패를 반환해 자동 복구 자체는 확인됐다.
 
   분류: BUG
 
-[MAJOR] [에러 계약/CORS] catch-all 500에서 브라우저가 안전한 에러 본문과 request_id를 읽을 수 없음
+[MAJOR] [에러 계약/CORS] catch-all 500을 브라우저가 읽을 수 없음
 
-  재현:
-  ```text
-  TestClient(app, raise_server_exceptions=False)
-  GET /__verify_boom
-  Origin: https://verify.example
-  ```
+  재현: 실제 app에 `RuntimeError`를 내는 검증 route를 메모리에서 추가하고 `Origin: https://verify.example`로 TestClient 요청했다. 파일 변경은 하지 않았다.
 
-  기대: `api/app/main.py:82-89`의 CORS 계약이 500에도 적용되어 프론트가
-  `INTERNAL_ERROR`와 `request_id`를 읽어야 한다.
+  기대: 프론트가 안전한 `INTERNAL_ERROR`와 `request_id`를 읽을 수 있도록 500에도 CORS가 있어야 한다.
 
-  실제:
-  ```text
-  status=500
-  access-control-allow-origin=None
-  body={"code":"INTERNAL_ERROR",...,"request_id":"683710527223"}
-  ```
-  `Exception`/500 핸들러는 Starlette의 최외곽 `ServerErrorMiddleware`에서 실행되어 안쪽
-  `CORSMiddleware`를 되통과하지 않는다. 같은 app의 전용 `OperationalError` 503 모의 응답에는
-  CORS와 `Retry-After`가 모두 있었다. 캐시 무효화는 성공 응답만 대상으로 하므로 별도 회귀는
-  관측되지 않았다.
+  실제: body는 안전했고 SQL·stack·비밀 문자열은 노출되지 않았지만 `access-control-allow-origin=None`이었다. 반면 직접 생성한 `OperationalError`의 503에는 CORS와 `Retry-After: 5`가 있었다. Starlette의 catch-all 처리 위치가 `CORSMiddleware` 바깥이어서 일반 500만 우회한다. request ID는 응답과 로그 메시지에 동일하게 남아 추적 가능했다.
 
   분류: BUG
 
-[MAJOR] [TZ/KPI/이벤트] 농장 타임존이 있는데도 핵심 계산·검증이 컨테이너 UTC 날짜를 사용함
+[MAJOR] [시간대/이벤트 입력] feed REST 경로가 여전히 UTC 날짜로 현지 오늘을 거부함
 
-  재현:
-  ```text
-  운영 API: 2026-08-25T07:12:23+00:00
-  운영 DB : TimeZone=Asia/Seoul, 2026-08-25 16:12:23+09
-  로컬 Python: Asia/Seoul
-  로컬 DB    : UTC
-  ```
-  운영 활성 농장 타임존은 UTC 47, Asia/Seoul 12, Asia/Manila 1,
-  America/Chicago 4, America/Mexico_City 3이었다.
+  재현: UTC `2026-08-25 22:00` = KST `2026-08-26 07:00`으로 고정하고 `FeedRecordCreate(record_date=2026-08-26, ...)`를 생성했다.
 
-  기대: `Farm.timezone`(`api/app/db/models/platform.py:79`)을 사용해야 한다. 실제로
-  알림(`alert_service.py:33-37`)과 리포트 라우터(`routers/base/reports.py:34-40`)는 이미
-  농장 현지 날짜를 사용한다.
+  기대: 서울 농장의 현지 오늘인 `2026-08-26`을 허용해야 한다.
 
-  실제: 검증 기준 커밋의 다음 경로는 `date.today()`/UTC 날짜를 사용한다.
-  - `get_dashboard`와 이번주 경계: `kpi_service.py:791-837`
-  - herd/loss/boar/rule context 및 trend: `kpi_service.py:393,577,611,637,691`
-  - REST 교배 생성·수정: `event_service.py:184,908`
-  - PSY/NPD 라우트, 연간 리포트, KPI worker, 정책 발효일 리졸버에도 동일 패턴이 있다.
-
-  서울 농장의 월요일 00:00~09:00에는 API가 아직 일요일이라 `week_start`가 **지난주 월요일**로
-  계산된다. 시카고/멕시코시티는 현지 저녁부터 서버 날짜가 하루 먼저 간다. NPD/PSY 일일
-  기준일도 농장 자정이 아니라 UTC 자정에 바뀐다. 따라서 KST 23:59:59→00:00:01에는 갱신되지
-  않고 09:00에 뒤늦게 하루 이동한다. 올바른 기준은 컨테이너 UTC나 DB KST 중 하나가 아니라
-  이미 저장된 **농장 현지 타임존**이다.
+  실제: `api/app/schemas/feed.py:24-29`가 농장 context 전에 `datetime.now(UTC).date()`와 비교하여 `record_date cannot be in the future`로 거부했다. 서울 00:00~09:00의 원 결함이 feed 경로에 남아 있다.
 
   분류: BUG
 
-[BLOCKER] [Sync/값 정합성] `mating_date=내일`이 수용되고 현재 KPI 경로끼리 값이 갈림
+[MAJOR] [시간대/KPI worker] UTC cron과 농장 현지 날짜 조합이 미주 농장의 주·월 스냅샷을 늦춤
 
-  재현: KR farm의 오늘을 `2026-08-25`로 두고 이유 10일 된 OPEN 모돈에
-  `SyncMating(mating_date="2026-08-26")`을 `_process_mating`으로 넣은 뒤 같은 트랜잭션에서
-  뷰와 inline repository를 조회했다.
+  재현: `api/app/jobs/worker.py:53-57`의 월간 cron `day=1, 00:15 UTC`를 Chicago 농장에 적용했다. 이 시각의 현지는 전월 마지막 날이다. `_period_bounds("monthly", local_today)`도 함께 계산했다.
 
-  기대: 실제 농장 현지 기준 미래 사건은 거부되거나, 수용 정책이 있다면 모든 현재값 계산에서
-  제외되어야 한다.
+  기대: 각 농장의 완료된 직전 월/주가 한 번씩 적시에 집계되어야 한다.
 
-  실제:
-  ```text
-  accepted=True, rejected=None, conflict=False
-  v_sow_npd: next_mating_date=2026-08-26, wei_days=11
-  inline(as_of=2026-08-25): wei_days=None
-  ```
-  `sync_service.py:75,107-108`은 무조건 +1일을 허용한다. 뷰에는 `mating_date <= CURRENT_DATE`
-  상한이 없어 미래 교배를 즉시 소비하지만 inline은 `:as_of`로 제외한다. 현재 앱 계산 경로는
-  inline으로 격리돼 NPD 자체는 보호되지만, `get_dashboard`의 이번주 교배/분만/이유 쿼리
-  (`kpi_service.py:817-836`)는 `>= week_start`만 있고 `<= today`가 없어 수용된 미래 사건을
-  즉시 이번주 실적으로 센다. 미래 데이터 수용과 표시값 오염이 함께 재현됐다.
+  실제: 2026-09-01 00:15 UTC에 Chicago는 2026-08-31이고 함수는 7월을 계산한다. 8월 스냅샷은 10월 1일 UTC까지 한 달 늦어진다. 주간도 월요일 00:10 UTC가 Chicago 일요일이므로 직전 주가 아니라 그 전 주를 다시 계산하고 최신 주는 일주일 늦어진다. unique key가 중복 row는 막지만 `_upsert_snapshot`은 SELECT 후 INSERT라 동시 실행 시 원자적 upsert도 아니다.
 
   분류: BUG
 
-[MAJOR] [인덱스 마이그레이션] `IF NOT EXISTS`가 잘못된 동명이인 인덱스를 성공으로 오인하고 downgrade가 수동 인덱스를 삭제함
+[MAJOR] [시간대/PSY API] 기본 연도가 import 시점의 서버 연도로 고정됨
 
-  재현:
-  ```text
-  alembic downgrade d1a4c6e8b2f5
-  CREATE INDEX idx_farrowings_sow_date ON farrowings(farm_id, farrowing_date);
-  alembic upgrade head
-  -- marker=head지만 정의는 여전히 (farm_id, farrowing_date)
-  alembic downgrade d1a4c6e8b2f5
-  -- 수동 인덱스도 삭제됨
-  ```
+  재현: `api/app/routers/base/kpi.py:100`의 `Query(default=date.today().year)`를 연말부터 새해까지 재시작 없이 유지하는 프로세스로 평가한다.
 
-  기대: 운영에 미리 `CONCURRENTLY` 생성된 인덱스를 수용하되 정의가 정확한지 검증하고,
-  downgrade가 마이그레이션 소유가 아닌 객체를 무조건 지우지 않아야 한다.
+  기대: query의 year 생략 시 요청 시점 농장 현지 연도를 사용해야 한다.
 
-  실제: `CREATE INDEX IF NOT EXISTS`는 이름만 확인해 잘못된 정의도 성공 처리했다.
-  이후 `DROP INDEX IF EXISTS`는 기원을 구분하지 않고 해당 이름을 삭제했다. 필요한 인덱스가
-  없는데도 Alembic marker만 head가 될 수 있어 5초대 성능 회귀를 숨길 수 있다.
+  실제: 기본값이 모듈 import 때 한 번 UTC로 계산된다. 서울 1월 1일 00:00~09:00에는 이전 연도이며, 프로세스가 재시작하지 않으면 이후에도 계속 이전 연도가 기본값이다. `farm_today(farm)`은 그 뒤 상한에만 적용돼 기본 year 오류를 교정하지 못한다.
 
   분류: BUG
 
-[MAJOR] [백업/설정 파싱] DATABASE_URL이 없으면 의도한 migration URL 폴백 전에 무출력 종료
+[MAJOR] [시간대/설정 검증] 잘못된 IANA timezone을 저장할 수 있고 조용히 UTC로 대체함
 
-  재현:
-  ```text
-  ENV_FILE=<MIGRATION_DATABASE_URL만 있는 파일> ./ops/backup_db.sh schema
-  ENV_FILE=<MIGRATION_DATABASE_URL만 있는 파일> ./ops/backup_incremental.sh 3
-  ```
+  재현: `FarmCreate`/`FarmUpdate`에 오타 난 timezone 문자열을 넣은 뒤 `farm_today`를 호출한다.
 
-  기대: 코드의 `case ''|*:6543/*)`대로 migration URL로 폴백하거나 명시적 오류를 내야 한다.
+  기대: 저장 전에 유효한 IANA timezone인지 검증하거나, 최소한 오류를 관측 가능하게 기록해야 한다.
 
-  실제: 두 스크립트 모두 `exit=1`, stdout/stderr **0 bytes**였다.
-  `set -euo pipefail` 아래 `URL=$(grep '^DATABASE_URL=' ... | head | cut | tr)`의 `grep`이 1을
-  반환해 `case` 전에 셸이 종료된다. 6543인데 migration URL이 없는 경우의 `ALT=$(grep...)`도
-  같은 방식으로 의도한 오류문 전에 종료될 수 있다.
+  실제: `api/app/schemas/farm.py:27-42`에는 timezone 검증이 없다. `api/app/core/farm_time.py:58-62`와 `alert_service.py:30-37`은 모든 예외를 잡아 로그 없이 UTC 날짜를 반환한다. 운영의 현재 5종 timezone은 모두 유효하지만, 향후 오타 하나가 원래의 날짜 경계 결함을 재발시키고 탐지를 막는다.
 
-  선택 매트릭스의 나머지는 실측상 코드대로였다.
-  - direct 5434가 있으면 `DATABASE_URL` 선택
-  - direct 6543이면 `MIGRATION_DATABASE_URL` 선택
-  - 다만 fallback 두 URL이 같은 라이브 DB인지 host/db identity를 확인하지 않아, stale
-    migration URL이면 다시 과거 DB를 백업할 수 있다(CONFIG 위험).
+  분류: CONFIG
 
-  운영 현재값은 비밀번호를 제외해 확인한 결과 direct=`172.18.0.1:5434/pigos`,
-  migration=`127.0.0.1:5434/pigos`, S3 bucket 설정 있음으로 정상 조합이다.
+[MAJOR] [Sync/데이터 정합성] 같은 미래 이벤트를 REST와 sync가 다르게 판정함
+
+  재현: 서버 오늘의 다음 날을 `mating_date`로 제출한다. `sync_service._is_future_date`와 REST 농장 현지 검증을 비교했다.
+
+  기대: 동일 farm/event는 입력 경로와 무관하게 같은 판정을 받아야 한다.
+
+  실제: `api/app/services/sync_service.py:75,107-119`는 서버 날짜 +1일까지 허용해 tomorrow를 통과시키지만 REST는 농장 현지 오늘보다 크면 거부한다. UTC·Chicago 농장에서는 같은 이벤트가 sync 성공/REST 실패가 된다. UTC+14가 세계 최대 실제 offset이라는 전제와 1일 tolerance 자체는 2025~2030 tzdata 598개 zone 전수 계산으로 확인했지만, `process_sync`는 이미 Farm을 보유하므로 농장 날짜를 계산하지 못할 이유는 없다.
 
   분류: BUG
 
-[MAJOR] [증분 백업] 테이블 일부 조회 실패를 성공한 부분 백업으로 확정·업로드함
+[MAJOR] [계정 삭제/고지·보유] UI의 영구삭제·30일 복구 고지와 서버 동작·정책이 서로 모순됨
 
-  재현: 자동 탐색 결과를 `bad:created_at`, `good:updated_at`으로 모의하고 bad 조회만 실패시켰다.
+  재현: `src/messages/ko.json:1049-1062`, `en.json:1049-1062`, `account_deletion_service.py:118-157`, 개인정보처리방침 후보본 제9조를 대조했다.
 
-  기대: 자동 탐색된 테이블 하나라도 실패하면 백업 전체가 실패(exit nonzero)하거나 결과가
-  명시적으로 incomplete여야 한다.
+  기대: 삭제되는 데이터, 조직 소유 데이터의 보존, 복구 가능 기간, 법정 보존 항목을 실제 처리와 동일하게 고지해야 한다.
 
-  실제:
-  ```text
-  ⚠ bad 건너뜀(조회 실패)
-  good 1행
-  완료 ... 총 1행
-  exit=0, inc-*.tar.gz 생성
-  ```
-  크론·모니터링과 S3는 이 부분 아카이브를 정상 백업으로 오인한다.
+  실제: UI는 모돈·농장 운영 데이터·AI/보고서·결제정보가 사라지고 30일 복구 후 영구 삭제된다고 말한다. 서버는 계정 식별자를 즉시 비가역 익명화하고 shared farm 원천 데이터와 consent ledger를 유지한다. 정책 `docs/legal/publish_candidate/PIGOS_GLOBAL_PRIVACY_NOTICE.md:142-150`은 원천 데이터 반환/파기와 consent ledger의 근거·기간을 여전히 `[OPEN]`/`[COUNSEL]`로 둔다. 한국 개인정보보호법 제21조도 불필요해진 개인정보의 파기를 원칙으로 하고 다른 법령상 보존만 예외로 두므로, 현재 열린 정책 항목을 확정된 근거처럼 간주할 수 없다. 근거: [개인정보보호법 제21조](https://law.go.kr/LSW/lsSideInfoP.do?docCls=jo&joBrNo=00&joNo=0021&lsiSeq=270351&urlMode=lsScJoRltInfoR).
 
-  분류: BUG
+  분류: CONFIG
 
-[MAJOR] [프론트 인증] 로그인 401도 토큰 refresh 인터셉터가 먼저 소비함
+[MAJOR] [계정 삭제/농장 소유권] 비활성 구성원 link가 active orphan farm을 만들 수 있음
 
-  재현: `authApi.login`은 `apiClient`를 사용한다(`src/lib/api/endpoints/auth.ts:15-16`).
-  잘못된 자격증명으로 401을 받으면 `src/lib/api/client.ts:40-58`을 따라간다.
+  재현: 유일한 active owner와 이미 `active=false`인 다른 사용자 사이에 같은 farm의 `UserFarm` link가 남은 상태에서 owner를 삭제한다.
 
-  기대: 보호 API의 401은 refresh/retry 후 최종 실패만 mapper로 가고, 로그인 자체의 401은
-  즉시 로그인 화면의 “자격증명 불일치” 처리로 가야 한다.
+  기대: 실질적으로 남은 active 구성원이 없으면 farm을 비활성화해야 한다.
 
-  실제: 인터셉터는 요청 URL을 구분하지 않아 로그인 401에도 `_doRefresh()`를 시도한다.
-  refresh token이 없거나 실패하면 인증정보를 지우고 `window.location.href="/login"`을 설정한
-  뒤에야 원래 401을 reject한다. 로그인 페이지가 `resolveApiError`로 문구를 설정해도 동일 URL
-  강제 탐색이 화면 상태를 초기화할 수 있다. 보호 API에서는 인터셉터가 mapper보다 먼저
-  실행되는 순서 자체는 정상이나, 새 mapper의 실제 소비처인 로그인 경로가 예외 처리되지 않았다.
-  기존 `apiErrors.test.ts`는 mapper 단위만 검사하고 인터셉터 체인은 검사하지 않는다.
+  실제: `account_deletion_service.py:83-91`은 다른 `UserFarm` row 수만 세고 `User.active`를 join하지 않는다. 비활성 사용자의 오래된 membership도 shared farm으로 간주되어 farm은 active로 남고, owner membership만 삭제된다. 이후 active farm job은 실행되지만 접근 가능한 active 사용자가 없는 orphan 상태가 된다.
 
   분류: BUG
 
-[MINOR] [i18n] 러시아어 재시도 문구 한 건이 직역체임
+[MAJOR] [백업/URL 선택] DATABASE_URL key가 없으면 fallback·오류 안내 전에 무출력 종료함
 
-  재현: `src/messages/ru.json`의 `errors.dbUnavailable` 확인.
+  재현: `MIGRATION_DATABASE_URL`만 있는 임시 env와 mock `grep`로 `backup_db.sh`, `backup_incremental.sh`를 실행했다. 검증용 임시 파일은 즉시 삭제했다.
 
-  기대: 현지 사용자에게 자연스러운 장애 안내.
+  기대: migration URL로 명시적으로 fallback하거나 구체적인 오류를 출력해야 한다.
 
-  실제: `Попробуйте через несколько мгновений.`은 의미는 정확하지만 일반 UI 러시아어로는
-  `Попробуйте позже/через некоторое время.`보다 직역 느낌이 강하다. th·vi의 신규 에러 문구와
-  돼지 업계 용어는 기능상 또는 명백한 의미 오류를 찾지 못했다. 네이티브 감수는 별도 필요하다.
+  실제: 두 스크립트 모두 exit 1, stdout/stderr 0 byte였다. `set -euo pipefail` 아래 `URL=$(grep '^DATABASE_URL=' ... | head | cut | tr)`에서 grep 1이 case문 전에 스크립트를 종료한다. 6543 direct URL일 때 migration URL key가 없는 경우도 같은 방식으로 의도한 오류문 전에 끝난다. 또한 증분 스크립트에는 full script의 “대체 URL도 6543이면 거부” 검사가 없다.
 
   분류: BUG
 
----
+[MAJOR] [증분 백업] 일부 테이블 조회 실패를 성공한 부분 백업으로 업로드함
 
-## 확인됨
+  재현: 한 테이블의 psql 조회만 실패하고 다른 테이블은 성공하도록 명령을 대체해 증분 스크립트 흐름을 실행했다.
 
-### `c262f5f` 인덱스 효과·값·비용
+  기대: 테이블 하나라도 실패하면 전체 작업이 nonzero 또는 명시적 incomplete 상태여야 한다.
 
-- 운영 최대 농장 10,251두(분만 42,899건)에서 실제 `_NPD_SQL`을
-  `EXPLAIN (ANALYZE, BUFFERS, SETTINGS)`로 실행했다.
-- `lact_open`의 `MAX(farrowing_date)`가
-  `Index Scan Backward using idx_farrowings_sow_date`를 사용했다(965 loops, 각 약 0.004ms).
-- 전체 실행은 약 223.6ms였다. 기존 `(farm_id, sow_id)` 인덱스는 해당 LATERAL에
-  `farm_id` 조건이 없어 대체되지 않으며 새 인덱스는 중복이 아니다.
-- 운영 531,760행에서 새 인덱스는 21MB(테이블 heap 86MB, 전체 인덱스 73MB)였고,
-  생성 뒤 `idx_scan=51,659`로 실제 사용됐다.
-- 로컬 520,000행 배치 모의에서 인덱스 없는 INSERT는 225~417ms, 새 인덱스 유지 INSERT는
-  1,420~1,490ms, 인덱스 크기는 8.3MB였다. 실제 테이블은 다른 인덱스도 이미 유지하므로
-  이 비율을 운영 단건 오버헤드로 그대로 환산할 수는 없지만, 절대 추가비용과 운영 사용량은
-  성능 이득 대비 수용 가능 범위로 판단한다.
-- `test_npd_*.py` 전부와 구조 가드 포함 표적 57개가 통과했다. 인덱스는 계산 SQL을 바꾸지
-  않으므로 NPD 값 회귀는 관측되지 않았다.
-- 단, 위의 동명이인 마이그레이션 안전성 결함은 별개다.
+  실제: `ops/backup_incremental.sh:70`은 경고 후 `continue`하고, 다른 CSV가 하나라도 있으면 archive 생성·S3 업로드·exit 0으로 끝난다. 모니터링은 부분 백업을 정상 백업으로 오인한다. 증분 CSV는 삭제 row를 표현하지 못한다는 복구 한계도 별도 문서화가 필요하다.
 
-### fast-path 재도입 방지 가드
+  분류: BUG
 
-- 현재 계산 경로는 `v_sow_npd`, `CURRENT_DATE`, `now()`를 참조하지 않고 모든 기준일을
-  `:as_of`로 바인드한다.
-- 메모리에서 `_AVG_VIEW = SELECT ... FROM v_sow_npd ... CURRENT_DATE`를 재도입하자
-  `test_no_view_or_wallclock_in_module_sql`이 의도대로 실패했다.
-- 따라서 과거 방식의 직접 재도입은 가드가 막는다. 다만 다른 모듈에 별도 뷰 경로를 만드는
-  우회까지 전역으로 막는 테스트는 아니다.
+[MINOR] [인덱스 마이그레이션] `IF NOT EXISTS`가 동일 이름의 잘못된 정의를 승인하고 downgrade가 수동 인덱스도 삭제함
 
-### 에러 응답의 비밀정보·request_id
+  재현: head 직전 DB에 `idx_farrowings_sow_date`라는 이름으로 `(farm_id, farrowing_date)` 인덱스를 만든 후 upgrade/downgrade 흐름을 검토했다.
 
-- 500/503 모의 예외의 응답 body에는 스택, SQL, 스키마명, 원본 메시지가 없었다.
-- 생성된 request_id는 같은 값이 로그 메시지 `[...]`와 응답에 남아 기본 uvicorn 포맷에서도
-  검색 가능했다. 별도 formatter 필드가 없어도 메시지 본문에 포함되므로 추적은 된다.
-- 결함은 일반 500의 CORS와 실제 DB 실패 분류이며, 본문 비밀정보 누출은 확인되지 않았다.
+  기대: 기존 인덱스 정의가 `(sow_id, farrowing_date)`인지 검증하고, 마이그레이션이 소유하지 않은 객체는 downgrade에서 보존해야 한다.
 
-### 백업 S3 실패·보존
+  실제: `api/alembic/versions/e2b5d7c9a1f3_farrowings_sow_date_index.py:33-42`는 이름만 존재하면 upgrade를 성공 처리하고 downgrade는 동일 이름을 무조건 drop한다. 현재 운영 인덱스 정의는 정확하므로 즉시 장애는 아니지만 재해복구·수동 선적용 시 잠복 결함이다.
 
-- 전체 백업을 모의해 S3 CLI 실패를 만들었을 때 로컬 `.sql.gz`는 남고 exit 0이었다.
-  요청된 “S3 실패가 로컬 백업 자체를 실패시키지 않음”은 확인됐다.
-- `find` 보존 삭제 대상은 `$BACKUP_DIR`/`$INC_DIR`의 로컬 파일뿐이며 S3 삭제 명령은 없다.
-  S3 사본은 로컬 보존 정리에 영향받지 않는다.
-- 실제 S3 쓰기/삭제는 수행하지 않았고 복원 경로도 이번 검증 범위에서 재시험하지 않았다.
+  분류: BUG
 
-### 테넌트 격리
+[MINOR] [KPI 표시정책/발효일] “회사 기준일”이 명시적 timezone이 아니라 프로세스 timezone에 종속됨
 
-- KPI 라우트는 계산·캐시 전에 `FarmDep -> get_farm_context -> can_access_farm`을 통과한다.
-- 캐시 키도 farm UUID를 포함한다. 조직 A 자격으로 다른 조직 B 농장 접근이 403/404가 되는
-  `test_org_hierarchy_access.py`와 전체 스위트가 통과했다.
-- 인덱스와 제거된 fast-path는 이 권한 경로 및 SQL의 farm 필터를 변경하지 않았다.
+  재현: KST 자정 직후와 UTC 자정 직후에 `effective_from=2026-08-26`인 정책을 `ref` 생략으로 resolve한다.
 
-### 표시 정책 `d1a4c6e8b2f5`
+  기대: 농장별 시간이 아니라 회사가 정한 하나의 명시적 governance timezone/날짜로 전 국가에 일관되게 발효해야 한다.
 
-- 운영 실측: GLOBAL 14개, visible 3개 `{FARROWING_RATE,NPD,PSY}`,
-  `compute_enabled=true` 14개.
-- COUNTRY 정책이 없는 11개 운영 국가가 GLOBAL 최소값을 상속한다.
-- `test_global_visible_minimum.py`와 BR 명시 정책 테스트가 통과했다.
-  숨김과 계산 중단이 섞이는 회귀는 확인되지 않았다.
+  실제: `api/app/services/kpi_policy_resolver.py:164,224,261`은 `date.today()`를 사용한다. 컨테이너 UTC에서는 한국 회사 기준 자정보다 9시간 늦게 발효된다. “농장 timezone을 쓰지 않는다”는 논리는 국가 내 일관성 면에서 타당하지만, 대안이 배포 호스트의 암묵적 timezone이어서는 안 된다.
 
-### 기간 잠금·알림·리포트
+  분류: CONFIG
 
-- period lock은 이벤트의 명시적 `date.year/date.month`로 조회해 DB/API 벽시계를 한 판정에
-  섞지 않는다.
-- 알림과 리포트 라우터의 기본 기간은 이미 농장 타임존을 사용한다.
-- 반면 연간 리포트 내부의 현재연도 PSY/NPD cap은 `date.today()`를 다시 사용하므로 위 TZ
-  결함에 포함했다.
+## 확인 완료 항목
 
-## 테스트 공백 요약
+### `c262f5f` farrowings 인덱스
 
-- `test_error_contract.py`는 실제 DB를 내리지 않고 `OperationalError(...)`를 직접 생성한다.
-  실제 asyncpg 예외 계층과 CORS middleware stack을 검증하지 않는다.
-- 통합 DB는 Alembic이 아니라 `Base.metadata.create_all()`로 만들어 head 재현성을 검증하지 않는다.
-- NPD 구조 가드는 강하지만 농장 현지 자정/주 경계 및 sync +1일과 뷰의 상호작용은 검증하지 않는다.
-- 프론트 테스트는 순수 mapper만 검증하고 axios refresh 인터셉터와 로그인 요청의 결합을 검증하지 않는다.
-- 백업 스크립트에는 URL 조합·부분 테이블 실패·S3 실패를 고정하는 자동 테스트가 없다.
+- 운영의 `idx_farrowings_sow_date` 정의는 `(sow_id, farrowing_date)`로 정확하다.
+- 531,760행에서 크기는 21 MB, `idx_scan`은 검증 시점 51,671회였다.
+- 10,251두 농장의 실제 `_NPD_SQL` LATERAL은 `Index Scan Backward using idx_farrowings_sow_date`를 사용했다.
+- 같은 조회의 warm 실행은 약 52.2 ms와 47.0 ms였다. 첫 cold 실행 약 704 ms는 3,468 block read를 포함하므로 warm 값과 직접 비교하면 안 된다.
+- 기존 `idx_farrowings_farm_sow(farm_id,sow_id)`는 해당 LATERAL에 `f.farm_id` 조건이 없고 leading column도 달라 대체 인덱스가 아니다.
+- 인덱스 추가 전후 NPD 경로 테스트는 통과했고, 인덱스는 값을 바꾸지 않는다.
+- 실제 운영 INSERT latency에 대한 인덱스 단독 증분 비용은 **미확보**다. 21 MB 저장비용과 높은 scan 사용량만 확인했으며 수치를 만들지 않았다.
+
+### `7417b01 -> 26a28d2` WEI view fast-path 제거
+
+- 운영 10,251두 warm 비교: inline 31.461 ms, view 31.907 ms, 평균값 동일.
+- 운영 1,508두 warm 비교: inline 12.337 ms, view 12.066 ms, 평균값 동일.
+- 유의미한 성능 이득은 없고 DB `CURRENT_DATE`와 API `as_of` timezone 차이의 정확성 위험은 실제 존재한다. 제거 판단은 타당하다.
+- 메모리에서 repository SQL에 `SELECT * FROM v_sow_npd`를 주입하자 `test_npd_calc_path_isolation.py`가 예상대로 red가 됐다. guard는 직접 view 재도입을 막는다. 별도 모듈로 우회하는 변형까지 전역 탐지하는 테스트는 아니다.
+
+### 계정 삭제 백엔드
+
+- 실제 서명된 기존 access token을 `active=false` 사용자에 적용하자 `get_current_user`가 `User not found or inactive`로 거부했다. 토큰 만료 때까지 접근 가능한 결함은 없다.
+- 삭제 service는 flush만 하고 router가 마지막에 commit하므로 중간 예외 시 session 종료 rollback이 가능하다.
+- 재가입 테스트에서 새 UUID, 이전 org 연결 없음, membership 제거가 확인됐다.
+- 순차 두 번째 삭제는 inactive 사용자 단계에서 막힌다. 완전히 동시인 두 요청은 두 요청 모두 204가 될 여지는 있지만 unique/FK 오염은 확인되지 않았다.
+- 소유 판단은 `UserFarm.role_override or user.role`로 명시된 farm membership을 기준으로 하므로 조직 admin을 자동 소유자로 오인하는 경로는 확인되지 않았다.
+
+### 테넌트 격리와 표시 정책
+
+- farm KPI route는 계산·cache 전에 `FarmDep -> get_farm_context -> can_access_farm`을 통과하며 cache key도 farm UUID를 포함한다.
+- 전체 suite의 `test_farm_access`, `test_org_hierarchy_access`, `test_kpi_display_tenant`가 통과했다. A 조직 자격으로 B 조직 farm KPI를 읽는 우회는 확인되지 않았다.
+- global minimum 정책은 미결정 국가에서 visible 3개만 노출하고 14개 모두 `compute_enabled=true`를 유지한다. BR pilot override와 상속 테스트도 통과했다.
+
+### 시간대 수정의 정상 범위
+
+- 서울 현지 오늘이 UTC상 내일인 이벤트 거부와 Chicago 일요일 주 경계의 원 결함을 먼저 재현했고, 수정된 `farm_today` 대상 경로 테스트는 통과했다.
+- period lock은 이벤트 자체의 year/month로 검사하므로 wall-clock timezone 회귀는 확인되지 않았다.
+- 운영 21개 non-UTC active farm을 UTC/현지 인접 날짜로 읽기 전용 계산했을 때 PSY는 0/21, NPD는 2/21에서 달랐다. 서울 표본은 136.9→136.1, 다른 표본은 365.0→364.8이었다. 이는 현지 `as_of`로 기준일이 하루 전진한 결과로 방향성 오류 증거가 아니다.
+- 같은 farm snapshot key에는 unique 제약이 있어 row 중복은 차단된다. 다만 위 worker 지연과 SELECT-then-INSERT 경쟁은 별도 결함이다.
+
+### 에러·프론트·i18n
+
+- 500/503 응답 body와 header에 원본 SQL, stack, schema명, 주입한 비밀 문자열은 노출되지 않았다.
+- `request_id`는 응답과 error log에 동일하게 기록됐다.
+- axios 401 interceptor는 먼저 refresh/retry하고 `resolveApiError`는 최종 rejection만 받는다. refresh 요청은 bare axios라 재귀하지 않는다.
+- 8개 언어 key 완전성과 프론트 테스트는 통과했다. th/vi/ru 문구에 명백한 key·영문 잔존 오류는 찾지 못했지만, 원어민 품질 검수는 **미확보**다.
+
+### 백업의 정상 범위
+
+- `bash -n`은 두 스크립트 모두 통과했다.
+- full backup은 pg_dump 실패·gzip 무결성 실패를 실패로 처리한다.
+- S3 업로드 실패는 로컬 파일을 남기고 작업 자체는 계속한다. 요청된 “로컬 백업 보존” 동작과 일치한다.
+- `find ... -mtime ... -delete` 대상은 로컬 backup directory뿐이며 S3 객체는 삭제하지 않는다.
+- 운영 현재 direct/migration URL은 모두 PostgreSQL 17 port 5434의 같은 `pigos` DB를 가리키는 정상 조합이었다. 이는 스크립트가 향후 stale URL을 식별한다는 보장은 아니다.
+
+## 적대 시나리오 판정
+
+| 시나리오 | 판정 | 근거 |
+|---|---|---|
+| 1. 자정 경계 NPD | 부분 통과 | 대상 dashboard/NPD는 farm-local `as_of`; feed와 worker에 누락 경로 존재 |
+| 2. 미래 날짜 sync | 실패 | tomorrow는 sync 통과, REST 거부 |
+| 2b. 삭제 후 기존 token | 통과 | 실제 서명 token이 inactive DB row에서 즉시 거부 |
+| 3. DB 차단/복구 | 실패 | 차단 중 500·Retry-After/CORS 없음; 복구 후 정상 |
+| 4. 테넌트 격리 | 통과 | 접근 dependency·farm cache key·통합 테스트 확인 |
+| 5. 표시 정책 | 통과 | visible 3, compute 14, BR override 확인 |
+| 6. 서울/Chicago 경계 | 부분 통과 | 수정 대상 경로 테스트 통과; feed·cron·PSY default 반례 존재 |
+
+## 미확보·STOP 항목
+
+- 운영 이벤트 INSERT에 대한 새 인덱스의 독립적인 latency 증가량: 미확보.
+- th/vi/ru 원어민 감수: 미확보.
+- 개인정보처리방침의 consent ledger 보존 근거·기간과 B2B 원천 데이터 반환/삭제 기준: 문서 자체가 `[COUNSEL]`/`[OPEN]`; 법률 자문 전 확정 불가.
+- 실제 App Store 심사 결과: 미확보. 다만 현재 UI는 공식 요구 이전에 기능적으로도 삭제 요청을 만들지 못한다.
 
 ## 최종 판정
 
-**NO-GO(미래일 sync가 현재 실적을 오염시키는 BLOCKER, 실제 DB 순단 500/CORS 실패, Alembic head 비재현, 백업 부분성공·무출력 종료가 해소되고 동일 적대 시나리오를 재검증하기 전까지)**
+**NO-GO — 계정 삭제 UI/App Review BLOCKER, 실제 DB 장애 계약 실패, 재현 불가능한 Alembic head, 현지 날짜 적용 누락, 백업의 무출력·부분 성공을 해소하고 위 적대 시나리오를 재검증하기 전까지 출시 불가.**

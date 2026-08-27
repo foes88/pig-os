@@ -185,7 +185,14 @@ value 없음 / 표본 부족 / 유효범위 밖
     → insufficient(reason= no_data | insufficient_sample | out_of_valid_range)
 ```
 
-- `npd`는 현재 rule이 **비활성**(M1) → `insufficient(reason="policy_pending")`.
+> **[2026-08-18 갱신 — main 머지 후 NPD는 정상 판정 경로. `policy_pending` 미적용]**
+> 아래 `policy_pending` 서술은 M1(NPD→WEI 표시 우회)이 살아 있던 `fix/kpi-npd-wei-m1` 브랜치 기준이었다.
+> main 머지(b71bb20) 후 상태: ① 계산 = 여집합 NPD(`_NPD_SQL`), ② `npd.overdue` 룰 **활성**(M1 비활성화는
+> main에 존재하지 않음), ③ 프로드 NPD 임계 6/6 존재(BR42/58·KR35/50·VN45/62 등).
+> 따라서 **main에서 NPD는 다른 KPI와 동일하게 normal/warning/critical로 판정**되며, Assembler의
+> `pending` 인자에 NPD를 넣지 않는다. 아래 문단은 이력으로만 보존한다.
+
+- ~~`npd`는 현재 rule이 **비활성**(M1) → `insufficient(reason="policy_pending")`.~~ *(M1 브랜치 한정 — 위 갱신 참조)*
   **절대 `npdTier()`로 폴백하지 않는다.** 정책 미확정이면 UI는 판단하지 않고 insufficient를 표시한다
   — 이 케이스가 본 ADR 원칙의 실증이다.
 
@@ -256,7 +263,7 @@ farm.country → effective_metric_values(warning/critical/direction) → KPI val
   "kpi_status": {
     "PSY":            { "status": "normal",       "reason": null },
     "FARROWING_RATE": { "status": "warning",      "reason": null },
-    "NPD":            { "status": "insufficient", "reason": "policy_pending" },
+    "NPD":            { "status": "normal",       "reason": null },
     "SOW_TURNOVER":   { "status": "insufficient", "reason": "no_policy" }
   }
 }
