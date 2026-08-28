@@ -501,12 +501,14 @@ class                          = CORRECTNESS_DEFECT   (parity gap 아님)
 |---|---|---|---|
 | Core | PigOS | `2e372b1` | ARQ false-success 제거 · snapshot supported-field contract |
 | Core | PigOS | `c3a46cc` | client version 수신·관측 미들웨어 |
+| CI | PigOS | `9da765c` | frontend unit test 스텝 신설 (그전엔 실행 0) |
 | Web | PigOS | `fdd9ca5` | local threshold fallback → `insufficient` fail-closed |
 | Web | PigOS | `c3a46cc` | platform/app version 헤더 송출 |
 | Android | pigos-android | `5ed3dd7` | `kpi_status` 소비 · benchmark→severity 제거 · version 헤더 · APK 보관 |
 | iOS | pigos-ios | `c516e2d` | `kpi_status` 소비 · `insufficient` FAIL-OPEN 제거 |
 | iOS | pigos-ios | `8ecfdfe` | platform/app version 헤더 송출 |
 | iOS | pigos-ios | `1d303bc` | unsigned archive validation job |
+| iOS | pigos-ios | `4b07d3c` | severity default 기대값을 fail-closed 로 갱신 (CI 가 잡음) |
 
 브랜치: 모바일 두 repo 는 `fix/kpi-status-consumption` (main 병합 안 함).
 
@@ -529,9 +531,9 @@ class                          = CORRECTNESS_DEFECT   (parity gap 아님)
 | 대상 | 검증 수단 | 결과 |
 |---|---|---|
 | Core | `pytest tests/unit` 721 passed · `ruff` clean | **VERIFIED** |
-| Web | `tsc --noEmit` clean | **PARTIAL** — 아래 |
+| Web | `tsc --noEmit` clean. vitest 실행 불가 → **CI 에 테스트 스텝 신설**(`9da765c`) | **PARTIAL** — 아래 |
 | Android | `:app:compileDebugKotlin` + `:app:testDebugUnitTest` BUILD SUCCESSFUL (로컬 실행) | **VERIFIED** |
-| iOS | 로컬 빌드 불가(Windows). CI `workflow_dispatch` 로 macos-15 실행 | `runtime_verification_status = NOT_RUNTIME_VERIFIED` |
+| iOS | 로컬 빌드 불가(Windows). CI `workflow_dispatch` macos-15 — run `33156495747` **success** (`build-test-lint` + `archive-validation` 둘 다) | **COMPILED_AND_UNIT_TESTED** / `runtime_verification_status = NOT_RUNTIME_VERIFIED` |
 
 ★ **Web 이 PARTIAL 인 이유 — 환경 blocker**
 
@@ -545,12 +547,23 @@ vitest 실행 불가
 ★ 이전 세션에 *"vitest 가 워커를 못 띄운다"* 로 기록했던 것은 **원인 오진**이었다.
   워커 문제가 아니라 **Node 버전 문제**다. `Node >= 20.12` 로 올리면 해소된다.
 
-  → 테스트 코드는 작성·커밋됐으나 **이 머신에서 실행되지 않았다.**
-    `regression_test_status = PRESENT_BUT_NOT_EXECUTED`
+  ★ 더 큰 문제를 같이 찾았다 — **PigOS CI 의 frontend job 에 테스트 스텝이 아예 없었다.**
+    `tsc --noEmit` + `npm run build` 뿐이었다. 즉 프론트 테스트는 로컬에서도
+    CI 에서도 **어디서도 실행된 적이 없다.** CI 는 이미 Node 22 를 쓰므로
+    스텝 한 줄을 추가했다(`9da765c`).
 
-★ iOS 는 `NOT_RUNTIME_VERIFIED` 를 유지한다. 컴파일이 통과해도
-  **시뮬레이터에서 실제 화면이 무채색으로 그려지는지는 확인하지 않았다.**
-  거짓 DONE 을 만들지 않는다.
+  → 이 머신 기준: `regression_test_status = PRESENT_BUT_NOT_EXECUTED`
+    다음 CI run 부터는 실행된다.
+
+★ iOS 는 CI 에서 컴파일·SwiftLint·단위테스트·unsigned archive 가 전부 통과했다.
+  그래도 `NOT_RUNTIME_VERIFIED` 를 유지한다 — **시뮬레이터에서 실제 카드가
+  무채색으로 그려지는지 눈으로 확인하지 않았다.** 거짓 DONE 을 만들지 않는다.
+
+★ CI 가 잡아낸 것 하나 (가치 있는 실패):
+  `APIErrorTests.testSeverityColorMapping` 이 `SeverityColor(severity: nil) == .ok`
+  를 기대하고 있었다. **그 기대값 자체가 FAIL-OPEN 을 잠그고 있었다.**
+  1차 run(`33155980980`)에서 이 테스트 하나만 실패했고, 그것이 정확히
+  `c516e2d` 가 의도적으로 바꾼 동작이다 → `4b07d3c` 로 계약 갱신.
 
 ### 9-2-4. stale evidence 규율
 
