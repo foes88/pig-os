@@ -186,11 +186,44 @@ LEGACY_ROWS
 
 ### 3-3. `MOBILE_LOCAL_SEVERITY` — DECISION_INTEGRITY_RISK
 
+> ### ★ 정정 (2026-08-28) — Web 행은 틀렸다
+>
+> 이전 판정 `Core/Web = NOT_APPLICABLE · 자체 판정 경로 없음` 은 **사실이 아니다.**
+> D-19 v1.4 감사(N-7)에서 웹 프론트 자체 임계가 발견됐다.
+> **"Web 은 판정 reference implementation 이다" 라는 전제를 폐기한다.**
+
 | | 상태 | 근거 |
 |---|---|---|
-| Core/Web | NOT_APPLICABLE · `not_applicable_reason: 서버 판정을 그대로 렌더. 자체 판정 경로 없음` | |
+| **Core/Web** | **BLOCKED** — `WEB_LOCAL_STATUS_FALLBACK` | `src/lib/kpi/status.ts` — `psyTier >=28/>=22` · `npdTier <=35/<=50` · `farrowingRateTier >=90/>=80`. `statusObservation.ts:53 resolveTier()` 가 backend `kpi_status` 부재 시 이 값으로 폴백 |
 | **Android** | **BLOCKED** | `DashboardScreen.kt:238-243` `meetsAvg = myValue >= b.avg` → Success/Warning. **벤치마크를 판정으로 변환** |
 | **iOS** | **BLOCKED** | `DashboardScreen.swift:241-246` alert 없음 → `AppColor.success`. **판정 없음이 초록(FAIL-OPEN)** |
+
+### 3-3-1. ACTIVE vs DORMANT — 같은 BLOCKED 가 아니다
+
+```
+Android · iOS   ACTIVE   매 렌더마다 자체 판정이 실행된다
+Web             DORMANT  backend kpi_status 가 있는 동안은 발동하지 않는다
+```
+
+```
+WEB_LOCAL_STATUS_FALLBACK
+platform_implementation_status = BLOCKED
+risk                = CROSS_COUNTRY_DECISION_RISK
+current_user_impact = NOT_OBSERVED
+trigger             = backend kpi_status 부재 / 배포 스큐 / contract mismatch
+```
+
+★ `CROSS_COUNTRY_DECISION_RISK` 인 이유: 이 임계는 **국가 구분이 없다.**
+`psyTier >= 28` 은 KR 기준이고, 서버 DMV 는 US PSY 임계를 26/23 으로 둔다.
+폴백이 발동하는 순간 **미국 농장에 한국 기준이 적용된다.**
+
+현재 미발동 근거(도달성 확인함):
+
+```
+backend kpi_status 키   PSY · NPD · FARROWING_RATE · SOW_TURNOVER
+KPI_CARD_REGISTRY      동일 4종
+presentation 미지 코드  unknownCodes 로 분리되어 렌더되지 않음
+→ 오늘은 발동하지 않는다. 그러나 응답에서 kpi_status 가 빠지는 순간 발동한다.
 
 ### 3-4. `KPI_FORMULA_LOCAL_CALCULATION`
 
@@ -448,6 +481,11 @@ class                          = CORRECTNESS_DEFECT   (parity gap 아님)
 | B-7 | 구버전 테스트 수단 없음 | rollout 안전성 검증 불가. `ANDROID_RELEASE_ARTIFACT_RETENTION`(§6-1) 이 선행 |
 | B-8 | iOS distribute 경로 없음 → **`CI_EXTENSION_REQUIRED`**(§7) | iOS required 국가의 rollout prerequisite. 인프라 부재가 아니라 CI 확장 |
 | B-9 | 3표면 모두 제품 계측 없음 | baseline 수집 불가 |
+| **B-10** | `WEB_LOCAL_STATUS_FALLBACK` (§3-3) | DORMANT. 발동 시 한국 임계가 타국에 적용 |
+| **B-11** | `SNAPSHOT_PIPELINE_CORRECTNESS` | `kpi_snapshots` 0행. 2026-05-29 이래 한 번도 동작한 적 없음. 스냅샷 의존 기능 전부가 선행 조건 |
+| **B-12** | `ARQ_FALSE_SUCCESS_OBSERVABILITY` | 71농장 전건 실패가 scheduler 에서 성공으로 보임. weekly/monthly 는 errors 를 세지도 않는다 |
+| **B-13** | `ALERT_DECISION_REPRODUCIBILITY` | 고객 대면 알림 468건에 threshold · authority · formula version 미저장 |
+| **B-14** | `UNAUDITED_AUTHORITY_CONFIG_CHANGE` | `use_governance_benchmarks` 는 GLOBAL scope 인데 변경 기록이 남는 곳이 없다 |
 
 ---
 
@@ -474,4 +512,5 @@ STEP 5   CI + Release Gate + App Version Gate
 |---|---|
 | 2026-08-27 | `MOBILE_PARITY.md` 신설 |
 | 2026-08-28 | `PLATFORM_PARITY.md` 로 `git mv`. STEP 0 — 기존 6행 evidence 재판정(DONE 2 → IN_PROGRESS, `done_with_sha=0`) · Track B 실측 고정 · `BACKEND_NO_JUDGMENT_STATE=PRESENT` 확인 · blocker 9건 등록 |
+| 2026-08-28 | ★ Web 행 정정 — `NOT_APPLICABLE` → `BLOCKED / WEB_LOCAL_STATUS_FALLBACK` (D-19 N-7). ACTIVE(모바일) vs DORMANT(웹) 분리. blocker B-10~B-14 등록 |
 | 2026-08-28 | STEP 1 착수 전 docs-only 보완 3건 — ① rename provenance + rename commit 분리 규율 ② B-3 → `P0-1` correctness blocker 승격 · Android `FAIL_CLOSED_BY_COINCIDENCE` 명기 ③ B-8 → `CI_EXTENSION_REQUIRED` 재분류 · `ANDROID_RELEASE_ARTIFACT_RETENTION` OPEN ISSUE 등록 |

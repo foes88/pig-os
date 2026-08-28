@@ -12,6 +12,10 @@ source_provenance:
   source_received_at: 2026-08-28T04:22:57Z   # = 2026-08-28 13:22 KST
   imported_at: 2026-08-28
   repository_copy_previously_existed: false
+  predecessor: NOT_FOUND            # v1.3 본문은 어디에도 존재하지 않는다 (§0-1)
+  spec_lineage: RECONSTRUCTED_CANONICAL_SPEC
+                                    # v1.3 을 읽고 patch 한 것이 아니다.
+                                    # 래퍼의 규율을 승계하고 나머지는 신규 저작이다.
   validation_basis:
     - current repository HEAD (56bddaf)
     - docs/runs/RUN_PROMPT_D13_canonical_formula_audit.md v1.4 (70a56a9)
