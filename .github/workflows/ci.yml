@@ -35,6 +35,12 @@ jobs:
       - run: npm ci
       - name: Type check
         run: npx tsc --noEmit
+      # ★ 2026-08-28 신설. 그 전까지 프론트 테스트는 **어디서도 실행되지 않았다** —
+      #   CI 에는 스텝이 없었고, 개발 머신은 Node 20.11 이라 vitest 가 뜨지 않았다
+      #   (rolldown 이 node:util.styleText 를 import. 20.12+ 필요).
+      #   테스트는 있는데 아무도 돌리지 않는 상태였다.
+      - name: Unit tests
+        run: npm run test:run
       - name: Build
         run: npm run build
 
