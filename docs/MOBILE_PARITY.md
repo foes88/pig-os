@@ -63,7 +63,39 @@ G3 ③ 이 서버에서 code_default severity 를 DENY  →  알림이 사라진
 **서버에서 G3 를 강제해도 모바일에서 뚫린다.** D-17 의 범위는 API 응답 계약이 아니라
 **모바일이 `kpi_status` 를 소비하도록 바꾸는 것까지**다.
 
-상태 **NEEDED** — 우선순위 §1-3 보다 위.
+상태 **NEEDED · P0** — 우선순위 §1-3 보다 위.
+
+#### D-17 최종 불변조건
+
+```
+Server              = KPI verdict/severity 의 유일한 authority
+Web / Android / iOS = 받은 status 를 render 만 한다
+Client              = benchmark/value 로 severity 재계산 금지
+```
+
+#### ★ D-17 분해 — API 계약만으로 끝나지 않는다
+
+| | 내용 |
+|---|---|
+| **D-17A** | API contract (`benchmark_status` · `comparison_status` · `kpi_status`) |
+| **D-17B** | Android server-authoritative rendering — `meetsAvg` 자체 판정 제거 |
+| **D-17C** | iOS server-authoritative rendering — `NO_VERDICT → GREEN` 제거 |
+| **D-17D** | **old-client rollout / version gate** |
+
+#### ★★ D-17D — 구버전 앱 (내가 놓쳤던 것)
+
+**새 Android/iOS 를 고쳐도 이미 설치된 옛 버전은 계속 자체 판정을 한다.**
+모바일은 배포 주기가 길어 구버전이 오래 남는다(이 문서 §0 의 경고 그대로다).
+
+```
+supported mobile version 이상  →  US KPI enabled
+구버전                          →  US benchmark/status 기능 제한
+                                   또는 mandatory upgrade
+```
+
+→ **미국을 모바일까지 함께 출시한다면 D-17 은 P0 blocker 다.**
+  웹 먼저 출시할 수 있다면 모바일만 feature-gate 하고 웹 US 활성화는 별도 진행 가능하다.
+  **이 선택은 대표 결재 사항이다.**
 
 > 참고: **산식 오염은 모바일에 없다.** Android DTO·iOS 모델에 계산 프로퍼티 0건이고,
 > `KpiDetailScreen` 은 `weaningToMatingDays`(WEI)를 별도 라벨로 정확히 쓴다.

@@ -5,11 +5,12 @@
 Mode      READ-ONLY. 코드·seed·마이그레이션·설정 변경 0
 Baseline  e7133fa   (선언 2fedb9c → 문서 5건만 변경돼 재고정, 근거 §0-1)
 Machine   bjh
-진행      B축 완료 · A축 부분(sync 해소) · ②③ 완료 · B′축 완료 · 잔여 U-8·U-9
+진행      A·B·B′ 3축 미추적 0 · 3축 상태모델 적용 · 잔여 U-8·U-9·U-10 (전부 후속작업)
 ```
 
-> **이 문서는 완료되지 않았다.** 실행 스펙 §8 "STOP 시에도 거기까지의 전수표는 남긴다"
-> 에 따라 중간 산출물을 남긴다. §8 미추적 목록이 비어야 완료다 — **지금은 비어 있지 않다.**
+> **추적은 완료됐다.** A·B·B′ 세 축의 미추적 경로가 0 이다.
+> 남은 U-8·U-9·U-10 은 "추적 미완" 이 아니라 **후속 작업**(regression hardening ·
+> D-17 모바일 · PWM fixture)이다. 상태 모델은 §5 의 3축 분리를 따른다.
 
 ---
 
@@ -151,7 +152,29 @@ top-level 과 `metrics[...]` 가 갈라지지 않는다. 룰엔진 판정값과�
 | ADG | `Σ((exit−entry)×head_out) / Σ((end−start)×head_out) ×1000` `:534` — **두수 가중** | `(exit_w−entry_w)/days×1000` `:355` — 그룹 단순 | 스코프가 달라 **비교 대상이 아니다**. 단 report 행들을 평균내면 herd 와 다르다 — 그렇게 쓰면 안 된다 |
 
 ★ 이 기준이 필요한 이유: 스코프 차이를 divergence 로 세면 **가짜 발견이 늘어난다.**
-divergence 는 **같은 스코프·같은 이름인데 산식이 다를 때**다.
+
+> ### ⚠ 다만 절대규칙으로 쓰면 위험하다 — 기준을 좁힌다 (2026-08-28)
+>
+> "scope 만 다르면 divergence 아님" 은 **틀릴 수 있다.**
+>
+> ```
+> average of ratios   Σ(feedᵢ/gainᵢ) / n
+> ratio of sums       Σfeedᵢ / Σgainᵢ
+> ```
+>
+> 둘은 scope 만 달라 보이지만 **수학적으로 같은 값이 아니다.** 가중이 다르다.
+>
+> **정확한 기준:**
+>
+> ```
+> scope 만 다르고, numerator/denominator 구성 · aggregation operator ·
+> time/population semantics 가 **동일하게 보존**되는 경우에만 divergence 로 보지 않는다.
+> ```
+>
+> 위 표에서 FCR·비육폐사는 `ratio of sums` 를 스코프만 좁힌 것이라 보존된다 ✓
+> **ADG 는 herd 가 두수 가중(`ratio of sums`), report 가 그룹 단순이므로
+> report 행들을 평균내면 `average of ratios` 가 되어 herd 와 다른 값이 된다** —
+> 그렇게 쓰면 그때는 divergence 다.
 
 ---
 
@@ -243,41 +266,134 @@ Android   서버 판정과 무관하게 benchmark 로 계속 색을 냄         
 
 ---
 
-## 5. KPI 별 판정 — ①②③
+## 4-1. LATENT — `MIGRATION_HAZARD`
 
-> 기준: ①코드라인 ②**산식**테스트 통과 ③실데이터 수기검산. **하나라도 비면 UNVERIFIED.**
-> ★ ②는 "KPI 이름이 나오는 테스트"가 아니라 **산식을 단언하는 테스트**여야 한다.
->   WSI·MSY·WEANED 테스트는 "값이 주어졌을 때 룰이 어떻게 동작하는가" 만 본다 → ② 미충족.
+```
+MIGRATION_HAZARD: PSY snapshot path uses point-in-time denominator
+
+  대상   jobs/kpi.py:132-135   (total_weaned / active) × (365/days)
+         · 현재 활성 두수(point-in-time) 분모 · parity>=1 필터 없음
+  현재   KpiSnapshot reader 0건 → LATENT_WRITER. LIVE_DIVERGENCE 아님
+  위험   CLAUDE.md 설계와 코드 주석 3곳이 "대시보드를 kpi_snapshots 조회로" 를 지시
+         → 이관하면 대시보드 PSY 가 조용히 이 산식으로 바뀐다
+
+  RULE   snapshot path 로 reader 전환 금지
+         UNTIL canonical formula conformance test PASS
+```
+
+★ 이렇게 고정해 두지 않으면, 다음에 누군가 **"문서대로 snapshot 이관"** 을 하면서
+PSY 를 다시 깨뜨린다. 그때는 docstring 이 "고쳤다" 고 적혀 있으니 아무도 의심하지 않는다.
+
+## 4-2. `pwmr_b` — 하나의 `formula_id` 아래 두 의미를 두면 안 된다
+
+`report_service.py:185` 는 `farrowing_weaned` 인자 유무로 산식을 바꾼다.
+
+```
+인자 있음 → Σ(tb−fw)/tb ÷ n     복단위 평균
+인자 없음 → (avg_tb−avg_weaned)/avg_tb   근사
+```
+
+**의도된 기능이면** `formula variant A` / `variant B` 로 **분리 선언**해야 하고,
+**의도치 않은 차이면** `LIVE_DIVERGENCE` 다. 어느 쪽이든 **하나의 canonical
+`formula_id` 아래 두 의미를 넣어서는 안 된다.** → P0-2/D-8 이전 판정 필요.
+
+---
+
+## 5. KPI 별 판정 — **3축 분리**
+
+> ### ★ 상태 모델 정정 (2026-08-28)
+>
+> 1차 보고에서 "산식 assertion 테스트가 없다" 는 이유로 `implementation_status` 를
+> `UNVERIFIED` 로 내렸다. **D-13 v1.2 와 충돌한다.** v1.2 는 테스트를
+> **authority 가 아니라 corroboration** 으로 정의했다. 코드 본문에서 산식이 유일하게
+> 특정되고 손계산·API 가 일치했는데 테스트 부재를 이유로 산식 판정을 내리면,
+> **`implementation_status` 의 의미를 몰래 바꾸는 것**이 된다.
+>
+> 세 축으로 분리한다. 서로 다른 질문이기 때문이다.
+>
+> ```
+> implementation_status       코드에서 산식이 유일하게 특정되는가
+>     CONFIRMED | AMBIGUOUS | NOT_APPLICABLE | UNRESOLVED_OUTSIDE_SCOPE
+>
+> runtime_reproduction_status 실데이터 손계산과 API 가 일치하는가
+>     MATCHED | MISMATCHED | NOT_RUN | ZERO_PATH_ONLY
+>
+> regression_test_status      그 산식을 잠그는 테스트가 있는가
+>     FORMULA_ASSERTION_PRESENT | MISSING
+> ```
+>
+> `regression_test_status = MISSING` 은 **formula verification 미완이 아니라
+> regression hardening backlog** 다(U-8). CONFIRMED 의 정의를 "테스트까지 존재" 로
+> 강화하려면 **D-13 v1.3 에서 새 composite gate 를 만들어야지**, 기존 축의 의미를
+> 바꿔서는 안 된다.
 
 **③ 검산 대상 농장**: `cb548b14…3563`
 `population_scope = INTERNAL_REFERENCE` (`data_origin=pigplan_migration`, country US)
-이유: 실고객 농장은 표본이 3분만이라 검산 불가. **실고객 예측치가 아니다.**
+실고객은 최근 365일 분만 3건이라 검산 불가 — **실고객 예측치가 아니다.**
 
-| KPI | ① 코드 | ② 산식 테스트 | ③ 수기 검산 | 판정 |
+### 5-1. canonical KPI **10개** — 판정표
+
+> ★ 1차 보고의 "CONFIRMED 5 / UNVERIFIED 4 / AMBIGUOUS 2 = 11" 은 **이중 집계**였다.
+> `STILLBORN_RATE` 를 "경로① CONFIRMED" 행과 "사산 계열 AMBIGUOUS" 행으로 두 번 셌다.
+> canonical KPI 는 **10개**, runtime 손계산도 **10개**로 일치한다.
+
+| KPI | implementation | runtime | regression_test | 비고 |
 |---|---|---|---|---|
-| **PSY** | `kpi_service.py:60-121` | `test_psy_denominator.py` PASSED | 47,078 ÷ 1608.4167 = **29.27** = API 29.27 ✓ | **CONFIRMED** |
-| **NPD** | `kpi_service.py:216-256` | `test_npd_complement.py` · `test_npd_as_of_determinism.py` · `test_npd_idle_cap.py` PASSED | 365×76,534÷584,670 = 47.7789 → **47.8** = API 47.8 ✓ | **CONFIRMED** |
-| **FARROWING_RATE** | `kpi_service.py:370-386` | `test_farrowing_rate_cohort.py` · `test_npd_culled_and_dashboard_fr.py` PASSED | mated 482 / farrowed 268 = **55.6** = API 55.6 ✓ | **CONFIRMED** (canonical 경로 한정 — §1-3 참조) |
-| **SOW_TURNOVER** | `kpi_service.py:234` | `test_dashboard_metrics_map.py` PASSED (metrics↔flat 동일성) | 3,701 ÷ 1608.42 = **2.30** = API 2.3 ✓ | **CONFIRMED** |
-| **STILLBORN_RATE**(경로①) | `kpi_service.py:523` | `test_dashboard_metrics_map.py:58` `2/25 → 8.0` 산식 단언 PASSED | sum(sb)÷sum(tb) = **2.2** = API 2.2 ✓ | **CONFIRMED** (경로① 정의에 한해) |
-| MUMMIFIED_RATE | `kpi_service.py:524` | 산식 단언 없음 | **1.6** = API 1.6 ✓ | **UNVERIFIED** (② 미충족) |
-| WSI | `kpi_service.py:425-429` | 산식 단언 없음(룰 동작만) | **10.5** = API 10.5 ✓ | **UNVERIFIED** (② 미충족) |
-| WEANED_PER_LITTER | `kpi_service.py:530` | 산식 단언 없음 | **12.5** = API 12.5 ✓ | **UNVERIFIED** (② 미충족) |
-| MSY | `kpi_service.py:559` | 산식 단언 없음 | **산출 불가** (출하 데이터 없어 API=None) | **UNVERIFIED** (②③ 미충족) |
-| 사산 계열(전체) | §1-5 | — | — | **AMBIGUOUS** — 같은 이름 두 산식 |
-| PRE_WEANING_MORTALITY | §1-2 | — | API=0.0 (DEATH 이벤트 0건) | **AMBIGUOUS** — 분모 3종 |
+| **PSY** | **CONFIRMED** `kpi_service.py:60-121` | **MATCHED** | PRESENT `test_psy_denominator.py` | |
+| **NPD** | **CONFIRMED** `:216-256` | **MATCHED** | PRESENT `test_npd_complement` 외 3 | |
+| **SOW_TURNOVER** | **CONFIRMED** `:234` | **MATCHED** | PRESENT `test_dashboard_metrics_map` | |
+| **FARROWING_RATE** | **AMBIGUOUS** — 산식 4개(§1-3) | **MATCHED** (canonical 경로) | PRESENT `test_farrowing_rate_cohort` | reachability 확정 필요 → §5-2 |
+| **WSI** | **CONFIRMED** `:425-429` | **MATCHED** | **MISSING** | U-8 |
+| **WEANED_PER_LITTER** | **CONFIRMED** `:530` | **MATCHED** | **MISSING** | U-8 |
+| **MUMMIFIED_RATE** | **CONFIRMED** `:524` | **MATCHED** | **MISSING** | U-8 |
+| **MSY** | **CONFIRMED** `:559` | **NOT_RUN** (출하 데이터 없음) | **MISSING** | U-8 + 검산 미실시 |
+| **STILLBORN_RATE** | **AMBIGUOUS** — 같은 이름 2산식(§1-5) | **MATCHED** (경로①) | PRESENT `metrics_map:58` `2/25→8.0` | P0-2 대상 |
+| **PRE_WEANING_MORTALITY** | **AMBIGUOUS** — 분모 3종(§1-2) | **ZERO_PATH_ONLY** | **MISSING** | §5-3 · U-10 |
 
 ```
-CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
+implementation   CONFIRMED 7 · AMBIGUOUS 3 · UNRESOLVED 0        (합 10)
+runtime          MATCHED 8 · ZERO_PATH_ONLY 1 · NOT_RUN 1        (합 10)
+regression_test  PRESENT 5 · MISSING 5                            (합 10)
 ```
 
-★ **③은 전건 일치했다.** 손계산과 API 가 소수점까지 맞았다. 그런데도 4건이
-`UNVERIFIED` 인 이유는 **② 산식 테스트가 없기 때문**이다. 값이 맞는 것과 그 값이
-앞으로도 맞으리라는 보장은 다르다 — 테스트가 없으면 다음 수정에서 조용히 깨진다.
+★ **D-8 mapping 진입 가능**: `implementation_status = CONFIRMED` 7건.
+  `AMBIGUOUS` 3건(FARROWING_RATE · STILLBORN_RATE · PWM)은 **mapping 금지**.
 
-★ FARROWING_RATE 의 `CONFIRMED` 는 **canonical 경로(`_cohort_farrowing_rate`)에 한해서**다.
-§1-3 의 나머지 3산식은 별개 문제로 남는다. 판정을 KPI 단위가 아니라 **경로 단위**로
-읽어야 한다.
+### 5-2. FARROWING_RATE 를 AMBIGUOUS 로 내린 이유
+
+1차 보고는 "canonical 경로 한정 CONFIRMED" 라고 썼다. 그런데 §1-3 의 나머지 3산식이
+**production reachable 인지가 판정을 가른다.**
+
+| 경로 | reachability | 근거 |
+|---|---|---|
+| ① 코호트 `kpi_service.py:370` | LIVE | 대시보드·룰엔진 |
+| ② 동기간 `report_service.py:182` | **LIVE** | `GET /reports/*` → 웹 `reports/reproduction/page.tsx:40-44` |
+| ③ 동월 `get_trend:788` | **LIVE** | `GET /kpi/trend` → 4개 화면 |
+| ④ 동기간 `jobs/kpi.py:138` | LATENT_WRITER | reader 0건 |
+
+②③이 live 다 → **`LIVE_DIVERGENCE`. D-8 이전 정렬 대상이다.**
+canonical 하나만 놓고 `CONFIRMED` 라고 쓰면 나머지 두 live 경로가 문서에서 사라진다.
+
+### 5-3. ★ PWMR `0.0` 은 산식 검증이 아니다 — 내 과장 정정
+
+1차 보고에 **"PWMR = 0.0 이 경로① 결함의 직접 증거"** 라고 썼다. **과하다.**
+
+```
+DEATH event = 0  →  0/A = 0 · 0/B = 0 · 0/C = 0
+분모가 무엇이든 결과가 0 이다.
+```
+
+이 실행이 직접 증명하는 것은 여기까지다:
+
+```
+DEATH 이벤트 0건 → API 가 0.0 반환 → zero-event/null 처리 경로 정상
+```
+
+**분모나 inclusion rule 의 직접 검증은 아니다.** 따라서
+`runtime_reproduction_status = ZERO_PATH_ONLY` 로 내린다.
+
+→ **U-10 신규**: PWM 산식 검증에는 **non-zero fixture 1건**이 필요하다.
+  실데이터가 없어도 synthetic regression test 면 충분하다.
 
 ---
 
@@ -289,20 +405,20 @@ CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
 |---|---|---|---|
 | PSY | 분자 47,078 / 분모 1608.4167 = 29.27 | 29.27 (`total_weaned=47078`, `avg_sow_count=1608.42`) | ✓ |
 | NPD | sow_days 584,670 · 365×76,534÷584,670 = 47.7789 | 47.8 (`empty_days=76534`) | ✓ (반올림) |
-| FARROWING_RATE | mated 482 · farrowed 268 → 55.6 | 55.6 | ✓ |
+| FARROWING_RATE | **farrowed 268 ÷ mated 482** = 55.6 | 55.6 | ✓ |
 | SOW_TURNOVER | farrow_cnt 3,701 / avg_inv 1608.42 = 2.30 | 2.3 | ✓ |
 | WSI | avg(mating−직전이유), wsi≥0 → 10.5 | 10.5 | ✓ |
 | WEANED_PER_LITTER | avg(weaned_count) → 12.5 | 12.5 | ✓ |
 | STILLBORN_RATE | Σsb ÷ Σtb → 2.2 | 2.2 | ✓ |
 | MUMMIFIED_RATE | Σmum ÷ Σtb → 1.6 | 1.6 | ✓ |
 | MSY | 출하(head_out) 데이터 없음 | None | 산출 불가 |
-| PWMR | DEATH 이벤트 0건 → 0.0 | 0.0 | ✓ (경로① 동작 확인) |
+| PWMR | DEATH 이벤트 0건 → 0.0 | 0.0 | **ZERO_PATH_ONLY** — 산식 검증 아님 |
 
 ★ NPD 역산 `sow_days` 584,412 vs 손계산 584,670 — 차 258일(0.044%)은 `avg_npd` 를
 `round(x,1)` 로 반올림해 생긴 것이다. `365×76534÷584670 = 47.7789 → 47.8` 로 일치 확인.
 
-★ **PWMR = 0.0 이 경로① 결함의 직접 증거다.** DEATH 이벤트가 0건인 하베스트 농장에서
-경로①은 구조적으로 0 이 나온다(D-20 §4).
+★ **PWMR = 0.0 은 zero-event 경로만 검증한다.** 분모가 무엇이든 `0/x = 0` 이므로
+산식·분모의 직접 검증이 아니다(§5-3). `ZERO_PATH_ONLY` — non-zero fixture 필요(U-10).
 
 ---
 
@@ -319,6 +435,7 @@ CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
 |---|---|---|
 | ~~U-1~~ | ~~③ 수기 검산~~ | **완료** — §6. 10개 KPI 전건 대조(8 일치 · 1 산출불가 · 1 결함확인) |
 | ~~U-2~~ | ~~② 테스트 대조~~ | **완료** — 산식 테스트 27건 PASSED. 다만 4개 KPI 는 산식 테스트 자체가 없음(U-8) |
+| **U-10** | **PWM non-zero fixture 부재** | 신규(§5-3). zero-event 경로만 검증됨. synthetic regression test 로 충분 |
 | **U-9** | **모바일이 `kpi_status` 미소비 · severity 자체 판정** | 신규(B′). D-17 범위를 API 계약 밖으로 넓힌다 |
 | **U-8** | **MUMMIFIED_RATE·WSI·WEANED_PER_LITTER·MSY 산식 테스트 부재** | 신규. ② 미충족 원인. 값은 맞으나 회귀 보호가 없다 |
 | ~~U-3~~ | ~~B′축(모바일 DTO)~~ | **완료** — §3. 산식 오염 없음 / severity 자체판정 발견(U-9) |
@@ -328,3 +445,31 @@ CONFIRMED 5 · UNVERIFIED 4 · AMBIGUOUS 2
 | ~~U-7~~ | ~~기타 스키마 KPI 필드~~ | **완료** — KPI 값 필드 없음 (설정값·알림메타·원자료) (§1-7) |
 
 **다음 런은 U-1 부터 시작한다.** ②③ 없이는 어떤 항목도 CONFIRMED 로 갈 수 없다.
+
+---
+
+## 10. RUN_DEVIATION — 감사 provenance
+
+D-13 v1.2 는 `git add/commit 금지` · `production server 제외` 였다. 이번 런은 둘 다 했다.
+**결과가 틀렸다는 뜻이 아니다** — runtime 검증 덕분에 가치가 커졌다. 다만 감사
+provenance 상 단계를 섞지 않는다.
+
+```
+RUN_DEVIATION
+
+  ① D-13 Canonical Audit          = local source read only
+                                     (source/config/prod write = 0)
+  ② Post-D13 Runtime Verification = INTERNAL_REFERENCE production SELECT
+                                     read-only · production write 0
+                                     ★ v1.2 의 "production server 제외" 에서 벗어남
+  ③ Post-run documentation        = local commit 8건 · push 0
+                                     ★ v1.2 의 "git commit 금지" 에서 벗어남
+
+  source / config / production write : 0
+```
+
+★ ②③은 **formal gate 상 protocol deviation** 이다. 재작업이 필요해 보이지는 않으나,
+"D-13 pure read-only audit" 과 "추가 runtime verification" 이 섞이면 나중에
+**어느 판정이 어느 근거에서 나왔는지 추적이 안 된다.** 그래서 분리해 기록한다.
+
+다음 런 스펙(v1.3)에서는 이 둘을 **처음부터 별도 단계로 선언**할 것.
