@@ -5,7 +5,22 @@
 > 모바일 저장소 문서는 build·signing·store release·platform-specific architecture ·
 > offline 구현 세부 · native dependency · push 설정 등 **플랫폼 고유사항만** 다룬다.
 >
-> 이전 이름: `docs/MOBILE_PARITY.md` (2026-08-28 `git mv`. history 승계)
+> **Renamed from `docs/MOBILE_PARITY.md` at `4ff8a30`.**
+> Pre-rename history: `git log docs/MOBILE_PARITY.md`
+>
+> `git log --follow docs/PLATFORM_PARITY.md` 는 이 연결을 자동으로 잇지 못한다.
+> rename 과 대규모 내용 수정이 **같은 commit** 에 들어가 Git rename heuristic 의
+> 유사도 임계 아래로 떨어졌기 때문이다. **pre-rename commit 은 전부 보존돼 있고**
+> 위 명령으로 조회된다. history rewrite 는 하지 않는다.
+
+### 규율 — 문서 rename 은 commit 을 분리한다
+
+```
+1. rename-only commit      (git mv 만. 내용 변경 0)
+2. content-change commit   (내용 수정)
+```
+
+한 commit 에 섞으면 `--follow` 가 끊긴다. 이 문서가 그 사례다.
 
 ```
 STEP 0 완료   2026-08-28
@@ -196,7 +211,16 @@ audit_finding = NO_LOCAL_FORMULA_FOUND     (양 플랫폼)
 
 | | 상태 | 근거 |
 |---|---|---|
-| **Android** | IN_PROGRESS | `DashboardScreen.kt:131` `data.benchmarks?.let{}` · `:241` `null → TextMuted` = **fail-closed** ✓. 로컬 상수 fallback 미발견. implementation SHA 없어 DONE 아님 |
+| **Android** | IN_PROGRESS | `DashboardScreen.kt:131` `data.benchmarks?.let{}` · `:241` `null → TextMuted`. 로컬 상수 fallback 미발견. implementation SHA 없어 DONE 아님 |
+
+```
+Android safety_behavior   = FAIL_CLOSED_BY_COINCIDENCE
+Android contract_compliance = NO
+```
+
+★ Android 가 무채색을 내는 것은 결과적으로 fail-closed 이지만, 서버 `kpi_status=insufficient` 를
+  **소비한 결과가 아니다.** benchmark 가 null 이라서 그런 것이다. benchmark 가 채워지면
+  서버가 `insufficient` 를 내더라도 `meetsAvg` 가 다시 판정을 만든다(§3-3). **contract 준수 아니다.**
 | **iOS** | **BLOCKED** | `benchmarks` 모델은 존재하나 alert 부재를 초록으로 표현 = **fail-OPEN** |
 
 ★ **두 플랫폼이 같은 입력에 다른 의미를 낸다** — §1 의 `PRESENTATION_PARITY_RISK` 실체.
@@ -307,6 +331,19 @@ HEADER_TRANSMISSION → SERVER_OBSERVABILITY → LEGACY_FAIL_CLOSED
 
 ★ 이번 STEP 0 에서 테스트를 억지로 실행하지 않았다. **수단 존재 여부만 확인했다.**
 
+### 6-1. `ANDROID_RELEASE_ARTIFACT_RETENTION` — OPEN ISSUE
+
+```
+platform_implementation_status = NOT_IMPLEMENTED
+current_build_capability       = AVAILABLE      (assembleDebug 가능)
+artifact_retention             = NONE           (APK/AAB 업로드 없음. test report 만)
+```
+
+**권고**: 향후 버전별 APK/AAB artifact 를 저장하여 legacy-client regression test
+자산을 축적한다. 지금 저장을 시작하지 않으면 **다음 버전부터도 과거 build 가 없다.**
+
+★ 이번 STEP 에서 **CI 수정 금지.** 기록만 한다.
+
 → 구버전이 새 국가 API 거부에 어떻게 반응하는지 **검증할 수단이 현재 없다.**
    `COUNTRY_ROLLOUT_BLOCKER` 후보로 등록한다.
 
@@ -315,10 +352,32 @@ HEADER_TRANSMISSION → SERVER_OBSERVABILITY → LEGACY_FAIL_CLOSED
 ## 7. `IOS_RELEASE_CAPABILITY`
 
 ```
-로컬 빌드    UNAVAILABLE   현재 머신이 Windows(MINGW64). macOS/Xcode 없음
-CI 빌드·테스트 AVAILABLE     .github/workflows/ci.yml — runs-on: macos-15
-                            XcodeGen · SwiftLint · xcodebuild test (시뮬레이터)
-archive/sign/distribute ABSENT  ci.yml 에 archive·TestFlight·fastlane 단계 없음
+IOS_RELEASE_CAPABILITY = CI_EXTENSION_REQUIRED
+```
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| CI macOS runner | **AVAILABLE** | `.github/workflows/ci.yml` — `runs-on: macos-15` |
+| XcodeGen | **AVAILABLE** | 커밋된 `.xcodeproj` 없음. CI 가 생성 |
+| `xcodebuild test` | **AVAILABLE** | 시뮬레이터 빌드·테스트 통과 경로 존재 |
+| `xcodebuild archive` | **NOT_IMPLEMENTED** | ci.yml 에 단계 없음 |
+| code signing | **NOT_IMPLEMENTED** | 〃 |
+| TestFlight / distribute | **NOT_IMPLEMENTED** | fastlane·App Store Connect 단계 없음 |
+| 로컬 빌드 | UNAVAILABLE | 현재 머신이 Windows(MINGW64). macOS/Xcode 없음 |
+
+★ **`iOS build infrastructure unavailable` 이라고 일반화하지 않는다.**
+  빌드·테스트 인프라는 **있다.** 없는 것은 **배포 파이프라인** 이고, 이는 기존 CI 를
+  확장하면 되는 문제다 — 새 인프라 조달이 아니다.
+
+**향후 확인 대상** (이번 STEP 구현 금지):
+
+```
+xcodebuild archive
+code signing
+provisioning profile
+App Store Connect credentials / API key
+export (ExportOptions.plist)
+TestFlight / App Store distribution
 ```
 
 `country_rollout_impact`:
@@ -347,18 +406,47 @@ iOS        제품 계측 0건                        BLOCKED
 
 ---
 
-## 9. `OPEN_BLOCKERS`
+## 9. `P0_CORRECTNESS_BLOCKERS` — parity 미구현이 아니라 **현재 결함**
+
+> ★ 아래는 "아직 안 만든 것" 이 아니라 **지금 사용자에게 잘못된 판단을 표시하는 것** 이다.
+> `OPEN_BLOCKERS`(§9-1) 와 분리한다. 우선순위가 다르기 때문이다.
+
+### P0-1. iOS `insufficient` / no-judgment → `success`(초록)
+
+```
+Backend
+  KpiStatus.status = insufficient        데이터 불충분 / 판정 불가
+
+iOS
+  DashboardScreen.swift:241-246
+  alert 없음 → AppColor.success          정상 / 초록
+```
+
+**서버의 "판정 불가" 를 클라이언트가 "정상" 으로 뒤집는다.**
+
+```
+platform_implementation_status = BLOCKED
+risk                           = SERVER_DECISION_OVERRIDE
+class                          = CORRECTNESS_DEFECT   (parity gap 아님)
+```
+
+이는 제품 선택이 아니라 결함이므로 **결재 대상이 아니다.** 서버는 이미
+`insufficient` 를 갖고 있으므로(§4) 신규 상태 설계 없이 소비하면 된다.
+
+---
+
+## 9-1. `OPEN_BLOCKERS`
 
 | # | blocker | 영향 |
 |---|---|---|
 | B-1 | 양 플랫폼 `/kpi/presentation` 미소비 | 국가를 데이터로 켜도 모바일 미반영 |
 | B-2 | 양 플랫폼 `kpi_status` 미소비 + 자체 판정 | 서버 G3 강제가 모바일에서 무력화 |
-| B-3 | iOS `판정 없음 → 초록` (FAIL-OPEN) | 판정 불가를 정상으로 표시 |
-| B-4 | Android `benchmark → severity` 변환 | 벤치마크가 판정 권한을 가짐 |
+| B-3 | **→ P0-1 로 승격.** iOS FAIL-OPEN | (§9 참조) |
+| B-4 | Android `benchmark → severity` 변환 | 벤치마크가 판정 권한을 가짐. `contract_compliance = NO` (§3-5) |
 | B-5 | 3표면 모두 per-request 앱버전 헤더 없음 | `min_supported_version` 게이트 불가 |
 | B-6 | 양 플랫폼 force-update 없음 | 구버전 차단 불가 (§5 순서 필요) |
-| B-7 | 구버전 테스트 수단 없음 | rollout 안전성 검증 불가 |
-| B-8 | iOS distribute 경로 없음 | iOS required 국가의 rollout prerequisite |
+| B-7 | 구버전 테스트 수단 없음 | rollout 안전성 검증 불가. `ANDROID_RELEASE_ARTIFACT_RETENTION`(§6-1) 이 선행 |
+| B-8 | iOS distribute 경로 없음 → **`CI_EXTENSION_REQUIRED`**(§7) | iOS required 국가의 rollout prerequisite. 인프라 부재가 아니라 CI 확장 |
 | B-9 | 3표면 모두 제품 계측 없음 | baseline 수집 불가 |
 
 ---
@@ -386,3 +474,4 @@ STEP 5   CI + Release Gate + App Version Gate
 |---|---|
 | 2026-08-27 | `MOBILE_PARITY.md` 신설 |
 | 2026-08-28 | `PLATFORM_PARITY.md` 로 `git mv`. STEP 0 — 기존 6행 evidence 재판정(DONE 2 → IN_PROGRESS, `done_with_sha=0`) · Track B 실측 고정 · `BACKEND_NO_JUDGMENT_STATE=PRESENT` 확인 · blocker 9건 등록 |
+| 2026-08-28 | STEP 1 착수 전 docs-only 보완 3건 — ① rename provenance + rename commit 분리 규율 ② B-3 → `P0-1` correctness blocker 승격 · Android `FAIL_CLOSED_BY_COINCIDENCE` 명기 ③ B-8 → `CI_EXTENSION_REQUIRED` 재분류 · `ANDROID_RELEASE_ARTIFACT_RETENTION` OPEN ISSUE 등록 |
