@@ -475,17 +475,88 @@ class                          = CORRECTNESS_DEFECT   (parity gap 아님)
 | B-1 | 양 플랫폼 `/kpi/presentation` 미소비 | 국가를 데이터로 켜도 모바일 미반영 |
 | B-2 | 양 플랫폼 `kpi_status` 미소비 + 자체 판정 | 서버 G3 강제가 모바일에서 무력화 |
 | B-3 | **→ P0-1 로 승격.** iOS FAIL-OPEN | (§9 참조) |
-| B-4 | Android `benchmark → severity` 변환 | 벤치마크가 판정 권한을 가짐. `contract_compliance = NO` (§3-5) |
+| B-4 | ~~Android `benchmark → severity` 변환~~ → **해소** `5ed3dd7` (§9-2) | — |
 | B-5 | 3표면 모두 per-request 앱버전 헤더 없음 | `min_supported_version` 게이트 불가 |
 | B-6 | 양 플랫폼 force-update 없음 | 구버전 차단 불가 (§5 순서 필요) |
 | B-7 | 구버전 테스트 수단 없음 | rollout 안전성 검증 불가. `ANDROID_RELEASE_ARTIFACT_RETENTION`(§6-1) 이 선행 |
 | B-8 | iOS distribute 경로 없음 → **`CI_EXTENSION_REQUIRED`**(§7) | iOS required 국가의 rollout prerequisite. 인프라 부재가 아니라 CI 확장 |
 | B-9 | 3표면 모두 제품 계측 없음 | baseline 수집 불가 |
 | **B-10** | `WEB_LOCAL_STATUS_FALLBACK` (§3-3) | DORMANT. 발동 시 한국 임계가 타국에 적용 |
-| **B-11** | `SNAPSHOT_PIPELINE_CORRECTNESS` | `kpi_snapshots` 0행. 2026-05-29 이래 한 번도 동작한 적 없음. 스냅샷 의존 기능 전부가 선행 조건 |
-| **B-12** | `ARQ_FALSE_SUCCESS_OBSERVABILITY` | 71농장 전건 실패가 scheduler 에서 성공으로 보임. weekly/monthly 는 errors 를 세지도 않는다 |
+| **B-11** | `SNAPSHOT_PIPELINE_CORRECTNESS` — **부분 해소** `2e372b1` | 크래시는 고쳤으나 `psy`·`farrowing_rate` 는 산식 미확정으로 여전히 보류. 배포 전까지 프로덕션 0행 유지 |
+| **B-12** | ~~`ARQ_FALSE_SUCCESS_OBSERVABILITY`~~ → **해소** `2e372b1` (로컬. 미배포) | 배포 전까지 프로덕션은 그대로 |
 | **B-13** | `ALERT_DECISION_REPRODUCIBILITY` | 고객 대면 알림 468건에 threshold · authority · formula version 미저장 |
 | **B-14** | `UNAUDITED_AUTHORITY_CONFIG_CHANGE` | `use_governance_benchmarks` 는 GLOBAL scope 인데 변경 기록이 남는 곳이 없다 |
+
+---
+
+## 9-2. ★ 구현 evidence 등록 (2026-08-28 야간)
+
+> `DONE` 은 implementation commit SHA 필수(§0-4). 2-phase 규율대로
+> **구현 commit 이 먼저 만들어진 뒤 이 evidence 를 별도 commit 으로 기록**한다.
+> 자기 commit SHA 를 같은 commit 에 기록하지 않는다.
+
+### 9-2-1. 구현 commit
+
+| 대상 | repo | commit | 내용 |
+|---|---|---|---|
+| Core | PigOS | `2e372b1` | ARQ false-success 제거 · snapshot supported-field contract |
+| Core | PigOS | `c3a46cc` | client version 수신·관측 미들웨어 |
+| Web | PigOS | `fdd9ca5` | local threshold fallback → `insufficient` fail-closed |
+| Web | PigOS | `c3a46cc` | platform/app version 헤더 송출 |
+| Android | pigos-android | `5ed3dd7` | `kpi_status` 소비 · benchmark→severity 제거 · version 헤더 · APK 보관 |
+| iOS | pigos-ios | `c516e2d` | `kpi_status` 소비 · `insufficient` FAIL-OPEN 제거 |
+| iOS | pigos-ios | `8ecfdfe` | platform/app version 헤더 송출 |
+| iOS | pigos-ios | `1d303bc` | unsigned archive validation job |
+
+브랜치: 모바일 두 repo 는 `fix/kpi-status-consumption` (main 병합 안 함).
+
+### 9-2-2. 셀 재판정
+
+| 항목 | Core/Web | Android | iOS |
+|---|---|---|---|
+| `KPI_STATUS_CONSUMPTION` | **DONE** `fdd9ca5` | **DONE** `5ed3dd7` | **IN_PROGRESS** `c516e2d` — §9-2-3 |
+| `LOCAL_SEVERITY_REMOVAL` | **DONE** `fdd9ca5` | **DONE** `5ed3dd7` | **IN_PROGRESS** `c516e2d` |
+| `APP_VERSION_REQUEST_REPORTING` | **IN_PROGRESS** `c3a46cc` | **IN_PROGRESS** `5ed3dd7` | **IN_PROGRESS** `8ecfdfe` |
+| `COUNTRY_KPI_PRESENTATION` | DONE(기존) | **BLOCKED** 변화 없음 | **BLOCKED** 변화 없음 |
+| `FORCE_UPDATE / LEGACY_CONTROL` | BLOCKED | BLOCKED | BLOCKED |
+| `PRODUCT_INSTRUMENTATION` | BLOCKED | BLOCKED | BLOCKED |
+
+`APP_VERSION_REQUEST_REPORTING` 이 `DONE` 이 아닌 이유: 송출·관측까지만 했고
+`min_supported_version` 게이트는 의도적으로 켜지 않았다(§12-1 순서). 계약 미완성이다.
+
+### 9-2-3. ★ verification 상태 — 거짓 DONE 을 만들지 않는다
+
+| 대상 | 검증 수단 | 결과 |
+|---|---|---|
+| Core | `pytest tests/unit` 721 passed · `ruff` clean | **VERIFIED** |
+| Web | `tsc --noEmit` clean | **PARTIAL** — 아래 |
+| Android | `:app:compileDebugKotlin` + `:app:testDebugUnitTest` BUILD SUCCESSFUL (로컬 실행) | **VERIFIED** |
+| iOS | 로컬 빌드 불가(Windows). CI `workflow_dispatch` 로 macos-15 실행 | `runtime_verification_status = NOT_RUNTIME_VERIFIED` |
+
+★ **Web 이 PARTIAL 인 이유 — 환경 blocker**
+
+```
+vitest 실행 불가
+원인  Node v20.11.1 < 20.12.
+      vitest → rolldown 이 node:util 의 styleText 를 import 하는데
+      20.11 에는 없다 → SyntaxError: does not provide an export named 'styleText'
+```
+
+★ 이전 세션에 *"vitest 가 워커를 못 띄운다"* 로 기록했던 것은 **원인 오진**이었다.
+  워커 문제가 아니라 **Node 버전 문제**다. `Node >= 20.12` 로 올리면 해소된다.
+
+  → 테스트 코드는 작성·커밋됐으나 **이 머신에서 실행되지 않았다.**
+    `regression_test_status = PRESENT_BUT_NOT_EXECUTED`
+
+★ iOS 는 `NOT_RUNTIME_VERIFIED` 를 유지한다. 컴파일이 통과해도
+  **시뮬레이터에서 실제 화면이 무채색으로 그려지는지는 확인하지 않았다.**
+  거짓 DONE 을 만들지 않는다.
+
+### 9-2-4. stale evidence 규율
+
+evidence path 가 위 SHA 이후 변경되면 `DONE → PENDING_RECHECK` 후보다.
+특히 `src/lib/kpi/statusObservation.ts` · `DashboardScreen.kt` ·
+`DashboardScreen.swift` 세 파일은 판정 경로의 중심이라 변경 시 재확인이 필요하다.
 
 ---
 
@@ -512,5 +583,6 @@ STEP 5   CI + Release Gate + App Version Gate
 |---|---|
 | 2026-08-27 | `MOBILE_PARITY.md` 신설 |
 | 2026-08-28 | `PLATFORM_PARITY.md` 로 `git mv`. STEP 0 — 기존 6행 evidence 재판정(DONE 2 → IN_PROGRESS, `done_with_sha=0`) · Track B 실측 고정 · `BACKEND_NO_JUDGMENT_STATE=PRESENT` 확인 · blocker 9건 등록 |
+| 2026-08-28 | 야간 remediation evidence 등록(§9-2) — Core/Web/Android/iOS 8개 구현 commit. B-4·B-10·B-12 해소, B-11 부분 해소. iOS 는 NOT_RUNTIME_VERIFIED 유지, Web 은 vitest 환경 blocker 로 PRESENT_BUT_NOT_EXECUTED |
 | 2026-08-28 | ★ Web 행 정정 — `NOT_APPLICABLE` → `BLOCKED / WEB_LOCAL_STATUS_FALLBACK` (D-19 N-7). ACTIVE(모바일) vs DORMANT(웹) 분리. blocker B-10~B-14 등록 |
 | 2026-08-28 | STEP 1 착수 전 docs-only 보완 3건 — ① rename provenance + rename commit 분리 규율 ② B-3 → `P0-1` correctness blocker 승격 · Android `FAIL_CLOSED_BY_COINCIDENCE` 명기 ③ B-8 → `CI_EXTENSION_REQUIRED` 재분류 · `ANDROID_RELEASE_ARTIFACT_RETENTION` OPEN ISSUE 등록 |
