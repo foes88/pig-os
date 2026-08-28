@@ -95,13 +95,54 @@ PigOS canonical
 | MetaFarms `PWMFY` (Pigs Weaned per **Mated Female** per Year) | 26.51 / 27.27 · 2020–2024 | 분모가 **mated female** 이다. 우리는 **경산돈 재고 평균**이다. `mated female` 은 교배된 후보돈을 포함할 수 있어 **모집단이 다르다** |
 
 ```
-formula_mapping_status        UNKNOWN
-                              ← 양쪽 다 분모 정의 원문 미확보. 값만으로는 판정 불가
+formula_mapping_status        NOT_EQUIVALENT  [UNVERIFIED — 2차 인용 근거]
+                              ← §2-1-A probe. 모집단(경산돈 vs mated female)과
+                                적분 방식(월초 스냅샷 vs 일 단위)이 둘 다 다르다
 performance_direction_status  UNKNOWN  (NONE_IN_FORMULA_LAYER)
 ```
 
-★ **MetaFarms 는 `NOT_EQUIVALENT` 로 기울지만 확정하지 않는다.** "mated female" 의
-정확한 모집단 정의를 원문에서 확인해야 한다 → **D-15 의 최우선 항목**.
+★ 원문(PigCHAMP 자사 문서) 확보 시 `[UNVERIFIED]` 를 뗀다 → **D-15 최우선 항목**.
+
+
+### 2-1-A. ★ PROBE 결과 (2026-08-28) — PSY 가 `UNKNOWN` 에서 움직였다
+
+결재 전 30분 probe: **"PigCHAMP 이 산식 정의를 공개하는가?"**
+
+**답은 Y/N 이 아니었다. 질문이 틀렸다.**
+
+```
+확보된 것 (2차 인용)
+  PigCHAMP AMFI (Average Mated Female Inventory)
+    = Σ(mated female days in period) ÷ (days in period)     [PigCHAMP, 1996]
+  출처: 논문이 PigCHAMP 1996 을 인용. PigCHAMP 자사 문서 원문 아님  [UNVERIFIED]
+```
+
+**우리 것과 대조:**
+
+| | PigOS `PSY_ROLLING12M v1` | PigCHAMP AMFI |
+|---|---|---|
+| 표본 방식 | **월초 12개 스냅샷의 평균** | **일 단위 누적 ÷ 기간일수** (day-weighted) |
+| 모집단 | `parity >= 1` — **경산돈** | `mated female` — **교배된 암컷** (교배된 후보돈 포함) |
+
+→ **`NOT_EQUIVALENT`** 다. 모집단과 적분 방식이 둘 다 다르다.
+   (근거가 2차 인용이라 `[UNVERIFIED]` 태그를 유지한다 — 원문 확보 시 확정)
+
+#### ★★ 그런데 더 중요한 것 — 업계 PWMFY 산식이 **하나가 아니다**
+
+```
+① NPPC        (pigs weaned ÷ days × 365) ÷ (total mated sow days ÷ days)
+② 구성요소식   (litters/mated female/year) × (pigs weaned/female farrowed)
+③ 140일 지연   (pigs weaned ÷ days × 365) ÷ (avg mated female inventory 140 days ago)
+```
+
+그리고 **"gilt development days 를 분모에 포함하느냐"가 값을 바꾸는 주요 변수**다
+— 포함하면 PSY 가 낮게 나온다.
+
+→ **D-5 의 질문이 바뀐다.** "발주처를 어디로 할까" 가 아니라
+   **"우리 PSY 를 어느 외부 산식에 맞출 것인가"** 다.
+   외부 산식을 조달해도 **"그래서 어느 것?"** 이 남는다. 이건 조달이 아니라 **제품 결정**이다.
+
+★ 이 probe 를 안 했으면, 조달만 하면 풀린다는 전제로 예산을 승인받았을 것이다.
 
 ### 2-2. `NPD_COMPLEMENT_SOWYEAR v1`
 
@@ -203,7 +244,9 @@ performance_direction_status  UNKNOWN
 ```
 
 ★ **`APPROVED_TRANSFORM` 후보로 승격 가능한가?**
-`0.50 ÷ 15.84 = 3.16%` 로 산술 변환은 가능하다. 그러나:
+`0.50 ÷ 15.84 = 3.16%` **[DERIVED_NOT_SOURCE_CLAIM]** 로 산술 변환은 가능하다.
+★ 이 숫자는 **PigCHAMP 이 주장한 값이 아니라 우리가 만든 파생값**이다. 몇 주 뒤
+  인용될 것이므로 태그 없이 문서에 두지 않는다. 그러나:
 
 ```
 · 그 값은 PigCHAMP 이 주장한 것이 아니라 우리가 만든 파생값이다
@@ -273,8 +316,9 @@ PigCHAMP / MetaFarms "Pre-weaning mortality" 에 자동 매핑 금지
 
 ```
 CONFIRMED 7건
-  NOT_EQUIVALENT              1   MUMMIFIED_RATE (measure_kind RATE ↔ COUNT)
-  UNKNOWN                     6   외부 FORMULA claim 부재
+  NOT_EQUIVALENT              2   MUMMIFIED_RATE (RATE ↔ COUNT)
+                                  PSY (모집단·적분방식 상이) [UNVERIFIED, 2차인용]
+  UNKNOWN                     5   NPD·SOW_TURNOVER·WSI·WEANED_PER_LITTER·MSY
   EXACT / STRUCTURAL_EQUIV    0
   APPROVED_TRANSFORM 승인     0   (후보 1: MUMMIFIED_RATE, 동반 필드 미충족)
 
