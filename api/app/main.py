@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
 from app.addons import AddonRegistry
-from app.core import cache
+from app.core import cache, client_version
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.db import keepalive
@@ -108,6 +108,20 @@ async def _invalidate_farm_cache(request: Request, call_next):
         if m:
             await cache.invalidate_farm(m.group(1))
     return response
+
+
+# ── 클라이언트 버전 관측 ──────────────────────────────────────────────────────
+# ★ 관측만 한다. 차단·분기·거부를 하지 않는다.
+#   지금 세 surface 중 헤더를 보내는 곳이 하나도 없다(2026-08-28 실측).
+#   여기서 fail-closed 를 켜면 정상 클라이언트가 전부 막힌다.
+#   활성화 순서: Web→Android→iOS 송출 → 서버 관측 확인 → 그 다음에야 강제.
+#   상세: app/core/client_version.py · HANDOFF §12-1
+
+
+@app.middleware("http")
+async def _observe_client_version(request: Request, call_next):
+    request.state.client_version = client_version.parse(request.headers)
+    return await call_next(request)
 
 
 # ── Exception handlers ────────────────────────────────────────────────────────
