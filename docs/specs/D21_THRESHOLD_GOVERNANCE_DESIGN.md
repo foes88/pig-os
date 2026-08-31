@@ -319,17 +319,35 @@ validation
 §6-1 대로 5개 대표 지표 중 3개가 AMBIGUOUS 다. `formula_id` 컬럼을 만들어도
 채울 값이 PSY·NPD 둘뿐이다. **P0-2 와 PWM code alignment 가 선행이다.**
 
-### 9-3. 무엇이 풀리면 구현하는가
+### 9-3. ★ Persistence GO trigger (2026-08-31 확정)
+
+세 조건이 **전부** 충족되면 그날 구현 단계로 넘긴다. 하나라도 비면 대기한다.
 
 ```
-[ ] P0-2 결재 — 사산 산식 A/B + 기준값
+① P0-2 canonical 확정
+     D-2026-001 이 APPROVED  (현재 PROPOSED — 사산 = (stillborn+mummified)/total_born)
+   +
+② threshold approver / path 확정
+     D-2026-002 가 APPROVED  (현재 PROPOSED — Decision Register 를 승인 SSOT 로)
+     ★ actor ID 체계가 정해져야 approved_by 를 쓸 수 있다
+   +
+③ formula CONFIRMED 재실사
+     code alignment → regression → D-13 재실사 → formula_status = CONFIRMED
+        ↓
+     D-21 PERSISTENCE GO
+```
+
+승인 기록: `docs/kpi/DECISION_REGISTER.md`
+
+### 9-4. GO 이후에도 남는 개발 선행조건
+
+```
 [ ] PWM code alignment (정책 아님. 버그 수정 트랙)
 [ ] FARROWING_RATE reachability 정리 (live 산식 4개 중 무엇을 canonical 로)
-[ ] 승인 주체·화면 결정 (admin UI? 문서 + 스크립트? 누가 approved_by 인가)
 [ ] DMV 마이그레이션 호환성 계획 (SELECT * 사용처 3곳 확인)
 ```
 
-위 5건 중 **1·4번은 사람 결정**이고 나머지는 개발이다.
+이 셋은 **사람 결정이 아니라 개발**이라 GO trigger 와 분리한다.
 
 ---
 
@@ -424,3 +442,6 @@ D-19 A3 로 authority 가 DMV 였음은 확인됐지만(2026-07-20~), 그것과
 | D-21-h | notification provenance = JSONB, backfill 금지 | D-21-d |
 
 **어느 것도 아직 APPROVED 가 아니다.**
+
+승인이 필요한 항목은 `docs/kpi/DECISION_REGISTER.md` 에 별도 decision 으로 등재한다.
+이 표는 **설계 항목**이고, 그 문서는 **승인 기록**이다. 둘을 섞지 않는다.
