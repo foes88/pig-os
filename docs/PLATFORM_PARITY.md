@@ -482,8 +482,8 @@ class                          = CORRECTNESS_DEFECT   (parity gap 아님)
 | B-8 | iOS distribute 경로 없음 → **`CI_EXTENSION_REQUIRED`**(§7) | iOS required 국가의 rollout prerequisite. 인프라 부재가 아니라 CI 확장 |
 | B-9 | 3표면 모두 제품 계측 없음 | baseline 수집 불가 |
 | **B-10** | `WEB_LOCAL_STATUS_FALLBACK` (§3-3) | DORMANT. 발동 시 한국 임계가 타국에 적용 |
-| **B-11** | `SNAPSHOT_PIPELINE_CORRECTNESS` — **부분 해소** `2e372b1` | 크래시는 고쳤으나 `psy`·`farrowing_rate` 는 산식 미확정으로 여전히 보류. 배포 전까지 프로덕션 0행 유지 |
-| **B-12** | ~~`ARQ_FALSE_SUCCESS_OBSERVABILITY`~~ → **해소** `2e372b1` (로컬. 미배포) | 배포 전까지 프로덕션은 그대로 |
+| **B-11** | `SNAPSHOT_PIPELINE_CORRECTNESS` — **부분 해소 · 배포됨** `2e372b1` | 크래시는 고쳤으나 `psy`·`farrowing_rate` 는 산식 미확정으로 보류. `WRITER_OPERATIONAL` 까지만 인정 — §9-4 |
+| **B-12** | ~~`ARQ_FALSE_SUCCESS_OBSERVABILITY`~~ → **해소 · 프로덕션 배포됨** `2e372b1` (2026-08-31) | §9-4 |
 | **B-13** | `ALERT_DECISION_REPRODUCIBILITY` | 고객 대면 알림 468건에 threshold · authority · formula version 미저장 |
 | **B-14** | `UNAUDITED_AUTHORITY_CONFIG_CHANGE` | `use_governance_benchmarks` 는 GLOBAL scope 인데 변경 기록이 남는 곳이 없다 |
 
@@ -573,6 +573,116 @@ evidence path 가 위 SHA 이후 변경되면 `DONE → PENDING_RECHECK` 후보�
 
 ---
 
+## 9-3. ★ G4 완료 정의 — `COUNTRY_KPI_PRESENTATION` (2026-08-31 확정)
+
+> G4 는 더 이상 "presentation endpoint 를 소비한다" 로 끝나는 작업이 아니다.
+> **구버전 앱이 서버 정책을 다시 뚫지 못하게 하는 것**까지가 완료다.
+
+```
+G4 PASS 조건
+
+Android
+  [ ] /kpi/presentation 소비
+  [ ] 서버 visible/hidden 준수          (프론트 필터 금지 — 서버가 이미 제외했다)
+  [ ] order 준수                        (프론트 재정렬 금지)
+  [ ] local card list 를 business logic source 로 사용 금지
+       ※ 렌더 메타(단위·소수자리·라벨키)는 로컬 유지 가능
+  [ ] benchmark null 정상처리           (비교만 사라지고 값은 남는다)
+
+iOS
+  [ ] 위와 동일 5항목
+
+Old clients
+  [ ] min_supported_version 미만에서 **신규 country presentation 비활성**
+```
+
+### 9-3-1. 왜 old-client 조항이 G4 안에 있는가
+
+새 앱만 고쳐도 **이미 설치된 구버전은 계속 로컬 카드 목록으로 그린다.**
+국가를 데이터로 켜는 순간 구버전은 서버가 숨기라고 한 KPI 를 그대로 보여준다.
+즉 **presentation 정책이 구버전에서 무력화**되고, 이는 G4 를 안 한 것과 같다.
+
+선행: `APP_VERSION_REQUEST_REPORTING` 이 세 surface 에서 송출·관측 확인까지 끝나야
+`min_supported_version` 을 판단할 수 있다(§12-1 순서). **역순 활성화 금지.**
+
+### 9-3-2. 현재 상태
+
+```
+Core/Web   DONE (기존)
+Android    BLOCKED  — 소비 0건
+iOS        BLOCKED  — 소비 0건
+Old client BLOCKED  — version gate 미활성 (송출·관측 단계)
+```
+
+`docs/FEATURE_REGISTRY.md` `PIGOS-F-0001` 과 같은 대상이다.
+
+---
+
+## 9-4. ★ 프로덕션 배포 기록 — `2e372b1` (2026-08-31)
+
+```
+배포 대상    api · worker 만          (web 제외 — 이 커밋에 frontend 변경 없음)
+배포 SHA     2e372b1                  hotfix/arq-observability-20260831
+직전 SHA     7c6dda7                  (서버 api/app 173파일 해시 대조로 실측)
+migration    없음   ·  .env 변경 없음  ·  use_governance_benchmarks 변경 없음
+롤백 자산    ~/pigos/api.bak-predeploy-20260831-095111
+```
+
+### 9-4-1. 배포 검증 — 비파괴만
+
+> ★ 의도적으로 production failure 를 발생시키지 않았다.
+>   순수함수 호출과 상태 조회로만 확인했다.
+
+```
+트리 일치       server api/app 174 파일 == 2e372b1   (diff 0 · git-only 0 · prod-only 0)
+health          200 {"status":"ok","version":"0.1.0"}
+web             미변경 (created 2026-08-26, 재빌드 대상 아님)
+flag            use_governance_benchmarks = False    (불변)
+worker          functions 7 · cron 6 등록됨
+```
+
+**ARQ 실패 semantics** (순수함수 · 프로덕션 데이터 무접촉)
+
+```
+전건 실패  expected=71 success=0  →  JobTotalFailure raise      ✓ 성공 문자열 반환 안 함
+부분 실패  expected=10 success=7  →  "PARTIAL — 7/10, 3 errors" ✓
+정상       expected=5  success=5  →  "OK — 5/5"                  ✓
+except:pass 잔존                   →  0 (log.exception 로 대체)  ✓
+```
+
+**Snapshot supported-field contract**
+
+```
+persisted  active_sow_count · gestating_count · lactating_count
+withheld   psy · farrowing_rate          ← 산식 미확정이라 영속 금지
+```
+
+### 9-4-2. ★ 배포 후에도 유지하는 관계
+
+```
+snapshot writer 작동   ≠   snapshot authority 승인   ≠   snapshot feature ready
+```
+
+```
+kpi_snapshots 배포 직후   0행
+reader                   0건 (KpiSnapshot 참조는 writer 와 model 뿐)  ✓ 전환 없음
+인정 범위                 WRITER_OPERATIONAL 까지.
+                         행이 생겨도 "스냅샷 기능 검증됨" 이 아니다.
+```
+
+### 9-4-3. 자연 발생 확인 일정 (강제 실행 안 함)
+
+```
+배포 시각                    2026-08-31 00:53 UTC
+generate_tasks_job           05:30 UTC 당일 — 신규 코드 첫 자연 실행
+generate_notifications_job   06:00 UTC 당일
+daily/weekly/monthly KPI     2026-09-01 00:05~00:15 UTC
+                             ← WRITER_OPERATIONAL 판정 시점
+baseline                     kpi_snapshots=0 · notifications=577
+```
+
+---
+
 ## 10. 후속 STEP (이번 범위 아님)
 
 ```
@@ -596,6 +706,7 @@ STEP 5   CI + Release Gate + App Version Gate
 |---|---|
 | 2026-08-27 | `MOBILE_PARITY.md` 신설 |
 | 2026-08-28 | `PLATFORM_PARITY.md` 로 `git mv`. STEP 0 — 기존 6행 evidence 재판정(DONE 2 → IN_PROGRESS, `done_with_sha=0`) · Track B 실측 고정 · `BACKEND_NO_JUDGMENT_STATE=PRESENT` 확인 · blocker 9건 등록 |
+| 2026-08-31 | `2e372b1` 프로덕션 배포(api·worker). ARQ false-success 해소 확인(비파괴). B-12 해소 · B-11 부분해소. snapshot 은 WRITER_OPERATIONAL 까지만 인정, reader 전환 없음. G4 완료 정의 고정(§9-3) |
 | 2026-08-28 | 야간 remediation evidence 등록(§9-2) — Core/Web/Android/iOS 8개 구현 commit. B-4·B-10·B-12 해소, B-11 부분 해소. iOS 는 NOT_RUNTIME_VERIFIED 유지, Web 은 vitest 환경 blocker 로 PRESENT_BUT_NOT_EXECUTED |
 | 2026-08-28 | ★ Web 행 정정 — `NOT_APPLICABLE` → `BLOCKED / WEB_LOCAL_STATUS_FALLBACK` (D-19 N-7). ACTIVE(모바일) vs DORMANT(웹) 분리. blocker B-10~B-14 등록 |
 | 2026-08-28 | STEP 1 착수 전 docs-only 보완 3건 — ① rename provenance + rename commit 분리 규율 ② B-3 → `P0-1` correctness blocker 승격 · Android `FAIL_CLOSED_BY_COINCIDENCE` 명기 ③ B-8 → `CI_EXTENSION_REQUIRED` 재분류 · `ANDROID_RELEASE_ARTIFACT_RETENTION` OPEN ISSUE 등록 |
