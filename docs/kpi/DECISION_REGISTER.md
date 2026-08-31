@@ -160,9 +160,44 @@ blocked_by:      [D-2026-001, D-2026-002]
 현행 값(BR 8.20 / KR·US·SYSTEM 8.00, critical 12.00)은 D-19 실측상 전부
 `UNATTRIBUTED` 이며 **자동 승격하지 않는다.**
 
+### ★ 001 이 APPROVED 돼도 003 이 따라 올라가지 않는다
+
+```
+D-2026-001 APPROVED
+      ↓
+   003 은 그대로 DRAFT 다.
+   임계는 **별도 evidence + 별도 approval** 이 필요하다.
+```
+
+산식을 승인했다는 사실은 임계의 근거가 아니다. 오히려 반대다 —
+미라를 포함하면 값이 구조적으로 올라가므로 **기존 임계는 새 산식에 맞지 않을 가능성이 높다.**
+승계가 아니라 재산정 대상이다.
+
 ---
 
-## 부록 — 이 문서와 기존 문서의 관계
+## 부록 A — 결정 간 순서
+
+```
+001 APPROVED
+      ↓
+  code alignment  →  regression  →  D-13 재실사  →  formula CONFIRMED
+
+002 APPROVED
+      ↓
+  approval persistence 구현 가능
+
+001 + 002 + formula CONFIRMED
+      ↓
+  D-21 persistence GO
+
+003 threshold
+      ↓
+  별도 evidence / 별도 approval      ← 001 을 따라 올라가지 않는다
+```
+
+---
+
+## 부록 B — 이 문서와 기존 문서의 관계
 
 | 문서 | 역할 |
 |---|---|

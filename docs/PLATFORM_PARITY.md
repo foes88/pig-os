@@ -544,8 +544,20 @@ vitest 실행 불가
       20.11 에는 없다 → SyntaxError: does not provide an export named 'styleText'
 ```
 
-★ 이전 세션에 *"vitest 가 워커를 못 띄운다"* 로 기록했던 것은 **원인 오진**이었다.
-  워커 문제가 아니라 **Node 버전 문제**다. `Node >= 20.12` 로 올리면 해소된다.
+★ **ROOT_CAUSE_CORRECTED** (2026-08-31 최종)
+
+```
+최초 기록   "vitest 가 워커를 못 띄운다"                         ← 오진
+1차 정정    "Node 20.11 < 20.12 라 node:util.styleText 가 없다"   ← 증상은 맞음
+최종        unsupported local Node version was not enforced       ← 진짜 원인
+```
+
+  버전 pin 은 **이미 있었다** — `.nvmrc 22.11.0` · `engines >=22.11` · CI node 22.
+  셋 다 **선언일 뿐 강제가 아니었다.** 그래서 Node 20.11 환경에서 npm 이 조용히 통과했고
+  오진이 가능했다. `src/.npmrc` 에 `engine-strict=true` 를 넣어 `npm ci` 가 즉시
+  실패하도록 고쳤다(`aeca20d`).
+
+  → 같은 오진을 반복하지 않으려면 **"버전이 낮다" 가 아니라 "강제가 없다" 로 기억해야 한다.**
 
   ★ 더 큰 문제를 같이 찾았다 — **PigOS CI 의 frontend job 에 테스트 스텝이 아예 없었다.**
     `tsc --noEmit` + `npm run build` 뿐이었다. 즉 프론트 테스트는 로컬에서도
@@ -676,9 +688,120 @@ reader                   0건 (KpiSnapshot 참조는 writer 와 model 뿐)  ✓ 
 배포 시각                    2026-08-31 00:53 UTC
 generate_tasks_job           05:30 UTC 당일 — 신규 코드 첫 자연 실행
 generate_notifications_job   06:00 UTC 당일
-daily/weekly/monthly KPI     2026-09-01 00:05~00:15 UTC
+daily/weekly/monthly KPI     2026-09-01 00:05~00:15 UTC = 09:05~09:15 KST
                              ← WRITER_OPERATIONAL 판정 시점
 baseline                     kpi_snapshots=0 · notifications=577
+```
+
+### 9-4-4. ★ ARQ_HOTFIX_ACCEPTANCE
+
+```
+1. daily_kpi_aggregation 실제 실행 시작
+2. farm-level success/error 집계
+3. 최종 결과가
+     전건 성공 → OK
+     일부 실패 → PARTIAL + 실제 errors
+     전건 실패 → exception
+4. ★ ARQ queue/job 자체 상태도 위 결과와 일치
+     전건 실패인데 j_failed=0 이 다시 나오면 FAIL
+5. traceback / error log 가 실제 실패 원인을 보존
+```
+
+#### ★ 4번은 자연 실행으로 관측되지 않는다 — 별도로 닫았다
+
+```
+수정 후 daily_kpi_aggregation 은 성공한다 (크래시 원인이 제거됐으므로).
+→ 자연 실행은 OK 만 내고 실패 경로를 밟지 않는다.
+→ 확인하려고 프로덕션에 의도적 실패를 만드는 것은 금지.
+```
+
+그래서 **로컬 burst worker + 로컬 redis** 로 닫았다. 프로덕션 무접촉.
+
+```
+api/tests/integration/test_arq_failure_propagation.py   (60fc542)
+
+전건 실패   jobs_failed=1 · jobs_complete=0 · arq 가 traceback 전문 기록
+정상        jobs_complete=1 · jobs_failed=0
+부분 실패   jobs_complete=1 (잡 자체는 실패 아님) + 결과에 PARTIAL/errors
+```
+
+```
+ACCEPTANCE_4 = CLOSED_BY_LOCAL_VERIFICATION   (프로덕션 자연 실행 대상 아님)
+```
+
+★ **정정** — 앞서 "전건 실패 시 `max_tries=5` 로 5회 재시도" 라고 기술했으나 **틀렸다.**
+`arq/worker.py:612-634` 실측: `Retry` / `CancelledError` / `RetryJob` 만 재시도이고
+일반 예외는 `logger.exception` + `finish=True` + `jobs_failed` 로 **즉시 종료**한다.
+`max_tries` 는 `Retry` 유발 재시도만 제한한다.
+→ 결과적으로 더 낫다. 매일 실패하는 cron 이 재시도 폭주를 일으키지 않는다.
+
+### 9-4-5. ★ SNAPSHOT_WRITER_ACCEPTANCE
+
+> 행 수가 아니라 **내용의 shape** 를 본다. `kpi_snapshots > 0` 만 보고 PASS 를 주지 않는다.
+
+```
+[ ] job crash 없음
+[ ] 예상 farm scope 에 대해서만 row 생성        (활성 농장 71 기준)
+[ ] persisted 대상 = 지원되는 counts 3종만
+      active_sow_count · gestating_count · lactating_count
+[ ] psy / farrowing_rate emitted 0
+[ ] reader 0 유지
+[ ] use_governance_benchmarks = False 유지
+```
+
+### 9-4-6. ★ 4축 판정 — 하나의 PASS 로 합치지 않는다
+
+```
+ARQ_HOTFIX          PASS | FAIL
+SNAPSHOT_WRITER     OPERATIONAL | NOT_OPERATIONAL
+SNAPSHOT_AUTHORITY  NOT_ENABLED        ← 고정. 이번 배포로 바뀌지 않는다
+SNAPSHOT_FEATURE    NOT_READY          ← 고정. 이번 배포로 바뀌지 않는다
+```
+
+현재값 (2026-08-31 배포 직후):
+
+```
+ARQ_HOTFIX          코드 검증 PASS / 자연 실행 검증 대기
+                    → 상태: DEPLOYED / AWAITING_NATURAL_RUN_ACCEPTANCE
+SNAPSHOT_WRITER     NOT_OPERATIONAL    (kpi_snapshots 0행. 첫 실행 전)
+SNAPSHOT_AUTHORITY  NOT_ENABLED
+SNAPSHOT_FEATURE    NOT_READY
+```
+
+★ 9/1 자연 실행이 통과하면 그때 처음으로
+`ARQ observability incident = CLOSED` 라고 닫을 수 있다. 지금은 아니다.
+
+---
+
+## 9-5. P1 — `DEPLOY_PROVENANCE` (신규 등록)
+
+### 문제
+
+`2e372b1` 배포 시 프로덕션 SHA 를 알아내려고 **서버 api/app 173개 파일 전수 해시 대조**를
+해야 했다. scp 배포라 서버에 git 이 없고, 이미지 라벨에도 revision 이 없다.
+
+이번엔 정확히 특정했지만 **반복할 방식이 아니다.**
+
+### 개선 방향 (이번 hotfix 에 섞지 않는다)
+
+```
+image label
+  org.opencontainers.image.revision=<sha>
+
+또는 health 응답
+  {"status":"ok","version":"0.1.0","revision":"<sha>"}
+```
+
+그러면 앞으로:
+
+```
+"What is production?"  →  health / image inspect  →  SHA 즉시 확정
+```
+
+```
+platform_implementation_status = PLANNED
+priority = P1
+★ 이번 hotfix 에 다시 섞어 넣지 않는다. 별도 deploy-provenance 개선으로 둔다.
 ```
 
 ---
