@@ -773,6 +773,158 @@ SNAPSHOT_FEATURE    NOT_READY
 
 ---
 
+### 9-4-7. ★ Natural Run Acceptance Result — 2026-09-01
+
+> §9-4-4/9-4-5 는 **기준**이고 이 절은 **결과**다. 기준은 수정하지 않고 결과만 append 한다.
+> §9-4-6 의 "현재값" 은 2026-08-31 배포 직후 시점 기록이며, 이 절이 그 이후 상태다.
+
+```
+실행 구분    production natural schedule / 비강제 실행
+대상 배포    2e372b1  (api + worker)
+검증 시각    2026-09-01 00:05~00:52 UTC  =  09:05~09:52 KST
+```
+
+#### ARQ
+
+자연 스케줄 실행 결과:
+
+```
+daily_kpi_aggregation     OK — 73/73 processed  period=2026-08-30
+weekly_kpi_aggregation    OK — 73/73 processed  period=2026-08-24~2026-08-30
+monthly_kpi_aggregation   OK — 73/73 processed  period=2026-07-01~2026-07-31
+generate_tasks_job        OK — 73/73 processed, 1 created
+generate_notifications    OK — 73/73 processed, 2 created, 0 pushed
+
+ARQ success marker ●      5
+ARQ failure marker !      0
+traceback                 0
+```
+
+★ `expected` 는 **73** 이다. 기준 작성 시점의 71 에서 활성 농장이 2 증가했다.
+  73/73 이므로 전건 처리다.
+
+ARQ health refresh (`arq:queue:health-check`):
+
+```
+Aug-31 23:52:29   j_complete=3  j_failed=0  j_retried=0  j_ongoing=0  queued=0   ← 실행 이전
+Sep-01 00:52:29   j_complete=6  j_failed=0  j_retried=0  j_ongoing=0  queued=0   ← 실행 이후
+```
+
+`j_complete` 3 → 6 (+3 = daily·weekly·monthly). **로그의 성공 결과와 queue/job-level
+상태가 일치했다.** 원래 사고였던 "전건 실패인데 `j_failed=0`" 의 반대 상황이며 정합이다.
+
+> health key 는 arq 가 **1시간 주기로만** 갱신한다. 실행 직후 조회하면 이전 값이 보인다.
+> 이번에도 00:39 UTC 조회 시 `Aug-31 23:52` 가 나와 00:52 갱신을 기다려 확인했다.
+
+#### 판정 — ARQ
+
+```
+ARQ_HOTFIX = PASS_ON_SUCCESS_PATH / FAILURE_PATH_LOCALLY_VERIFIED
+```
+
+이번 자연 실행에서는 **실패가 발생하지 않았으므로 production 에서 failure propagation
+자체를 관측하지 않았다.** 전건 실패의 ARQ failure propagation 은 로컬 검증
+`60fc542`(`test_arq_failure_propagation.py`)에서 확인됐다.
+
+**따라서 아직 `CLOSED` 로 승격하지 않는다.**
+
+향후 자연 실패 발생 시 아래를 **모두** 만족하면 `CLOSED` 후보로 전환한다.
+
+```
+[ ] 실제 task exception 발생
+[ ] ARQ job status = FAILED
+[ ] j_failed 증가
+[ ] traceback 보존
+[ ] false-success 없음
+```
+
+#### Snapshot Writer
+
+자연 실행 후:
+
+```
+total rows   219
+farms         73
+DAILY         73
+WEEKLY        73
+MONTHLY       73
+calculated_at 2026-09-01 09:05:00 ~ 09:15:01 KST
+```
+
+농장 timezone 에 따라 completed period 가 정상적으로 분리됐다:
+
+```
+DAILY     2026-08-30  12농장   ·  2026-08-31  61농장
+MONTHLY   2026-07-01  12농장   ·  2026-08-01  61농장
+WEEKLY    2026-08-24~08-30     73농장
+```
+
+Shape 검증:
+
+```
+psy_written        0            ← 산식 미확정. _WITHHELD_FIELDS 작동
+farrowing_rate     column not present
+
+active_sow_count   219
+gestating_count    219
+lactating_count    219
+
+msy / npd / mortality_rate / fcr / avg_daily_gain   0
+```
+
+**산식 미확정 필드인 `psy` · `farrowing_rate` 가 snapshot 에 유입되지 않았다.**
+특히 `psy` 는 컬럼이 존재하는데도 0건이므로, 컬럼 부재가 아니라 **보류 규칙이 실제로
+동작한 결과**다.
+
+#### 판정 — Snapshot
+
+```
+SNAPSHOT_WRITER     = OPERATIONAL
+SNAPSHOT_AUTHORITY  = NOT_ENABLED
+SNAPSHOT_FEATURE    = NOT_READY
+```
+
+`WRITER_OPERATIONAL` 은 authority 승인 또는 snapshot feature readiness 를 의미하지 않는다.
+
+#### Authority invariants
+
+배포 후 불변조건 유지 확인:
+
+```
+use_governance_benchmarks   False
+KpiSnapshot readers         0            (writer·model 제외 시 참조 0)
+Alembic head                f3c6a8d0b2e4
+authority switch            not enabled  (컨테이너 env 에 키 없음)
+
+DMV                         87
+operational_defaults        29
+rule_configs                0
+DMV last update             2026-07-08
+```
+
+#### Final Acceptance
+
+```
+ARQ_HOTFIX          PASS_ON_SUCCESS_PATH / FAILURE_PATH_LOCALLY_VERIFIED
+SNAPSHOT_WRITER     OPERATIONAL
+SNAPSHOT_AUTHORITY  NOT_ENABLED
+SNAPSHOT_FEATURE    NOT_READY
+```
+
+Snapshot-dependent features — **What Changed · snapshot-first Home ·
+historical comparison — remain `NOT_READY`.**
+
+#### 부수 관측
+
+`generate_notifications_job` 이 `73/73, 2 created` 로 정상 동작했고 `notifications`
+577 → 579. **`create_from_alerts` 의 KPI 블록에서 `log.exception` 이 찍히지 않았다** —
+즉 KPI 알림 유실이 실제로 없었다. 배포 전에는 이 사실을 알 방법 자체가 없었다(§A1-4).
+
+★ **writer 가 실제로 정상 작동하기 시작한 날 = 2026-09-01.**
+  그 전 2026-05-29~2026-08-31 구간의 `kpi_snapshots` 는 0행이며 그 사실은 바뀌지 않는다.
+
+---
+
 ## 9-5. P1 — `DEPLOY_PROVENANCE` (신규 등록)
 
 ### 문제
@@ -829,6 +981,7 @@ STEP 5   CI + Release Gate + App Version Gate
 |---|---|
 | 2026-08-27 | `MOBILE_PARITY.md` 신설 |
 | 2026-08-28 | `PLATFORM_PARITY.md` 로 `git mv`. STEP 0 — 기존 6행 evidence 재판정(DONE 2 → IN_PROGRESS, `done_with_sha=0`) · Track B 실측 고정 · `BACKEND_NO_JUDGMENT_STATE=PRESENT` 확인 · blocker 9건 등록 |
+| 2026-09-01 | 자연 실행 acceptance 결과 기록(§9-4-7) — ARQ 73/73 OK · `j_complete` 3→6 · `j_failed=0` · snapshot 219행/73농장, `psy`·`farrowing_rate` 유입 0. `ARQ_HOTFIX = PASS_ON_SUCCESS_PATH / FAILURE_PATH_LOCALLY_VERIFIED` (CLOSED 아님) · `SNAPSHOT_WRITER = OPERATIONAL` |
 | 2026-08-31 | `2e372b1` 프로덕션 배포(api·worker). ARQ false-success 해소 확인(비파괴). B-12 해소 · B-11 부분해소. snapshot 은 WRITER_OPERATIONAL 까지만 인정, reader 전환 없음. G4 완료 정의 고정(§9-3) |
 | 2026-08-28 | 야간 remediation evidence 등록(§9-2) — Core/Web/Android/iOS 8개 구현 commit. B-4·B-10·B-12 해소, B-11 부분 해소. iOS 는 NOT_RUNTIME_VERIFIED 유지, Web 은 vitest 환경 blocker 로 PRESENT_BUT_NOT_EXECUTED |
 | 2026-08-28 | ★ Web 행 정정 — `NOT_APPLICABLE` → `BLOCKED / WEB_LOCAL_STATUS_FALLBACK` (D-19 N-7). ACTIVE(모바일) vs DORMANT(웹) 분리. blocker B-10~B-14 등록 |
