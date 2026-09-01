@@ -39,11 +39,21 @@ paths:
   web:
     - src/lib/kpi/presentation.ts                     # resolveKpiCards
     - src/lib/kpi/cardRegistry.ts                     # 렌더 메타(임계·판정 금지)
-  android: NOT_PRESENT                                # 소비 0건 (실측)
-  ios:     NOT_PRESENT                                # 소비 0건 (실측)
+  android:                                            # UNMERGED — wiselake/pigos-android#2 (5640711)
+    - app/src/main/java/io/pigos/app/ui/screens/dashboard/KpiPresentationResolver.kt
+    - app/src/main/java/io/pigos/app/data/remote/dto/KpiDto.kt
+  ios:                                                # UNMERGED — wiselake/pigos-ios#2 (0628de1)
+    - PigOS/Domain/Model/KpiPresentation.swift
+    - PigOS/Data/Repository/KpiRepository.swift
 offline_mode: READ_CACHE                              # 정책은 서버 확정. 클라 재정렬 금지
 analytics_events: []                                  # 미정의
 ```
+
+★ **android·ios 경로는 아직 main 에 없다.** 각 저장소 `fix/kpi-status-consumption`
+위에 쌓인 stacked branch 이며 merge 0건이다. 경로를 미리 등재한 이유는 다음 세션이
+"소비 0건" 이라는 낡은 실측을 다시 믿지 않게 하려는 것이고, 상태는 `NOT_PRESENT` 가
+아니라 **`UNMERGED`** 다 — main 기준으로는 여전히 없다.
+판정 근거는 `docs/PLATFORM_PARITY.md` §9-3-3.
 
 ---
 

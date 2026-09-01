@@ -628,6 +628,82 @@ Old client BLOCKED  — version gate 미활성 (송출·관측 단계)
 
 `docs/FEATURE_REGISTRY.md` `PIGOS-F-0001` 과 같은 대상이다.
 
+### 9-3-3. ★ G4 구현 결과 — 2026-09-01 (append-only)
+
+> 위 9-3-2 의 판정은 **당시 상태 그대로 둔다.** 아래는 그 뒤에 일어난 일이다.
+
+```
+Android   feat/kpi-presentation-consumption   wiselake/pigos-android#2
+iOS       feat/kpi-presentation-consumption   wiselake/pigos-ios#2
+base      각 저장소 fix/kpi-status-consumption (#1)  — stacked, main 아님
+merge     0건   ·  main push 0건  ·  force-push 0건
+```
+
+**5항목 판정 (양 플랫폼 동일)**
+
+| 항목 | 판정 | 근거 |
+|---|---|---|
+| `/kpi/presentation` 소비 | DONE | `KpiRepository.presentation()` |
+| 서버 visible/hidden 준수 | DONE | visibility = `items` 멤버십. 로컬 목록이 카드를 만들지 않음 |
+| order 준수 | DONE | `items` 배열 순서 그대로. `display_order` 재정렬 금지 테스트 |
+| local list 를 business logic 로 미사용 | DONE | `RENDERABLE_KPI_ORDER`/`renderableKpiOrder` = 폴백 순서 + 렌더 가능 여부 |
+| benchmark null 정상처리 | DONE(기존) | PR #1 에서 benchmark→severity 변환 제거. `benchmark alone yields no decision` |
+
+```
+implementation_status        DONE      Android 5640711 · iOS 0628de1
+regression_test_status       PASS      Android 10건 · iOS 9건 (동일 케이스)
+runtime_reproduction_status  NOT_RUNTIME_VERIFIED
+                                       CI 빌드·테스트만. 실서버 응답으로 화면을 본 적 없음
+```
+
+★ **`DONE` 은 아직 이 표에 못 쓴다.** 세션 프로토콜 §5 상 `DONE` 은 implementation
+commit SHA 를 요구하고 SHA 는 있으나, **두 SHA 모두 merge 되지 않은 stacked branch 위**에 있다.
+main 에 없는 SHA 를 `DONE` 근거로 쓰면 그것이 곧 거짓 DONE 이다 →
+셀 상태는 `IN_PROGRESS` 를 유지하고, merge 시점에 승격한다.
+
+#### 9-3-4. ★ G4 로 닫지 못한 것 — `BLOCKED_BY_PRODUCT_DECISION`
+
+**(1) `ACTIVE_SOWS` — "server hidden" 이 아니라 "server 무관"**
+
+```
+country_kpi_policy 에 ACTIVE_SOWS 코드 자체가 없다
+  → 서버가 표시 여부에 의견을 낸 적이 없다
+  → 엄격히 G4 를 적용하면 화면에서 사라진다 = 눈에 보이는 제품 변경
+```
+
+제거할지 사육두수 컨텍스트로 유지할지는 제품 결정이다. **현재 동작을 보존**하고
+Android·iOS 코드에 주석으로 표시했다. 정책 KPI 로 편입할지도 함께 결정해야 한다.
+
+**(2) 폴백 3종의 표시 정책 — 관측 granularity 가 플랫폼마다 다르다**
+
+```
+                       unavailable(요청 실패)   empty(200 + items=[])   no_renderable
+Android · iOS          구분함                   구분함                  구분함
+Web                    ─────── 합쳐짐 ───────                          구분함
+```
+
+Web `resolveKpiCards` 는 `!presentation || items.length === 0` 을 한 분기로 처리하고
+telemetry 도 `absent_or_empty` 하나로 낸다 (`src/lib/kpi/presentation.ts`).
+현행 web 테스트 `"404/timeout(null) · items 빈 배열 → 동일 폴백"` 이 이 합침을 이미 고정하고 있다.
+
+**렌더 결과는 세 플랫폼 모두 같다** — 발산이 아니라 관측 해상도 차이다.
+"서버가 의도적으로 비운 것"과 "서버 정책을 모르는 것"에 다른 화면을 줄지가
+제품 결정이고, 그 전까지 모바일은 구분을 **데이터 모델에만** 남긴다
+(결정 후 재작업 0). 현재 동작은 양 플랫폼 characterization test 로 고정했다.
+
+**(3) old-client gate — 여전히 BLOCKED, 이번에 건드리지 않았다**
+
+```
+헤더 송출     Android ClientVersionInterceptor · iOS APIClient · Web client.ts   3/3 송출
+서버          api/app/core/client_version.py                        observe-only (raise 없음)
+min_supported_version                                                미정
+gate 활성                                                            0건
+```
+
+메커니즘은 갖춰졌고 **막힌 것은 제품 결정 하나**다 — 어느 버전 미만을 끊을지,
+끊었을 때 무엇을 보여줄지. 임계값을 코드가 정하면 그 순간 정책을 발명하는 것이므로
+threshold 를 넣지 않았다. §9-3-1 의 역순 활성화 금지 규율 그대로다.
+
 ---
 
 ## 9-4. ★ 프로덕션 배포 기록 — `2e372b1` (2026-08-31)
