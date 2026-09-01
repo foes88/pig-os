@@ -925,6 +925,38 @@ historical comparison — remain `NOT_READY`.**
 
 ---
 
+### 9-4-8. ★ Snapshot 안전규칙 — forward-only
+
+```
+snapshot_epoch        = 2026-09-01
+historical_backfill   = BLOCKED_BY_DEFAULT
+```
+
+**2026-05-29 ~ 2026-08-31 구간의 `kpi_snapshots` 공백을 현재 코드로 재계산해 메우지 않는다.**
+
+그 구간을 지금 산식으로 채우면 당시의 `formula` · `as_of` · `authority` 를 재현하지 못한
+**가짜 과거 snapshot** 이 된다. D-19 `V-3 = NOT_REPRODUCIBLE` 이 그 재현 불가를 이미 실측했고,
+notification 468건 backfill 을 금지한 것과 같은 이유다.
+
+해제 조건: **별도의 재현성 증명이 생긴 뒤**에만. 그 전까지 forward-only 가 안전하다.
+
+---
+
+## 9-6. `ARQ_OBSERVABILITY` — 인시던트 상태
+
+```
+remediation          DEPLOYED                      2e372b1 (2026-08-31)
+success_path         PROD_VERIFIED                 §9-4-7
+failure_path         LOCAL_VERIFIED                60fc542
+prod_failure_path    AWAITING_NATURAL_OBSERVATION
+incident_status      MONITORING
+```
+
+`CLOSED` 는 §9-4-7 의 5개 조건이 **자연 실패에서** 충족될 때만 올린다.
+**일부러 실패를 만들지 않는다.**
+
+---
+
 ## 9-5. P1 — `DEPLOY_PROVENANCE` (신규 등록)
 
 ### 문제
