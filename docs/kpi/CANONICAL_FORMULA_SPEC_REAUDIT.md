@@ -356,6 +356,33 @@ runtime          MATCHED 8 · ZERO_PATH_ONLY 1 · NOT_RUN 1        (합 10)
 regression_test  PRESENT 5 · MISSING 5                            (합 10)
 ```
 
+> ### ★ U-8 / U-10 완료 (2026-09-01)
+>
+> ```
+> regression_test  PRESENT 10 · MISSING 0        (합 10)
+> ```
+>
+> | KPI | 추가된 회귀 | commit |
+> |---|---|---|
+> | WSI | `test_u8_formula_regression.py` — 평균 간격 + 음수/NULL 제외 | `86e6966` |
+> | WEANED_PER_LITTER | 이유 건별 단순 평균 | `86e6966` |
+> | MUMMIFIED_RATE | 분모 = `total_born` (실산 분모 반증 포함) | `86e6966` |
+> | MSY | 출하/평균재고 + 출하 없으면 None | `86e6966` |
+> | PRE_WEANING_MORTALITY | 3경로 characterization | `5c2dc8d` |
+>
+> ★ **다른 두 축은 움직이지 않았다.**
+>
+> ```
+> implementation_status        변경 없음  (CONFIRMED 7 · AMBIGUOUS 3)
+> runtime_reproduction_status  변경 없음
+>   MSY  = NOT_RUN 유지 — synthetic fixture 는 production reproduction 이 아니다
+>   PWM  = ZERO_PATH_ONLY 유지 — U-10 은 로컬 fixture 이지 실데이터 재현이 아니다
+> ```
+>
+> ★ PWM 회귀는 **canonical 을 선택하지 않는다.** 세 경로가 현재 무엇을 계산하는지
+>   보존할 뿐이다. P0-2 이후 code alignment 가 일어나면 그 테스트가 **깨져야 정상**이고,
+>   깨지지 않으면 정렬이 실제로 일어나지 않은 것이다.
+
 ★ **D-8 mapping 진입 가능**: `implementation_status = CONFIRMED` 7건.
   `AMBIGUOUS` 3건(FARROWING_RATE · STILLBORN_RATE · PWM)은 **mapping 금지**.
 
