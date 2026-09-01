@@ -9,6 +9,113 @@ Date      2026-08-28
 
 ---
 
+## 0-0. ★ D-8 STATUS (2026-09-01 확정)
+
+```
+D-8 STATUS
+  implementation input     READY
+    CONFIRMED 7
+
+  external formula input   BLOCKED
+    FORMULA claims 0
+
+  current mapping
+    NOT_EQUIVALENT           2
+    UNKNOWN                  5
+    EXACT                    0
+    STRUCTURAL_EQUIVALENCE   0
+
+  next trigger
+    primary-source formula evidence 확보
+
+  blocker
+    PRIMARY_FORMULA_EVIDENCE_MISSING
+```
+
+★ **지금 D-8 을 다시 돌리는 것은 작업이 아니라 같은 `UNKNOWN` 을 재출력하는 행위다.**
+  병목은 PigOS canonical 이 아니라 external formula evidence 다.
+  우리 쪽 입력(`CONFIRMED 7`)은 이미 준비돼 있다.
+
+### 0-0-1. KPI 별 blocker
+
+| formula_id | 우리 입력 | 외부 산식 | blocker |
+|---|---|---|---|
+| `PSY_ROLLING12M v1` | READY | 없음 (분모 정의 미확보) | `PRIMARY_FORMULA_EVIDENCE_MISSING` |
+| `NPD_COMPLEMENT_SOWYEAR v1` | READY | 없음 | `PRIMARY_FORMULA_EVIDENCE_MISSING` |
+| `SOW_TURNOVER_FARROWINGS_PER_INV v1` | READY | 없음 | `PRIMARY_FORMULA_EVIDENCE_MISSING` |
+| `WSI_WEAN_TO_SERVICE v1` | READY | 없음 | `PRIMARY_FORMULA_EVIDENCE_MISSING` |
+| `WEANED_AVG_PER_WEANING v1` | READY | 없음 | `PRIMARY_FORMULA_EVIDENCE_MISSING` |
+| `MSY_HEADOUT_PER_INV v1` | READY | 없음 | `PRIMARY_FORMULA_EVIDENCE_MISSING` |
+| `MUMMIFIED_RATE` | READY | measure_kind 만 확보 | §0-0-2 (부분 판정 가능) |
+
+### 0-0-2. ★ 기술 판정과 거버넌스 승격을 분리한다
+
+`NOT_EQUIVALENT 2` 는 **사실판정**이다. 그것을 정식 `definition_mapping` record 로
+승격해 **제품 게이트의 입력으로 쓰는 것**은 `decided_by` · `decided_at` · `decision_id`
+가 필요한 **governance action** 이다. 둘은 다른 층이다.
+
+```
+MUMMIFIED_RATE
+  technical_mapping_finding = NOT_EQUIVALENT
+      PigOS  MUMMIFIED_RATE                = RATE   (mummified / total_born)
+      PigCHAMP Average mummies per litter  = COUNT
+      → 단위가 달라 직접 비교 불가. 이 사실 자체는 원문 없이도 확정된다.
+  governed_mapping_status   = NOT_ESTABLISHED
+
+PSY_ROLLING12M v1
+  technical_mapping_finding = NOT_EQUIVALENT_CANDIDATE
+      근거가 2차 인용이다(§2-1-A probe). 원문 미확보.
+  evidence_status           = UNVERIFIED
+  governed_mapping_status   = NOT_ESTABLISHED
+```
+
+★ **D-2026-002(승인 주체·경로)가 없다고 해서 `RATE ↔ COUNT` 비동치 같은
+  명백한 기술 사실까지 기록하지 못하는 구조로 만들지 않는다.**
+  반대로 그 기술 finding 을 곧바로 승인된 mapping row 처럼 사용해서도 안 된다.
+
+승격 경로: `docs/kpi/DECISION_REGISTER.md`
+
+---
+
+## 0-0-3. Evidence procurement — D-8 과 분리한다
+
+```
+EVIDENCE PROCUREMENT
+
+PigCHAMP
+  - Pigs wnd/female/year denominator
+  - total pigs per litter population/denominator semantics
+
+MetaFarms
+  - mated female population definition
+  - latest 2021–2025 source details          ← D-15
+
+Other primary sources
+  - NPD calculation semantics (여집합 vs 간격누적)
+  - WSI formula
+  - MSY formula
+  - weaned per litter formula
+```
+
+★ **D-15 만 끝난다고 D-8 전체가 열리지 않는다.**
+  D-15 는 MetaFarms 최신판 실사이고, NPD·WSI·MSY 원문 formula 조달은
+  **별도 evidence acquisition** 이다. 새 ID 를 만들지 않고 위 목록으로 관리한다.
+
+★ 조달은 웹 리서치 트랙이며 이 저장소의 코드 작업이 아니다.
+
+---
+
+## 0-0-4. `performance_direction` 은 D-8 재실행 명분이 아니다
+
+전건 `UNKNOWN` 이지만, 이 필드를 채워도 `UNKNOWN 5 → EXACT` 를 **하나도 움직이지 못한다.**
+게다가 방향이 Threshold 계층에 있다면 Track 4 범위를 다시 건드리게 된다.
+
+```
+performance_direction procurement = 별도 backlog
+```
+
+---
+
 ## 0. 이 문서의 규율 — 이름으로 매핑하지 않는다
 
 D-13 재실사가 **같은 이름 아래 다른 산식**을 여럿 찾아냈다. 그러니 D-8 에서
